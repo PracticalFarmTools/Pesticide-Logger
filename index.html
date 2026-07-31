@@ -24,7 +24,7 @@
       </svg>
       <div>
         <h1>Pesticide Logger</h1>
-        <span class="header-sub">Practical Farm Tools · v2.5</span>
+        <span class="header-sub">Practical Farm Tools · v2.5.1</span>
       </div>
     </div>
     <div class="header-right">
@@ -682,6 +682,12 @@
             <select id="report-product"><option value="">All products</option></select>
           </label>
         </div>
+        <div class="form-row">
+          <label class="checkbox-label">
+            <input type="checkbox" id="report-include-deleted">
+            Include soft-deleted records (audit / retention)
+          </label>
+        </div>
       </div>
       <div class="form-actions report-actions">
         <button class="btn btn-primary btn-lg" id="report-print">Print / PDF inspection report</button>
@@ -780,7 +786,7 @@
 
     <div class="card about-card">
       <h3 class="card-title">About</h3>
-      <p>Pesticide Logger v2.5 — part of the <strong>Practical Farm Tools</strong> suite. Free forever, works offline, and your farm records stay on this device.</p>
+      <p>Pesticide Logger v2.5.1 — part of the <strong>Practical Farm Tools</strong> suite. Free forever, works offline, and your farm records stay on this device.</p>
       <p class="card-hint">This tool provides 50-state application <em>recordkeeping field coverage</em> with audit history, lot tracking, and in-cab workflows. It is not legal advice, does not replace WPS employer duties, and does not file California PUR, New York PRL, or other electronic reports for you. Always follow the product label and confirm requirements with your state pesticide agency.</p>
     </div>
   </section>

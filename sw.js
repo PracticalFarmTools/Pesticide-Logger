@@ -1,8 +1,8 @@
-/* Pesticide Logger v2.5 — offline-first service worker.
+/* Pesticide Logger v2.5.1 — offline-first service worker.
  * Cache-first for the app shell; records live in localStorage so the app
  * is fully functional with zero connectivity after first load.
  */
-const CACHE_NAME = 'pesticide-logger-v2.5';
+const CACHE_NAME = 'pesticide-logger-v2.5.1';
 const APP_SHELL = [
   './',
   './index.html',

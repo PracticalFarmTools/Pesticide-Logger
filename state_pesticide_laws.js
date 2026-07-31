@@ -16,6 +16,15 @@
  *   partial    — core fields verified; some private/commercial nuances open
  *   uncertain  — limited authoritative field list; capture recommended base
  *
+ * privateDuty:
+ *   required  — private applicators have a researched state recordkeeping duty
+ *   none      — state sources indicate no private applicator record duty
+ *   uncertain — private-applicator duty not verified after Part 110 rescission
+ *
+ * customerCopyDays:
+ *   number — researched commercial customer-copy window (days)
+ *   null   — no researched customer-copy duty encoded (do not invent one)
+ *
  * Source research date: 2026-07-31. Always confirm with your state agency.
  */
 const STATE_LAWS = {
@@ -128,7 +137,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "AL": {
     "agency": "Alabama Department of Agriculture and Industries",
@@ -197,7 +207,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "none"
   },
   "AR": {
     "agency": "Arkansas Department of Agriculture, State Plant Board",
@@ -242,7 +253,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "uncertain"
   },
   "AZ": {
     "agency": "Arizona Department of Agriculture",
@@ -353,7 +365,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "CA": {
     "agency": "California Department of Pesticide Regulation and county agricultural commissioners",
@@ -476,7 +489,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "CO": {
     "agency": "Colorado Department of Agriculture",
@@ -545,7 +559,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "CT": {
     "agency": "Connecticut Department of Energy and Environmental Protection",
@@ -620,7 +635,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "DE": {
     "agency": "Delaware Department of Agriculture",
@@ -737,7 +753,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "FL": {
     "agency": "Florida Department of Agriculture and Consumer Services",
@@ -842,7 +859,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 48,
-    "customerCopyDays": 30
+    "customerCopyDays": 30,
+    "privateDuty": "required"
   },
   "GA": {
     "agency": "Georgia Department of Agriculture",
@@ -947,7 +965,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "HI": {
     "agency": "Hawaii Department of Agriculture and Biosecurity, Pesticides Branch",
@@ -1052,7 +1071,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": 30,
+    "privateDuty": "required"
   },
   "IA": {
     "agency": "Iowa Department of Agriculture and Land Stewardship",
@@ -1157,7 +1177,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "ID": {
     "agency": "Idaho State Department of Agriculture",
@@ -1274,7 +1295,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "IL": {
     "agency": "Illinois Department of Agriculture",
@@ -1319,7 +1341,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "IN": {
     "agency": "Office of Indiana State Chemist",
@@ -1430,7 +1453,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 72,
-    "customerCopyDays": 30
+    "customerCopyDays": 30,
+    "privateDuty": "required"
   },
   "KS": {
     "agency": "Kansas Department of Agriculture",
@@ -1523,7 +1547,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "uncertain"
   },
   "KY": {
     "agency": "Kentucky Department of Agriculture",
@@ -1640,7 +1665,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "LA": {
     "agency": "Louisiana Department of Agriculture and Forestry",
@@ -1757,7 +1783,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 72,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "MA": {
     "agency": "Massachusetts Department of Agricultural Resources",
@@ -1838,7 +1865,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "MD": {
     "agency": "Maryland Department of Agriculture",
@@ -1961,7 +1989,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "ME": {
     "agency": "Maine Board of Pesticides Control, Department of Agriculture, Conservation and Forestry",
@@ -2126,7 +2155,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 0,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "MI": {
     "agency": "Michigan Department of Agriculture and Rural Development",
@@ -2207,7 +2237,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "uncertain"
   },
   "MN": {
     "agency": "Minnesota Department of Agriculture",
@@ -2312,7 +2343,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 120,
-    "customerCopyDays": 0
+    "customerCopyDays": null,
+    "privateDuty": "uncertain"
   },
   "MO": {
     "agency": "Missouri Department of Agriculture",
@@ -2459,7 +2491,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 72,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "MS": {
     "agency": "Mississippi Department of Agriculture and Commerce, Bureau of Plant Industry",
@@ -2558,7 +2591,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "MT": {
     "agency": "Montana Department of Agriculture",
@@ -2693,7 +2727,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "NC": {
     "agency": "North Carolina Department of Agriculture and Consumer Services",
@@ -2792,7 +2827,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 72,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "ND": {
     "agency": "North Dakota Department of Agriculture",
@@ -2933,7 +2969,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": 30,
+    "privateDuty": "required"
   },
   "NE": {
     "agency": "Nebraska Department of Agriculture",
@@ -3044,7 +3081,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 48,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "NH": {
     "agency": "New Hampshire Department of Agriculture, Markets & Food, Division of Pesticide Control",
@@ -3113,7 +3151,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "NJ": {
     "agency": "New Jersey Department of Environmental Protection, Pesticide Control Program",
@@ -3230,7 +3269,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "NM": {
     "agency": "New Mexico Department of Agriculture",
@@ -3353,7 +3393,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": 30,
+    "privateDuty": "required"
   },
   "NV": {
     "agency": "Nevada Department of Agriculture",
@@ -3476,7 +3517,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "NY": {
     "agency": "New York State Department of Environmental Conservation",
@@ -3545,7 +3587,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "OH": {
     "agency": "Ohio Department of Agriculture",
@@ -3674,7 +3717,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "OK": {
     "agency": "Oklahoma Department of Agriculture, Food, and Forestry",
@@ -3791,7 +3835,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "OR": {
     "agency": "Oregon Department of Agriculture",
@@ -3920,7 +3965,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "PA": {
     "agency": "Pennsylvania Department of Agriculture",
@@ -4019,7 +4065,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": 30,
+    "privateDuty": "required"
   },
   "RI": {
     "agency": "Rhode Island Department of Environmental Management",
@@ -4124,7 +4171,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "uncertain"
   },
   "SC": {
     "agency": "Clemson University Department of Pesticide Regulation",
@@ -4187,7 +4235,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "uncertain"
   },
   "SD": {
     "agency": "South Dakota Department of Agriculture and Natural Resources",
@@ -4310,7 +4359,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "uncertain"
   },
   "TN": {
     "agency": "Tennessee Department of Agriculture",
@@ -4403,7 +4453,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "TX": {
     "agency": "Texas Department of Agriculture",
@@ -4538,7 +4589,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "UT": {
     "agency": "Utah Department of Agriculture and Food",
@@ -4655,7 +4707,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "VA": {
     "agency": "Virginia Department of Agriculture and Consumer Services",
@@ -4760,7 +4813,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "uncertain"
   },
   "VT": {
     "agency": "Vermont Agency of Agriculture, Food & Markets",
@@ -4877,7 +4931,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "WA": {
     "agency": "Washington State Department of Agriculture",
@@ -5018,7 +5073,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 0,
-    "customerCopyDays": 30
+    "customerCopyDays": 30,
+    "privateDuty": "required"
   },
   "WI": {
     "agency": "Wisconsin Department of Agriculture, Trade and Consumer Protection",
@@ -5123,7 +5179,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "WV": {
     "agency": "West Virginia Department of Agriculture",
@@ -5240,7 +5297,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   },
   "WY": {
     "agency": "Wyoming Department of Agriculture",
@@ -5381,7 +5439,8 @@ const STATE_LAWS = {
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30
+    "customerCopyDays": null,
+    "privateDuty": "required"
   }
 };
 

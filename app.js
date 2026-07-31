@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.5 — Practical Farm Tools
+/* Pesticide Logger v2.5.1 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in localStorage/IndexedDB on this device.
@@ -107,6 +107,12 @@
     (d.products || []).forEach(p => {
       if (p.omri == null) p.omri = false;
       if (p.lotHint == null) p.lotHint = '';
+      if (p.updatedAt == null) p.updatedAt = p.createdAt || new Date().toISOString();
+      if (p.createdAt == null) p.createdAt = p.updatedAt;
+    });
+    (d.fields || []).forEach(f => {
+      if (f.updatedAt == null) f.updatedAt = f.createdAt || new Date().toISOString();
+      if (f.createdAt == null) f.createdAt = f.updatedAt;
     });
     d.meta = d.meta || {};
     d.version = 5;
@@ -345,8 +351,7 @@
     });
     if ($('#set-applicator-class')) {
       $('#set-applicator-class').addEventListener('change', () => {
-        // Live preview while editing settings before save.
-        data.settings.applicatorClass = $('#set-applicator-class').value || 'private';
+        // Preview only — do not mutate saved settings until Save.
         renderStateInfo();
         reshapeAppFormForState();
         updateCompliancePreview();
@@ -414,13 +419,26 @@
     return v != null && String(v).trim() !== '';
   }
 
+  function settingsFormPreview() {
+    // Only while Settings is open — never leak unsaved values into saved records.
+    if (!$('#tab-settings') || !$('#tab-settings').classList.contains('active')) return null;
+    return {
+      state: ($('#set-state') && $('#set-state').value) || '',
+      applicatorClass: ($('#set-applicator-class') && $('#set-applicator-class').value) || ''
+    };
+  }
+
   function applicatorClassFor(app) {
-    return (app && app.complianceApplicatorClass) ||
-      data.settings.applicatorClass || 'private';
+    if (app && app.complianceApplicatorClass) return app.complianceApplicatorClass;
+    const preview = settingsFormPreview();
+    return (preview && preview.applicatorClass) || data.settings.applicatorClass || 'private';
   }
 
   function lawFor(app) {
-    const code = (app && app.complianceState) || data.settings.state;
+    const preview = settingsFormPreview();
+    const code = (app && app.complianceState) ||
+      (preview && preview.state) ||
+      data.settings.state;
     return (code && typeof STATE_LAWS !== 'undefined' && STATE_LAWS[code])
       ? { code, law: STATE_LAWS[code] }
       : { code: null, law: null };
@@ -436,6 +454,10 @@
     return !!(app && (app.usedNoncertified || hasText(app.noncertifiedApplicatorName)));
   }
 
+  function privateDutyFor(law) {
+    return (law && law.privateDuty) || 'required';
+  }
+
   function fieldAppliesToApp(app, fieldName) {
     const cls = applicatorClassFor(app);
     if (COMMERCIAL_ONLY_FIELDS.has(fieldName) && cls === 'private') return false;
@@ -444,10 +466,19 @@
     return true;
   }
 
+  // When privateDuty is none, state-required matrix does not apply to private users.
+  function stateFieldsApply(app, law) {
+    if (!law) return false;
+    const cls = applicatorClassFor(app);
+    if (cls !== 'private') return true;
+    return privateDutyFor(law) !== 'none';
+  }
+
   function formContextApp() {
+    const preview = settingsFormPreview();
     return {
-      complianceState: data.settings.state,
-      complianceApplicatorClass: data.settings.applicatorClass || 'private',
+      complianceState: (preview && preview.state) || data.settings.state,
+      complianceApplicatorClass: (preview && preview.applicatorClass) || data.settings.applicatorClass || 'private',
       applicationType: ($('#app-type') && $('#app-type').value) || 'ground',
       usedNoncertified: !!( $('#app-used-trainee') && $('#app-used-trainee').checked ),
       method: ($('#app-method') && $('#app-method').value) || '',
@@ -459,6 +490,7 @@
   function requiredFieldNames(law, app) {
     if (!law) return new Set();
     const ctx = app || formContextApp();
+    if (!stateFieldsApply(ctx, law)) return new Set();
     return new Set(
       law.fields
         .filter(f => f.required && fieldAppliesToApp(ctx, f.name))
@@ -608,6 +640,8 @@
           <a href="${esc(law.citation.url)}" target="_blank" rel="noopener">state agency website</a></p>
         <p><strong>Retain records ${esc(String(law.retentionYears))} year(s)</strong> from application date.</p>
         <p class="card-hint">Applies to: ${esc(law.appliesTo || 'See state agency guidance')}</p>
+        <p class="card-hint">Private-applicator duty: ${esc(law.privateDuty || 'required')} ·
+          Customer-copy window: ${law.customerCopyDays != null ? esc(String(law.customerCopyDays)) + ' day(s)' : 'not encoded (no invented duty)'}</p>
         <p class="card-hint">Source status: ${esc(verLabel)}</p>
         <p>Applicable required fields for ${esc(STATE_NAMES[code])} as a <strong>${esc(applicatorClassFor(ctx))}</strong> applicator (${req.length}):</p>
         <ul>${req.map(r => `<li>${esc(r.label)}</li>`).join('')}</ul>
@@ -638,15 +672,16 @@
       case 'pesticide_formulation': return productsOk(app, p => hasText(p.type));
       case 'manufacturer_name': return productsOk(app, p => hasText(p.epaCompany));
       case 'state_registration_no': return productsOk(app, p => hasText(p.stateRegNo));
-      case 'dilution_rate': return hasText(app.dilution) || productsOk(app, p => p.rate != null && p.rate !== '');
-      case 'concentration': return hasText(app.concentration) || hasText(app.dilution);
+      // Do not treat related-but-distinct legal fields as interchangeable.
+      case 'dilution_rate': return hasText(app.dilution);
+      case 'concentration': return hasText(app.concentration);
       case 'carrier_volume':
       case 'total_mix_applied': return app.carrier != null && app.carrier !== '' && !Number.isNaN(Number(app.carrier));
       case 'area_treated': return app.area != null && app.area !== '' && Number(app.area) > 0;
       case 'area_unit': return hasText(app.areaUnit);
       case 'crop_treated': return hasText(app.crop);
       case 'target_pest': return hasText(app.targetPest);
-      case 'application_purpose': return hasText(app.applicationPurpose) || hasText(app.targetPest);
+      case 'application_purpose': return hasText(app.applicationPurpose);
       case 'location': return hasText(app.fieldName) || hasText(app.fieldLocation) || hasText(app.locationNote);
       case 'county': return hasText(app.county);
       case 'date': return hasText(app.date);
@@ -725,13 +760,33 @@
       };
     }
 
-    const missing = law.fields
-      .filter(f => f.required && fieldAppliesToApp(app, f.name) && !complianceValuePresent(app, f.name))
-      .map(f => f.label);
+    const cls = applicatorClassFor(app);
+    const privateDuty = privateDutyFor(law);
+    const applyStateMatrix = stateFieldsApply(app, law);
+
+    const missing = applyStateMatrix
+      ? law.fields
+          .filter(f => f.required && fieldAppliesToApp(app, f.name) && !complianceValuePresent(app, f.name))
+          .map(f => f.label)
+      : [];
+
+    if (!applyStateMatrix && cls === 'private' && privateDuty === 'none') {
+      warnings.push('This state’s sources indicate no private-applicator recordkeeping duty — still follow the label and keep good farm records');
+    }
 
     if (app.rup && !hasText(app.certNumber)) {
       missing.push('Certification / license # (required when mix includes RUP)');
     }
+
+    // Always require operational core for any saved “complete” record.
+    [
+      ['date', 'Application date', hasText(app.date)],
+      ['crop', 'Crop / commodity / site treated', hasText(app.crop)],
+      ['location', 'Field / site', hasText(app.fieldName) || hasText(app.locationNote)],
+      ['applicator', 'Applicator name', hasText(app.applicatorName)],
+      ['products', 'At least one product with amount applied',
+        productsOk(app, p => hasText(p.productName) && p.total != null && p.total !== '')]
+    ].forEach(([_, label, ok]) => { if (!ok && !missing.includes(label)) missing.push(label); });
 
     const intervals = intervalsStatus(app);
     if (!intervals.ok) warnings.push(intervals.message);
@@ -739,19 +794,27 @@
     if (law.verification === 'partial' || law.verification === 'uncertain') {
       warnings.push(`State dataset is ${law.verification} — confirm requirements with ${law.agency}`);
     }
+    if (cls === 'private' && privateDuty === 'uncertain') {
+      warnings.push('Private-applicator recordkeeping duty is uncertain for this state after Part 110 rescission — confirm with your agency');
+    }
 
     const copyDue = computeCustomerCopyDueAt(app);
     if (copyDue && !app.customerCopyProvided) {
       const overdue = new Date(copyDue) < now();
       warnings.push(overdue
-        ? 'Customer copy of this record appears overdue under state guidance'
-        : `Customer copy due by ${copyDue.slice(0, 10)} under state guidance`);
+        ? 'Customer copy of this record appears overdue under researched state guidance'
+        : `Customer copy due by ${copyDue.slice(0, 10)} under researched state guidance`);
+    }
+    if (app.customerCopyProvided && !hasText(app.customerCopyDate)) {
+      warnings.push('Customer copy marked provided — enter the date it was given');
     }
 
     const fieldsOk = missing.length === 0;
     let status = 'incomplete';
-    if (fieldsOk && intervals.ok && law.verification === 'researched') status = 'fields_complete';
-    else if (fieldsOk && (!intervals.ok || law.verification !== 'researched')) status = 'needs_review';
+    const datasetOk = law.verification === 'researched' &&
+      !(cls === 'private' && privateDuty === 'uncertain');
+    if (fieldsOk && intervals.ok && datasetOk) status = 'fields_complete';
+    else if (fieldsOk && (!intervals.ok || !datasetOk)) status = 'needs_review';
 
     return {
       // "complete" for strict save = applicable required fields filled.
@@ -765,7 +828,8 @@
       citation: law.citation,
       verification: law.verification,
       stateCode: code,
-      intervalsOk: intervals.ok
+      intervalsOk: intervals.ok,
+      privateDuty
     };
   }
 
@@ -1015,7 +1079,9 @@
         epaActiveIngredient: verified?.epaActiveIngredient || null,
         epaSource: verified?.epaSource || null,
         omri: !!( $('#prod-omri') && $('#prod-omri').checked ),
-        lotHint: ($('#prod-lot-hint') && $('#prod-lot-hint').value.trim()) || ''
+        lotHint: ($('#prod-lot-hint') && $('#prod-lot-hint').value.trim()) || '',
+        createdAt: existing?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
       const idx = data.products.findIndex(p => p.id === id);
       if (idx >= 0) data.products[idx] = product; else data.products.push(product);
@@ -1153,7 +1219,9 @@
         crop: $('#field-crop').value.trim(),
         location: $('#field-location').value.trim(),
         siteId: ($('#field-site-id') && $('#field-site-id').value.trim()) || '',
-        boundary: pendingBoundary || (existing && existing.boundary) || null
+        boundary: pendingBoundary || (existing && existing.boundary) || null,
+        createdAt: existing?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
       const idx = data.fields.findIndex(f => f.id === id);
       if (idx >= 0) data.fields[idx] = field; else data.fields.push(field);
@@ -1742,6 +1810,7 @@
 
   function computeCustomerCopyDueAt(app) {
     const { law } = lawFor(app);
+    // Only researched, non-null customer-copy windows — never invent a 30-day duty.
     if (!law || law.customerCopyDays == null || !app.date) return null;
     const cls = applicatorClassFor(app);
     if (cls === 'private') return null;
@@ -1762,14 +1831,32 @@
   function onAppSubmit(e, asDraft) {
     if (e && e.preventDefault) e.preventDefault();
     const mix = collectMixRows();
-    if (!mix.length) { toast('Pick at least one product (add products in the Products tab first)'); return; }
-    if (!getField($('#app-field').value)) { toast('Pick a field (add one in Fields first)'); return; }
-    if (!$('#app-date').value || !$('#app-crop').value.trim() || !$('#app-applicator').value.trim()) {
-      toast('Date, crop, and applicator name are always required');
-      return;
+    const editingId = $('#app-id').value;
+    const prev = editingId ? data.applications.find(a => a.id === editingId) : null;
+
+    if (!asDraft) {
+      if (!mix.length) { toast('Pick at least one product (add products in the Products tab first)'); return; }
+      if (!getField($('#app-field').value)) { toast('Pick a field (add one in Fields first)'); return; }
+      if (!$('#app-date').value || !$('#app-crop').value.trim() || !$('#app-applicator').value.trim()) {
+        toast('Date, crop, and applicator name are always required');
+        return;
+      }
+    } else if (!$('#app-date').value) {
+      $('#app-date').value = new Date().toISOString().slice(0, 10);
     }
 
     const app = collectAppFromForm(!!asDraft);
+    // Preserve frozen compliance context on edits so Settings changes do not
+    // silently re-score historical records.
+    if (prev) {
+      app.complianceState = prev.complianceState || app.complianceState;
+      app.complianceApplicatorClass = prev.complianceApplicatorClass || app.complianceApplicatorClass;
+    }
+    if (app.customerCopyProvided && !hasText(app.customerCopyDate) && !asDraft) {
+      toast('Enter the customer copy date, or uncheck “copy provided”');
+      return;
+    }
+
     const result = evaluateCompliance(app);
     app.complianceComplete = result.complete;
     app.complianceStatus = result.status;
@@ -1795,10 +1882,10 @@
 
     const idx = data.applications.findIndex(a => a.id === app.id);
     if (idx >= 0) {
-      const prev = data.applications[idx];
-      app.createdAt = prev.createdAt || app.createdAt;
-      app.history = pushHistory(prev);
-      app.deletedAt = prev.deletedAt || null;
+      const existing = data.applications[idx];
+      app.createdAt = existing.createdAt || app.createdAt;
+      app.history = pushHistory(existing);
+      app.deletedAt = existing.deletedAt || null;
       data.applications[idx] = app;
     } else {
       app.history = [];
@@ -1977,10 +2064,12 @@
     if (copyDue && !a.customerCopyProvided && !a.deletedAt && new Date(copyDue) < now()) {
       out.push('<span class="badge-pill badge-incomplete">Copy overdue</span>');
     }
-    const rei = reiExpiry(a);
-    if (rei && hoursLeft(rei) > 0) out.push(`<span class="badge-pill badge-rei">REI ${fmtCountdown(hoursLeft(rei))}</span>`);
-    const phi = phiDate(a);
-    if (phi && phi > now()) out.push(`<span class="badge-pill badge-phi">PHI until ${phi.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>`);
+    if (!a.deletedAt) {
+      const rei = reiExpiry(a);
+      if (rei && hoursLeft(rei) > 0) out.push(`<span class="badge-pill badge-rei">REI ${fmtCountdown(hoursLeft(rei))}</span>`);
+      const phi = phiDate(a);
+      if (phi && phi > now()) out.push(`<span class="badge-pill badge-phi">PHI until ${phi.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>`);
+    }
     if (a.rup) out.push('<span class="badge-pill badge-rup">RUP</span>');
     if ((a.history || []).length) out.push(`<span class="badge-pill">${a.history.length} edit(s)</span>`);
     return out.join(' ');
@@ -2438,7 +2527,7 @@
       </tr>`).join('');
     $('#print-area').innerHTML = `
       <h1>Tank Mix Worksheet</h1>
-      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.5 (Practical Farm Tools)</p>
+      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.5.1 (Practical Farm Tools)</p>
       <table>
         <tr><th>Area treated</th><td>${fmtNum(c.area)} ${c.areaUnit === 'sqft' ? 'sq ft' : c.areaUnit === '1000sqft' ? '× 1,000 sq ft' : 'acres'} (${fmtNum(c.acres, 3)} ac)</td>
             <th>Spray volume</th><td>${fmtNum(c.gpa)} ${c.gpaUnit === 'gal_acre' ? 'gal/acre' : 'gal/1,000 sq ft'}</td></tr>
@@ -2469,7 +2558,8 @@
     const to = $('#report-to').value;
     const fieldId = $('#report-field').value;
     const productId = $('#report-product').value;
-    return sortedApps().filter(a =>
+    const includeDeleted = !!( $('#report-include-deleted') && $('#report-include-deleted').checked );
+    return sortedApps(includeDeleted).filter(a =>
       (!from || a.date >= from) &&
       (!to || a.date <= to) &&
       (!fieldId || a.fieldId === fieldId) &&
@@ -2482,8 +2572,13 @@
   }
 
   function initReports() {
-    ['#report-from', '#report-to', '#report-field', '#report-product']
-      .forEach(sel => $(sel).addEventListener('input', updateReportCount));
+    ['#report-from', '#report-to', '#report-field', '#report-product', '#report-include-deleted']
+      .forEach(sel => {
+        const el = $(sel);
+        if (!el) return;
+        el.addEventListener('input', updateReportCount);
+        el.addEventListener('change', updateReportCount);
+      });
     $('#report-csv').addEventListener('click', downloadCsv);
     $('#report-print').addEventListener('click', printReport);
     if ($('#report-state-pack')) $('#report-state-pack').addEventListener('click', downloadStatePack);
@@ -2514,8 +2609,10 @@
     const apps = reportApps();
     if (!apps.length) { toast('No records match the filter'); return; }
     const header = [
-      'Record ID', 'Compliance Complete', 'Draft', 'Deleted', 'Date', 'Start', 'End',
-      'Brand/Product Name', 'EPA Reg No', 'Active Ingredient', 'RUP', 'OMRI', 'Lot/Batch',
+      'Record ID', 'Compliance Status', 'Compliance Complete', 'Draft', 'Deleted',
+      'Frozen State', 'Frozen Applicator Class', 'Date', 'Start', 'End',
+      'Brand/Product Name', 'EPA Reg No', 'Active Ingredient', 'Manufacturer', 'Formulation', 'State Reg No',
+      'RUP', 'OMRI', 'Lot/Batch', 'EPA Status', 'EPA Label URL',
       'Field/Site', 'Location', 'Location Note', 'County', 'Site ID', 'Permit/Operator ID',
       'Crop/Commodity', 'Target Pest', 'Purpose',
       'Area Treated', 'Area Unit', 'Rate', 'Rate Unit',
@@ -2525,19 +2622,21 @@
       'Method/Equipment', 'Nozzle', 'Pressure', 'Equipment ID', 'Aircraft ID', 'Mix/Load Location',
       'Applicator', 'Certification No', 'Supervisor', 'Noncertified Applicator',
       'Owner/Operator', 'Customer', 'Customer Address', 'Customer Phone',
-      'Customer Copy Provided', 'Customer Copy Date', 'Record Due At',
+      'Customer Copy Provided', 'Customer Copy Date', 'Customer Copy Due At', 'Record Due At',
       'Business', 'Company License', 'Supplier', 'Disposal',
       'Product REI (hours)', 'Product PHI (days)', 'Mix REI (hours)', 'Mix PHI (days)',
-      'Retention Years', 'Missing Fields', 'History Edits', 'Notes'
+      'Retention Years', 'Missing Fields', 'Warnings', 'History Edits', 'Notes'
     ];
     const lines = [header.join(',')];
     apps.forEach(a => {
       const result = evaluateCompliance(a);
       (a.products || []).forEach(pr => {
         lines.push([
-          a.id.slice(0, 8), result.complete ? 'Yes' : 'No', a.draft ? 'Yes' : 'No', a.deletedAt ? 'Yes' : 'No',
+          a.id.slice(0, 8), result.status, result.complete ? 'Yes' : 'No', a.draft ? 'Yes' : 'No', a.deletedAt ? 'Yes' : 'No',
+          a.complianceState || '', a.complianceApplicatorClass || '',
           a.date, a.startTime, a.endTime,
-          pr.productName, pr.epaRegNo, pr.activeIngredient, pr.rup ? 'Yes' : 'No', pr.omri ? 'Yes' : 'No', pr.lotNumber || '',
+          pr.productName, pr.epaRegNo, pr.activeIngredient, pr.epaCompany || '', pr.type || '', pr.stateRegNo || '',
+          pr.rup ? 'Yes' : 'No', pr.omri ? 'Yes' : 'No', pr.lotNumber || '', pr.epaStatus || '', pr.epaLabelUrl || '',
           a.fieldName, a.fieldLocation, a.locationNote || '', a.county || '', a.siteId || '', a.permitNumber || '',
           a.crop, a.targetPest, a.applicationPurpose || '',
           a.area, a.areaUnit, pr.rate ?? '', pr.rateUnit,
@@ -2547,10 +2646,11 @@
           a.method, a.nozzleType || '', a.sprayerPressure || '', a.equipmentId || '', a.aircraftId || '', a.mixLoadLocation || '',
           a.applicatorName, a.certNumber, a.supervisorName || '', a.noncertifiedApplicatorName || '',
           a.ownerOperatorName || '', a.customerName || '', a.customerAddress || '', a.customerPhone || '',
-          a.customerCopyProvided ? 'Yes' : 'No', a.customerCopyDate || '', a.recordDueAt || computeRecordDueAt(a) || '',
+          a.customerCopyProvided ? 'Yes' : 'No', a.customerCopyDate || '', computeCustomerCopyDueAt(a) || '',
+          a.recordDueAt || computeRecordDueAt(a) || '',
           a.businessNameAddress || '', a.companyLicense || '', a.pesticideSupplier || '', a.disposalMethod || '',
           pr.reiHours ?? '', pr.phiDays ?? '', a.reiHours ?? '', a.phiDays ?? '', result.retentionYears,
-          result.missing.join('; '), (a.history || []).length, a.notes
+          result.missing.join('; '), (result.warnings || []).join('; '), (a.history || []).length, a.notes
         ].map(csvEscape).join(','));
       });
     });
@@ -2612,7 +2712,7 @@
       </table>
       <div class="sig-line"><span>Certified applicator signature / date</span><span>Reviewed by / date</span></div>
       <p class="print-footer">
-        Generated by Pesticide Logger v2.5 — Practical Farm Tools. Retain records per your state
+        Generated by Pesticide Logger v2.5.1 — Practical Farm Tools. Retain records per your state
         (${retain} year(s) shown above). This report is a record-keeping aid, not legal advice,
         and does not replace WPS duties or electronic reporting programs.
       </p>`;
@@ -2676,7 +2776,7 @@
       format: 'pesticide-logger-state-pack',
       version: 5,
       generatedAt: new Date().toISOString(),
-      app: 'Pesticide Logger v2.5 — Practical Farm Tools',
+      app: 'Pesticide Logger v2.5.1 — Practical Farm Tools',
       disclaimer: 'Completion means required fields are filled for this context — not a legal determination. Does not replace WPS duties or e-filing programs.',
       farm: {
         name: s.farmName || '',

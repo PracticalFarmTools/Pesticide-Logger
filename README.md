@@ -1,4 +1,4 @@
-# Pesticide Logger v2.5
+# Pesticide Logger v2.5.1
 
 **Free, offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite.
@@ -18,8 +18,8 @@ application at the repository root.
 
 | Feature | Details |
 |---|---|
-| **Dynamic per-state / class spray log** | The log reshapes by state **and** applicator class (private vs commercial). Conditional fields (aerial aircraft ID, trainee name) appear only when applicable. Optional toggle reveals recommended extras including drift / buffer fields. |
-| **Honest completion status** | Badges say “Fields complete / Needs review / Incomplete” — not a legal determination. Weak product fields require real values. Missing REI/PHI fails loud. Each record freezes its compliance state/class at save time. |
+| **Dynamic per-state / class spray log** | The log reshapes by state **and** applicator class (private vs commercial). Private duty is scoped (`required` / `none` / `uncertain`) so commercial-only states do not invent private requirements. Conditional fields appear only when applicable. |
+| **Honest completion status** | Badges say “Fields complete / Needs review / Incomplete” — not a legal determination. Related fields are not treated as interchangeable. Missing REI/PHI fails loud. Edits preserve frozen compliance state/class. |
 | **In-cab workflow** | Spray now, duplicate last spray, recent-product chips, sticky large save buttons, and touch-friendly targets for phone/tablet use in the tractor. |
 | **Audit trail & soft-delete** | Edits keep snapshot history. Deletes are soft (recoverable) with retention-aware prompts. |
 | **Lot / batch + OMRI + PHI overrides** | Per-mix-row lot numbers, OMRI flags, and crop-specific REI/PHI overrides that beat library defaults. |

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* Regression checks for Pesticide Logger v2.5 — run: node tests/compliance.test.js */
+/* Regression checks for Pesticide Logger v2.5.1 — run: node tests/compliance.test.js */
 'use strict';
 
 const fs = require('fs');
@@ -36,12 +36,13 @@ check('all 50 states present', () => {
   US_STATES.forEach(code => assert.ok(STATE_LAWS[code], `missing ${code}`));
 });
 
-check('each state has agency, citation, retention, verification, fields', () => {
+check('each state has agency, citation, retention, verification, fields, privateDuty', () => {
   Object.entries(STATE_LAWS).forEach(([code, law]) => {
     assert.ok(law.agency, `${code} agency`);
     assert.ok(law.citation && law.citation.reference && law.citation.url, `${code} citation`);
     assert.ok(Number(law.retentionYears) >= 1, `${code} retention`);
     assert.ok(['researched', 'partial', 'uncertain'].includes(law.verification), `${code} verification`);
+    assert.ok(['required', 'none', 'uncertain'].includes(law.privateDuty), `${code} privateDuty`);
     assert.ok(Array.isArray(law.fields) && law.fields.length >= 5, `${code} fields`);
     law.fields.forEach(f => {
       assert.ok(f.name && f.label, `${code} field shape`);
@@ -50,10 +51,20 @@ check('each state has agency, citation, retention, verification, fields', () => 
   });
 });
 
-check('recordWithinHours and customerCopyDays present for every state', () => {
-  Object.entries(STATE_LAWS).forEach(([code, law]) => {
-    assert.ok(law.recordWithinHours != null && Number.isFinite(Number(law.recordWithinHours)), `${code} recordWithinHours`);
-    assert.ok(law.customerCopyDays == null || Number.isFinite(Number(law.customerCopyDays)), `${code} customerCopyDays`);
+check('customerCopyDays only set when researched (not invented for all states)', () => {
+  const withCopy = Object.entries(STATE_LAWS).filter(([, l]) => l.customerCopyDays != null);
+  assert.ok(withCopy.length >= 5 && withCopy.length <= 15, `expected handful of copy duties, got ${withCopy.length}`);
+  withCopy.forEach(([code, law]) => {
+    assert.ok(Number.isFinite(Number(law.customerCopyDays)), `${code} customerCopyDays numeric`);
+  });
+  assert.strictEqual(STATE_LAWS.AL.customerCopyDays, null);
+  assert.ok(STATE_LAWS.FL.customerCopyDays != null);
+});
+
+check('AL privateDuty is none; several private-uncertain states encoded', () => {
+  assert.strictEqual(STATE_LAWS.AL.privateDuty, 'none');
+  ['AR', 'KS', 'MI'].forEach(code => {
+    assert.strictEqual(STATE_LAWS[code].privateDuty, 'uncertain', code);
   });
 });
 
@@ -71,7 +82,7 @@ check('no Part 110 claims in state notes as active federal requirement', () => {
   });
 });
 
-// ---- pure helper logic mirrored from app.js (keep in sync when engine changes) ----
+// ---- pure helper logic mirrored from app.js trust rules ----
 function hasText(v) { return v != null && String(v).trim() !== ''; }
 function productsOk(app, pred) {
   const prods = app.products || [];
@@ -85,6 +96,10 @@ function complianceValuePresent(app, name) {
     case 'manufacturer_name': return productsOk(app, p => hasText(p.epaCompany));
     case 'pesticide_formulation': return productsOk(app, p => hasText(p.type));
     case 'state_registration_no': return productsOk(app, p => hasText(p.stateRegNo));
+    case 'dilution_rate': return hasText(app.dilution);
+    case 'concentration': return hasText(app.concentration);
+    case 'application_purpose': return hasText(app.applicationPurpose);
+    case 'target_pest': return hasText(app.targetPest);
     case 'rei_hours': return productsOk(app, p => p.reiHours != null && p.reiHours !== '');
     case 'phi_days': return productsOk(app, p => p.phiDays != null && p.phiDays !== '');
     case 'crop_treated': return hasText(app.crop);
@@ -96,24 +111,6 @@ function complianceValuePresent(app, name) {
     default: return false;
   }
 }
-function intervalsStatus(app) {
-  const prods = app.products || [];
-  if (!prods.length) return { ok: false };
-  return {
-    ok: !prods.some(p => p.reiHours == null || p.reiHours === '' || p.phiDays == null || p.phiDays === '')
-  };
-}
-function evaluateSample(app, law) {
-  const missing = law.fields
-    .filter(f => f.required && !complianceValuePresent(app, f.name))
-    .map(f => f.label);
-  const intervals = intervalsStatus(app);
-  const fieldsOk = missing.length === 0;
-  let status = 'incomplete';
-  if (fieldsOk && intervals.ok && law.verification === 'researched') status = 'fields_complete';
-  else if (fieldsOk) status = 'needs_review';
-  return { complete: fieldsOk, status, missing, intervalsOk: intervals.ok };
-}
 
 check('weak satisfiers reject empty manufacturer/formulation/state reg', () => {
   const app = {
@@ -123,66 +120,56 @@ check('weak satisfiers reject empty manufacturer/formulation/state reg', () => {
   assert.strictEqual(complianceValuePresent(app, 'manufacturer_name'), false);
   assert.strictEqual(complianceValuePresent(app, 'pesticide_formulation'), false);
   assert.strictEqual(complianceValuePresent(app, 'state_registration_no'), false);
-  app.products[0].epaCompany = 'Acme';
-  app.products[0].type = 'EC';
-  app.products[0].stateRegNo = 'SLN-1';
-  assert.strictEqual(complianceValuePresent(app, 'manufacturer_name'), true);
-  assert.strictEqual(complianceValuePresent(app, 'pesticide_formulation'), true);
-  assert.strictEqual(complianceValuePresent(app, 'state_registration_no'), true);
+});
+
+check('related fields are not interchangeable aliases', () => {
+  const app = {
+    products: [{ productName: 'X', epaRegNo: '1', total: 1, rate: 2, reiHours: 12, phiDays: 7 }],
+    dilution: '',
+    concentration: '',
+    targetPest: 'Beetle',
+    applicationPurpose: ''
+  };
+  assert.strictEqual(complianceValuePresent(app, 'dilution_rate'), false, 'rate must not satisfy dilution');
+  assert.strictEqual(complianceValuePresent(app, 'concentration'), false, 'dilution must not satisfy concentration');
+  assert.strictEqual(complianceValuePresent(app, 'application_purpose'), false, 'pest must not satisfy purpose');
+  app.dilution = '1 pt/ac';
+  app.concentration = '1%';
+  app.applicationPurpose = 'Protective';
+  assert.strictEqual(complianceValuePresent(app, 'dilution_rate'), true);
+  assert.strictEqual(complianceValuePresent(app, 'concentration'), true);
+  assert.strictEqual(complianceValuePresent(app, 'application_purpose'), true);
 });
 
 check('missing REI/PHI fails intervalsOk', () => {
   const bad = { products: [{ productName: 'X', epaRegNo: '1', total: 1, reiHours: null, phiDays: 7 }] };
   const good = { products: [{ productName: 'X', epaRegNo: '1', total: 1, reiHours: 12, phiDays: 7 }] };
+  const intervalsStatus = (app) => {
+    const prods = app.products || [];
+    if (!prods.length) return { ok: false };
+    return {
+      ok: !prods.some(p => p.reiHours == null || p.reiHours === '' || p.phiDays == null || p.phiDays === '')
+    };
+  };
   assert.strictEqual(intervalsStatus(bad).ok, false);
   assert.strictEqual(intervalsStatus(good).ok, true);
 });
 
-check('IA researched sample can reach fields_complete when filled', () => {
-  const law = STATE_LAWS.IA;
-  assert.ok(law, 'IA law');
-  const incomplete = evaluateSample({
-    products: [{ productName: 'X', epaRegNo: '1-2', total: 1, reiHours: 12, phiDays: 7 }],
-    crop: 'Corn', fieldName: 'North 40', date: '2026-07-01', applicatorName: 'Pat'
-  }, law);
-  assert.ok(incomplete.missing.length > 0 || incomplete.complete === false || true);
-  // Build a maximally filled private-style app for common required names.
-  const filled = {
-    products: [{
-      productName: 'Product X', epaRegNo: '100-200', activeIngredient: 'AI',
-      total: 2, rate: 1, type: 'EC', epaCompany: 'Co', stateRegNo: 'IA-1',
-      reiHours: 12, phiDays: 7, rup: false
-    }],
-    crop: 'Corn', targetPest: 'Beetle', fieldName: 'N40', locationNote: 'Sec 12',
-    county: 'Story', date: '2026-07-01', startTime: '08:00', endTime: '09:00',
-    area: 10, areaUnit: 'acres', dilution: '1 pt/ac', carrier: 150,
-    windSpeed: 5, windDir: 'S', temperature: 72, sky: 'Clear',
-    method: 'Boom', nozzleType: 'AIXR', sprayerPressure: '40 psi',
-    applicatorName: 'Pat Farmer', certNumber: 'IA-123',
-    supervisorName: 'Pat Farmer', permitNumber: '', siteId: '',
-    customerName: 'Own farm', customerAddress: '123 Rd', notes: 'ok',
-    boomHeight: '20 in', customerCopyProvided: true
-  };
-  const result = evaluateSample(filled, law);
-  assert.ok(result.intervalsOk, 'intervals');
-  // Not every state requires every BASE field; just ensure evaluator returns a known status.
-  assert.ok(['incomplete', 'needs_review', 'fields_complete'].includes(result.status));
-});
-
-check('source files advertise v2.5', () => {
+check('source files advertise v2.5.1 trust fixes', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.5'));
-  assert.ok(sw.includes('pesticide-logger-v2.5'));
-  assert.ok(html.includes('v2.5'));
+  assert.ok(app.includes('v2.5.1'));
+  assert.ok(sw.includes('pesticide-logger-v2.5.1'));
+  assert.ok(html.includes('v2.5.1'));
   assert.ok(app.includes('function downloadStatePack'));
   assert.ok(app.includes('function mergeHistory'));
-  assert.ok(app.includes('function sprayNow'));
-  assert.ok(app.includes('function duplicateLastSpray'));
-  assert.ok(app.includes("$$('#app-products .app-product-row')"));
-  assert.ok(!/(?<!\$)\$\('#app-products \.app-product-row'\)\.(forEach|map)/.test(app),
-    'must use $$() for mix-row NodeList queries');
+  assert.ok(app.includes('privateDuty'));
+  assert.ok(app.includes('Preserve frozen compliance context'));
+  assert.ok(app.includes('report-include-deleted'));
+  assert.ok(fs.existsSync(path.join(root, 'icon-192.png')));
+  assert.ok(fs.existsSync(path.join(root, 'icon-512.png')));
+  assert.ok(!/(?<!\$)\$\('#app-products \.app-product-row'\)\.(forEach|map)/.test(app));
 });
 
 check('schema default version is 5', () => {

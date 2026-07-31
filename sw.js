@@ -2,7 +2,7 @@
  * Cache-first for the app shell; records live in localStorage so the app
  * is fully functional with zero connectivity after first load.
  */
-const CACHE_NAME = 'pesticide-logger-v2.0.0';
+const CACHE_NAME = 'pesticide-logger-v2.1.0';
 const APP_SHELL = [
   './',
   './index.html',
@@ -12,7 +12,14 @@ const APP_SHELL = [
   './manifest.json',
   './favicon.svg',
   './icon-192.png',
-  './icon-512.png'
+  './icon-512.png',
+  './vendor/leaflet/leaflet.js',
+  './vendor/leaflet/leaflet.css',
+  './vendor/leaflet/images/marker-icon.png',
+  './vendor/leaflet/images/marker-icon-2x.png',
+  './vendor/leaflet/images/marker-shadow.png',
+  './vendor/leaflet/images/layers.png',
+  './vendor/leaflet/images/layers-2x.png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -35,6 +42,9 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  // Leave cross-origin requests (map tiles) to the network — caching third-party
+  // tiles violates provider policies and would bloat storage.
+  if (new URL(event.request.url).origin !== location.origin) return;
   event.respondWith(
     caches.match(event.request, { ignoreSearch: true }).then((cached) => {
       if (cached) {

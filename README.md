@@ -17,6 +17,7 @@ and costs nothing to run: no server, no account, no subscription.
 | **REI / PHI tracking** | Every product stores its label REI and PHI. The dashboard counts down live: which fields workers can't re-enter yet, and the earliest legal harvest date for each treated crop. |
 | **Tank mix calculator** | Enter area, tank size, and spray volume; add any number of products (per-acre, per-1,000 sq ft, per-gallon, or per-100-gal rates). Get total spray, tank loads, product per full tank and per partial fill, and a printable mix worksheet with W-A-L-E fill order. |
 | **Product & field libraries** | Save label facts once (REI, PHI, rate, signal word, RUP flag) and every record auto-fills. Records snapshot product details, so history stays accurate even after label edits. |
+| **Field mapper** | Draw any field on satellite imagery by tapping its corners — acreage (geodesic, Turf.js-equivalent math), square footage, and perimeter compute live and auto-fill the field form. Drag corners to fine-tune. Saved boundaries stay on the map; tap one to edit. |
 | **Inspection-ready reports** | Filter by date, field, or product. One-click print/PDF report formatted for an inspector, with signature lines — or CSV export for a spreadsheet. |
 | **Backup & restore** | One-file JSON backup of everything. Restore on any device. |
 | **Offline-first PWA** | Installable on a phone home screen. After first load, everything — including the calculator and reports — works with no connectivity at all. |
@@ -47,6 +48,7 @@ index.html                 App shell (dashboard, log, calculator, products, fiel
 styles.css                 Practical Farm Tools theme + print stylesheet
 app.js                     All application logic (vanilla JS, no dependencies)
 state_pesticide_laws.js    Per-state agencies, citations, and required record fields (50 states)
+vendor/leaflet/            Leaflet 1.9.4, vendored locally (no CDN dependency)
 sw.js                      Service worker (cache-first app shell)
 manifest.json              PWA manifest
 icon-192.png / icon-512.png / favicon.svg
@@ -60,6 +62,13 @@ vercel.json                Optional static-hosting headers
 - REI/PHI values are entered from the product label by the user.
   **The label is the law**; this tool never overrides it.
 - This software is a record-keeping aid, not legal advice.
+
+## Map tiles
+
+The field mapper uses free tile services (Esri World Imagery for satellite,
+OpenStreetMap for streets) with attribution, fetched live — the only feature
+that needs connectivity. Drawn boundaries and computed acreage are stored
+locally and remain available offline.
 
 ## License
 

@@ -525,6 +525,48 @@ input:hover, select:hover, textarea:hover { border-color: var(--border-color-hov
   margin-bottom: 1rem;
 }
 
+/* ---------- Field mapper ---------- */
+#field-map {
+  height: 440px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--accent-sage-light);
+  cursor: crosshair;
+  z-index: 1; /* keep Leaflet panes under the sticky tab bar */
+}
+@media (max-width: 600px) { #field-map { height: 340px; } }
+
+.map-toolbar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+.map-toolbar-spacer { flex: 1; }
+
+.map-readout {
+  margin-top: 0.75rem;
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.map-readout strong { color: var(--primary-green-dark); font-family: var(--font-title); font-size: 1.05rem; }
+.zoom-warn { color: var(--warn); font-weight: 700; }
+
+.leaflet-container { font-family: var(--font-body); }
+.leaflet-container .leaflet-control-attribution { font-size: 0.62rem; }
+
+.field-poly-tooltip {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+
 /* ---------- Toast ---------- */
 .toast {
   position: fixed;

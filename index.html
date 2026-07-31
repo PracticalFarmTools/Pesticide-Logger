@@ -9,6 +9,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -411,6 +412,23 @@
 
   <!-- ============ FIELDS ============ -->
   <section id="tab-fields" class="tab-panel" role="tabpanel">
+    <div class="card map-card">
+      <h3 class="card-title">Field mapper — draw your acreage</h3>
+      <p class="card-hint">Zoom to your farm (or tap <strong>My location</strong>), then tap each corner of the field.
+        Acreage is calculated live and fills the form below when you tap <strong>Use this shape</strong>.
+        Drag any corner to fine-tune it.</p>
+      <div class="map-toolbar">
+        <button type="button" class="btn btn-secondary btn-sm" id="map-locate">📍 My location</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="map-basemap">🛰 Satellite / streets</button>
+        <span class="map-toolbar-spacer"></span>
+        <button type="button" class="btn btn-secondary btn-sm" id="map-undo" disabled>↩ Undo point</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="map-clear" disabled>✕ Clear</button>
+        <button type="button" class="btn btn-primary btn-sm" id="map-use" disabled>Use this shape</button>
+      </div>
+      <div id="field-map" role="application" aria-label="Field boundary drawing map"></div>
+      <div class="map-readout" id="map-readout">Tap the map to start drawing a field boundary.</div>
+    </div>
+
     <div class="card">
       <h3 class="card-title" id="field-form-title">Add a field / site</h3>
       <form id="field-form" class="form-grid" autocomplete="off">
@@ -551,6 +569,7 @@
 <div id="print-area" class="print-area" aria-hidden="true"></div>
 
 <script src="state_pesticide_laws.js"></script>
+<script src="vendor/leaflet/leaflet.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

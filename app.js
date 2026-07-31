@@ -152,6 +152,7 @@
     if (name === 'dashboard') renderDashboard();
     if (name === 'reports') renderReportFilters();
     if (name === 'calculator') refreshCalcProductOptions();
+    if (name === 'fields') initFieldMap();
   }
 
   $$('.tab-btn').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
@@ -397,13 +398,15 @@
     $('#field-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const id = $('#field-id').value || uid();
+      const existing = getField(id);
       const field = {
         id,
         name: $('#field-name').value.trim(),
         size: $('#field-acres').value === '' ? null : Number($('#field-acres').value),
         sizeUnit: $('#field-unit').value,
         crop: $('#field-crop').value.trim(),
-        location: $('#field-location').value.trim()
+        location: $('#field-location').value.trim(),
+        boundary: pendingBoundary || (existing && existing.boundary) || null
       };
       const idx = data.fields.findIndex(f => f.id === id);
       if (idx >= 0) data.fields[idx] = field; else data.fields.push(field);
@@ -411,6 +414,7 @@
       resetFieldForm();
       renderFields();
       renderFieldOptions();
+      renderFieldPolys();
       toast(idx >= 0 ? 'Field updated' : 'Field added');
     });
     $('#field-cancel-btn').addEventListener('click', resetFieldForm);
@@ -423,6 +427,7 @@
     $('#field-form-title').textContent = 'Add a field / site';
     $('#field-save-btn').textContent = 'Save field';
     $('#field-cancel-btn').hidden = true;
+    if (fieldMap) clearDrawing(true); else pendingBoundary = null;
   }
 
   function editField(id) {
@@ -437,6 +442,7 @@
     $('#field-form-title').textContent = `Edit — ${f.name}`;
     $('#field-save-btn').textContent = 'Update field';
     $('#field-cancel-btn').hidden = false;
+    if (f.boundary && f.boundary.length >= 3) loadBoundaryForEdit(f.boundary);
     $('#field-form').scrollIntoView({ behavior: 'smooth' });
   }
 
@@ -448,6 +454,7 @@
     save();
     renderFields();
     renderFieldOptions();
+    renderFieldPolys();
     toast('Field deleted');
   }
 
@@ -461,7 +468,7 @@
       .slice().sort((a, b) => a.name.localeCompare(b.name))
       .map(f => `
         <tr>
-          <td><strong>${esc(f.name)}</strong></td>
+          <td><strong>${esc(f.name)}</strong>${f.boundary && f.boundary.length >= 3 ? ' <span class="badge-pill badge-signal-caution">Mapped</span>' : ''}</td>
           <td>${f.size != null ? `${fmtNum(f.size)} ${f.sizeUnit === 'sqft' ? 'sq ft' : 'acres'}` : '—'}</td>
           <td>${esc(f.crop || '—')}</td>
           <td>${esc(f.location || '—')}</td>
@@ -1289,6 +1296,232 @@
     if (!confirm('Last check — this cannot be undone. Erase everything?')) return;
     localStorage.removeItem(STORE_KEY);
     location.reload();
+  }
+
+  // -------------------------------------------------------------- field mapper
+
+  const MAPVIEW_KEY = 'pesticide-logger.mapview';
+  let fieldMap = null;
+  let baseSatellite, baseStreets, usingSatellite = true;
+  let drawPoints = [];        // L.LatLng[] of the shape being drawn
+  let drawMarkers = [];       // draggable vertex markers
+  let drawPoly = null;        // live preview polygon
+  let savedPolysLayer = null; // all saved field boundaries
+  let pendingBoundary = null; // [[lat,lng],...] to store on the next field save
+
+  const SQM_PER_ACRE = 4046.8564224;
+
+  // Geodesic ring area on the WGS84 sphere (same algorithm as Turf.js /
+  // L.GeometryUtil): accurate to well under 0.5% for field-sized parcels.
+  function ringAreaSqm(latlngs) {
+    const R = 6378137;
+    const rad = (d) => d * Math.PI / 180;
+    let total = 0;
+    const n = latlngs.length;
+    if (n < 3) return 0;
+    for (let i = 0; i < n; i++) {
+      const a = latlngs[i], b = latlngs[(i + 1) % n];
+      total += rad(b.lng - a.lng) * (2 + Math.sin(rad(a.lat)) + Math.sin(rad(b.lat)));
+    }
+    return Math.abs(total * R * R / 2);
+  }
+
+  function ringPerimeterM(latlngs) {
+    let d = 0;
+    for (let i = 0; i < latlngs.length; i++) {
+      d += latlngs[i].distanceTo(latlngs[(i + 1) % latlngs.length]);
+    }
+    return d;
+  }
+
+  function initFieldMap() {
+    if (typeof L === 'undefined') return; // Leaflet failed to load; app still works
+    if (fieldMap) {
+      setTimeout(() => fieldMap.invalidateSize(), 50);
+      return;
+    }
+
+    let view = { lat: 39.8, lng: -98.6, zoom: 4 };
+    try {
+      const saved = JSON.parse(localStorage.getItem(MAPVIEW_KEY));
+      if (saved && isFinite(saved.lat)) view = saved;
+    } catch (e) { /* first run */ }
+
+    fieldMap = L.map('field-map', { zoomControl: true }).setView([view.lat, view.lng], view.zoom);
+
+    baseSatellite = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom: 19, attribution: 'Imagery © Esri, Maxar, Earthstar Geographics' });
+    baseStreets = L.tileLayer(
+      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      { maxZoom: 19, attribution: '© OpenStreetMap contributors' });
+    baseSatellite.addTo(fieldMap);
+
+    savedPolysLayer = L.layerGroup().addTo(fieldMap);
+    renderFieldPolys();
+
+    fieldMap.on('click', (e) => addDrawPoint(e.latlng));
+    fieldMap.on('moveend', () => {
+      const c = fieldMap.getCenter();
+      localStorage.setItem(MAPVIEW_KEY, JSON.stringify({ lat: c.lat, lng: c.lng, zoom: fieldMap.getZoom() }));
+    });
+
+    $('#map-locate').addEventListener('click', locateMe);
+    $('#map-basemap').addEventListener('click', toggleBasemap);
+    $('#map-undo').addEventListener('click', undoDrawPoint);
+    $('#map-clear').addEventListener('click', () => clearDrawing(true));
+    $('#map-use').addEventListener('click', useShape);
+
+    setTimeout(() => fieldMap.invalidateSize(), 50);
+  }
+
+  function locateMe() {
+    if (!navigator.geolocation) { toast('Location is not available in this browser'); return; }
+    toast('Finding your location…');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => fieldMap.setView([pos.coords.latitude, pos.coords.longitude], 17),
+      () => toast('Could not get your location — check location permissions'),
+      { enableHighAccuracy: true, timeout: 10000 });
+  }
+
+  function toggleBasemap() {
+    usingSatellite = !usingSatellite;
+    if (usingSatellite) { fieldMap.removeLayer(baseStreets); baseSatellite.addTo(fieldMap); }
+    else { fieldMap.removeLayer(baseSatellite); baseStreets.addTo(fieldMap); }
+  }
+
+  function addDrawPoint(latlng) {
+    drawPoints.push(latlng);
+    const marker = L.circleMarker(latlng, {
+      radius: 7, color: '#ffffff', weight: 2, fillColor: '#2d6b38', fillOpacity: 1,
+      pane: 'markerPane', interactive: true, bubblingMouseEvents: false
+    }).addTo(fieldMap);
+
+    // circleMarker has no built-in drag; implement with mouse/touch events.
+    const idx = drawMarkers.length;
+    enableVertexDrag(marker, idx);
+    drawMarkers.push(marker);
+    redrawShape();
+  }
+
+  function enableVertexDrag(marker, idx) {
+    let dragging = false;
+    marker.on('mousedown', (e) => {
+      dragging = true;
+      fieldMap.dragging.disable();
+      L.DomEvent.stop(e);
+      const move = (ev) => {
+        if (!dragging) return;
+        marker.setLatLng(ev.latlng);
+        drawPoints[idx] = ev.latlng;
+        redrawShape();
+      };
+      const up = () => {
+        dragging = false;
+        fieldMap.dragging.enable();
+        fieldMap.off('mousemove', move);
+        fieldMap.off('mouseup', up);
+      };
+      fieldMap.on('mousemove', move);
+      fieldMap.on('mouseup', up);
+    });
+    // A click on an existing vertex should not add a new point.
+    marker.on('click', (e) => L.DomEvent.stop(e));
+  }
+
+  function redrawShape() {
+    if (drawPoly) { fieldMap.removeLayer(drawPoly); drawPoly = null; }
+    if (drawPoints.length >= 2) {
+      drawPoly = (drawPoints.length >= 3
+        ? L.polygon(drawPoints, { color: '#f0d99a', weight: 3, fillColor: '#2d6b38', fillOpacity: 0.35 })
+        : L.polyline(drawPoints, { color: '#f0d99a', weight: 3 }));
+      drawPoly.addTo(fieldMap);
+    }
+    updateDrawUI();
+  }
+
+  function updateDrawUI() {
+    const n = drawPoints.length;
+    $('#map-undo').disabled = n === 0;
+    $('#map-clear').disabled = n === 0;
+    $('#map-use').disabled = n < 3;
+    const readout = $('#map-readout');
+    if (n === 0) {
+      readout.innerHTML = 'Tap the map to start drawing a field boundary.';
+    } else if (n < 3) {
+      readout.innerHTML = `${n} point${n === 1 ? '' : 's'} placed — need at least 3 to close a shape.`;
+    } else {
+      const sqm = ringAreaSqm(drawPoints);
+      const acres = sqm / SQM_PER_ACRE;
+      const perim = ringPerimeterM(drawPoints);
+      const zoomWarn = fieldMap.getZoom() < 15
+        ? ` &nbsp;·&nbsp; <span class="zoom-warn">Zoom in closer for corner-level accuracy</span>` : '';
+      readout.innerHTML =
+        `<strong>${fmtNum(acres, acres < 1 ? 3 : 2)} acres</strong>
+         &nbsp;·&nbsp; ${fmtNum(sqm * 10.7639, 0)} sq ft
+         &nbsp;·&nbsp; perimeter ${fmtNum(perim * 3.28084, 0)} ft
+         &nbsp;·&nbsp; ${n} corners${zoomWarn}`;
+    }
+  }
+
+  function undoDrawPoint() {
+    if (!drawPoints.length) return;
+    drawPoints.pop();
+    const m = drawMarkers.pop();
+    if (m) fieldMap.removeLayer(m);
+    redrawShape();
+  }
+
+  function clearDrawing(alsoPending) {
+    drawPoints = [];
+    drawMarkers.forEach(m => fieldMap && fieldMap.removeLayer(m));
+    drawMarkers = [];
+    if (drawPoly && fieldMap) fieldMap.removeLayer(drawPoly);
+    drawPoly = null;
+    if (alsoPending) pendingBoundary = null;
+    if (fieldMap) updateDrawUI();
+  }
+
+  function useShape() {
+    if (drawPoints.length < 3) return;
+    const sqm = ringAreaSqm(drawPoints);
+    const acres = sqm / SQM_PER_ACRE;
+    pendingBoundary = drawPoints.map(p => [
+      Math.round(p.lat * 1e6) / 1e6,
+      Math.round(p.lng * 1e6) / 1e6
+    ]);
+    $('#field-acres').value = Math.round(acres * 1000) / 1000;
+    $('#field-unit').value = 'acres';
+    if (!$('#field-location').value) {
+      const c = drawPoints[0];
+      $('#field-location').value = `GPS ${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}`;
+    }
+    toast(`Shape captured: ${fmtNum(acres, acres < 1 ? 3 : 2)} acres — now name and save the field below`);
+    $('#field-form').scrollIntoView({ behavior: 'smooth' });
+    $('#field-name').focus();
+  }
+
+  // Load an existing boundary into the editor so corners can be adjusted.
+  function loadBoundaryForEdit(boundary) {
+    if (!fieldMap || !boundary || !boundary.length) return;
+    clearDrawing(false);
+    boundary.forEach(([lat, lng]) => addDrawPoint(L.latLng(lat, lng)));
+    pendingBoundary = boundary.slice();
+    fieldMap.fitBounds(L.latLngBounds(boundary), { padding: [30, 30] });
+  }
+
+  function renderFieldPolys() {
+    if (!savedPolysLayer) return;
+    savedPolysLayer.clearLayers();
+    data.fields.filter(f => f.boundary && f.boundary.length >= 3).forEach(f => {
+      const acres = ringAreaSqm(f.boundary.map(([lat, lng]) => L.latLng(lat, lng))) / SQM_PER_ACRE;
+      const poly = L.polygon(f.boundary, {
+        color: '#2d6b38', weight: 2, fillColor: '#2d6b38', fillOpacity: 0.22
+      }).bindTooltip(`${f.name} · ${fmtNum(acres, acres < 1 ? 3 : 2)} ac`,
+        { className: 'field-poly-tooltip', sticky: true });
+      poly.on('click', (e) => { L.DomEvent.stop(e); editField(f.id); });
+      savedPolysLayer.addLayer(poly);
+    });
   }
 
   // -------------------------------------------------------------- offline

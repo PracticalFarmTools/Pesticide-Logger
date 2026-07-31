@@ -166,6 +166,7 @@
       <div class="cab-toolbar">
         <button type="button" class="btn btn-primary btn-lg" id="app-spray-now">Spray now</button>
         <button type="button" class="btn btn-secondary btn-lg" id="app-duplicate-last">Duplicate last spray</button>
+        <button type="button" class="btn btn-secondary btn-lg" id="app-scan-jug" hidden>Scan jug</button>
         <label class="checkbox-label cab-toggle">
           <input type="checkbox" id="app-show-recommended">
           Show recommended extras
@@ -421,6 +422,10 @@
               <textarea id="app-notes" rows="2" placeholder="Buffer zones, label deviations, unexpected occurrences, tank order…"></textarea>
             </label>
           </div>
+          <div class="photo-row">
+            <button type="button" class="btn btn-secondary btn-sm" id="app-add-photo">Attach photo (label, lot, conditions…)</button>
+            <div id="app-photo-thumbs" class="photo-thumbs"></div>
+          </div>
         </fieldset>
 
         <div id="app-interval-preview" class="interval-preview" hidden></div>
@@ -599,6 +604,18 @@
           <label>Default lot / batch # pattern
             <input type="text" id="prod-lot-hint" placeholder="Optional reminder, e.g. jug lot">
           </label>
+        </div>
+        <div class="form-row form-row-2">
+          <label>Jug barcode (for cab scanning)
+            <div class="input-pair">
+              <input type="text" id="prod-barcode" placeholder="Scan or type UPC" autocomplete="off">
+              <button type="button" class="btn btn-secondary btn-sm" id="prod-scan-barcode" hidden>Scan</button>
+            </div>
+          </label>
+          <div class="photo-row">
+            <button type="button" class="btn btn-secondary btn-sm" id="prod-add-photo">Attach label photo</button>
+            <div id="prod-photo-thumbs" class="photo-thumbs"></div>
+          </div>
         </div>
         <div class="form-row">
           <label>Notes
@@ -883,6 +900,24 @@
     compliance pack.</p>
   <div class="form-actions">
     <button type="button" class="btn btn-secondary" id="history-close">Close</button>
+  </div>
+</dialog>
+
+<dialog id="photo-dialog" class="app-dialog photo-dialog-box">
+  <img id="photo-dialog-img" alt="Attached photo">
+  <p class="card-hint" id="photo-dialog-meta"></p>
+  <div class="form-actions">
+    <button type="button" class="btn btn-danger" id="photo-dialog-delete">Remove photo</button>
+    <button type="button" class="btn btn-secondary" onclick="this.closest('dialog').close()">Close</button>
+  </div>
+</dialog>
+
+<dialog id="scan-dialog" class="app-dialog">
+  <h3>Scan a barcode</h3>
+  <video id="scan-video" playsinline muted></video>
+  <p class="card-hint">Point the camera at the jug's UPC. Scanning happens entirely on this device.</p>
+  <div class="form-actions">
+    <button type="button" class="btn btn-secondary" id="scan-cancel">Cancel</button>
   </div>
 </dialog>
 

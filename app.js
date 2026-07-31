@@ -107,8 +107,13 @@
     (d.products || []).forEach(p => {
       if (p.omri == null) p.omri = false;
       if (p.lotHint == null) p.lotHint = '';
+      if (p.barcode == null) p.barcode = '';
+      if (!Array.isArray(p.photoIds)) p.photoIds = [];
       if (p.updatedAt == null) p.updatedAt = p.createdAt || new Date().toISOString();
       if (p.createdAt == null) p.createdAt = p.updatedAt;
+    });
+    d.applications.forEach(a => {
+      if (!Array.isArray(a.photoIds)) a.photoIds = [];
     });
     (d.fields || []).forEach(f => {
       if (f.updatedAt == null) f.updatedAt = f.createdAt || new Date().toISOString();
@@ -144,11 +149,16 @@
       if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
     } catch (e) { /* not supported */ }
     if (!('indexedDB' in window)) return;
-    const req = indexedDB.open('pesticide-logger', 1);
-    req.onupgradeneeded = () => req.result.createObjectStore('kv');
+    const req = indexedDB.open('pesticide-logger', 2);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
+      if (!db.objectStoreNames.contains('photos')) db.createObjectStore('photos', { keyPath: 'id' });
+    };
     req.onsuccess = () => {
       idbDb = req.result;
       resumeAutoBackup();
+      setTimeout(sweepOrphanPhotos, 4000);
       if (localStorage.getItem(STORE_KEY)) { idbMirror(); return; }
       // localStorage is empty — recover from the mirror if it has real data.
       const get = idbDb.transaction('kv', 'readonly').objectStore('kv').get('data');
@@ -1202,8 +1212,22 @@
     }
   }
 
+  let productFormPhotoIds = [];
+
   function initProducts() {
     initEpaLookup();
+    if ($('#prod-add-photo')) {
+      $('#prod-add-photo').addEventListener('click', () =>
+        capturePhotoInto(productFormPhotoIds, $('#prod-photo-thumbs'), 'product label'));
+    }
+    if ($('#prod-scan-barcode') && barcodeSupported()) {
+      $('#prod-scan-barcode').hidden = false;
+      $('#prod-scan-barcode').addEventListener('click', () =>
+        openScanner(code => {
+          $('#prod-barcode').value = code;
+          toast('Barcode linked — you can now scan this jug in the spray log');
+        }));
+    }
     $('#product-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const id = $('#prod-id').value || uid();
@@ -1237,6 +1261,8 @@
         epaSource: verified?.epaSource || null,
         omri: !!( $('#prod-omri') && $('#prod-omri').checked ),
         lotHint: ($('#prod-lot-hint') && $('#prod-lot-hint').value.trim()) || '',
+        barcode: ($('#prod-barcode') && $('#prod-barcode').value.trim()) || '',
+        photoIds: productFormPhotoIds.slice(),
         createdAt: existing?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -1257,6 +1283,8 @@
     $('#product-form').reset();
     pendingEpaImport = null;
     $('#prod-id').value = '';
+    productFormPhotoIds = [];
+    renderPhotoThumbs(productFormPhotoIds, $('#prod-photo-thumbs'));
     $('#product-form-title').textContent = 'Add a product';
     $('#prod-save-btn').textContent = 'Save product';
     $('#prod-cancel-btn').hidden = true;
@@ -1282,6 +1310,9 @@
     if ($('#prod-state-reg')) $('#prod-state-reg').value = p.stateRegNo || '';
     if ($('#prod-omri')) $('#prod-omri').checked = !!p.omri;
     if ($('#prod-lot-hint')) $('#prod-lot-hint').value = p.lotHint || '';
+    if ($('#prod-barcode')) $('#prod-barcode').value = p.barcode || '';
+    productFormPhotoIds = (p.photoIds || []).slice();
+    renderPhotoThumbs(productFormPhotoIds, $('#prod-photo-thumbs'));
     $('#prod-notes').value = p.notes;
     $('#product-form-title').textContent = `Edit — ${p.name}`;
     $('#prod-save-btn').textContent = 'Update product';
@@ -1463,8 +1494,20 @@
 
   const RATE_UNITS = ['fl oz', 'pt', 'qt', 'gal', 'oz', 'lb', 'g', 'kg', 'mL', 'L'];
 
+  let appFormPhotoIds = [];
+
   function initAppForm() {
     $('#app-date').value = new Date().toISOString().slice(0, 10);
+
+    if ($('#app-add-photo')) {
+      $('#app-add-photo').addEventListener('click', () =>
+        capturePhotoInto(appFormPhotoIds, $('#app-photo-thumbs'), 'application'));
+    }
+    if ($('#app-scan-jug') && barcodeSupported()) {
+      $('#app-scan-jug').hidden = false;
+      $('#app-scan-jug').addEventListener('click', scanJugIntoMix);
+    }
+    if ($('#scan-cancel')) $('#scan-cancel').addEventListener('click', closeScanner);
 
     renderProductOptions();
     renderFieldOptions();
@@ -1940,6 +1983,7 @@
       inversionObserved: !!( $('#app-inversion') && $('#app-inversion').checked ),
       customerCopyProvided: !!( $('#app-customer-copy') && $('#app-customer-copy').checked ),
       customerCopyDate: ($('#app-customer-copy-date') && $('#app-customer-copy-date').value) || '',
+      photoIds: appFormPhotoIds.slice(),
       // Freeze compliance context on the record so history does not re-score
       // when Settings later change.
       complianceState: s.state || '',
@@ -2396,6 +2440,7 @@
 
   function renderDashboard() {
     renderBackupBanner();
+    renderForecastFieldOptions();
     const apps = sortedApps();
     const seasonStart = new Date(now().getFullYear(), 0, 1);
     const seasonApps = apps.filter(a => new Date(a.date + 'T12:00:00') >= seasonStart);
@@ -3400,6 +3445,214 @@
     });
   }
 
+  // -------------------------------------------------------------- photos & barcode
+
+  // Photos live in IndexedDB only (not in JSON backups — they would balloon
+  // the file). Records/products store photo ids.
+
+  function idbPhotoPut(photo) {
+    return new Promise((res, rej) => {
+      if (!idbDb) return rej(new Error('no idb'));
+      const tx = idbDb.transaction('photos', 'readwrite');
+      tx.objectStore('photos').put(photo);
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+    });
+  }
+
+  function idbPhotoGet(id) {
+    return new Promise((res) => {
+      if (!idbDb) return res(null);
+      try {
+        const get = idbDb.transaction('photos', 'readonly').objectStore('photos').get(id);
+        get.onsuccess = () => res(get.result || null);
+        get.onerror = () => res(null);
+      } catch (e) { res(null); }
+    });
+  }
+
+  function idbPhotoDelete(id) {
+    return new Promise((res) => {
+      if (!idbDb) return res();
+      try {
+        const tx = idbDb.transaction('photos', 'readwrite');
+        tx.objectStore('photos').delete(id);
+        tx.oncomplete = () => res();
+        tx.onerror = () => res();
+      } catch (e) { res(); }
+    });
+  }
+
+  function referencedPhotoIds() {
+    const ids = new Set();
+    const collect = (arr) => (arr || []).forEach(pid => ids.add(pid));
+    data.applications.forEach(a => {
+      collect(a.photoIds);
+      (a.history || []).forEach(h => collect(h.snapshot && h.snapshot.photoIds));
+    });
+    data.products.forEach(p => collect(p.photoIds));
+    return ids;
+  }
+
+  function sweepOrphanPhotos() {
+    if (!idbDb || !idbDb.objectStoreNames.contains('photos')) return;
+    const keep = referencedPhotoIds();
+    try {
+      const store = idbDb.transaction('photos', 'readwrite').objectStore('photos');
+      const cursorReq = store.openCursor();
+      cursorReq.onsuccess = () => {
+        const cur = cursorReq.result;
+        if (!cur) return;
+        // Grace period: never sweep photos under 24h old (may be mid-form).
+        const fresh = cur.value.createdAt && Date.now() - new Date(cur.value.createdAt).getTime() < 86400000;
+        if (!keep.has(cur.value.id) && !fresh) cur.delete();
+        cur.continue();
+      };
+    } catch (e) { /* sweep is best-effort */ }
+  }
+
+  function compressImage(file, maxDim) {
+    return new Promise((res, rej) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const scale = Math.min(1, (maxDim || 1280) / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        res(canvas.toDataURL('image/jpeg', 0.8));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('bad image')); };
+      img.src = url;
+    });
+  }
+
+  async function capturePhotoInto(idList, thumbsHost, label) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'environment';
+    input.addEventListener('change', async () => {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      try {
+        const dataUrl = await compressImage(file, 1280);
+        const photo = { id: uid(), dataUrl, label: label || '', createdAt: new Date().toISOString() };
+        await idbPhotoPut(photo);
+        idList.push(photo.id);
+        renderPhotoThumbs(idList, thumbsHost);
+        toast('Photo attached (stays on this device — not in JSON backups)');
+      } catch (e) {
+        toast('Could not read that image');
+      }
+    });
+    input.click();
+  }
+
+  async function renderPhotoThumbs(idList, host) {
+    if (!host) return;
+    if (!idList.length) { host.innerHTML = ''; return; }
+    const photos = (await Promise.all(idList.map(idbPhotoGet))).filter(Boolean);
+    host.innerHTML = photos.map(p =>
+      `<button type="button" class="photo-thumb" data-photo-id="${p.id}" aria-label="View photo">
+        <img src="${p.dataUrl}" alt="">
+      </button>`).join('');
+    host.querySelectorAll('[data-photo-id]').forEach(b =>
+      b.addEventListener('click', () => openPhotoViewer(b.dataset.photoId, idList, host)));
+  }
+
+  async function openPhotoViewer(photoId, idList, thumbsHost) {
+    const p = await idbPhotoGet(photoId);
+    if (!p) { toast('Photo not found on this device'); return; }
+    const dlg = $('#photo-dialog');
+    $('#photo-dialog-img').src = p.dataUrl;
+    $('#photo-dialog-meta').textContent =
+      `Taken ${new Date(p.createdAt).toLocaleString()} — photos stay in this browser and are not part of JSON backups.`;
+    $('#photo-dialog-delete').onclick = async () => {
+      const idx = idList.indexOf(photoId);
+      if (idx >= 0) idList.splice(idx, 1);
+      await idbPhotoDelete(photoId);
+      renderPhotoThumbs(idList, thumbsHost);
+      dlg.close();
+      toast('Photo removed');
+    };
+    dlg.showModal();
+  }
+
+  // ---- barcode scanning (BarcodeDetector, Chromium) ----
+
+  let scanStream = null;
+
+  function barcodeSupported() {
+    return typeof window !== 'undefined' && 'BarcodeDetector' in window &&
+      navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+  }
+
+  function closeScanner() {
+    if (scanStream) {
+      scanStream.getTracks().forEach(t => t.stop());
+      scanStream = null;
+    }
+    const dlg = $('#scan-dialog');
+    if (dlg && dlg.open) dlg.close();
+  }
+
+  async function openScanner(onCode) {
+    if (!barcodeSupported()) {
+      toast('Barcode scanning needs a Chromium browser with a camera');
+      return;
+    }
+    const dlg = $('#scan-dialog');
+    const video = $('#scan-video');
+    try {
+      scanStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }, audio: false
+      });
+    } catch (e) {
+      toast('Camera access was blocked — allow it to scan barcodes');
+      return;
+    }
+    video.srcObject = scanStream;
+    await video.play();
+    dlg.showModal();
+    const detector = new BarcodeDetector({
+      formats: ['upc_a', 'upc_e', 'ean_13', 'ean_8', 'code_128', 'code_39', 'qr_code']
+    });
+    const tick = async () => {
+      if (!scanStream) return;
+      try {
+        const codes = await detector.detect(video);
+        if (codes.length) {
+          const value = codes[0].rawValue;
+          closeScanner();
+          onCode(value);
+          return;
+        }
+      } catch (e) { /* keep trying */ }
+      if (scanStream) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  function scanJugIntoMix() {
+    if (!requirePro('Barcode jug scanning')) return;
+    openScanner(code => {
+      const p = data.products.find(pr => pr.barcode === code);
+      if (!p) {
+        toast('No product with this barcode yet — scan it once in the product form to link it');
+        return;
+      }
+      const rows = $$('#app-products .app-product-row');
+      const empty = rows.find(r => !r.querySelector('.apr-product').value);
+      const row = empty || addAppProductRow();
+      row.querySelector('.apr-product').value = p.id;
+      onRowProductChange(row);
+      toast(`Scanned: ${p.name}`);
+    });
+  }
+
   // -------------------------------------------------------------- spray window forecast
 
   // Score one forecast hour against common drift guidance. The label rules.
@@ -3592,6 +3845,7 @@
     }
     renderLicenseUI();
     renderRecentProducts();
+    renderSprayForecast();
   }
 
   function renderLicenseUI() {
@@ -3732,6 +3986,7 @@
   initOffline();
   initLicense();
   initOnboarding();
+  initSprayForecast();
   if ($('#history-close')) $('#history-close').addEventListener('click', () => $('#history-dialog').close());
   renderDashboard();
   renderRecentProducts();

@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Pesticide Logger — free, offline-first spray record keeping, tank mix calculator, and REI/PHI tracking for farms. Federal RUP and WPS compliant records with zero subscription cost.">
+  <meta name="theme-color" content="#0f2814">
+  <title>Pesticide Logger · Practical Farm Tools</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-content">
+    <div class="logo-area">
+      <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 2v4"/><path d="M8 6h8l-1 4a3 3 0 0 1-6 0z"/>
+        <path d="M12 12v3"/><path d="M7 22c0-3 2.2-7 5-7s5 4 5 7"/>
+        <path d="M7 22h10"/>
+      </svg>
+      <div>
+        <h1>Pesticide Logger</h1>
+        <span class="header-sub">Practical Farm Tools · v2.0</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <span id="offline-badge" class="offline-badge" hidden>Offline — records save locally</span>
+      <span id="farm-name-display" class="farm-name-display"></span>
+    </div>
+  </div>
+</header>
+
+<nav class="tab-nav" role="tablist" aria-label="Main navigation">
+  <button class="tab-btn active" data-tab="dashboard" role="tab" aria-selected="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+    <span>Dashboard</span>
+  </button>
+  <button class="tab-btn" data-tab="log" role="tab" aria-selected="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+    <span>Spray Log</span>
+  </button>
+  <button class="tab-btn" data-tab="calculator" role="tab" aria-selected="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="11" x2="8" y2="11.01"/><line x1="12" y1="11" x2="12" y2="11.01"/><line x1="16" y1="11" x2="16" y2="11.01"/><line x1="8" y1="15" x2="8" y2="15.01"/><line x1="12" y1="15" x2="12" y2="15.01"/><line x1="16" y1="15" x2="16" y2="15.01"/><line x1="8" y1="19" x2="8" y2="19.01"/><line x1="12" y1="19" x2="12" y2="19.01"/><line x1="16" y1="19" x2="16" y2="19.01"/></svg>
+    <span>Tank Mix</span>
+  </button>
+  <button class="tab-btn" data-tab="products" role="tab" aria-selected="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4"/><path d="M9 2v3l-3 4v11a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9l-3-4V2"/><line x1="6" y1="13" x2="18" y2="13"/></svg>
+    <span>Products</span>
+  </button>
+  <button class="tab-btn" data-tab="fields" role="tab" aria-selected="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    <span>Fields</span>
+  </button>
+  <button class="tab-btn" data-tab="reports" role="tab" aria-selected="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    <span>Reports</span>
+  </button>
+  <button class="tab-btn" data-tab="settings" role="tab" aria-selected="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span>Settings</span>
+  </button>
+</nav>
+
+<main id="main">
+
+  <!-- ============ DASHBOARD ============ -->
+  <section id="tab-dashboard" class="tab-panel active" role="tabpanel">
+    <div id="setup-banner" class="setup-banner" hidden>
+      <div>
+        <strong>Welcome to Pesticide Logger.</strong>
+        <p>Set your farm name, state, and applicator credentials once — every record you create will be pre-filled and checked against your state's requirements.</p>
+      </div>
+      <button class="btn btn-primary" data-goto="settings">Set up my farm</button>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <span class="stat-value" id="stat-season-apps">0</span>
+        <span class="stat-label">Applications this season</span>
+      </div>
+      <div class="stat-card stat-warn" id="stat-rei-card">
+        <span class="stat-value" id="stat-active-rei">0</span>
+        <span class="stat-label">Fields under REI now</span>
+      </div>
+      <div class="stat-card" id="stat-phi-card">
+        <span class="stat-value" id="stat-active-phi">0</span>
+        <span class="stat-label">Crops in PHI wait</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value" id="stat-products">0</span>
+        <span class="stat-label">Products in library</span>
+      </div>
+    </div>
+
+    <div class="dash-columns">
+      <div class="card">
+        <h3 class="card-title">
+          <span class="dot dot-red"></span> Re-Entry Intervals (REI)
+        </h3>
+        <p class="card-hint">Workers may not enter these areas without PPE until the REI expires.</p>
+        <div id="rei-list" class="interval-list"></div>
+      </div>
+      <div class="card">
+        <h3 class="card-title">
+          <span class="dot dot-amber"></span> Pre-Harvest Intervals (PHI)
+        </h3>
+        <p class="card-hint">Earliest legal harvest date for each treated crop.</p>
+        <div id="phi-list" class="interval-list"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title-row">
+        <h3 class="card-title">Recent applications</h3>
+        <button class="btn btn-primary btn-sm" data-goto="log" id="dash-new-app">+ Log application</button>
+      </div>
+      <div id="recent-apps"></div>
+    </div>
+
+    <div class="card compliance-card" id="compliance-card" hidden>
+      <h3 class="card-title">Your state's rules</h3>
+      <p id="compliance-summary"></p>
+      <p class="card-hint" id="compliance-citation"></p>
+    </div>
+  </section>
+
+  <!-- ============ SPRAY LOG ============ -->
+  <section id="tab-log" class="tab-panel" role="tabpanel">
+    <div class="card">
+      <h3 class="card-title" id="app-form-title">Log an application</h3>
+      <p class="card-hint">Fields marked <span class="req-star">*</span> satisfy federal restricted-use pesticide (RUP) record requirements (7 CFR Part 110). Fields marked <span class="state-req-tag">state</span> are additionally required by your state.</p>
+
+      <form id="app-form" class="form-grid" autocomplete="off">
+        <input type="hidden" id="app-id">
+
+        <fieldset>
+          <legend>What &amp; where</legend>
+          <div class="form-row">
+            <label>Product <span class="req-star">*</span>
+              <select id="app-product" required>
+                <option value="">— Select product —</option>
+              </select>
+            </label>
+            <label>Field / site <span class="req-star">*</span>
+              <select id="app-field" required>
+                <option value="">— Select field —</option>
+              </select>
+            </label>
+          </div>
+          <div id="app-product-info" class="product-info-strip" hidden></div>
+          <div class="form-row">
+            <label>Crop / commodity treated <span class="req-star">*</span>
+              <input type="text" id="app-crop" required placeholder="e.g. Sweet corn">
+            </label>
+            <label>Target pest <span id="req-target_pest" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-pest" placeholder="e.g. Colorado potato beetle">
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>When</legend>
+          <div class="form-row form-row-3">
+            <label>Date <span class="req-star">*</span>
+              <input type="date" id="app-date" required>
+            </label>
+            <label>Start time
+              <input type="time" id="app-start">
+            </label>
+            <label>End time
+              <input type="time" id="app-end">
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>How much</legend>
+          <div class="form-row form-row-3">
+            <label>Area treated <span class="req-star">*</span>
+              <input type="number" id="app-area" step="any" min="0" required>
+            </label>
+            <label>Area unit
+              <select id="app-area-unit">
+                <option value="acres">acres</option>
+                <option value="sqft">sq ft</option>
+                <option value="1000sqft">1,000 sq ft</option>
+              </select>
+            </label>
+            <label>Application rate
+              <div class="input-pair">
+                <input type="number" id="app-rate" step="any" min="0">
+                <select id="app-rate-unit"></select>
+              </div>
+            </label>
+          </div>
+          <div class="form-row form-row-3">
+            <label>Total product applied <span class="req-star">*</span> <span id="req-amount_applied" class="state-req-tag" hidden>state</span>
+              <div class="input-pair">
+                <input type="number" id="app-total" step="any" min="0" required>
+                <select id="app-total-unit">
+                  <option>fl oz</option><option>pt</option><option>qt</option><option>gal</option>
+                  <option>oz</option><option>lb</option><option>g</option><option>kg</option><option>mL</option><option>L</option>
+                </select>
+              </div>
+            </label>
+            <label>Carrier volume (finished spray)
+              <div class="input-pair">
+                <input type="number" id="app-carrier" step="any" min="0">
+                <select id="app-carrier-unit"><option>gal</option><option>L</option></select>
+              </div>
+            </label>
+            <label>Dilution rate <span id="req-dilution_rate" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-dilution" placeholder="e.g. 2 fl oz / gal">
+            </label>
+          </div>
+          <p class="auto-calc-note" id="app-total-note" hidden></p>
+        </fieldset>
+
+        <fieldset>
+          <legend>Conditions</legend>
+          <div class="form-row form-row-4">
+            <label>Wind speed (mph) <span id="req-wind_speed" class="state-req-tag" hidden>state</span>
+              <input type="number" id="app-wind" step="any" min="0" max="60">
+            </label>
+            <label>Wind direction <span id="req-wind_direction" class="state-req-tag" hidden>state</span>
+              <select id="app-wind-dir">
+                <option value="">—</option>
+                <option>N</option><option>NNE</option><option>NE</option><option>ENE</option><option>E</option><option>ESE</option><option>SE</option><option>SSE</option><option>S</option><option>SSW</option><option>SW</option><option>WSW</option><option>W</option><option>WNW</option><option>NW</option><option>NNW</option><option>Calm</option>
+              </select>
+            </label>
+            <label>Temperature (°F) <span id="req-temperature" class="state-req-tag" hidden>state</span>
+              <input type="number" id="app-temp" step="any" min="-20" max="120">
+            </label>
+            <label>Sky / humidity
+              <input type="text" id="app-sky" placeholder="e.g. Clear, 60% RH">
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Who &amp; how</legend>
+          <div class="form-row form-row-3">
+            <label>Applicator name <span class="req-star">*</span>
+              <input type="text" id="app-applicator" required>
+            </label>
+            <label>Certification / license # <span class="req-star">*</span> <span id="req-applicator_license" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-cert">
+            </label>
+            <label>Method / equipment
+              <input type="text" id="app-method" placeholder="e.g. Boom sprayer, backpack">
+            </label>
+          </div>
+          <div class="form-row">
+            <label>Notes
+              <textarea id="app-notes" rows="2" placeholder="Buffer zones observed, nozzle type, tank order…"></textarea>
+            </label>
+          </div>
+        </fieldset>
+
+        <div id="app-interval-preview" class="interval-preview" hidden></div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="app-save-btn">Save application record</button>
+          <button type="button" class="btn btn-secondary" id="app-cancel-btn" hidden>Cancel edit</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-title-row">
+        <h3 class="card-title">Application history</h3>
+        <input type="search" id="log-search" class="search-input" placeholder="Search product, field, crop…">
+      </div>
+      <div id="app-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ TANK MIX CALCULATOR ============ -->
+  <section id="tab-calculator" class="tab-panel" role="tabpanel">
+    <div class="card">
+      <h3 class="card-title">Tank mix calculator</h3>
+      <p class="card-hint">Enter your sprayer setup and the area to treat. Add one or more products and get exact amounts per tank, total product needed, and a fill-order worksheet.</p>
+
+      <div class="form-grid">
+        <fieldset>
+          <legend>Sprayer &amp; area</legend>
+          <div class="form-row form-row-3">
+            <label>Area to treat
+              <input type="number" id="calc-area" step="any" min="0" value="1">
+            </label>
+            <label>Area unit
+              <select id="calc-area-unit">
+                <option value="acres">acres</option>
+                <option value="sqft">sq ft</option>
+                <option value="1000sqft">1,000 sq ft</option>
+              </select>
+            </label>
+            <label>Tank size (gal)
+              <input type="number" id="calc-tank" step="any" min="0" value="25">
+            </label>
+          </div>
+          <div class="form-row">
+            <label>Spray volume — carrier applied per area
+              <div class="input-pair">
+                <input type="number" id="calc-gpa" step="any" min="0" value="20">
+                <select id="calc-gpa-unit">
+                  <option value="gal_acre">gal / acre</option>
+                  <option value="gal_1000">gal / 1,000 sq ft</option>
+                </select>
+              </div>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Products in the mix</legend>
+          <div id="calc-products"></div>
+          <button type="button" class="btn btn-secondary btn-sm" id="calc-add-product">+ Add product to mix</button>
+        </fieldset>
+      </div>
+
+      <div id="calc-results" class="calc-results" hidden></div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-primary" id="calc-run">Calculate mix</button>
+        <button type="button" class="btn btn-secondary" id="calc-print" hidden>Print mix worksheet</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PRODUCTS ============ -->
+  <section id="tab-products" class="tab-panel" role="tabpanel">
+    <div class="card">
+      <h3 class="card-title" id="product-form-title">Add a product</h3>
+      <p class="card-hint">Copy REI, PHI, and rates straight from the product label. The label is the law — this tool never overrides it.</p>
+      <form id="product-form" class="form-grid" autocomplete="off">
+        <input type="hidden" id="prod-id">
+        <div class="form-row form-row-3">
+          <label>Brand / product name <span class="req-star">*</span>
+            <input type="text" id="prod-name" required placeholder="e.g. Entrust SC">
+          </label>
+          <label>EPA registration # <span class="req-star">*</span>
+            <input type="text" id="prod-epa" required placeholder="e.g. 62719-621">
+          </label>
+          <label>Active ingredient
+            <input type="text" id="prod-ai" placeholder="e.g. Spinosad 22.5%">
+          </label>
+        </div>
+        <div class="form-row form-row-4">
+          <label>Type
+            <select id="prod-type">
+              <option>Insecticide</option><option>Fungicide</option><option>Herbicide</option>
+              <option>Bactericide</option><option>Miticide</option><option>Nematicide</option>
+              <option>Plant growth regulator</option><option>Adjuvant</option><option>Other</option>
+            </select>
+          </label>
+          <label>Signal word
+            <select id="prod-signal">
+              <option value="">— none —</option>
+              <option>CAUTION</option><option>WARNING</option><option>DANGER</option>
+            </select>
+          </label>
+          <label>REI (hours)
+            <input type="number" id="prod-rei" step="any" min="0" placeholder="e.g. 4">
+          </label>
+          <label>PHI (days)
+            <input type="number" id="prod-phi" step="any" min="0" placeholder="e.g. 1">
+          </label>
+        </div>
+        <div class="form-row form-row-3">
+          <label>Label rate
+            <input type="number" id="prod-rate" step="any" min="0" placeholder="e.g. 6">
+          </label>
+          <label>Rate unit
+            <select id="prod-rate-unit">
+              <option>fl oz</option><option>pt</option><option>qt</option><option>gal</option>
+              <option>oz</option><option>lb</option><option>g</option><option>kg</option><option>mL</option><option>L</option>
+            </select>
+          </label>
+          <label>Per
+            <select id="prod-rate-per">
+              <option value="acre">acre</option>
+              <option value="1000sqft">1,000 sq ft</option>
+              <option value="gal">gallon of water</option>
+              <option value="100gal">100 gal of water</option>
+            </select>
+          </label>
+        </div>
+        <div class="form-row">
+          <label class="checkbox-label">
+            <input type="checkbox" id="prod-rup">
+            Restricted-use pesticide (RUP)
+          </label>
+          <label>Notes
+            <input type="text" id="prod-notes" placeholder="Max apps per season, buffer requirements…">
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="prod-save-btn">Save product</button>
+          <button type="button" class="btn btn-secondary" id="prod-cancel-btn" hidden>Cancel edit</button>
+        </div>
+      </form>
+    </div>
+    <div class="card">
+      <h3 class="card-title">Product library</h3>
+      <div id="product-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ FIELDS ============ -->
+  <section id="tab-fields" class="tab-panel" role="tabpanel">
+    <div class="card">
+      <h3 class="card-title" id="field-form-title">Add a field / site</h3>
+      <form id="field-form" class="form-grid" autocomplete="off">
+        <input type="hidden" id="field-id">
+        <div class="form-row form-row-4">
+          <label>Field name <span class="req-star">*</span>
+            <input type="text" id="field-name" required placeholder="e.g. North block">
+          </label>
+          <label>Size
+            <input type="number" id="field-acres" step="any" min="0" placeholder="e.g. 2.5">
+          </label>
+          <label>Unit
+            <select id="field-unit">
+              <option value="acres">acres</option>
+              <option value="sqft">sq ft</option>
+            </select>
+          </label>
+          <label>Usual crop
+            <input type="text" id="field-crop" placeholder="e.g. Mixed vegetables">
+          </label>
+        </div>
+        <div class="form-row">
+          <label>Location description <span class="req-star">*</span>
+            <input type="text" id="field-location" placeholder="e.g. East of barn, 123 Farm Rd, Nobleboro ME — or GPS coords">
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="field-save-btn">Save field</button>
+          <button type="button" class="btn btn-secondary" id="field-cancel-btn" hidden>Cancel edit</button>
+        </div>
+      </form>
+    </div>
+    <div class="card">
+      <h3 class="card-title">Fields &amp; sites</h3>
+      <div id="field-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ REPORTS ============ -->
+  <section id="tab-reports" class="tab-panel" role="tabpanel">
+    <div class="card">
+      <h3 class="card-title">Reports &amp; export</h3>
+      <p class="card-hint">Federal law requires RUP records be kept for 2 years (7 CFR 110); many states require longer for all pesticides. Everything below runs on this device — nothing is uploaded anywhere.</p>
+      <div class="form-grid">
+        <div class="form-row form-row-4">
+          <label>From
+            <input type="date" id="report-from">
+          </label>
+          <label>To
+            <input type="date" id="report-to">
+          </label>
+          <label>Field
+            <select id="report-field"><option value="">All fields</option></select>
+          </label>
+          <label>Product
+            <select id="report-product"><option value="">All products</option></select>
+          </label>
+        </div>
+      </div>
+      <div class="form-actions report-actions">
+        <button class="btn btn-primary" id="report-print">Print / PDF inspection report</button>
+        <button class="btn btn-secondary" id="report-csv">Download CSV</button>
+      </div>
+      <p class="card-hint" id="report-count"></p>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">Backup &amp; restore</h3>
+      <p class="card-hint">Your records live only in this browser. Download a backup regularly and keep it with your farm files.</p>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="backup-download">Download full backup (.json)</button>
+        <label class="btn btn-secondary file-btn">
+          Restore from backup
+          <input type="file" id="backup-restore" accept=".json,application/json" hidden>
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SETTINGS ============ -->
+  <section id="tab-settings" class="tab-panel" role="tabpanel">
+    <div class="card">
+      <h3 class="card-title">Farm &amp; applicator</h3>
+      <form id="settings-form" class="form-grid" autocomplete="off">
+        <div class="form-row form-row-3">
+          <label>Farm name
+            <input type="text" id="set-farm" placeholder="e.g. Spear Farm">
+          </label>
+          <label>State
+            <select id="set-state"><option value="">— Select state —</option></select>
+          </label>
+          <label>County <span id="req-county" class="state-req-tag" hidden>state</span>
+            <input type="text" id="set-county" placeholder="e.g. Lincoln">
+          </label>
+        </div>
+        <div class="form-row form-row-3">
+          <label>Default applicator name
+            <input type="text" id="set-applicator">
+          </label>
+          <label>Certification / license #
+            <input type="text" id="set-cert">
+          </label>
+          <label>Certification expiry
+            <input type="date" id="set-cert-expiry">
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Save settings</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card" id="state-info-card" hidden>
+      <h3 class="card-title">State requirements</h3>
+      <div id="state-info"></div>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">Data</h3>
+      <p class="card-hint">All data is stored locally in this browser (<span id="storage-usage">…</span>). No account, no server, no cost.</p>
+      <div class="form-actions">
+        <button class="btn btn-danger" id="data-clear">Erase all data on this device</button>
+      </div>
+    </div>
+
+    <div class="card about-card">
+      <h3 class="card-title">About</h3>
+      <p>Pesticide Logger v2.0 — part of the <strong>Practical Farm Tools</strong> suite. Free forever, works offline, and your data never leaves your device.</p>
+      <p class="card-hint">This tool helps you keep records; it is not legal advice. Always follow the product label and confirm requirements with your state pesticide agency.</p>
+    </div>
+  </section>
+
+</main>
+
+<div id="toast" class="toast" role="status"></div>
+
+<!-- Print report container (populated at print time) -->
+<div id="print-area" class="print-area" aria-hidden="true"></div>
+
+<script src="state_pesticide_laws.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

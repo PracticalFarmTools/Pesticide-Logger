@@ -1,4 +1,4 @@
-# Pesticide Logger v2.6.1
+# Pesticide Logger v2.7.0
 
 **Free, offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite.
@@ -31,7 +31,12 @@ application at the repository root.
 | **Live EPA product lookup** | Official EPA PPLS identity/status import via optional Vercel proxy. Rates, REI, and PHI stay label-entered. |
 | **Field mapper** | Satellite corner tapping with geodesic acreage; boundaries stay local. |
 | **Weather auto-fill** | Open-Meteo fill for wind, temperature, sky/humidity at field centroid or GPS. |
-| **Inspection output** | Print/PDF, CSV, and **state compliance pack** (JSON with citation, field matrix, due/copy status, audit history). |
+| **Inspection output** | Print/PDF, CSV, **state compliance pack** (JSON with citation, field matrix, due/copy status, audit history), and a **certifier/buyer packet** for organic & GAP audits. |
+| **Spray window outlook** | Next 48 hours scored good/marginal/poor per mapped field from free Open-Meteo wind/gust/rain data (Pro). |
+| **Photos & barcode** | Attach label/lot/condition photos to records (free, device-local); scan a jug's UPC to drop it into the tank mix (Pro). |
+| **REI posting & reminders** | Bilingual DO NOT ENTER / NO ENTRE posting sheet from any active REI, plus opt-in browser notifications when REI clears or PHI dates arrive. |
+| **CSV import** | Bring existing Excel/Sheets records in with a column-mapping wizard — rows land as compliance-checked drafts. |
+| **Spanish interface** | One-tap Español toggle covering interface labels (212-entry dictionary). |
 | **Smarter backup merge** | Newest `updatedAt` wins; audit histories union; no silent loss when syncing phone ↔ PC. |
 | **Offline-first PWA** | Installable; core logging works with no connectivity after first load. |
 

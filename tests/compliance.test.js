@@ -216,17 +216,19 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.6.1 + deadline/license wiring', () => {
+check('source files advertise v2.7.0 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.6.1'));
-  assert.ok(sw.includes('pesticide-logger-v2.6.1'));
-  assert.ok(html.includes('v2.6.1'));
+  assert.ok(app.includes('v2.7.0'));
+  assert.ok(sw.includes('pesticide-logger-v2.7.0'));
+  assert.ok(html.includes('v2.7.0'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));
+  assert.ok(html.includes('i18n.js'));
   assert.ok(sw.includes('./deadline.js'));
   assert.ok(sw.includes('./license.js'));
+  assert.ok(sw.includes('./i18n.js'));
   assert.ok(html.includes('auto-backup-connect'), 'auto backup UI present');
   assert.ok(app.includes('function connectAutoBackup'), 'auto backup wired');
   assert.ok(html.includes('Terms of use, license'), 'in-app legal terms present');
@@ -241,6 +243,37 @@ check('source files advertise v2.6.1 + deadline/license wiring', () => {
   assert.ok(fs.existsSync(path.join(root, 'deadline.js')));
   assert.ok(fs.existsSync(path.join(root, 'license.js')));
   assert.ok(!/(?<!\$)\$\('#app-products \.app-product-row'\)\.(forEach|map)/.test(app));
+});
+
+check('v2.7 features wired: forecast, photos, barcode, posting, import, i18n', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  assert.ok(app.includes('function scoreSprayHour'), 'forecast scoring');
+  assert.ok(app.includes('function fetchSprayForecast'), 'forecast fetch');
+  assert.ok(html.includes('spray-window-card'), 'forecast card');
+  assert.ok(app.includes('function capturePhotoInto'), 'photo capture');
+  assert.ok(app.includes('function sweepOrphanPhotos'), 'photo sweep');
+  assert.ok(app.includes('function scanJugIntoMix'), 'barcode jug scan');
+  assert.ok(app.includes('function printReiPosting'), 'posting sheet');
+  assert.ok(app.includes('NO ENTRE'), 'bilingual posting');
+  assert.ok(app.includes('function checkReminders'), 'reminders');
+  assert.ok(app.includes('function printCertifierPacket'), 'certifier packet');
+  assert.ok(app.includes('function parseCsv'), 'csv import');
+  assert.ok(app.includes('function runCsvImport'), 'csv import run');
+  const i18n = require(path.join(root, 'i18n.js'));
+  assert.ok(Object.keys(i18n.ES).length >= 180, 'spanish dictionary size');
+  assert.strictEqual(i18n.ES['Spray Log'], 'Registro');
+  // Pro/free split for new features: forecast + barcode + certifier gated,
+  // photos + posting + reminders + import free.
+  assert.ok(app.includes("requirePro('Spray window outlook')"));
+  assert.ok(app.includes("requirePro('Barcode jug scanning')"));
+  assert.ok(app.includes("requirePro('Certifier / buyer packet')"));
+  ['function printReiPosting', 'function capturePhotoInto', 'function checkReminders', 'function runCsvImport']
+    .forEach(fn => {
+      const idx = app.indexOf(fn);
+      assert.ok(idx > 0, fn);
+      assert.ok(!app.slice(idx, idx + 400).includes('requirePro'), fn + ' must stay free');
+    });
 });
 
 check('free tier never gates legal-safety features', () => {

@@ -1,0 +1,150 @@
+{
+  "sourceDeployment": "https://practical-farm-tools-pesticide.vercel.app/",
+  "recoveredAtUtc": "2026-07-31T15:54:51.646293+00:00",
+  "files": [
+    {
+      "path": "spray-log.html",
+      "bytes": 60528,
+      "sha256": "bba54894b3f762dbd69f6a9872c8c58f4c6d909c7a8e300a610c4065bffeb2ee",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/spray-log.html"
+    },
+    {
+      "path": "styles.css",
+      "bytes": 137116,
+      "sha256": "c23fe6a445d4b6d221535ce60ffbe6d368cc0ca179da36720b27a0540b6b80d2",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/styles.css"
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 696,
+      "sha256": "80dc9edb1ee247a66d705c7aa0e8c6598ca8d3c6ea1e82544153771a95f04691",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/manifest.json"
+    },
+    {
+      "path": "icon-192.png",
+      "bytes": 17584,
+      "sha256": "a195dec313327b6feeb9473e1f834bfc53003a6cb78a58e83cb9f26a72dcd8bb",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/icon-192.png"
+    },
+    {
+      "path": "icon-512.png",
+      "bytes": 17584,
+      "sha256": "a195dec313327b6feeb9473e1f834bfc53003a6cb78a58e83cb9f26a72dcd8bb",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/icon-512.png"
+    },
+    {
+      "path": "pesticide-data.js",
+      "bytes": 56827,
+      "sha256": "78eab1af21eae33ae2af67985ab3c2f31048ee89a2319e34d3c3d134cc19a703",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/pesticide-data.js"
+    },
+    {
+      "path": "complianceDictionary.js",
+      "bytes": 22430,
+      "sha256": "dbd4cd1cd0049e2be0d1abebdfb92e4f074a167a41749ad52e0e0925a10cff17",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/complianceDictionary.js"
+    },
+    {
+      "path": "state.js",
+      "bytes": 5851,
+      "sha256": "2d7072c07125c031e79dfd143a8d823f442311e096af268df6f9bb458a3afca4",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/state.js"
+    },
+    {
+      "path": "weather-engine.js",
+      "bytes": 6986,
+      "sha256": "f006eabfd1ea002930d4961306029fff89199b66914570d840cdd02dbdb22ddd",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/weather-engine.js"
+    },
+    {
+      "path": "map-engine.js",
+      "bytes": 24961,
+      "sha256": "ca062fbb571e5e5a37617c2feed01a9875a13fb7357c4a900eaac24cc48facd6",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/map-engine.js"
+    },
+    {
+      "path": "field-manager.js",
+      "bytes": 9136,
+      "sha256": "fa71ac871813722ab9ce9fbbf946405684874068a98fb0bcec0802d238cce1a7",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/field-manager.js"
+    },
+    {
+      "path": "search-engine.js",
+      "bytes": 25318,
+      "sha256": "2b4971cbb82fbc46597331273bef7ea859935cb69d58aa82de9cfc782d0acfae",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/search-engine.js"
+    },
+    {
+      "path": "mix-master.js",
+      "bytes": 27659,
+      "sha256": "0b66080f498198ec2cc3730006b27c588865fc9c925b675d625bc0bb81f32f37",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/mix-master.js"
+    },
+    {
+      "path": "vault-sync.js",
+      "bytes": 32842,
+      "sha256": "94d066b331122944921f94782a8c1b4857b8027c1f37340b699c4845141efe7c",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/vault-sync.js"
+    },
+    {
+      "path": "vault-db.js",
+      "bytes": 23561,
+      "sha256": "02b0ee7ecb2f7fa99716d1b6a283bf96057a922f42e7602d95cab2983ce5d145",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/vault-db.js"
+    },
+    {
+      "path": "cfpa-engine.js",
+      "bytes": 26705,
+      "sha256": "785be53cf4a5a3d347c27d6453b3ff071a19370a1e401c0951cd617b9e3f549b",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/cfpa-engine.js"
+    },
+    {
+      "path": "epa-sync-agent.js",
+      "bytes": 23211,
+      "sha256": "f93f46ccd276b1796c4abe2af0facd88852bc11f26efe435dba2e680757e6a8b",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/epa-sync-agent.js"
+    },
+    {
+      "path": "safety-layers.js",
+      "bytes": 23257,
+      "sha256": "deb37775e36dec0ff542ad9ea60e879ce5f97d8142aadaf1b1088bde43db19bf",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/safety-layers.js"
+    },
+    {
+      "path": "gps-throttle.js",
+      "bytes": 20828,
+      "sha256": "3f76100e4eb3f55d48a4fbe07ef5b6ecfe3cade3505581c7601a13ac2230357b",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/gps-throttle.js"
+    },
+    {
+      "path": "compliance-bridge.js",
+      "bytes": 33793,
+      "sha256": "7abbf58fc0a010fa5e284a1a68a70eb684730076d76b6ecbde6e3ac147d927b7",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/compliance-bridge.js"
+    },
+    {
+      "path": "app.js",
+      "bytes": 85753,
+      "sha256": "d1f89038ecce38302e96fac59e1240bbb5e67c4e16e0999c704e6f5b4d6b89c1",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/app.js"
+    },
+    {
+      "path": "export-engine.js",
+      "bytes": 20451,
+      "sha256": "773cff916993f0ce04aff62e648e731b27d1f7f5c9427bca0d652a295a72b179",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/export-engine.js"
+    },
+    {
+      "path": "voice-engine.js",
+      "bytes": 17009,
+      "sha256": "c8d433645123d63651d84feb0e8b6e07990a58947f450a73df76f089228a1fd7",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/voice-engine.js"
+    },
+    {
+      "path": "sw.js",
+      "bytes": 7861,
+      "sha256": "4f89b4c4679b65bd747792de11164cf0f27b9dfc9ea301c17c9e56f441272742",
+      "source": "https://practical-farm-tools-pesticide.vercel.app/sw.js"
+    }
+  ]
+}

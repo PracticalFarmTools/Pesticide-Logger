@@ -328,6 +328,26 @@
 
   <!-- ============ PRODUCTS ============ -->
   <section id="tab-products" class="tab-panel" role="tabpanel">
+    <div class="card epa-lookup-card">
+      <div class="card-title-row">
+        <div>
+          <h3 class="card-title">Official EPA product lookup</h3>
+          <p class="card-hint">Search the live EPA Pesticide Product Label System by product name or registration number.</p>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" id="epa-verify-all">Verify my library</button>
+      </div>
+      <form id="epa-search-form" class="epa-search-row" role="search">
+        <input type="search" id="epa-search-input" placeholder="Product name or EPA Reg. No. (for example: Entrust or 62719-621)" minlength="2" maxlength="100" required>
+        <button type="submit" class="btn btn-primary">Search EPA</button>
+      </form>
+      <p class="card-hint epa-lookup-note">
+        EPA verifies product identity, registration status, active ingredients, RUP classification, signal word, and label documents.
+        EPA does <strong>not</strong> supply crop-specific rates, REI, or PHI through this API—copy those from the exact current label.
+      </p>
+      <div id="epa-search-status" class="epa-search-status" role="status"></div>
+      <div id="epa-search-results" class="epa-search-results"></div>
+    </div>
+
     <div class="card">
       <h3 class="card-title" id="product-form-title">Add a product</h3>
       <p class="card-hint">Copy REI, PHI, and rates straight from the product label. The label is the law — this tool never overrides it.</p>

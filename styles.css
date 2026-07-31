@@ -397,6 +397,41 @@ input:hover, select:hover, textarea:hover { border-color: var(--border-color-hov
 }
 .product-info-strip .pill-danger { color: var(--danger); border-color: rgba(161,51,51,0.35); background: var(--danger-bg); }
 
+.epa-search-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.6rem;
+  margin-bottom: 0.65rem;
+}
+.epa-search-row .btn { white-space: nowrap; }
+.epa-lookup-note { margin-bottom: 0.5rem; }
+.epa-search-status { min-height: 1.3rem; font-size: 0.82rem; color: var(--text-muted); }
+.epa-search-results { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; }
+.epa-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--primary-green-light);
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+}
+.epa-result-alert { border-left-color: var(--danger); background: var(--danger-bg); }
+.epa-result-main { min-width: 0; }
+.epa-result-meta { color: var(--text-muted); font-size: 0.77rem; margin-top: 0.12rem; }
+.epa-result-actions { display: flex; gap: 0.45rem; flex-wrap: wrap; flex-shrink: 0; }
+.epa-label-link { color: var(--primary-green); font-size: 0.75rem; font-weight: 700; }
+.epa-mismatch { color: var(--danger); font-size: 0.72rem; font-weight: 700; }
+
+@media (max-width: 650px) {
+  .epa-search-row { grid-template-columns: 1fr; }
+  .epa-result { align-items: flex-start; flex-direction: column; }
+  .epa-result-actions { width: 100%; }
+  .epa-result-actions .btn { flex: 1; }
+}
+
 .interval-preview {
   background: var(--warn-bg);
   border: 1px solid rgba(201, 155, 29, 0.35);

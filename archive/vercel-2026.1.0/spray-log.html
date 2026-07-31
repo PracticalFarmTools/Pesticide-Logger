@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Practical Pesticide Log</title>
+    <meta name="description"
+        content="Farm compliance made easy — GPS, weather, and 50-state audit logging for every spray.">
+    <meta name="theme-color" content="#1B5E20">
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- ═══ ONBOARDING OVERLAY (Profile-First Gatekeeper) ═══ -->
+    <div id="onboarding-overlay" class="onboarding-overlay">
+        <div class="onboarding-card">
+            <div class="onboarding-brand">
+                <i data-lucide="sprout" width="32"></i>
+                <h1>Practical Pesticide Log</h1>
+                <p class="onboarding-subtitle">by Practical Farm Tools</p>
+            </div>
+
+            <div class="onboarding-form">
+                <label class="onboarding-label required-label">
+                    <span>State <span class="required-star">*</span></span>
+                    <select id="onboard-state" class="onboarding-select">
+                        <option value="" disabled selected>Select your state…</option>
+                        <option value="AL">Alabama</option>
+                        <option value="AK">Alaska</option>
+                        <option value="AZ">Arizona</option>
+                        <option value="AR">Arkansas</option>
+                        <option value="CA">California</option>
+                        <option value="CO">Colorado</option>
+                        <option value="CT">Connecticut</option>
+                        <option value="DE">Delaware</option>
+                        <option value="FL">Florida</option>
+                        <option value="GA">Georgia</option>
+                        <option value="HI">Hawaii</option>
+                        <option value="ID">Idaho</option>
+                        <option value="IL">Illinois</option>
+                        <option value="IN">Indiana</option>
+                        <option value="IA">Iowa</option>
+                        <option value="KS">Kansas</option>
+                        <option value="KY">Kentucky</option>
+                        <option value="LA">Louisiana</option>
+                        <option value="ME">Maine</option>
+                        <option value="MD">Maryland</option>
+                        <option value="MA">Massachusetts</option>
+                        <option value="MI">Michigan</option>
+                        <option value="MN">Minnesota</option>
+                        <option value="MS">Mississippi</option>
+                        <option value="MO">Missouri</option>
+                        <option value="MT">Montana</option>
+                        <option value="NE">Nebraska</option>
+                        <option value="NV">Nevada</option>
+                        <option value="NH">New Hampshire</option>
+                        <option value="NJ">New Jersey</option>
+                        <option value="NM">New Mexico</option>
+                        <option value="NY">New York</option>
+                        <option value="NC">North Carolina</option>
+                        <option value="ND">North Dakota</option>
+                        <option value="OH">Ohio</option>
+                        <option value="OK">Oklahoma</option>
+                        <option value="OR">Oregon</option>
+                        <option value="PA">Pennsylvania</option>
+                        <option value="RI">Rhode Island</option>
+                        <option value="SC">South Carolina</option>
+                        <option value="SD">South Dakota</option>
+                        <option value="TN">Tennessee</option>
+                        <option value="TX">Texas</option>
+                        <option value="UT">Utah</option>
+                        <option value="VT">Vermont</option>
+                        <option value="VA">Virginia</option>
+                        <option value="WA">Washington</option>
+                        <option value="WV">West Virginia</option>
+                        <option value="WI">Wisconsin</option>
+                        <option value="WY">Wyoming</option>
+                    </select>
+                </label>
+
+                <label class="onboarding-label">
+                    <span>Applicator Name</span>
+                    <input type="text" id="onboard-name" class="onboarding-input" placeholder="Full Name"
+                        autocomplete="name">
+                </label>
+                <label class="onboarding-label">
+                    <span>Farm / Operation</span>
+                    <input type="text" id="onboard-farm" class="onboarding-input" placeholder="e.g. North Ridge Farms"
+                        autocomplete="off">
+                </label>
+                <label class="onboarding-label">
+                    <span id="onboard-license-label">License #</span>
+                    <input type="text" id="onboard-license" class="onboarding-input" placeholder="e.g. ME-123456-A"
+                        autocomplete="off">
+                </label>
+            </div>
+
+            <button id="onboard-enter-btn" class="onboarding-enter-btn" disabled>
+                <i data-lucide="arrow-right-circle" width="20"></i>
+                Let's Go
+            </button>
+            <p class="onboarding-hint">State is required for compliance rules. Other fields are optional.</p>
+        </div>
+    </div>
+
+    <div class="cockpit-layout">
+        <!-- Header -->
+        <header class="app-header">
+            <button id="identity-anchor-btn" class="identity-btn" title="My Profile">
+                <i data-lucide="user-circle" width="22"></i>
+            </button>
+            <h1 class="app-title">
+                <i data-lucide="sprout" width="20"></i> Practical Pesticide Log
+            </h1>
+            <div id="state-badge" class="state-badge" title="Active compliance state">
+                <span id="state-badge-label">--</span>
+            </div>
+        </header>
+
+        <!-- Guided Mode: Step Hint Bar -->
+        <div id="step-hint-bar" class="step-hint-bar">
+            <span id="step-hint-text">① Tap "Find My Field" to start</span>
+        </div>
+
+        <!-- Smart Defaults: Last Spray Banner -->
+        <div id="last-spray-banner" class="last-spray-banner hidden">
+            <i data-lucide="repeat" width="14"></i>
+            <span>Continuing from <strong id="last-spray-label">--</strong></span>
+            <button class="last-spray-clear" onclick="clearLastSprayBanner()">✕ Clear</button>
+        </div>
+
+        <!-- Identity Anchor Popover -->
+        <div id="identity-popover" class="identity-popover hidden">
+            <div class="id-popover-header">
+                <i data-lucide="id-card" width="18"></i>
+                <span>Applicator Profile</span>
+            </div>
+            <div class="id-popover-body">
+                <label class="id-label">Name
+                    <input type="text" id="id-name" class="id-input" placeholder="Full Name" autocomplete="off">
+                </label>
+                <label class="id-label">Farm
+                    <input type="text" id="id-farm" class="id-input" placeholder="Farm / Operation" autocomplete="off">
+                </label>
+                <label class="id-label"><span id="id-license-label">License #</span>
+                    <input type="text" id="id-license" class="id-input" placeholder="e.g. ME-123456-A"
+                        autocomplete="off">
+                </label>
+                <label class="id-label">Certification #
+                    <input type="text" id="id-cert" class="id-input" placeholder="State Cert Number" autocomplete="off">
+                </label>
+                <label class="id-label">Home State
+                    <div class="home-state-lock">
+                        <span id="home-state-badge" class="home-state-badge">--</span>
+                        <button type="button" id="change-state-btn" class="change-state-link">Change</button>
+                    </div>
+                    <select id="id-state" class="id-input hidden">
+                        <option value="">Select…</option>
+                        <optgroup label="─ Detailed Rules ─">
+                            <option value="ME">Maine</option>
+                            <option value="CA">California</option>
+                            <option value="TX">Texas</option>
+                            <option value="FL">Florida</option>
+                            <option value="WA">Washington</option>
+                            <option value="GA">Georgia</option>
+                            <option value="NY">New York</option>
+                            <option value="OH">Ohio</option>
+                            <option value="OR">Oregon</option>
+                        </optgroup>
+                        <optgroup label="─ All States ─">
+                            <option value="AL">Alabama</option>
+                            <option value="AK">Alaska</option>
+                            <option value="AZ">Arizona</option>
+                            <option value="AR">Arkansas</option>
+                            <option value="CO">Colorado</option>
+                            <option value="CT">Connecticut</option>
+                            <option value="DE">Delaware</option>
+                            <option value="HI">Hawaii</option>
+                            <option value="ID">Idaho</option>
+                            <option value="IL">Illinois</option>
+                            <option value="IN">Indiana</option>
+                            <option value="IA">Iowa</option>
+                            <option value="KS">Kansas</option>
+                            <option value="KY">Kentucky</option>
+                            <option value="LA">Louisiana</option>
+                            <option value="MD">Maryland</option>
+                            <option value="MA">Massachusetts</option>
+                            <option value="MI">Michigan</option>
+                            <option value="MN">Minnesota</option>
+                            <option value="MS">Mississippi</option>
+                            <option value="MO">Missouri</option>
+                            <option value="MT">Montana</option>
+                            <option value="NE">Nebraska</option>
+                            <option value="NV">Nevada</option>
+                            <option value="NH">New Hampshire</option>
+                            <option value="NJ">New Jersey</option>
+                            <option value="NM">New Mexico</option>
+                            <option value="NC">North Carolina</option>
+                            <option value="ND">North Dakota</option>
+                            <option value="OK">Oklahoma</option>
+                            <option value="PA">Pennsylvania</option>
+                            <option value="RI">Rhode Island</option>
+                            <option value="SC">South Carolina</option>
+                            <option value="SD">South Dakota</option>
+                            <option value="TN">Tennessee</option>
+                            <option value="UT">Utah</option>
+                            <option value="VT">Vermont</option>
+                            <option value="VA">Virginia</option>
+                            <option value="WV">West Virginia</option>
+                            <option value="WI">Wisconsin</option>
+                            <option value="WY">Wyoming</option>
+                        </optgroup>
+                    </select>
+                </label>
+            </div>
+            <button id="id-save-btn" class="primary-btn id-save-btn">
+                <i data-lucide="save" width="16"></i> Save Profile
+            </button>
+            <div class="id-version-footer">
+                <span>v1.0 — Practical Farm Tools</span>
+                <div id="epa-sync-badge" class="epa-sync-badge idle">⏳ EPA Sync: Pending</div>
+            </div>
+        </div>
+
+        <!-- ═══ TOP SECTION – MAP ═══ -->
+        <section class="top-section">
+            <div id="map-container" class="map-container-full"></div>
+
+            <!-- Safety Shield FAB (collapsed - expands on alert) -->
+            <button id="safety-shield-fab" class="safety-shield-fab hidden" title="Safety Alerts">
+                <i data-lucide="shield-alert" width="18" class="shield-icon"></i>
+                <span id="safety-shield-text" class="shield-text"></span>
+            </button>
+
+            <!-- Hidden alert data (tracked by JS, shown via shield) -->
+            <div id="weather-variance-alert" class="hidden" data-alert-type="weather"></div>
+            <div id="proximity-alert" class="hidden" data-alert-type="proximity"><span id="distance-reading">--</span>
+            </div>
+            <div id="inversion-alert" class="hidden" data-alert-type="inversion"></div>
+
+            <!-- Zero-Clutter Map FAB Stack (right-side vertical controls) -->
+            <div class="map-fab-stack">
+                <button id="fab-zoom-in" class="map-fab-btn" title="Zoom In">
+                    <i data-lucide="plus" width="20"></i>
+                </button>
+                <button id="fab-zoom-out" class="map-fab-btn" title="Zoom Out">
+                    <i data-lucide="minus" width="20"></i>
+                </button>
+                <button id="fab-draw" class="map-fab-btn" title="Draw Field">
+                    <i data-lucide="pencil" width="18"></i>
+                </button>
+                <button id="fab-clear" class="map-fab-btn" title="Clear Field">
+                    <i data-lucide="trash-2" width="16"></i>
+                </button>
+                <button id="basemap-toggle" class="map-fab-btn basemap-toggle-fab" title="Switch Basemap">
+                    <span id="basemap-label">TOPO</span>
+                </button>
+                <button id="map-focus-btn" class="map-fab-btn" title="Focus Mode">
+                    <i data-lucide="maximize-2" width="18"></i>
+                </button>
+            </div>
+
+            <!-- Floating HUD Badge (bottom-center, semi-transparent) -->
+            <div id="map-hud" class="map-hud">
+                <input type="text" id="field-name-input" class="hud-field-input" placeholder="Field Name"
+                    autocomplete="off">
+                <div class="hud-divider"></div>
+                <div class="hud-acreage"><span id="calculated-acreage">0.00</span> AC</div>
+                <button id="save-field-btn" class="hud-save-btn" title="Save This Field">
+                    <i data-lucide="bookmark-plus" width="14"></i>
+                </button>
+            </div>
+
+            <!-- Floating Drawing HUD — Compact Left-Edge Strip (top-left, never blocks map centre) -->
+            <div id="draw-hud" class="draw-hud hidden">
+                <!-- Info pill: acreage hero + status + vertex count -->
+                <div class="draw-hud-info">
+                    <div id="draw-hud-area" class="draw-hud-area">0.00 AC</div>
+                    <div id="draw-hud-status" class="draw-hud-status">Tap corners of field</div>
+                    <span id="draw-hud-vertices" class="draw-hud-vertices">0 pts</span>
+                </div>
+                <!-- Icon-only action buttons -->
+                <div class="draw-hud-actions">
+                    <button id="draw-hud-cancel" class="draw-hud-btn draw-hud-cancel" title="Cancel Drawing">
+                        <i data-lucide="x" width="17"></i>
+                        <span>Cancel</span>
+                    </button>
+                    <button id="draw-hud-undo" class="draw-hud-btn" title="Undo Last Point">
+                        <i data-lucide="undo-2" width="17"></i>
+                        <span>Undo</span>
+                    </button>
+                    <button id="draw-hud-finish" class="draw-hud-btn draw-hud-finish disabled" title="Finish Field">
+                        <i data-lucide="check" width="17"></i>
+                        <span>Done</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Post-Draw Save Field Card (appears after polygon completion) -->
+            <div id="save-field-card" class="save-field-card hidden">
+                <div class="save-card-header">
+                    <i data-lucide="map-pin" width="18"></i>
+                    <span class="save-card-title">Save This Field</span>
+                    <span id="save-card-acreage" class="save-card-acreage">0.00 AC</span>
+                </div>
+                <input type="text" id="save-card-name" class="save-card-input" placeholder="Enter field name…" autocomplete="off">
+                <div class="save-card-actions">
+                    <button id="save-card-discard" class="save-card-btn save-card-discard">
+                        <i data-lucide="trash-2" width="14"></i> Discard
+                    </button>
+                    <button id="save-card-save" class="save-card-btn save-card-save">
+                        <i data-lucide="check-circle" width="14"></i> Save Field
+                    </button>
+                </div>
+            </div>
+
+            <!-- GPS FAB – Centered Pulsing Visual Anchor -->
+            <div id="gps-pulse-ring" class="gps-pulse-ring"></div>
+            <button id="locate-btn" class="fab-locate" title="Find My Field">
+                <i data-lucide="crosshair" width="22"></i>
+                <span id="locate-label" class="hidden-label">Find My Field</span>
+            </button>
+            <!-- GPS Kinematic Throttle Tier Badge -->
+            <span id="gps-tier-badge" class="gps-tier-badge tier-1" title="GPS Sleep Mode">T1</span>
+
+            <!-- Draw CTA Banner: appears after GPS lock, before field is drawn -->
+            <div id="draw-cta-banner" class="draw-cta-banner hidden">
+                <i data-lucide="pencil-ruler" width="16"></i>
+                <span>Tap <strong>✏️</strong> to draw your field boundary</span>
+            </div>
+
+            <!-- Neighbor Notified Toggle -->
+            <div id="neighbor-toggle-wrap" class="neighbor-toggle-wrap hidden"
+                title="Neighbor notified – shrink buffer">
+                <i data-lucide="bell" width="14"></i>
+                <span>Notified</span>
+                <div class="neighbor-toggle"></div>
+            </div>
+        </section>
+
+        <!-- ═══ MID SECTION – BENTO TILES ═══ -->
+        <section class="mid-section">
+            <!-- Librarian Tile -->
+            <div class="bento-tile librarian-tile" id="librarian-tile-trigger" title="Tap to view active product label">
+                <div class="tile-header"><i data-lucide="flask-conical" width="14"></i> Chemicals & Labels</div>
+                <div class="tile-content lib-content">
+                    <div id="lib-product-name" class="product-name">Search or Scan a Label</div>
+                    <div id="lib-epa" class="text-xsmall text-muted epa-text">EPA: --</div>
+                    <div class="recent-searches-box">
+                        <span class="rs-label">Recent Products</span>
+                        <div id="recent-searches-list" class="rs-list">
+                            <div class="text-xsmall text-muted" style="padding-top: 4px;">None</div>
+                        </div>
+                    </div>
+                    <a id="label-vault-link" class="label-vault-link hidden" href="#" target="_blank" rel="noopener">
+                        <i data-lucide="file-text" width="14"></i> View Digital Label (PDF)
+                    </a>
+                    <a id="ct-pfas-btn" class="ct-pfas-btn hidden" href="https://portal.ct.gov/deep/pesticides/pfas-in-pesticide-containers" target="_blank" rel="noopener">
+                        <i data-lucide="shield-alert" width="14"></i> Check CT PFAS Status (DEEP Portal)
+                    </a>
+                </div>
+            </div>
+
+            <!-- Environmental Shield -->
+            <div class="bento-tile env-tile disclosure-gate locked" id="env-shield-tile">
+                <div class="tile-header"><i data-lucide="cloud-sun" width="14"></i> Weather & Conditions</div>
+                <div class="tile-content env-content">
+                    <div class="weather-grid">
+                        <div class="weather-src">
+                            <span class="src-label">NOAA HRRR 3km</span>
+                            <div class="w-val-group">
+                                <span id="shield-noaa-temp">--</span>°F |
+                                <span id="shield-noaa-rh">--</span>% |
+                                <span id="shield-noaa-wind">--</span>mph
+                                <span id="lw-wind-deg" class="wind-deg-badge" title="Wind Direction (360-degree)">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="delta-t-box" id="delta-t-box">
+                        <span class="dt-label">Spray Window (ΔT):</span>
+                        <span class="dt-val" id="shield-delta-t">--</span>
+                    </div>
+
+                    <button id="ground-truth-btn" class="secondary-btn verify-btn">
+                        <i data-lucide="check-circle" width="14"></i> Check Conditions Now
+                    </button>
+                    <div id="manual-beaufort-display" class="hidden"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Records Vault link (now in bottom nav) -->
+        <a id="records-vault-btn" class="hidden"
+            href="https://docs.google.com/spreadsheets/d/1NeXx4Ez2xYrbJK0LyGvqRt3KIw1lihXexv4zEbO9J-8/edit"
+            target="_blank" rel="noopener">
+            <span id="records-vault-label">My Spray Records</span>
+        </a>
+
+        <!-- Border-Crossing Notice -->
+        <div id="state-crossing-notice" class="state-crossing-notice hidden">
+            <i data-lucide="map-pin" width="14"></i>
+            <span id="state-crossing-text">Switching compliance view...</span>
+            <button id="state-crossing-dismiss" class="state-crossing-x">&times;</button>
+        </div>
+
+        <!-- ═══ BOTTOM SECTION – THUMB ZONE ═══ -->
+        <section class="bottom-section thumb-zone">
+            <div class="search-container full-width-search">
+                <button id="ocr-scan-btn" class="search-action-btn ocr-btn" title="Scan Label (Camera)">
+                    <i data-lucide="camera" width="20"></i>
+                </button>
+                <!-- Hidden file input for real camera capture -->
+                <input type="file" id="camera-file-input" accept="image/*" capture="environment" class="hidden">
+                <input type="text" id="pesticide-search" placeholder="Find a product" class="search-input">
+                <button id="search-btn" class="search-action-btn" title="Search Chemicals">
+                    <i data-lucide="search" width="20"></i>
+                </button>
+            </div>
+            <div id="ocr-status-line" class="ocr-status-line" aria-live="polite"></div>
+
+            <!-- Top 10 Most-Used Product Chips -->
+
+            <div id="top10-chips-container" class="top10-container hidden">
+                <span class="top10-label"><i data-lucide="zap" width="12"></i> Quick-Pick Products</span>
+                <div id="top10-chips" class="top10-scroll"></div>
+            </div>
+
+            <!-- ═══ LIVE WEATHER BAR ═══ -->
+            <div id="live-weather-bar" class="live-weather-bar">
+                <div class="lw-item" title="Temperature">
+                    <i data-lucide="thermometer" width="13"></i>
+                    <span id="lw-temp">--</span>°F
+                </div>
+                <div class="lw-item" title="Wind Speed">
+                    <i data-lucide="wind" width="13"></i>
+                    <span id="lw-wind">--</span>mph
+                </div>
+                <div class="lw-item" title="Wind Direction">
+                    <i data-lucide="compass" width="13"></i>
+                    <span id="lw-wind-dir">--</span>
+                </div>
+                <div class="lw-item" title="Humidity">
+                    <i data-lucide="droplets" width="13"></i>
+                    <span id="lw-rh">--</span>%
+                </div>
+                <div class="lw-src">HRRR 3km <span id="lw-status" class="lw-dot">●</span></div>
+            </div>
+
+            <!-- ═══ FARM PRESET BADGE ═══ -->
+            <div id="farm-preset-badge" class="farm-preset-badge hidden">
+                <i data-lucide="settings-2" width="12"></i>
+                <span id="farm-preset-text">Last setup loaded</span>
+                <button id="farm-preset-clear" class="farm-preset-clear" title="Clear preset">×</button>
+            </div>
+
+            <!-- ═══ COMPLIANCE WARNING BANNER ═══ -->
+            <div id="compliance-rate-warn" class="compliance-rate-warn hidden">
+                <i data-lucide="alert-triangle" width="16"></i>
+                <span id="compliance-rate-text">Rate outside legal label range</span>
+            </div>
+
+            <!-- ═══ CFPA CHILDREN'S SHIELD ALERT BANNER (MA Only) ═══ -->
+            <div id="cfpa-alert-banner" class="cfpa-alert-banner hidden">
+                <!-- Dynamically populated by cfpa-engine.js -->
+            </div>
+
+            <!-- ═══ EQUIPMENT DRAWER (Collapsible) ═══ -->
+            <div id="equip-drawer" class="adaptive-drawer">
+                <button id="equip-drawer-toggle" class="drawer-toggle" type="button">
+                    <i data-lucide="wrench" width="14"></i>
+                    <span>Equipment & Nozzle</span>
+                    <i data-lucide="chevron-down" width="14" class="drawer-chevron"></i>
+                </button>
+                <div id="equip-drawer-body" class="drawer-body collapsed">
+            <div id="equip-strip" class="equip-strip disclosure-gate locked">
+                <span id="section-check-equip" class="section-check">○</span>
+                <input type="hidden" id="nozzle-iso-select" value="">
+                <input type="hidden" id="input-psi" value="">
+                <input type="hidden" id="input-mph" value="">
+                <input type="hidden" id="input-method" value="">
+                <div class="equip-row">
+                    <span class="equip-strip-label"><i data-lucide="tractor" width="12"></i> Method</span>
+                    <div class="zt-group" id="method-buttons">
+                        <button class="zt-btn selected" data-value="Ground" type="button">🚜 Ground</button>
+                        <button class="zt-btn" data-value="Boom Sprayer" type="button">🔧 Boom</button>
+                        <button class="zt-btn" data-value="Airblast" type="button">💨 Airblast</button>
+                        <button class="zt-btn" data-value="Aerial" type="button">✈️ Aerial</button>
+                        <button class="zt-btn" data-value="Backpack" type="button">🎒 Backpack</button>
+                        <button class="zt-btn" data-value="Chemigation" type="button">💧 Chemi</button>
+                        <button class="zt-btn" data-value="Injection" type="button">💉 Inject</button>
+                    </div>
+                </div>
+                <div class="equip-row">
+                    <span class="equip-strip-label"><i data-lucide="bug" width="12"></i> Target Pest</span>
+                    <input type="text" id="input-target-pest" class="equip-inline-input" placeholder="e.g. Potato Beetle" autocomplete="off">
+                </div>
+                <div class="equip-row">
+                    <span class="equip-strip-label"><i data-lucide="gauge" width="12"></i> Nozzle</span>
+                    <div class="zt-group" id="nozzle-buttons">
+                        <button class="zt-btn" data-value="XR" type="button">XR</button>
+                        <button class="zt-btn" data-value="TT" type="button">TT</button>
+                        <button class="zt-btn" data-value="TTI" type="button">TTI</button>
+                        <button class="zt-btn" data-value="AI" type="button">AI</button>
+                        <button class="zt-btn" data-value="AIXR" type="button">AIXR</button>
+                    </div>
+                </div>
+                <div class="equip-row">
+                    <span class="equip-strip-label">PSI</span>
+                    <div class="zt-group" id="psi-buttons">
+                        <button class="zt-btn" data-value="20" type="button">20</button>
+                        <button class="zt-btn" data-value="30" type="button">30</button>
+                        <button class="zt-btn" data-value="40" type="button">40</button>
+                        <button class="zt-btn" data-value="60" type="button">60</button>
+                        <button class="zt-btn" data-value="80" type="button">80</button>
+                    </div>
+                </div>
+                <div class="equip-row">
+                    <span class="equip-strip-label">Speed</span>
+                    <div class="zt-group" id="mph-buttons">
+                        <button class="zt-btn" data-value="3" type="button">3</button>
+                        <button class="zt-btn" data-value="5" type="button">5</button>
+                        <button class="zt-btn" data-value="7" type="button">7</button>
+                        <button class="zt-btn" data-value="10" type="button">10</button>
+                        <button class="zt-btn" data-value="12" type="button">12</button>
+                    </div>
+                </div>
+            </div>
+                </div>
+            </div>
+
+            <!-- Beaufort Gate / Row -->
+            <div id="beaufort-wrapper" style="display:flex; flex-direction: column; gap: 4px;">
+                <span class="beaufort-label-text">What's the wind doing?</span>
+                <div class="beaufort-row" id="beaufort-row">
+                    <div class="beaufort-circle" data-force="0" title="Force 0: <1mph">0</div>
+                    <div class="beaufort-circle" data-force="1" title="Force 1: 1-3mph">1</div>
+                    <div class="beaufort-circle" data-force="2" title="Force 2: 4-7mph">2</div>
+                    <div class="beaufort-circle" data-force="3" title="Force 3: 8-12mph">3</div>
+                    <div class="beaufort-circle" data-force="4" title="Force 4: 13-18mph">4</div>
+                </div>
+            </div>
+
+            <!-- Collapsible Precision Details Pane (Compliance Chameleon – rebuilt dynamically) -->
+            <div id="precision-details-pane" class="precision-pane disclosure-gate locked">
+                <span id="section-check-safety" class="section-check">○</span>
+                <button id="precision-toggle" class="precision-toggle-btn" type="button">
+                    <i data-lucide="sliders-horizontal" width="14"></i>
+                    <span>Record Details</span>
+                    <i data-lucide="chevron-down" width="14" id="precision-chevron"></i>
+                </button>
+                <div id="precision-fields" class="precision-fields collapsed">
+                    <!-- Dynamically built by updateComplianceUI() based on state rules -->
+                </div>
+            </div>
+
+            <div class="action-area">
+                <!-- Readiness Checklist -->
+                <div id="readiness-list" class="readiness-list"></div>
+                <span id="compliance-badge" class="compliance-badge hidden"></span>
+
+                <!-- ═══ PRE-SPRAY COMPLIANCE CHECKLIST ═══ -->
+                <div id="pre-spray-checklist" class="pre-spray-checklist">
+                    <div class="psc-header">
+                        <i data-lucide="clipboard-check" width="14"></i>
+                        <span>Pre-Spray Compliance</span>
+                    </div>
+
+                    <!-- ME LD 356 — Residential Property Toggle -->
+                    <div id="ld356-gate" class="psc-gate hidden">
+                        <label class="psc-toggle-label" for="ld356-checkbox">
+                            <span class="psc-toggle-text">
+                                <strong>ME LD 356</strong> — Is this a residential property?
+                            </span>
+                            <div class="psc-toggle-switch">
+                                <input type="checkbox" id="ld356-checkbox" class="psc-toggle-input" />
+                                <span class="psc-toggle-slider"></span>
+                            </div>
+                        </label>
+                        <span class="psc-hint">Neighbor notification confirmed</span>
+                    </div>
+
+                    <!-- NH HB 1431 — State-Owned Property Toggle -->
+                    <div id="nh-hb1431-gate" class="psc-gate hidden">
+                        <label class="psc-toggle-label" for="nh-hb1431-checkbox">
+                            <span class="psc-toggle-text">
+                                <strong>NH HB 1431</strong> — Is this State-Owned Property?
+                            </span>
+                            <div class="psc-toggle-switch">
+                                <input type="checkbox" id="nh-hb1431-checkbox" class="psc-toggle-input" />
+                                <span class="psc-toggle-slider"></span>
+                            </div>
+                        </label>
+                        <span class="psc-hint">IPM plan required for state property</span>
+                    </div>
+
+                    <!-- VT Act 182 — Bloom Stage Certification -->
+                    <label id="vt-bloom-gate" class="psc-gate psc-checkbox-gate hidden">
+                        <input type="checkbox" id="vt-bloom-checkbox" />
+                        <span class="psc-check-text">
+                            <strong>VT Act 182</strong> — Certify Bloom Stage: pollinator-active crops are NOT in bloom, or approved mitigation is in place.
+                        </span>
+                    </label>
+
+                    <!-- VT Act 182 — Bloom Active Toggle (environmental state) -->
+                    <div id="vt-bloom-active-gate" class="psc-gate hidden">
+                        <label class="psc-toggle-label" for="vt-bloom-active-checkbox">
+                            <span class="psc-toggle-text">
+                                <strong>VT Act 182</strong> — Is the target crop currently in bloom (onset of flowering to petal fall)?
+                            </span>
+                            <div class="psc-toggle-switch">
+                                <input type="checkbox" id="vt-bloom-active-checkbox" class="psc-toggle-input" />
+                                <span class="psc-toggle-slider"></span>
+                            </div>
+                        </label>
+                        <span class="psc-hint">Toggle ON if flowers are visible — neonicotinoid restrictions apply</span>
+                    </div>
+
+                    <!-- ME LD 356 — Wild Blueberry 500ft Abutter Notification -->
+                    <div id="me-blueberry-notif-gate" class="psc-gate hidden">
+                        <label class="psc-toggle-label" for="me-blueberry-notif-checkbox">
+                            <span class="psc-toggle-text">
+                                <strong>ME LD 356</strong> — Confirm 500ft wild blueberry abutter notification sent
+                            </span>
+                            <div class="psc-toggle-switch">
+                                <input type="checkbox" id="me-blueberry-notif-checkbox" class="psc-toggle-input" />
+                                <span class="psc-toggle-slider"></span>
+                            </div>
+                        </label>
+                        <span class="psc-hint">Required when spraying within 500ft of wild blueberry abutters</span>
+                    </div>
+
+                    <!-- CT PA 24-59 — PFAS Apparel Disclosure -->
+                    <label id="ct-pfas-apparel-gate" class="psc-gate psc-checkbox-gate hidden">
+                        <input type="checkbox" id="ct-pfas-apparel-checkbox" />
+                        <span class="psc-check-text">
+                            <strong>CT PA 24-59</strong> — Confirm PFAS Apparel Disclosure: all PPE has been verified for PFAS labeling compliance.
+                        </span>
+                    </label>
+
+                    <!-- RI — 24-Hour School Notification -->
+                    <label id="ri-school-notif-gate" class="psc-gate psc-checkbox-gate hidden">
+                        <input type="checkbox" id="ri-school-notif-checkbox" />
+                        <span class="psc-check-text">
+                            <strong>RI DEM</strong> — 24-Hour School Notification has been sent to all schools within 1,500ft of the application site.
+                        </span>
+                    </label>
+                </div>
+
+                <!-- Maine Wind Hard Stop Banner -->
+                <div id="wind-hardstop-banner" class="wind-hardstop-banner hidden">
+                    <span class="hardstop-icon">⛔</span>
+                    <strong>Legal Prohibited:</strong> Wind exceeds 15 mph — spraying is not permitted under Maine law.
+                </div>
+
+                <!-- Digital Signature Pad -->
+                <div id="signature-section" class="signature-section">
+                    <div class="sig-header">
+                        <span class="sig-label">✍️ Sign to Lock</span>
+                        <button type="button" id="sig-clear-btn" class="sig-clear-btn">Clear</button>
+                    </div>
+                    <canvas id="signature-pad" class="signature-pad" width="320" height="100"></canvas>
+                </div>
+
+                <button id="log-spray-btn" class="primary-btn log-btn big-action" disabled>
+                    <span id="log-icon-wrap"><i data-lucide="send" width="20"></i></span>
+                    <span id="log-text">Log This Spray</span>
+                </button>
+                <div class="brand-footnote">by Practical Farm Tools</div>
+            </div>
+
+            <!-- Search Results -->
+            <div id="scrollable-results" class="results-container hidden">
+                <div class="results-header">
+                    <span style="font-weight: 700; font-size: 0.85rem; color: var(--text-muted);">Select Product</span>
+                    <button id="close-search-btn" class="icon-btn" style="width: 24px; height: 24px; box-shadow: none;">
+                        <i data-lucide="x" width="16"></i>
+                    </button>
+                </div>
+                <div id="search-results-list"></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ═══ FIELD HISTORY SLIDE-UP DRAWER ═══ -->
+    <div id="field-history-drawer" class="field-history-drawer">
+        <div id="field-drawer-handle" class="field-drawer-handle">
+            <div class="handle-bar"></div>
+        </div>
+        <div class="field-drawer-header">
+            <i data-lucide="layers" width="14"></i>
+            <span>Field History</span>
+            <span id="field-count-badge" class="field-count-badge">0</span>
+        </div>
+        <div id="field-scroll" class="field-scroll hidden">
+            <div id="field-scroll-pills" class="field-scroll-pills"></div>
+        </div>
+    </div>
+
+    <!-- ═══ FIXED BOTTOM NAV ═══ -->
+    <nav id="bottom-nav" class="bottom-nav">
+        <button id="bottom-nav-map" class="bottom-nav-btn active" title="Map">
+            <i data-lucide="map" width="20"></i>
+            <span>Map</span>
+        </button>
+        <button id="bottom-nav-mix" class="bottom-nav-btn" title="Mix">
+            <i data-lucide="flask-conical" width="20"></i>
+            <span>Mix</span>
+        </button>
+        <button id="bottom-nav-vault" class="bottom-nav-btn" title="Vault">
+            <i data-lucide="file-spreadsheet" width="20"></i>
+            <span>Vault</span>
+        </button>
+        <button id="bottom-nav-settings" class="bottom-nav-btn" title="Settings">
+            <i data-lucide="settings-2" width="20"></i>
+            <span>Settings</span>
+        </button>
+    </nav>
+
+    <!-- ═══ MIX-MASTER SMART-DRAWER ═══ -->
+    <div id="mixmaster-backdrop" class="mixmaster-backdrop"></div>
+    <div id="mixmaster-drawer" class="mixmaster-drawer">
+        <div class="mm-header">
+            <div class="mm-title">
+                <i data-lucide="flask-conical" width="20"></i>
+                <span>Get My Mix</span>
+            </div>
+            <button id="mm-close-btn" class="close-sheet-btn" title="Close">
+                <i data-lucide="x" width="22"></i>
+            </button>
+        </div>
+
+        <!-- Live Weather Strip -->
+        <div id="mm-weather-strip" class="mm-weather-strip">
+            <i data-lucide="wind" width="14"></i> -- mph &nbsp;|&nbsp; <i data-lucide="thermometer" width="14"></i> --°F
+        </div>
+
+        <!-- Saved Field Quick-Select -->
+        <div class="mm-field-select-wrap">
+            <i data-lucide="map-pin" width="14"></i>
+            <select id="mm-field-select" class="mm-field-select">
+                <option value="">Select Saved Field…</option>
+            </select>
+        </div>
+
+        <!-- Product Badge -->
+        <div class="mm-product-badge" id="mm-product-badge">
+            <span id="mm-product-label">No Product Selected</span>
+            <span id="mm-rate-label" class="mm-rate-tag">-- per acre</span>
+        </div>
+
+        <!-- MOA Rotation Tip (non-intrusive) -->
+        <div id="mm-moa-tip" class="mm-moa-tip hidden">
+            <i data-lucide="refresh-cw" width="14"></i>
+            <span id="mm-moa-tip-text">Rotate MOA group to prevent resistance</span>
+        </div>
+
+        <!-- REI / PHI Auto-Display Badge -->
+        <div id="mm-rei-phi-banner" class="mm-rei-phi-banner hidden">
+            <i data-lucide="clock" width="14"></i>
+            REI: <strong>--</strong> &nbsp;|&nbsp; PHI: <strong>--</strong>
+        </div>
+
+        <!-- EPA-Only Product Advisory Banner -->
+        <div id="mm-epa-advisory" class="mm-epa-advisory hidden">
+            <i data-lucide="alert-triangle" width="14"></i>
+            <span><strong>EPA Database Product</strong> — Verify rates on the official label.</span>
+        </div>
+
+        <!-- Wind Alert Banner -->
+        <div id="mm-wind-alert" class="mm-alert-banner alert-yellow hidden">
+            <i data-lucide="wind" width="16"></i>
+            <span class="alert-text">Wind advisory</span>
+        </div>
+
+        <!-- Pollinator Risk Alert Banner -->
+        <div id="mm-pollinator-alert" class="mm-alert-banner alert-red hidden">
+            <i data-lucide="bug" width="16"></i>
+            <span class="alert-text">Pollinator risk</span>
+        </div>
+
+        <!-- EPA Label Vault Link -->
+        <a id="mm-epa-label-link" class="mm-epa-label-link hidden" href="#" target="_blank" rel="noopener">
+            <i data-lucide="file-text" width="14"></i>
+            <span>View EPA Product Label (PDF)</span>
+            <i data-lucide="external-link" width="12"></i>
+        </a>
+
+        <!-- Over-Application Warning -->
+        <div id="mm-overapply-warning" class="mm-overapply-warning hidden">
+            <i data-lucide="alert-octagon" width="20"></i>
+            <div>
+                <strong>OVER-APPLICATION WARNING</strong>
+                <p id="mm-overapply-detail">Calculated rate exceeds the maximum legal limit.</p>
+            </div>
+        </div>
+
+        <!-- Legal Range Indicator -->
+        <div id="mm-legal-range" class="mm-legal-range">
+            <span class="range-icon">✅</span>
+            <span id="mm-range-text">Legal Range: -- to -- per acre</span>
+        </div>
+
+        <!-- Rate Intensity Slider -->
+        <div class="mm-rate-slider-wrap" id="mm-rate-slider-wrap">
+            <div class="mm-rate-slider-header">
+                <span class="mm-rate-slider-title">Application Intensity</span>
+            </div>
+            <div class="mm-rate-slider-labels">
+                <span id="mm-rate-min-label" class="mm-rate-edge">Min</span>
+                <span id="mm-rate-current-label" class="mm-rate-current-val">-- /acre</span>
+                <span id="mm-rate-max-label" class="mm-rate-edge">Max</span>
+            </div>
+            <input type="range" id="mm-rate-slider" class="mm-rate-slider" min="0" max="100" value="50" step="1">
+        </div>
+
+        <!-- Mode Tabs -->
+        <div class="mm-mode-tabs">
+            <button class="mm-tab active" data-mode="handheld" id="mm-tab-handheld">
+                <i data-lucide="spray-can" width="16"></i> Handheld
+            </button>
+            <button class="mm-tab" data-mode="tractor" id="mm-tab-tractor">
+                <i data-lucide="tractor" width="16"></i> Tractor / Boom
+            </button>
+        </div>
+
+        <!-- ═══ CROP SELECTOR (Two-Tier) ═══ -->
+        <div class="mm-crop-section">
+            <div class="mm-crop-header">Target Crop</div>
+            <div id="mm-crop-categories" class="mm-crop-categories">
+                <!-- Dynamically populated by JS -->
+            </div>
+            <div id="mm-crop-detail" class="mm-crop-detail hidden">
+                <input type="text" id="mm-crop-search" class="mm-crop-search" placeholder="Filter crops…"
+                    autocomplete="off">
+                <div id="mm-crop-grid" class="mm-crop-grid">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+            <div id="mm-crop-selected" class="mm-crop-selected hidden">
+                <span id="mm-crop-selected-text">No crop selected</span>
+                <button id="mm-crop-clear" class="mm-crop-clear">&times;</button>
+            </div>
+        </div>
+
+        <!-- Input Fields -->
+        <div class="mm-inputs">
+            <div class="mm-input-row">
+                <label class="mm-label" id="mm-area-label">
+                    <span>Area to Treat</span>
+                    <div class="mm-input-wrap">
+                        <input type="number" id="mm-area" class="mm-input" placeholder="0" min="0" step="any">
+                        <span class="mm-unit" id="mm-area-unit">sq ft</span>
+                    </div>
+                </label>
+            </div>
+            <div class="mm-input-row mm-tank-row">
+                <label class="mm-label">
+                    <span>Target Tank Size</span>
+                    <div class="mm-input-wrap">
+                        <input type="number" id="mm-tank-target" class="mm-input" placeholder="0" min="0" step="any">
+                        <span class="mm-unit">gal</span>
+                    </div>
+                </label>
+                <label class="mm-label">
+                    <span>Current Level</span>
+                    <div class="mm-input-wrap">
+                        <input type="number" id="mm-tank-current" class="mm-input" placeholder="0" min="0" step="any"
+                            value="0">
+                        <span class="mm-unit">gal</span>
+                    </div>
+                </label>
+            </div>
+            <!-- Smart-Refill Delta Display -->
+            <div class="mm-delta-bar" id="mm-delta-bar">
+                <i data-lucide="droplets" width="14"></i>
+                <span>Water to Add: <strong id="mm-delta-val">0</strong> gal</span>
+            </div>
+        </div>
+
+        <!-- Calculated Output -->
+        <div class="mm-output" id="mm-output">
+            <div class="mm-output-title">Product to Add</div>
+            <div class="mm-output-grid" id="mm-output-grid">
+                <!-- Dynamically populated -->
+                <div class="mm-out-card">
+                    <div class="mm-out-icon" id="mm-icon-1"><i data-lucide="cup-soda" width="24"></i></div>
+                    <div class="mm-out-value" id="mm-val-1">--</div>
+                    <div class="mm-out-label" id="mm-label-1">tsp</div>
+                </div>
+                <div class="mm-out-card">
+                    <div class="mm-out-icon" id="mm-icon-2"><i data-lucide="cup-soda" width="24"></i></div>
+                    <div class="mm-out-value" id="mm-val-2">--</div>
+                    <div class="mm-out-label" id="mm-label-2">Tbsp</div>
+                </div>
+                <div class="mm-out-card">
+                    <div class="mm-out-icon" id="mm-icon-3"><i data-lucide="beaker" width="24"></i></div>
+                    <div class="mm-out-value" id="mm-val-3">--</div>
+                    <div class="mm-out-label" id="mm-label-3">fl oz</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 128th Method Backpack Calibration -->
+        <div class="mm-calibration" id="mm-calibration-section">
+            <div class="mm-cal-header">
+                <i data-lucide="target" width="14"></i>
+                <span>Backpack Calibration (128th Method)</span>
+            </div>
+            <p class="mm-cal-desc">Spray a 18.5 × 18.5 ft test plot. How many ounces did you catch?</p>
+            <div class="mm-input-wrap" style="margin-top: 6px;">
+                <input type="number" id="mm-cal-oz" class="mm-input" placeholder="0" min="0" step="any">
+                <span class="mm-unit">oz caught</span>
+            </div>
+            <div class="mm-cal-result" id="mm-cal-result">
+                <span>Your GPA: <strong id="mm-cal-gpa">--</strong></span>
+            </div>
+        </div>
+
+        <button id="mm-apply-btn" class="primary-btn mm-apply-btn">
+            <i data-lucide="flask-conical" width="18"></i>
+            Add to My Tank
+        </button>
+    </div>
+
+    <!-- ═══ CFPA 48-HOUR NOTIFICATION OVERLAY ═══ -->
+    <div id="cfpa-notification-overlay" class="cfpa-notification-overlay hidden">
+        <!-- Dynamically populated by cfpa-engine.js showNotificationForm() -->
+    </div>
+
+    <!-- ═══ SETTINGS SLIDE-UP DRAWER ═══ -->
+    <div id="settings-backdrop" class="settings-backdrop"></div>
+    <div id="settings-drawer" class="settings-drawer">
+        <!-- Header -->
+        <div class="settings-header">
+            <div class="settings-title">
+                <i data-lucide="settings-2" width="18"></i>
+                <span>Settings</span>
+            </div>
+            <button id="settings-close-btn" class="close-sheet-btn" title="Close">
+                <i data-lucide="x" width="22"></i>
+            </button>
+        </div>
+
+        <!-- Vault Health Section -->
+        <div class="settings-section">
+            <div class="settings-section-label">
+                <i data-lucide="database" width="13"></i>
+                Local Vault Health
+            </div>
+            <div id="vault-health-card" class="vault-health-card">
+                <!-- Populated by JS on open -->
+                <div class="vh-loading">Loading vault stats…</div>
+            </div>
+            <button id="vault-sync-now-btn" class="settings-action-btn">
+                <i data-lucide="refresh-cw" width="14"></i>
+                Sync Pending Records Now
+            </button>
+        </div>
+
+        <!-- Compliance Engine Section -->
+        <div class="settings-section">
+            <div class="settings-section-label">
+                <i data-lucide="shield-check" width="13"></i>
+                Compliance Engine
+            </div>
+            <div class="settings-info-row">
+                <span class="si-label">Active State</span>
+                <span class="si-value" id="settings-state-badge">--</span>
+            </div>
+            <div class="settings-info-row">
+                <span class="si-label">Engine Version</span>
+                <span class="si-value">ComplianceEngine v1.0</span>
+            </div>
+            <div class="settings-info-row">
+                <span class="si-label">Federal Baseline</span>
+                <span class="si-value si-green">FIFRA + WPS Active</span>
+            </div>
+            <div class="settings-info-row">
+                <span class="si-label">CT PFAS Clock</span>
+                <span class="si-value" id="settings-pfas-clock">--</span>
+            </div>
+        </div>
+
+        <!-- Applicator Profile Section -->
+        <div class="settings-section">
+            <div class="settings-section-label">
+                <i data-lucide="id-card" width="13"></i>
+                Applicator Profile
+            </div>
+            <div class="settings-info-row">
+                <span class="si-label">Name</span>
+                <span class="si-value" id="settings-profile-name">--</span>
+            </div>
+            <div class="settings-info-row">
+                <span class="si-label">Farm</span>
+                <span class="si-value" id="settings-profile-farm">--</span>
+            </div>
+            <div class="settings-info-row">
+                <span class="si-label">License</span>
+                <span class="si-value" id="settings-profile-license">--</span>
+            </div>
+            <button class="settings-action-btn settings-action-secondary" id="settings-edit-profile-btn">
+                <i data-lucide="user-pen" width="14"></i>
+                Edit Profile
+            </button>
+        </div>
+
+        <!-- Data & Storage Section -->
+        <div class="settings-section">
+            <div class="settings-section-label">
+                <i data-lucide="hard-drive" width="13"></i>
+                Data & Retention
+            </div>
+            <div class="settings-info-row">
+                <span class="si-label">CT Retention</span>
+                <span class="si-value">5 years</span>
+            </div>
+            <div class="settings-info-row">
+                <span class="si-label">MA Retention</span>
+                <span class="si-value">3 years</span>
+            </div>
+            <div class="settings-info-row">
+                <span class="si-label">ME / VT / NH / RI</span>
+                <span class="si-value">2 years</span>
+            </div>
+            <div class="settings-info-row">
+                <span class="si-label">Un-synced Purge</span>
+                <span class="si-value si-green">Never (safe)</span>
+            </div>
+        </div>
+
+        <!-- About Section -->
+        <div class="settings-section settings-section-last">
+            <div class="settings-section-label">
+                <i data-lucide="info" width="13"></i>
+                About
+            </div>
+            <div class="settings-info-row">
+                <span class="si-label">Version</span>
+                <span class="si-value">2026.1.0</span>
+            </div>
+            <div class="settings-info-row">
+                <span class="si-label">Weather Source</span>
+                <span class="si-value">NOAA HRRR 3km</span>
+            </div>
+            <div class="settings-info-row">
+                <span class="si-label">EPA Data</span>
+                <span class="si-value">PPIS / Label Sync</span>
+            </div>
+            <a href="https://www.epa.gov/pesticides" target="_blank" rel="noopener" class="settings-action-btn settings-action-secondary settings-link">
+                <i data-lucide="external-link" width="14"></i>
+                EPA Pesticide Resources
+            </a>
+        </div>
+    </div>
+
+    <!-- Success Notification -->
+    <div id="success-notification" class="notification">
+        <div class="notification-title" style="display:flex; align-items:center; gap:6px;">
+            <i data-lucide="check-circle-2" width="24" style="color:var(--primary);"></i>
+            Audit Logged Successfully
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; line-height: 1.4;">
+            Your application data, live weather, and field coordinates have been synced to the secure registry.
+        </p>
+        <div class="notification-links">
+            <a href="#" id="link-master" class="btn btn-primary notification-btn" target="_blank"
+                style="text-decoration:none;">
+                <i data-lucide="external-link" width="18"></i> Open 2026 Audit Log
+            </a>
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 8px;">
+            <button onclick="copyLogToClipboard()" class="secondary-btn" style="flex:1; font-size: 0.78rem;">
+                <i data-lucide="clipboard-copy" width="14"></i> Copy Summary
+            </button>
+            <button onclick="document.getElementById('success-notification').classList.remove('show')"
+                class="secondary-btn dismiss-btn" style="flex:1;">Dismiss</button>
+        </div>
+    </div>
+
+    <!-- Quick Log FAB -->
+    <button id="quick-log-fab" class="quick-log-fab hidden" onclick="executeQuickLog()">
+        <i data-lucide="zap" width="20"></i>
+        <span>Same spray, new field?</span>
+    </button>
+
+    <!-- PFT Toast (Non-intrusive alerts) -->
+    <div id="pft-toast" class="pft-toast">
+        <i id="pft-toast-icon" data-lucide="info" width="18"></i>
+        <span id="pft-toast-text"></span>
+    </div>
+
+    <!-- Librarian Overlay -->
+    <div id="librarian-overlay-backdrop"></div>
+    <div id="librarian-sheet" class="bottom-sheet">
+        <div class="sheet-header">
+            <h3><i data-lucide="book-open" width="20"></i> EPA Label Library</h3>
+            <button id="close-librarian-btn" class="close-sheet-btn" title="Close">
+                <i data-lucide="x" width="24"></i>
+            </button>
+        </div>
+        <div class="sheet-content">
+            <h4 id="librarian-product-name"
+                style="margin-bottom: 16px; font-weight: 700; color: var(--text-main); font-size: 1.05rem;">Product Name
+            </h4>
+            <div class="sheet-section-title">My Farm Priorities</div>
+            <div id="librarian-priority-grid" class="crop-grid"></div>
+            <div class="sheet-section-title" style="margin-top: 8px;">All EPA Crop Groups</div>
+            <div id="librarian-all-grid" class="crop-grid"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Tesseract.js v5 — browser-native OCR for label scanning -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <script src="https://unpkg.com/esri-leaflet@3.0.12/dist/esri-leaflet.js"></script>
+    <script>lucide.createIcons();</script>
+    <script type="module" src="pesticide-data.js"></script>
+    <script type="module" src="complianceDictionary.js"></script>
+    <script src="export-engine.js"></script>
+    <script src="voice-engine.js"></script>
+    <script type="module" src="epa-sync-agent.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
+    <script type="module" src="safety-layers.js"></script>
+    <script type="module" src="cfpa-engine.js"></script>
+    <script type="module" src="gps-throttle.js"></script>
+    <script type="module" src="compliance-bridge.js"></script>
+    <script type="module" src="app.js"></script>
+    <script>
+        // Register Service Worker for offline tile caching
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').catch(() => { });
+        }
+    </script>
+</body>
+
+</html>

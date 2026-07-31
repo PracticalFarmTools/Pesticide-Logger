@@ -2,7 +2,7 @@
  * Cache-first for the app shell; records live in localStorage so the app
  * is fully functional with zero connectivity after first load.
  */
-const CACHE_NAME = 'pesticide-logger-v2.2.0';
+const CACHE_NAME = 'pesticide-logger-v2.3.0';
 const APP_SHELL = [
   './',
   './index.html',
@@ -42,9 +42,13 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  const requestUrl = new URL(event.request.url);
+  // EPA results must remain network-fresh; the serverless proxy sets its own
+  // six-hour edge cache based on EPA's twice-daily update cadence.
+  if (requestUrl.origin === location.origin && requestUrl.pathname.startsWith('/api/')) return;
   // Leave cross-origin requests (map tiles) to the network — caching third-party
   // tiles violates provider policies and would bloat storage.
-  if (new URL(event.request.url).origin !== location.origin) return;
+  if (requestUrl.origin !== location.origin) return;
   event.respondWith(
     caches.match(event.request, { ignoreSearch: true }).then((cached) => {
       if (cached) {

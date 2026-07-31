@@ -197,6 +197,10 @@ main {
 .setup-banner p { font-size: 0.9rem; color: var(--accent-sage-light); max-width: 560px; }
 .setup-banner .btn { width: auto; }
 
+.backup-banner { background: var(--accent-sage-dark); }
+.banner-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.backup-banner .btn-secondary { color: #e8f0e9; border-color: rgba(255, 255, 255, 0.35); }
+
 /* ---------- Dashboard ---------- */
 .stat-grid {
   display: grid;
@@ -353,6 +357,19 @@ input:hover, select:hover, textarea:hover { border-color: var(--border-color-hov
 }
 
 .form-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
+
+.app-product-row { align-items: end; }
+.app-product-row .apr-remove { align-self: end; height: 38px; }
+#app-add-product { margin-top: 0.25rem; }
+
+.legend-btn {
+  margin-left: 0.6rem;
+  font-size: 0.68rem;
+  padding: 0.22rem 0.6rem;
+  text-transform: none;
+  letter-spacing: normal;
+  vertical-align: middle;
+}
 
 .auto-calc-note {
   font-size: 0.82rem;

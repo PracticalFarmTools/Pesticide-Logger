@@ -77,6 +77,17 @@
       <button class="btn btn-primary" data-goto="settings">Set up my farm</button>
     </div>
 
+    <div id="backup-banner" class="setup-banner backup-banner" hidden>
+      <div>
+        <strong>Back up your records.</strong>
+        <p id="backup-banner-msg">Your spray records live only in this browser. Download a backup and keep it with your farm files.</p>
+      </div>
+      <div class="banner-actions">
+        <button class="btn btn-primary" id="backup-banner-download">Download backup</button>
+        <button class="btn btn-secondary" id="backup-banner-snooze">Remind me later</button>
+      </div>
+    </div>
+
     <div class="stat-grid">
       <div class="stat-card">
         <span class="stat-value" id="stat-season-apps">0</span>
@@ -138,21 +149,13 @@
         <input type="hidden" id="app-id">
 
         <fieldset>
-          <legend>What &amp; where</legend>
-          <div class="form-row">
-            <label>Product <span class="req-star">*</span>
-              <select id="app-product" required>
-                <option value="">— Select product —</option>
-              </select>
-            </label>
+          <legend>Where</legend>
+          <div class="form-row form-row-3">
             <label>Field / site <span class="req-star">*</span>
               <select id="app-field" required>
                 <option value="">— Select field —</option>
               </select>
             </label>
-          </div>
-          <div id="app-product-info" class="product-info-strip" hidden></div>
-          <div class="form-row">
             <label>Crop / commodity treated <span class="req-star">*</span>
               <input type="text" id="app-crop" required placeholder="e.g. Sweet corn">
             </label>
@@ -160,6 +163,13 @@
               <input type="text" id="app-pest" placeholder="e.g. Colorado potato beetle">
             </label>
           </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Products applied (tank mix) <span class="req-star">*</span></legend>
+          <div id="app-products"></div>
+          <button type="button" class="btn btn-secondary btn-sm" id="app-add-product">+ Add product to mix</button>
+          <div id="app-product-info" class="product-info-strip" hidden></div>
         </fieldset>
 
         <fieldset>
@@ -178,8 +188,8 @@
         </fieldset>
 
         <fieldset>
-          <legend>How much</legend>
-          <div class="form-row form-row-3">
+          <legend>Area &amp; spray volume</legend>
+          <div class="form-row form-row-4">
             <label>Area treated <span class="req-star">*</span>
               <input type="number" id="app-area" step="any" min="0" required>
             </label>
@@ -189,23 +199,6 @@
                 <option value="sqft">sq ft</option>
                 <option value="1000sqft">1,000 sq ft</option>
               </select>
-            </label>
-            <label>Application rate
-              <div class="input-pair">
-                <input type="number" id="app-rate" step="any" min="0">
-                <select id="app-rate-unit"></select>
-              </div>
-            </label>
-          </div>
-          <div class="form-row form-row-3">
-            <label>Total product applied <span class="req-star">*</span> <span id="req-amount_applied" class="state-req-tag" hidden>state</span>
-              <div class="input-pair">
-                <input type="number" id="app-total" step="any" min="0" required>
-                <select id="app-total-unit">
-                  <option>fl oz</option><option>pt</option><option>qt</option><option>gal</option>
-                  <option>oz</option><option>lb</option><option>g</option><option>kg</option><option>mL</option><option>L</option>
-                </select>
-              </div>
             </label>
             <label>Carrier volume (finished spray)
               <div class="input-pair">
@@ -221,7 +214,9 @@
         </fieldset>
 
         <fieldset>
-          <legend>Conditions</legend>
+          <legend>Conditions
+            <button type="button" class="btn btn-secondary btn-sm legend-btn" id="app-weather">⛅ Fetch current weather</button>
+          </legend>
           <div class="form-row form-row-4">
             <label>Wind speed (mph) <span id="req-wind_speed" class="state-req-tag" hidden>state</span>
               <input type="number" id="app-wind" step="any" min="0" max="60">
@@ -497,11 +492,13 @@
 
     <div class="card">
       <h3 class="card-title">Backup &amp; restore</h3>
-      <p class="card-hint">Your records live only in this browser. Download a backup regularly and keep it with your farm files.</p>
+      <p class="card-hint">Your records live only in this browser. Download a backup regularly and keep it with your farm files.
+        To move records between phone and PC: download (or share) a backup on one device, then restore it on the other and choose <strong>Merge</strong> — records combine without duplicates.</p>
       <div class="form-actions">
         <button class="btn btn-primary" id="backup-download">Download full backup (.json)</button>
+        <button class="btn btn-secondary" id="backup-share" hidden>Share to another device</button>
         <label class="btn btn-secondary file-btn">
-          Restore from backup
+          Restore / merge from backup
           <input type="file" id="backup-restore" accept=".json,application/json" hidden>
         </label>
       </div>

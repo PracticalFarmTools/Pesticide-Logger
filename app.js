@@ -10,14 +10,15 @@
   const STORE_KEY = 'pesticide-logger.v2';
 
   const defaultData = () => ({
-    version: 2,
+    version: 3,
     settings: {
       farmName: '', state: '', county: '',
       applicatorName: '', certNumber: '', certExpiry: ''
     },
     products: [],
     fields: [],
-    applications: []
+    applications: [],
+    meta: {}
   });
 
   let data = load();
@@ -27,15 +28,77 @@
       const raw = localStorage.getItem(STORE_KEY);
       if (!raw) return defaultData();
       const parsed = JSON.parse(raw);
-      return Object.assign(defaultData(), parsed);
+      const loaded = migrate(Object.assign(defaultData(), parsed));
+      // Persist schema upgrades immediately so exports and future loads are v3.
+      localStorage.setItem(STORE_KEY, JSON.stringify(loaded));
+      return loaded;
     } catch (e) {
       console.error('Failed to load saved data', e);
+      // Let initDurability recover the last valid IndexedDB mirror.
+      try { localStorage.removeItem(STORE_KEY); } catch (ignored) { /* ignore */ }
       return defaultData();
     }
   }
 
+  // v2 records held one product per application; v3 holds a tank mix array.
+  function migrate(d) {
+    d.applications.forEach(a => {
+      if (!a.products) {
+        a.products = [{
+          productId: a.productId, productName: a.productName, epaRegNo: a.epaRegNo,
+          activeIngredient: a.activeIngredient, rup: !!a.rup,
+          reiHours: a.reiHours, phiDays: a.phiDays,
+          rate: a.rate, rateUnit: a.rateUnit, total: a.total, totalUnit: a.totalUnit
+        }];
+      }
+    });
+    d.meta = d.meta || {};
+    d.version = 3;
+    return d;
+  }
+
   function save() {
     localStorage.setItem(STORE_KEY, JSON.stringify(data));
+    idbMirror();
+  }
+
+  // ---- durability: IndexedDB mirror + persistent storage ----
+  // localStorage stays the primary (synchronous) store; every save is mirrored
+  // to IndexedDB so records survive if localStorage is evicted or cleared.
+
+  let idbDb = null;
+
+  function idbMirror() {
+    if (!idbDb) return;
+    try {
+      idbDb.transaction('kv', 'readwrite').objectStore('kv')
+        .put(JSON.stringify(data), 'data');
+    } catch (e) { /* mirror is best-effort */ }
+  }
+
+  function initDurability() {
+    try {
+      if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+    } catch (e) { /* not supported */ }
+    if (!('indexedDB' in window)) return;
+    const req = indexedDB.open('pesticide-logger', 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('kv');
+    req.onsuccess = () => {
+      idbDb = req.result;
+      if (localStorage.getItem(STORE_KEY)) { idbMirror(); return; }
+      // localStorage is empty — recover from the mirror if it has real data.
+      const get = idbDb.transaction('kv', 'readonly').objectStore('kv').get('data');
+      get.onsuccess = () => {
+        if (!get.result) return;
+        try {
+          const rec = JSON.parse(get.result);
+          if ((rec.applications || []).length || (rec.products || []).length || (rec.fields || []).length) {
+            localStorage.setItem(STORE_KEY, get.result);
+            location.reload();
+          }
+        } catch (e) { /* corrupt mirror; ignore */ }
+      };
+    };
   }
 
   const uid = () => (crypto.randomUUID ? crypto.randomUUID()
@@ -340,7 +403,7 @@
   function deleteProduct(id) {
     const p = getProduct(id);
     if (!p) return;
-    const used = data.applications.some(a => a.productId === id);
+    const used = data.applications.some(a => (a.products || []).some(pr => pr.productId === id));
     const msg = used
       ? `Delete "${p.name}" from the library? Past spray records that used it keep their saved copy of its details.`
       : `Delete "${p.name}" from the library?`;
@@ -491,47 +554,175 @@
   const RATE_UNITS = ['fl oz', 'pt', 'qt', 'gal', 'oz', 'lb', 'g', 'kg', 'mL', 'L'];
 
   function initAppForm() {
-    const rateUnitSel = $('#app-rate-unit');
-    RATE_UNITS.forEach(u => {
-      const o = document.createElement('option');
-      o.textContent = u;
-      rateUnitSel.appendChild(o);
-    });
-
     $('#app-date').value = new Date().toISOString().slice(0, 10);
 
     renderProductOptions();
     renderFieldOptions();
 
-    $('#app-product').addEventListener('change', onAppProductChange);
     $('#app-field').addEventListener('change', onAppFieldChange);
-    ['#app-rate', '#app-rate-unit', '#app-area', '#app-area-unit', '#app-carrier']
-      .forEach(sel => $(sel).addEventListener('input', autoComputeTotal));
+    ['#app-area', '#app-area-unit', '#app-carrier']
+      .forEach(sel => $(sel).addEventListener('input', computeMixTotals));
     ['#app-date', '#app-start', '#app-end']
       .forEach(sel => $(sel).addEventListener('input', updateIntervalPreview));
 
+    $('#app-add-product').addEventListener('click', () => addAppProductRow());
+    $('#app-weather').addEventListener('click', fetchWeather);
     $('#app-form').addEventListener('submit', onAppSubmit);
     $('#app-cancel-btn').addEventListener('click', resetAppForm);
     $('#log-search').addEventListener('input', renderAppList);
 
+    addAppProductRow();
     renderAppList();
   }
 
+  function productOptionsHtml() {
+    return '<option value="">— Select product —</option>' +
+      data.products.slice().sort((a, b) => a.name.localeCompare(b.name))
+        .map(p => `<option value="${p.id}">${esc(p.name)}${p.rup ? ' (RUP)' : ''}</option>`).join('');
+  }
+
   function renderProductOptions() {
-    const sels = [$('#app-product'), $('#report-product')];
-    sels.forEach((sel, i) => {
-      const keep = sel.value;
-      sel.innerHTML = i === 0
-        ? '<option value="">— Select product —</option>'
-        : '<option value="">All products</option>';
-      data.products.slice().sort((a, b) => a.name.localeCompare(b.name)).forEach(p => {
-        const o = document.createElement('option');
-        o.value = p.id;
-        o.textContent = p.name + (p.rup ? ' (RUP)' : '');
-        sel.appendChild(o);
-      });
-      sel.value = keep;
+    const rep = $('#report-product');
+    const keep = rep.value;
+    rep.innerHTML = '<option value="">All products</option>' +
+      data.products.slice().sort((a, b) => a.name.localeCompare(b.name))
+        .map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
+    rep.value = keep;
+    $$('#app-products .apr-product').forEach(sel => {
+      const v = sel.value;
+      sel.innerHTML = productOptionsHtml();
+      sel.value = getProduct(v) ? v : '';
     });
+  }
+
+  // ---- tank mix rows in the log form ----
+
+  const UNIT_OPTS = RATE_UNITS.map(u => `<option>${u}</option>`).join('');
+
+  function addAppProductRow(pre) {
+    const row = document.createElement('div');
+    row.className = 'form-row form-row-4 app-product-row';
+    row.innerHTML = `
+      <label>Product <span class="req-star">*</span>
+        <select class="apr-product">${productOptionsHtml()}</select>
+      </label>
+      <label>Rate
+        <div class="input-pair">
+          <input type="number" class="apr-rate" step="any" min="0">
+          <select class="apr-rate-unit">${UNIT_OPTS}</select>
+        </div>
+      </label>
+      <label>Total applied <span class="req-star">*</span>
+        <div class="input-pair">
+          <input type="number" class="apr-total" step="any" min="0">
+          <select class="apr-total-unit">${UNIT_OPTS}</select>
+        </div>
+      </label>
+      <button type="button" class="icon-btn danger apr-remove">✕ Remove</button>`;
+    $('#app-products').appendChild(row);
+
+    row.querySelector('.apr-product').addEventListener('change', () => onRowProductChange(row));
+    row.querySelector('.apr-rate').addEventListener('input', () => computeRowTotal(row));
+    row.querySelector('.apr-rate-unit').addEventListener('change', () => computeRowTotal(row));
+    row.querySelector('.apr-remove').addEventListener('click', () => {
+      row.remove();
+      if (!$('#app-products').children.length) addAppProductRow();
+      updateMixInfo();
+      updateIntervalPreview();
+    });
+
+    if (pre) {
+      row.querySelector('.apr-product').value = pre.productId || '';
+      row.querySelector('.apr-rate').value = pre.rate ?? '';
+      row.querySelector('.apr-rate-unit').value = pre.rateUnit || 'fl oz';
+      row.querySelector('.apr-total').value = pre.total ?? '';
+      row.querySelector('.apr-total-unit').value = pre.totalUnit || 'fl oz';
+    }
+    return row;
+  }
+
+  function onRowProductChange(row) {
+    const p = getProduct(row.querySelector('.apr-product').value);
+    if (p && p.rateAmount != null) {
+      if (p.ratePer === 'acre' || p.ratePer === '1000sqft') {
+        row.querySelector('.apr-rate').value = p.rateAmount;
+        row.querySelector('.apr-rate-unit').value = p.rateUnit;
+      } else if (!$('#app-dilution').value) {
+        $('#app-dilution').value = `${p.rateAmount} ${p.rateUnit} ${RATE_PER_LABEL[p.ratePer]}`;
+      }
+    }
+    computeRowTotal(row);
+    updateMixInfo();
+    updateIntervalPreview();
+  }
+
+  // Total for one mix row: label rate × area, or × carrier for water-based rates.
+  function computeRowTotal(row) {
+    const p = getProduct(row.querySelector('.apr-product').value);
+    const rate = parseFloat(row.querySelector('.apr-rate').value);
+    const area = parseFloat($('#app-area').value);
+    const carrier = parseFloat($('#app-carrier').value);
+    const totalEl = row.querySelector('.apr-total');
+    const unitEl = row.querySelector('.apr-total-unit');
+
+    if (p && p.rateAmount != null && (p.ratePer === 'gal' || p.ratePer === '100gal')) {
+      if (isFinite(carrier) && carrier > 0) {
+        totalEl.value = round3(p.rateAmount * (p.ratePer === 'gal' ? carrier : carrier / 100));
+        unitEl.value = p.rateUnit;
+        showCalcNote();
+      }
+      return;
+    }
+    if (isFinite(rate) && rate > 0 && isFinite(area) && area > 0) {
+      const acres = areaToAcres(area, $('#app-area-unit').value);
+      const per = (p && p.ratePer === '1000sqft') ? '1000sqft' : 'acre';
+      totalEl.value = round3(rate * areaUnitsFor(per, acres));
+      unitEl.value = row.querySelector('.apr-rate-unit').value;
+      showCalcNote();
+    }
+  }
+
+  function showCalcNote() {
+    const note = $('#app-total-note');
+    note.hidden = false;
+    note.textContent = 'Totals auto-calculated from label rate × area (or × carrier volume for per-gallon rates). Adjust any total if what actually went out differed.';
+  }
+
+  function computeMixTotals() {
+    $$('#app-products .app-product-row').forEach(computeRowTotal);
+  }
+
+  // Products currently selected in the mix rows.
+  function selectedMixProducts() {
+    return $$('#app-products .app-product-row')
+      .map(row => getProduct(row.querySelector('.apr-product').value))
+      .filter(Boolean);
+  }
+
+  // Effective (most restrictive) interval across a mix.
+  function maxOrNull(values) {
+    const nums = values.filter(v => v != null && isFinite(v));
+    return nums.length ? Math.max(...nums) : null;
+  }
+
+  function updateMixInfo() {
+    const prods = selectedMixProducts();
+    const strip = $('#app-product-info');
+    if (!prods.length) { strip.hidden = true; return; }
+    strip.hidden = false;
+    const bits = prods.map(p => {
+      const parts = [esc(p.name), `EPA ${esc(p.epaRegNo)}`];
+      if (p.reiHours != null) parts.push(`REI ${fmtNum(p.reiHours)} hr`);
+      if (p.phiDays != null) parts.push(`PHI ${fmtNum(p.phiDays)} d`);
+      return `<span${p.rup ? ' class="pill-danger"' : ''}>${parts.join(' · ')}${p.rup ? ' · RUP' : ''}</span>`;
+    });
+    if (prods.length > 1) {
+      const rei = maxOrNull(prods.map(p => p.reiHours));
+      const phi = maxOrNull(prods.map(p => p.phiDays));
+      bits.push(`<span><strong>Mix follows the most restrictive label:</strong>
+        REI ${rei != null ? fmtNum(rei) + ' hr' : '—'} · PHI ${phi != null ? fmtNum(phi) + ' d' : '—'}</span>`);
+    }
+    strip.innerHTML = bits.join('');
   }
 
   function renderFieldOptions() {
@@ -551,31 +742,6 @@
     });
   }
 
-  function onAppProductChange() {
-    const p = getProduct($('#app-product').value);
-    const strip = $('#app-product-info');
-    if (!p) { strip.hidden = true; updateIntervalPreview(); return; }
-    strip.hidden = false;
-    const bits = [];
-    bits.push(`<span>EPA Reg # ${esc(p.epaRegNo)}</span>`);
-    if (p.activeIngredient) bits.push(`<span>${esc(p.activeIngredient)}</span>`);
-    if (p.reiHours != null) bits.push(`<span>REI ${fmtNum(p.reiHours)} hr</span>`);
-    if (p.phiDays != null) bits.push(`<span>PHI ${fmtNum(p.phiDays)} days</span>`);
-    if (p.signalWord) bits.push(`<span>${esc(p.signalWord)}</span>`);
-    if (p.rup) bits.push(`<span class="pill-danger">Restricted-use — certified applicator required</span>`);
-    strip.innerHTML = bits.join('');
-
-    if (p.rateAmount != null && (p.ratePer === 'acre' || p.ratePer === '1000sqft')) {
-      $('#app-rate').value = p.rateAmount;
-      $('#app-rate-unit').value = p.rateUnit;
-    }
-    if (p.rateAmount != null && (p.ratePer === 'gal' || p.ratePer === '100gal')) {
-      $('#app-dilution').value = `${p.rateAmount} ${p.rateUnit} ${RATE_PER_LABEL[p.ratePer]}`;
-    }
-    autoComputeTotal();
-    updateIntervalPreview();
-  }
-
   function onAppFieldChange() {
     const f = getField($('#app-field').value);
     if (!f) return;
@@ -584,51 +750,17 @@
       $('#app-area-unit').value = f.sizeUnit === 'sqft' ? 'sqft' : 'acres';
     }
     if (f.crop && !$('#app-crop').value) $('#app-crop').value = f.crop;
-    autoComputeTotal();
-  }
-
-  function autoComputeTotal() {
-    const note = $('#app-total-note');
-    const p = getProduct($('#app-product').value);
-    const rate = parseFloat($('#app-rate').value);
-    const area = parseFloat($('#app-area').value);
-    const areaUnit = $('#app-area-unit').value;
-
-    // Water-based label rates: total = rate × carrier gallons.
-    if (p && p.rateAmount != null && (p.ratePer === 'gal' || p.ratePer === '100gal')) {
-      const carrier = parseFloat($('#app-carrier').value);
-      if (isFinite(carrier) && carrier > 0) {
-        const mult = p.ratePer === 'gal' ? carrier : carrier / 100;
-        const total = p.rateAmount * mult;
-        $('#app-total').value = round3(total);
-        $('#app-total-unit').value = p.rateUnit;
-        note.hidden = false;
-        note.textContent = `Auto-calculated: ${fmtNum(p.rateAmount)} ${p.rateUnit} ${RATE_PER_LABEL[p.ratePer]} × ${fmtNum(carrier)} gal carrier = ${fmtAmount(total, p.rateUnit)}. Adjust if needed.`;
-        return;
-      }
-    }
-
-    // Area-based rates.
-    if (isFinite(rate) && rate > 0 && isFinite(area) && area > 0) {
-      const acres = areaToAcres(area, areaUnit);
-      const per = (p && p.ratePer === '1000sqft') ? '1000sqft' : 'acre';
-      const units = areaUnitsFor(per, acres);
-      const total = rate * units;
-      $('#app-total').value = round3(total);
-      $('#app-total-unit').value = $('#app-rate-unit').value;
-      note.hidden = false;
-      note.textContent = `Auto-calculated: ${fmtNum(rate)} ${$('#app-rate-unit').value} ${RATE_PER_LABEL[per]} × ${fmtNum(units)} ${per === 'acre' ? 'acres' : '× 1,000 sq ft'} = ${fmtAmount(total, $('#app-rate-unit').value)}. Adjust if needed.`;
-    } else {
-      note.hidden = true;
-    }
+    computeMixTotals();
   }
 
   function round3(n) { return Math.round(n * 1000) / 1000; }
 
   function updateIntervalPreview() {
-    const p = getProduct($('#app-product').value);
+    const prods = selectedMixProducts();
     const box = $('#app-interval-preview');
-    if (!p || (p.reiHours == null && p.phiDays == null) || !$('#app-date').value) {
+    const rei = maxOrNull(prods.map(p => p.reiHours));
+    const phi = maxOrNull(prods.map(p => p.phiDays));
+    if ((rei == null && phi == null) || !$('#app-date').value) {
       box.hidden = true;
       return;
     }
@@ -636,23 +768,103 @@
       date: $('#app-date').value,
       startTime: $('#app-start').value,
       endTime: $('#app-end').value,
-      reiHours: p.reiHours,
-      phiDays: p.phiDays
+      reiHours: rei,
+      phiDays: phi
     };
     const parts = [];
-    const rei = reiExpiry(fake);
-    if (rei) parts.push(`<strong>Re-entry allowed after:</strong> ${rei.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`);
-    const phi = phiDate(fake);
-    if (phi) parts.push(`<strong>Earliest harvest:</strong> ${phi.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}`);
+    const reiAt = reiExpiry(fake);
+    if (reiAt) parts.push(`<strong>Re-entry allowed after:</strong> ${reiAt.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`);
+    const phiAt = phiDate(fake);
+    if (phiAt) parts.push(`<strong>Earliest harvest:</strong> ${phiAt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}`);
     box.hidden = parts.length === 0;
     box.innerHTML = parts.join(' &nbsp;·&nbsp; ');
   }
 
+  // ---- weather auto-fill (Open-Meteo: free, keyless) ----
+
+  const COMPASS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+
+  function skyDesc(code) {
+    if (code === 0) return 'Clear';
+    if (code <= 2) return 'Partly cloudy';
+    if (code === 3) return 'Overcast';
+    if (code <= 48) return 'Fog';
+    if (code <= 67) return 'Rain';
+    if (code <= 77) return 'Snow';
+    if (code <= 82) return 'Showers';
+    return 'Thunderstorm';
+  }
+
+  // Coordinates for the weather lookup: mapped-field centroid, else device GPS.
+  function appCoords() {
+    const f = getField($('#app-field').value);
+    if (f && f.boundary && f.boundary.length >= 3) {
+      const lat = f.boundary.reduce((s, p) => s + p[0], 0) / f.boundary.length;
+      const lng = f.boundary.reduce((s, p) => s + p[1], 0) / f.boundary.length;
+      return Promise.resolve({ lat, lng });
+    }
+    return new Promise(res => {
+      if (!navigator.geolocation) return res(null);
+      navigator.geolocation.getCurrentPosition(
+        p => res({ lat: p.coords.latitude, lng: p.coords.longitude }),
+        () => res(null), { timeout: 8000 });
+    });
+  }
+
+  async function fetchWeather() {
+    const btn = $('#app-weather');
+    btn.disabled = true;
+    btn.textContent = 'Fetching…';
+    try {
+      const c = await appCoords();
+      if (!c) { toast('Select a mapped field or allow location access to fetch weather'); return; }
+      const res = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${c.lat.toFixed(4)}&longitude=${c.lng.toFixed(4)}` +
+        `&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,weather_code` +
+        `&temperature_unit=fahrenheit&wind_speed_unit=mph`);
+      const cur = (await res.json()).current;
+      $('#app-wind').value = Math.round(cur.wind_speed_10m * 10) / 10;
+      $('#app-wind-dir').value = COMPASS[Math.round(cur.wind_direction_10m / 22.5) % 16];
+      $('#app-temp').value = Math.round(cur.temperature_2m);
+      $('#app-sky').value = `${skyDesc(cur.weather_code)}, ${cur.relative_humidity_2m}% RH`;
+      toast('Current weather filled in — adjust if conditions at the sprayer differ');
+    } catch (e) {
+      toast('Could not fetch weather — check your connection');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '⛅ Fetch current weather';
+    }
+  }
+
+  // Snapshot the mix rows: label facts are copied so history stays true
+  // even if a library product is edited later.
+  function collectMixRows() {
+    const out = [];
+    $$('#app-products .app-product-row').forEach(row => {
+      const p = getProduct(row.querySelector('.apr-product').value);
+      if (!p) return;
+      out.push({
+        productId: p.id, productName: p.name, epaRegNo: p.epaRegNo,
+        activeIngredient: p.activeIngredient, rup: !!p.rup,
+        reiHours: p.reiHours, phiDays: p.phiDays,
+        rate: row.querySelector('.apr-rate').value === '' ? null : parseFloat(row.querySelector('.apr-rate').value),
+        rateUnit: row.querySelector('.apr-rate-unit').value,
+        total: parseFloat(row.querySelector('.apr-total').value) || 0,
+        totalUnit: row.querySelector('.apr-total-unit').value
+      });
+    });
+    return out;
+  }
+
+  function appProductsLabel(a) {
+    return (a.products || []).map(p => p.productName).join(' + ') || '—';
+  }
+
   function onAppSubmit(e) {
     e.preventDefault();
-    const p = getProduct($('#app-product').value);
     const f = getField($('#app-field').value);
-    if (!p) { toast('Pick a product (add one in Products first)'); return; }
+    const mix = collectMixRows();
+    if (!mix.length) { toast('Pick at least one product (add products in the Products tab first)'); return; }
     if (!f) { toast('Pick a field (add one in Fields first)'); return; }
 
     const id = $('#app-id').value || uid();
@@ -661,14 +873,11 @@
       date: $('#app-date').value,
       startTime: $('#app-start').value,
       endTime: $('#app-end').value,
-      productId: p.id,
-      // Snapshot label facts so history stays true even if the product is edited later.
-      productName: p.name,
-      epaRegNo: p.epaRegNo,
-      activeIngredient: p.activeIngredient,
-      rup: !!p.rup,
-      reiHours: p.reiHours,
-      phiDays: p.phiDays,
+      products: mix,
+      // Effective values follow the most restrictive label in the mix.
+      reiHours: maxOrNull(mix.map(p => p.reiHours)),
+      phiDays: maxOrNull(mix.map(p => p.phiDays)),
+      rup: mix.some(p => p.rup),
       fieldId: f.id,
       fieldName: f.name,
       fieldLocation: f.location,
@@ -676,10 +885,6 @@
       targetPest: $('#app-pest').value.trim(),
       area: parseFloat($('#app-area').value) || 0,
       areaUnit: $('#app-area-unit').value,
-      rate: $('#app-rate').value === '' ? null : parseFloat($('#app-rate').value),
-      rateUnit: $('#app-rate-unit').value,
-      total: parseFloat($('#app-total').value) || 0,
-      totalUnit: $('#app-total-unit').value,
       carrier: $('#app-carrier').value === '' ? null : parseFloat($('#app-carrier').value),
       carrierUnit: $('#app-carrier-unit').value,
       dilution: $('#app-dilution').value.trim(),
@@ -706,8 +911,8 @@
           case 'temperature': return app.temperature == null;
           case 'target_pest': return !app.targetPest;
           case 'applicator_license': return !app.certNumber;
-          case 'dilution_rate': return !app.dilution && !app.rate;
-          case 'amount_applied': return !app.total;
+          case 'dilution_rate': return !app.dilution && !mix.some(pr => pr.rate != null);
+          case 'amount_applied': return mix.some(pr => !pr.total);
           default: return false;
         }
       }).map(sf => sf.label);
@@ -732,6 +937,8 @@
     $('#app-date').value = new Date().toISOString().slice(0, 10);
     $('#app-applicator').value = data.settings.applicatorName;
     $('#app-cert').value = data.settings.certNumber;
+    $('#app-products').innerHTML = '';
+    addAppProductRow();
     $('#app-product-info').hidden = true;
     $('#app-total-note').hidden = true;
     $('#app-interval-preview').hidden = true;
@@ -744,8 +951,9 @@
     const a = data.applications.find(x => x.id === id);
     if (!a) return;
     $('#app-id').value = a.id;
-    $('#app-product').value = a.productId;
-    onAppProductChange();
+    $('#app-products').innerHTML = '';
+    (a.products && a.products.length ? a.products : [null]).forEach(pr => addAppProductRow(pr || undefined));
+    updateMixInfo();
     $('#app-field').value = a.fieldId;
     $('#app-crop').value = a.crop;
     $('#app-pest').value = a.targetPest;
@@ -754,10 +962,6 @@
     $('#app-end').value = a.endTime;
     $('#app-area').value = a.area;
     $('#app-area-unit').value = a.areaUnit;
-    $('#app-rate').value = a.rate ?? '';
-    $('#app-rate-unit').value = a.rateUnit;
-    $('#app-total').value = a.total;
-    $('#app-total-unit').value = a.totalUnit;
     $('#app-carrier').value = a.carrier ?? '';
     $('#app-carrier-unit').value = a.carrierUnit || 'gal';
     $('#app-dilution').value = a.dilution;
@@ -771,7 +975,7 @@
     $('#app-notes').value = a.notes;
     $('#app-total-note').hidden = true;
     updateIntervalPreview();
-    $('#app-form-title').textContent = `Edit record — ${a.productName} on ${fmtDate(a.date)}`;
+    $('#app-form-title').textContent = `Edit record — ${appProductsLabel(a)} on ${fmtDate(a.date)}`;
     $('#app-save-btn').textContent = 'Update record';
     $('#app-cancel-btn').hidden = false;
     showTab('log');
@@ -781,7 +985,7 @@
   function deleteApp(id) {
     const a = data.applications.find(x => x.id === id);
     if (!a) return;
-    if (!confirm(`Delete the ${a.productName} record from ${fmtDate(a.date)}? Regulators expect records kept at least 2 years.`)) return;
+    if (!confirm(`Delete the ${appProductsLabel(a)} record from ${fmtDate(a.date)}? Regulators expect records kept at least 2 years.`)) return;
     data.applications = data.applications.filter(x => x.id !== id);
     save();
     renderAppList();
@@ -810,7 +1014,7 @@
     let apps = sortedApps();
     if (q) {
       apps = apps.filter(a =>
-        [a.productName, a.fieldName, a.crop, a.targetPest, a.applicatorName, a.notes]
+        [appProductsLabel(a), a.fieldName, a.crop, a.targetPest, a.applicatorName, a.notes]
           .join(' ').toLowerCase().includes(q));
     }
     if (!apps.length) {
@@ -820,10 +1024,12 @@
     const rows = apps.map(a => `
       <tr>
         <td>${fmtDate(a.date)}${a.startTime ? `<br><span class="card-hint">${esc(a.startTime)}${a.endTime ? '–' + esc(a.endTime) : ''}</span>` : ''}</td>
-        <td><strong>${esc(a.productName)}</strong><br><span class="card-hint">${esc(a.epaRegNo)}</span><br>${appStatusBadges(a)}</td>
+        <td>${(a.products || []).map(p =>
+          `<strong>${esc(p.productName)}</strong> <span class="card-hint">${esc(p.epaRegNo)}</span>`).join('<br>')}
+          <br>${appStatusBadges(a)}</td>
         <td>${esc(a.fieldName)}<br><span class="card-hint">${esc(a.crop)}</span></td>
         <td>${fmtNum(a.area)} ${a.areaUnit === 'sqft' ? 'sq ft' : a.areaUnit === '1000sqft' ? '× 1,000 sq ft' : 'ac'}</td>
-        <td>${fmtAmount(a.total, a.totalUnit)}</td>
+        <td>${(a.products || []).map(p => fmtAmount(p.total, p.totalUnit)).join('<br>')}</td>
         <td>${esc(a.applicatorName)}${a.certNumber ? `<br><span class="card-hint">#${esc(a.certNumber)}</span>` : ''}</td>
         <td class="row-actions">
           <button class="icon-btn" data-edit-app="${a.id}">Edit</button>
@@ -842,6 +1048,7 @@
   // -------------------------------------------------------------- dashboard
 
   function renderDashboard() {
+    renderBackupBanner();
     const apps = sortedApps();
     const seasonStart = new Date(now().getFullYear(), 0, 1);
     const seasonApps = apps.filter(a => new Date(a.date + 'T12:00:00') >= seasonStart);
@@ -862,7 +1069,7 @@
           <div class="interval-item blocked">
             <div>
               <div class="where">${esc(a.fieldName)}</div>
-              <div class="what">${esc(a.productName)} · sprayed ${fmtDate(a.date)}</div>
+              <div class="what">${esc(appProductsLabel(a))} · sprayed ${fmtDate(a.date)}</div>
             </div>
             <div class="when">${fmtCountdown(hoursLeft(exp))}<br>
               <span class="card-hint">${exp.toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}</span>
@@ -883,7 +1090,7 @@
           <div class="interval-item waiting">
             <div>
               <div class="where">${esc(a.crop || a.fieldName)} — ${esc(a.fieldName)}</div>
-              <div class="what">${esc(a.productName)} · sprayed ${fmtDate(a.date)}</div>
+              <div class="what">${esc(appProductsLabel(a))} · sprayed ${fmtDate(a.date)}</div>
             </div>
             <div class="when">harvest ${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}<br>
               <span class="card-hint">${plural(Math.ceil((d - now()) / 86400000), 'day')}</span>
@@ -898,8 +1105,8 @@
       ? `<div class="interval-list">${recent.map(a => `
           <div class="interval-item clear">
             <div>
-              <div class="where">${esc(a.productName)} → ${esc(a.fieldName)}</div>
-              <div class="what">${esc(a.crop)} · ${fmtAmount(a.total, a.totalUnit)} on ${fmtNum(a.area)} ${a.areaUnit === 'sqft' ? 'sq ft' : a.areaUnit === '1000sqft' ? '× 1,000 sq ft' : 'ac'}</div>
+              <div class="where">${esc(appProductsLabel(a))} → ${esc(a.fieldName)}</div>
+              <div class="what">${esc(a.crop)} · ${(a.products || []).map(p => fmtAmount(p.total, p.totalUnit)).join(' + ')} on ${fmtNum(a.area)} ${a.areaUnit === 'sqft' ? 'sq ft' : a.areaUnit === '1000sqft' ? '× 1,000 sq ft' : 'ac'}</div>
             </div>
             <div class="when">${fmtDate(a.date)}</div>
           </div>`).join('')}</div>`
@@ -1151,7 +1358,7 @@
       (!from || a.date >= from) &&
       (!to || a.date <= to) &&
       (!fieldId || a.fieldId === fieldId) &&
-      (!productId || a.productId === productId)
+      (!productId || (a.products || []).some(pr => pr.productId === productId))
     ).reverse(); // oldest first for reports
   }
 
@@ -1167,6 +1374,19 @@
     $('#backup-download').addEventListener('click', downloadBackup);
     $('#backup-restore').addEventListener('change', restoreBackup);
     $('#data-clear').addEventListener('click', clearAllData);
+
+    const shareBtn = $('#backup-share');
+    if (navigator.share && navigator.canShare &&
+        navigator.canShare({ files: [new File(['x'], 'x.json', { type: 'application/json' })] })) {
+      shareBtn.hidden = false;
+      shareBtn.addEventListener('click', shareBackup);
+    }
+    $('#backup-banner-download').addEventListener('click', downloadBackup);
+    $('#backup-banner-snooze').addEventListener('click', () => {
+      data.meta.backupSnoozeUntil = Date.now() + 7 * 86400000;
+      save();
+      renderBackupBanner();
+    });
   }
 
   function csvEscape(v) {
@@ -1178,25 +1398,29 @@
     const apps = reportApps();
     if (!apps.length) { toast('No records match the filter'); return; }
     const header = [
-      'Date', 'Start', 'End', 'Brand/Product Name', 'EPA Reg No', 'Active Ingredient', 'RUP',
+      'Record ID', 'Date', 'Start', 'End', 'Brand/Product Name', 'EPA Reg No', 'Active Ingredient', 'RUP',
       'Field/Site', 'Location', 'Crop/Commodity', 'Target Pest',
       'Area Treated', 'Area Unit', 'Rate', 'Rate Unit',
       'Total Applied', 'Total Unit', 'Carrier Volume', 'Carrier Unit', 'Dilution',
       'Wind Speed (mph)', 'Wind Direction', 'Temperature (F)', 'Sky/Humidity',
       'Applicator', 'Certification No', 'Method/Equipment',
-      'REI (hours)', 'PHI (days)', 'Notes'
+      'Mix REI (hours)', 'Mix PHI (days)', 'Notes'
     ];
     const lines = [header.join(',')];
+    // One CSV row per product; tank-mix products share a Record ID.
     apps.forEach(a => {
-      lines.push([
-        a.date, a.startTime, a.endTime, a.productName, a.epaRegNo, a.activeIngredient, a.rup ? 'Yes' : 'No',
-        a.fieldName, a.fieldLocation, a.crop, a.targetPest,
-        a.area, a.areaUnit, a.rate ?? '', a.rateUnit,
-        a.total, a.totalUnit, a.carrier ?? '', a.carrierUnit, a.dilution,
-        a.windSpeed ?? '', a.windDir, a.temperature ?? '', a.sky,
-        a.applicatorName, a.certNumber, a.method,
-        a.reiHours ?? '', a.phiDays ?? '', a.notes
-      ].map(csvEscape).join(','));
+      (a.products || []).forEach(pr => {
+        lines.push([
+          a.id.slice(0, 8), a.date, a.startTime, a.endTime,
+          pr.productName, pr.epaRegNo, pr.activeIngredient, pr.rup ? 'Yes' : 'No',
+          a.fieldName, a.fieldLocation, a.crop, a.targetPest,
+          a.area, a.areaUnit, pr.rate ?? '', pr.rateUnit,
+          pr.total, pr.totalUnit, a.carrier ?? '', a.carrierUnit, a.dilution,
+          a.windSpeed ?? '', a.windDir, a.temperature ?? '', a.sky,
+          a.applicatorName, a.certNumber, a.method,
+          a.reiHours ?? '', a.phiDays ?? '', a.notes
+        ].map(csvEscape).join(','));
+      });
     });
     const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
     triggerDownload(blob, `pesticide-records-${new Date().toISOString().slice(0, 10)}.csv`);
@@ -1214,12 +1438,15 @@
     const rows = apps.map(a => `
       <tr>
         <td>${fmtDate(a.date)}${a.startTime ? `<br>${esc(a.startTime)}${a.endTime ? '–' + esc(a.endTime) : ''}` : ''}</td>
-        <td>${esc(a.productName)}${a.rup ? ' <strong>(RUP)</strong>' : ''}<br>${esc(a.epaRegNo)}${a.activeIngredient ? `<br>${esc(a.activeIngredient)}` : ''}</td>
+        <td>${(a.products || []).map(pr =>
+          `${esc(pr.productName)}${pr.rup ? ' <strong>(RUP)</strong>' : ''} — ${esc(pr.epaRegNo)}${pr.activeIngredient ? `<br><em>${esc(pr.activeIngredient)}</em>` : ''}`
+        ).join('<br>')}</td>
         <td>${esc(a.fieldName)}${a.fieldLocation ? `<br>${esc(a.fieldLocation)}` : ''}</td>
         <td>${esc(a.crop)}${a.targetPest ? `<br>vs. ${esc(a.targetPest)}` : ''}</td>
         <td>${fmtNum(a.area)} ${a.areaUnit === 'sqft' ? 'sq ft' : a.areaUnit === '1000sqft' ? '×1,000 sq ft' : 'ac'}</td>
-        <td>${a.rate != null ? `${fmtNum(a.rate)} ${esc(a.rateUnit)}` : esc(a.dilution || '—')}</td>
-        <td>${fmtNum(a.total)} ${esc(a.totalUnit)}</td>
+        <td>${(a.products || []).map(pr =>
+          pr.rate != null ? `${fmtNum(pr.rate)} ${esc(pr.rateUnit)}` : esc(a.dilution || '—')).join('<br>')}</td>
+        <td>${(a.products || []).map(pr => `${fmtNum(pr.total)} ${esc(pr.totalUnit)}`).join('<br>')}</td>
         <td>${a.windSpeed != null ? `${fmtNum(a.windSpeed)} mph ${esc(a.windDir || '')}` : '—'}${a.temperature != null ? `<br>${fmtNum(a.temperature)} °F` : ''}</td>
         <td>${a.reiHours != null ? fmtNum(a.reiHours) + ' hr' : '—'} / ${a.phiDays != null ? fmtNum(a.phiDays) + ' d' : '—'}</td>
         <td>${esc(a.applicatorName)}${a.certNumber ? `<br>#${esc(a.certNumber)}` : ''}</td>
@@ -1264,10 +1491,48 @@
     setTimeout(() => URL.revokeObjectURL(url), 4000);
   }
 
+  function backupFilename() {
+    return `pesticide-logger-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  }
+
+  function markBackedUp() {
+    data.meta.lastBackupAt = new Date().toISOString();
+    save();
+    renderBackupBanner();
+  }
+
   function downloadBackup() {
+    data.meta.lastBackupAt = new Date().toISOString();
+    save();
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    triggerDownload(blob, `pesticide-logger-backup-${new Date().toISOString().slice(0, 10)}.json`);
+    triggerDownload(blob, backupFilename());
+    renderBackupBanner();
     toast('Backup downloaded — keep it with your farm files');
+  }
+
+  async function shareBackup() {
+    const payload = JSON.parse(JSON.stringify(data));
+    payload.meta.lastBackupAt = new Date().toISOString();
+    const file = new File([JSON.stringify(payload, null, 2)], backupFilename(), { type: 'application/json' });
+    try {
+      await navigator.share({ files: [file], title: 'Pesticide Logger backup' });
+      markBackedUp();
+    } catch (e) { /* user cancelled the share sheet */ }
+  }
+
+  // Union by record id: nothing on this device is lost, nothing duplicates.
+  function mergeData(incoming) {
+    let added = 0;
+    ['products', 'fields', 'applications'].forEach(key => {
+      const have = new Set(data[key].map(x => x.id));
+      (incoming[key] || []).forEach(x => {
+        if (x && x.id && !have.has(x.id)) { data[key].push(x); added++; }
+      });
+    });
+    Object.keys(incoming.settings || {}).forEach(k => {
+      if (!data.settings[k] && incoming.settings[k]) data.settings[k] = incoming.settings[k];
+    });
+    return added;
   }
 
   function restoreBackup(e) {
@@ -1279,10 +1544,19 @@
         const parsed = JSON.parse(reader.result);
         if (!parsed || !Array.isArray(parsed.applications)) throw new Error('Not a Pesticide Logger backup');
         const counts = `${(parsed.applications || []).length} records, ${(parsed.products || []).length} products, ${(parsed.fields || []).length} fields`;
-        if (!confirm(`Restore backup containing ${counts}? This replaces everything currently on this device.`)) return;
-        data = Object.assign(defaultData(), parsed);
-        save();
-        location.reload();
+        const merge = confirm(
+          `Backup contains ${counts}.\n\nOK = MERGE into this device (keeps both sets, no duplicates — use this to sync phone and PC)\nCancel = replace everything instead`);
+        if (merge) {
+          const added = mergeData(migrate(Object.assign(defaultData(), parsed)));
+          save();
+          toast(`Merged: ${added} new item(s) added`);
+          location.reload();
+        } else {
+          if (!confirm(`REPLACE everything on this device with the backup (${counts})? This cannot be undone.`)) return;
+          data = migrate(Object.assign(defaultData(), parsed));
+          save();
+          location.reload();
+        }
       } catch (err) {
         toast('That file is not a valid backup: ' + err.message);
       }
@@ -1291,11 +1565,40 @@
     e.target.value = '';
   }
 
+  // Nudge when records exist that no backup covers.
+  function backupDue() {
+    const m = data.meta;
+    if (!data.applications.length) return false;
+    if (m.backupSnoozeUntil && Date.now() < m.backupSnoozeUntil) return false;
+    if (!m.lastBackupAt) return data.applications.length >= 3;
+    return data.applications.some(a => (a.createdAt || '') > m.lastBackupAt) &&
+      (Date.now() - new Date(m.lastBackupAt).getTime()) > 14 * 86400000;
+  }
+
+  function renderBackupBanner() {
+    const el = $('#backup-banner');
+    el.hidden = !backupDue();
+    if (!el.hidden) {
+      $('#backup-banner-msg').textContent = data.meta.lastBackupAt
+        ? `Your last backup was ${fmtDate(data.meta.lastBackupAt.slice(0, 10))} and you have newer records. Regulators expect records kept for years — don't trust a single browser with them.`
+        : `You have ${data.applications.length} spray records that exist only in this browser. Download a backup and keep it with your farm files.`;
+    }
+  }
+
   function clearAllData() {
     if (!confirm('Erase ALL products, fields, records, and settings on this device? Download a backup first if you need these records — regulators expect them kept for years.')) return;
     if (!confirm('Last check — this cannot be undone. Erase everything?')) return;
+    if (idbDb) {
+      try {
+        const tx = idbDb.transaction('kv', 'readwrite');
+        tx.objectStore('kv').delete('data');
+        tx.oncomplete = () => location.reload();
+        tx.onerror = () => location.reload();
+      } catch (e) { location.reload(); }
+    } else {
+      location.reload();
+    }
     localStorage.removeItem(STORE_KEY);
-    location.reload();
   }
 
   // -------------------------------------------------------------- field mapper
@@ -1541,6 +1844,7 @@
 
   // -------------------------------------------------------------- boot
 
+  initDurability();
   initSettings();
   initProducts();
   initFields();

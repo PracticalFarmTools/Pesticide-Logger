@@ -12,14 +12,15 @@ and costs nothing to run: no server, no account, no subscription.
 
 | Feature | Details |
 |---|---|
-| **Spray log** | One form captures every field required by federal restricted-use pesticide recordkeeping (7 CFR Part 110): product, EPA reg #, total amount, location, area, crop, date, applicator + certification number — plus weather, method, and target pest. |
+| **Tank-mix spray log** | One application can contain any number of products. Each product keeps its own EPA number, rate, and total; the dashboard automatically enforces the mix's longest REI and PHI. The form captures every federal RUP field (7 CFR Part 110), plus weather, method, and target pest. |
 | **State-aware compliance** | Pick your state in Settings and the form automatically tags the extra fields *your* state requires (wind speed, temperature, dilution rate, license #, …), with the agency name and legal citation. Covers all 50 states. |
 | **REI / PHI tracking** | Every product stores its label REI and PHI. The dashboard counts down live: which fields workers can't re-enter yet, and the earliest legal harvest date for each treated crop. |
 | **Tank mix calculator** | Enter area, tank size, and spray volume; add any number of products (per-acre, per-1,000 sq ft, per-gallon, or per-100-gal rates). Get total spray, tank loads, product per full tank and per partial fill, and a printable mix worksheet with W-A-L-E fill order. |
 | **Product & field libraries** | Save label facts once (REI, PHI, rate, signal word, RUP flag) and every record auto-fills. Records snapshot product details, so history stays accurate even after label edits. |
 | **Field mapper** | Draw any field on satellite imagery by tapping its corners — acreage (geodesic, Turf.js-equivalent math), square footage, and perimeter compute live and auto-fill the field form. Drag corners to fine-tune. Saved boundaries stay on the map; tap one to edit. |
+| **Weather auto-fill** | One tap fills current wind speed/direction, temperature, sky, and humidity from free Open-Meteo data at the mapped field centroid (or device GPS). Values remain editable because conditions at the sprayer govern. |
 | **Inspection-ready reports** | Filter by date, field, or product. One-click print/PDF report formatted for an inspector, with signature lines — or CSV export for a spreadsheet. |
-| **Backup & restore** | One-file JSON backup of everything. Restore on any device. |
+| **Durable, portable records** | Every save is mirrored to IndexedDB and the browser is asked for persistent storage. Backup reminders protect legally required records. JSON restore can merge phone and PC data by stable IDs without duplicates; supported phones can share the backup directly. |
 | **Offline-first PWA** | Installable on a phone home screen. After first load, everything — including the calculator and reports — works with no connectivity at all. |
 
 ## $0 overhead

@@ -18,7 +18,8 @@ application at the repository root.
 
 | Feature | Details |
 |---|---|
-| **Dynamic per-state spray log** | The log is not one national form. Selecting a state reshapes the Spray Log to core fields + that state’s required record fields (CA shows permit/site ID; many Plains states show wind; etc.). Optional toggle reveals recommended extras. Strict mode blocks incomplete saves; drafts are allowed. |
+| **Dynamic per-state / class spray log** | The log reshapes by state **and** applicator class (private vs commercial). Conditional fields (aerial aircraft ID, trainee name) appear only when applicable. Optional toggle reveals recommended extras. |
+| **Honest completion status** | Badges say “Fields complete / Needs review / Incomplete” — not a legal determination. Weak product fields (manufacturer, formulation, state reg) require real values. Missing REI/PHI fails loud. Each record freezes its compliance state/class at save time. |
 | **Tank-mix spray log** | One application can contain any number of products. Each product keeps its own EPA number, rate, and total; the dashboard uses the mix's longest REI and PHI. |
 | **Post–Part 110 framing** | USDA rescinded 7 CFR Part 110 (effective July 11, 2025). The app no longer treats that rule as active law. State pesticide acts, labels, and WPS control. |
 | **REI / PHI tracking** | Label REI/PHI countdown for worker re-entry and harvest timing. |

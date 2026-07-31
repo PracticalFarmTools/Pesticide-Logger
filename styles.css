@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.5.2 — Practical Farm Tools theme */
+/* Pesticide Logger v2.6.0 — Practical Farm Tools theme */
 
 :root {
   --primary-green: #1b4322;
@@ -738,6 +738,60 @@ label.state-required-field {
   .form-actions .btn { width: 100%; }
   .sticky-actions { padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px)); }
 }
+
+/* ---------- Licensing & dialogs (v2.6) ---------- */
+.license-badge {
+  font-family: var(--font-title);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #dfe9e0;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+.license-badge-pro { background: var(--ok-bg); color: var(--primary-green); border-color: transparent; }
+.form-row-license {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.form-row-license label { flex: 1 1 260px; }
+.chip-locked { opacity: 0.8; border-style: dashed; }
+.app-dialog {
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  box-shadow: var(--shadow-md);
+  padding: 1.5rem;
+  max-width: 480px;
+  width: calc(100vw - 2rem);
+  background: var(--bg-card);
+  color: var(--text-dark);
+  font-family: var(--font-body);
+}
+.app-dialog::backdrop { background: rgba(15, 40, 20, 0.45); }
+.app-dialog h3 {
+  font-family: var(--font-title);
+  margin-bottom: 0.6rem;
+  color: var(--primary-green-dark);
+}
+.app-dialog p { margin-bottom: 0.6rem; font-size: 0.92rem; }
+.app-dialog .form-grid { margin: 0.75rem 0; display: grid; gap: 0.75rem; }
+.app-dialog label { display: block; font-size: 0.85rem; font-weight: 600; }
+.app-dialog input, .app-dialog select {
+  width: 100%;
+  margin-top: 0.3rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font: inherit;
+  background: var(--bg-white);
+}
+.history-list { margin: 0.5rem 0 0.75rem 1.2rem; font-size: 0.9rem; }
+.history-list li { margin-bottom: 0.5rem; }
 
 /* ---------- Toast ---------- */
 .toast {

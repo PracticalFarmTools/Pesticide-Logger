@@ -216,22 +216,43 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.5.2 + deadline wiring', () => {
+check('source files advertise v2.6.0 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.5.2'));
-  assert.ok(sw.includes('pesticide-logger-v2.5.2'));
-  assert.ok(html.includes('v2.5.2'));
+  assert.ok(app.includes('v2.6.0'));
+  assert.ok(sw.includes('pesticide-logger-v2.6.0'));
+  assert.ok(html.includes('v2.6.0'));
   assert.ok(html.includes('deadline.js'));
+  assert.ok(html.includes('license.js'));
   assert.ok(sw.includes('./deadline.js'));
+  assert.ok(sw.includes('./license.js'));
   assert.ok(app.includes('DeadlineUtils.computeRecordDueAtFromLaw'));
   assert.ok(app.includes('function downloadStatePack'));
   assert.ok(app.includes('Preserve frozen compliance context'));
   assert.ok(app.includes('report-include-deleted'));
   assert.ok(fs.existsSync(path.join(root, 'icon-192.png')));
   assert.ok(fs.existsSync(path.join(root, 'deadline.js')));
+  assert.ok(fs.existsSync(path.join(root, 'license.js')));
   assert.ok(!/(?<!\$)\$\('#app-products \.app-product-row'\)\.(forEach|map)/.test(app));
+});
+
+check('free tier never gates legal-safety features', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  // Gated (Pro): calculator, weather, cab tools, state pack, bulk verify.
+  assert.ok(app.includes("requirePro('Tank mix calculator')"));
+  assert.ok(app.includes("requirePro('Weather auto-fill')"));
+  assert.ok(app.includes("requirePro('State compliance pack export')"));
+  assert.ok(app.includes("requirePro('Bulk EPA library verification')"));
+  // Never gated: record save, CSV, print, backup, restore, delete/restore.
+  ['function onAppSubmit', 'function downloadCsv', 'function printReport',
+    'function downloadBackup', 'function restoreBackup', 'function deleteApp',
+    'function restoreApp'].forEach(fn => {
+    const idx = app.indexOf(fn);
+    assert.ok(idx > 0, fn + ' exists');
+    const body = app.slice(idx, idx + 400);
+    assert.ok(!body.includes('requirePro'), fn + ' must stay free');
+  });
 });
 
 check('schema default version is 5', () => {

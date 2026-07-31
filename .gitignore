@@ -1,0 +1,4 @@
+# License signing private key — NEVER commit. Back it up offline.
+keys/
+node_modules/
+.DS_Store

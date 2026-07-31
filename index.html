@@ -24,11 +24,12 @@
       </svg>
       <div>
         <h1>Pesticide Logger</h1>
-        <span class="header-sub">Practical Farm Tools · v2.5.2</span>
+        <span class="header-sub">Practical Farm Tools · v2.6.0</span>
       </div>
     </div>
     <div class="header-right">
       <span id="offline-badge" class="offline-badge" hidden>Offline — records save locally</span>
+      <span id="license-badge" class="license-badge" hidden></span>
       <span id="farm-name-display" class="farm-name-display"></span>
     </div>
   </div>
@@ -776,6 +777,26 @@
       <div id="state-info"></div>
     </div>
 
+    <div class="card" id="license-card">
+      <h3 class="card-title">License — Pesticide Logger Pro</h3>
+      <p id="license-status" class="card-hint"></p>
+      <p class="card-hint"><strong>Free forever, no key needed:</strong> the full state-shaped spray log,
+        strict compliance checks, REI/PHI dashboard, due clocks, backups, restore/merge, print/PDF, and CSV.
+        Your records are never locked behind payment.</p>
+      <p class="card-hint"><strong>Pro adds the time-savers:</strong> tank-mix calculator, weather auto-fill,
+        spray-now / duplicate-last / recent-product cab tools, one-click state compliance pack, and bulk EPA
+        library verification.</p>
+      <div class="form-row form-row-license">
+        <label>License key
+          <input type="text" id="license-key-input" placeholder="PLPRO.…" autocomplete="off" spellcheck="false">
+        </label>
+        <button type="button" class="btn btn-primary" id="license-activate">Activate</button>
+        <button type="button" class="btn btn-secondary" id="license-buy">Get Pro</button>
+      </div>
+      <p class="card-hint">One purchase per farm, works offline, no account, no telemetry.
+        Keys are verified on this device with a cryptographic signature — nothing is sent anywhere.</p>
+    </div>
+
     <div class="card">
       <h3 class="card-title">Data</h3>
       <p class="card-hint">All data is stored locally in this browser (<span id="storage-usage">…</span>). No account, no server, no cost.</p>
@@ -786,7 +807,7 @@
 
     <div class="card about-card">
       <h3 class="card-title">About</h3>
-      <p>Pesticide Logger v2.5.2 — part of the <strong>Practical Farm Tools</strong> suite. Free forever, works offline, and your farm records stay on this device.</p>
+      <p>Pesticide Logger v2.6.0 — part of the <strong>Practical Farm Tools</strong> suite. Free forever, works offline, and your farm records stay on this device.</p>
       <p class="card-hint">This tool provides 50-state application <em>recordkeeping field coverage</em> with audit history, lot tracking, and in-cab workflows. It is not legal advice, does not replace WPS employer duties, and does not file California PUR, New York PRL, or other electronic reports for you. Always follow the product label and confirm requirements with your state pesticide agency.</p>
     </div>
   </section>
@@ -798,8 +819,60 @@
 <!-- Print report container (populated at print time) -->
 <div id="print-area" class="print-area" aria-hidden="true"></div>
 
+<dialog id="upgrade-dialog" class="app-dialog">
+  <h3 id="upgrade-title">Pesticide Logger Pro</h3>
+  <p id="upgrade-feature" class="card-hint"></p>
+  <p><strong>$29/year per farm</strong> (or one-time perpetual option) — versus $500–$2,000+/year for
+    comparable ag record platforms. Works offline, no account, no data harvesting.</p>
+  <p class="card-hint">Everything legally important stays free forever: state-shaped logging, compliance
+    checks, REI/PHI tracking, backups, print, and CSV. Pro only unlocks the time-savers.</p>
+  <div class="form-actions">
+    <button type="button" class="btn btn-primary" id="upgrade-buy">Get Pro</button>
+    <button type="button" class="btn btn-secondary" id="upgrade-enter-key">I have a license key</button>
+    <button type="button" class="btn btn-secondary" id="upgrade-close">Not now</button>
+  </div>
+</dialog>
+
+<dialog id="history-dialog" class="app-dialog">
+  <h3 id="history-dialog-title">Record audit history</h3>
+  <div id="history-dialog-body"></div>
+  <p class="card-hint">Every save keeps a snapshot. Full snapshots are included in backups and the state
+    compliance pack.</p>
+  <div class="form-actions">
+    <button type="button" class="btn btn-secondary" id="history-close">Close</button>
+  </div>
+</dialog>
+
+<dialog id="onboarding-dialog" class="app-dialog">
+  <h3>Welcome — set up your farm in 30 seconds</h3>
+  <p class="card-hint">The spray log reshapes itself to your state’s required record fields.
+    Everything runs on this device; nothing is uploaded.</p>
+  <div class="form-grid">
+    <label>Your state
+      <select id="onboard-state"><option value="">— Select state —</option></select>
+    </label>
+    <label>Applicator class
+      <select id="onboard-class">
+        <option value="private">Private / grower</option>
+        <option value="commercial">Commercial / for-hire</option>
+        <option value="both">Both (strictest fields)</option>
+      </select>
+    </label>
+    <label>Farm name
+      <input type="text" id="onboard-farm" placeholder="e.g. Spear Farm">
+    </label>
+  </div>
+  <p class="card-hint">Every feature is unlocked free for 30 days. After that, logging, compliance
+    checks, backups, and exports stay free forever.</p>
+  <div class="form-actions">
+    <button type="button" class="btn btn-primary" id="onboard-save">Start logging</button>
+    <button type="button" class="btn btn-secondary" id="onboard-skip">Skip for now</button>
+  </div>
+</dialog>
+
 <script src="state_pesticide_laws.js"></script>
 <script src="deadline.js"></script>
+<script src="license.js"></script>
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="app.js"></script>
 </body>

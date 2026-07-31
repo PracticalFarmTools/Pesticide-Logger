@@ -1,4 +1,4 @@
-# Pesticide Logger v2.5.2
+# Pesticide Logger v2.6.0
 
 **Free, offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite.
@@ -70,6 +70,15 @@ the state agency. Always follow the product label.
 - **Free hosting.** GitHub Pages (static core) or Vercel (`vercel.json` included).
   Or open `index.html` from a USB stick.
 
+## Free vs Pro
+
+Core recordkeeping is **free forever** — records are never hostage. Pro
+($29/yr per farm, 30-day automatic trial) unlocks the time-savers: tank-mix
+calculator, weather auto-fill, in-cab quick tools, state compliance pack
+export, and bulk EPA verification. Licensing is fully offline — ECDSA-signed
+keys verified on-device, no license server, no telemetry. See `PRICING.md`
+for the model and `tools/` for the owner's key-signing workflow.
+
 ## Running locally
 
 ```bash
@@ -83,8 +92,10 @@ python3 -m http.server 8000
 node --check app.js
 node --check state_pesticide_laws.js
 node --check deadline.js
+node --check license.js
 node --check sw.js
 node tests/compliance.test.js
+node tests/license.test.js
 ```
 
 ## Intentional non-goals
@@ -103,12 +114,15 @@ index.html                 App shell
 styles.css                 Theme + print stylesheet
 app.js                     Application + compliance engine
 deadline.js                Record / customer-copy deadline math
+license.js                 Offline Pro license verification (WebCrypto)
 state_pesticide_laws.js    50-state agencies, citations, retention, required fields
 api/epa.js                 Stateless Vercel proxy to official EPA PPLS
+tools/                     Owner key-signing scripts (generate/sign licenses)
 vendor/leaflet/            Leaflet 1.9.4 (vendored)
 sw.js                      Service worker
 manifest.json              PWA manifest
-tests/compliance.test.js   Node regression checks (no npm)
+PRICING.md                 Business model: free-forever core + $29/yr Pro
+tests/                     Node regression checks (no npm)
 archive/vercel-2026.1.0/   Historical recovered deployment (reference only)
 ```
 

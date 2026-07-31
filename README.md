@@ -23,7 +23,7 @@ application at the repository root.
 | **In-cab workflow** | Spray now, duplicate last spray, recent-product chips, sticky large save buttons, and touch-friendly targets for phone/tablet use in the tractor. |
 | **Audit trail & soft-delete** | Edits keep snapshot history. Deletes are soft (recoverable) with retention-aware prompts. |
 | **Lot / batch + OMRI + PHI overrides** | Per-mix-row lot numbers, OMRI flags, and crop-specific REI/PHI overrides that beat library defaults. |
-| **Commercial clocks** | Record-completion due times from state `recordWithinHours`, plus customer-copy tracking from `customerCopyDays`. |
+| **Commercial clocks** | Record-completion due times from state `recordWithinHours`. Customer-copy clocks only for states with a researched copy duty (never invented). |
 | **Tank-mix spray log** | One application can contain any number of products. Dashboard uses the mix's longest REI and PHI. |
 | **Post–Part 110 framing** | USDA rescinded 7 CFR Part 110 (effective July 11, 2025). State pesticide acts, labels, and WPS control. |
 | **REI / PHI tracking** | Label REI/PHI countdown for worker re-entry and harvest timing. |

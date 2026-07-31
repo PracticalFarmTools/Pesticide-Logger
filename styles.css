@@ -871,6 +871,24 @@ label.state-required-field {
 .photo-dialog-box { max-width: 640px; }
 .photo-dialog-box img { width: 100%; border-radius: 8px; margin-bottom: 0.5rem; }
 #scan-video { width: 100%; border-radius: 10px; background: #000; margin-bottom: 0.5rem; }
+
+/* ---------- CSV import ---------- */
+.import-dialog-box { max-width: 620px; }
+.import-dialog-box .table-wrap { max-height: 140px; overflow: auto; margin-bottom: 0.75rem; }
+.import-dialog-box .record-table th, .import-dialog-box .record-table td {
+  font-size: 0.75rem;
+  padding: 0.3rem 0.5rem;
+  white-space: nowrap;
+}
+.import-mapping {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.5rem 0.75rem;
+  max-height: 40vh;
+  overflow: auto;
+}
+.import-map-row { font-size: 0.82rem; font-weight: 600; }
+.import-map-row select { width: 100%; margin-top: 0.2rem; }
 .fc-block:hover, .fc-block:focus-visible { outline: 2px solid var(--primary-green); }
 @media (max-width: 720px) {
   .fc-block { width: 1.7rem; height: 1.7rem; }

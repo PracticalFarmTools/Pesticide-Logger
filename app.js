@@ -3275,6 +3275,212 @@
     e.target.value = '';
   }
 
+  // -------------------------------------------------------------- CSV import
+
+  // Minimal RFC-4180-ish parser: quoted fields, embedded commas/newlines.
+  function parseCsv(text) {
+    const rows = [];
+    let row = [];
+    let cell = '';
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (inQuotes) {
+        if (ch === '"') {
+          if (text[i + 1] === '"') { cell += '"'; i++; }
+          else inQuotes = false;
+        } else cell += ch;
+      } else if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ',') {
+        row.push(cell); cell = '';
+      } else if (ch === '\n' || ch === '\r') {
+        if (ch === '\r' && text[i + 1] === '\n') i++;
+        row.push(cell); cell = '';
+        if (row.some(c => c.trim() !== '')) rows.push(row);
+        row = [];
+      } else cell += ch;
+    }
+    row.push(cell);
+    if (row.some(c => c.trim() !== '')) rows.push(row);
+    return rows;
+  }
+
+  const IMPORT_FIELDS = [
+    { key: 'date', label: 'Application date', required: true, guess: /date|applied/i },
+    { key: 'productName', label: 'Product / brand name', required: true, guess: /product|chemical|brand|material/i },
+    { key: 'epaRegNo', label: 'EPA registration #', guess: /epa|reg/i },
+    { key: 'fieldName', label: 'Field / site name', guess: /field|block|site|location/i },
+    { key: 'crop', label: 'Crop / commodity', guess: /crop|commodity/i },
+    { key: 'area', label: 'Area treated (acres)', guess: /acre|area/i },
+    { key: 'rate', label: 'Rate', guess: /rate/i },
+    { key: 'total', label: 'Total applied', guess: /total|amount|qty|quantity/i },
+    { key: 'applicatorName', label: 'Applicator', guess: /applicator|operator|sprayer/i },
+    { key: 'certNumber', label: 'Certification #', guess: /cert|license/i },
+    { key: 'targetPest', label: 'Target pest', guess: /pest|target|weed|insect/i },
+    { key: 'startTime', label: 'Start time', guess: /start|time/i },
+    { key: 'notes', label: 'Notes', guess: /note|comment|remark/i }
+  ];
+
+  let importCsvRows = null;
+
+  function parseImportDate(v) {
+    const t = String(v || '').trim();
+    if (!t) return null;
+    if (/^\d{4}-\d{2}-\d{2}/.test(t)) return t.slice(0, 10);
+    const m = t.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})/);
+    if (m) {
+      let y = Number(m[3]);
+      if (y < 100) y += 2000;
+      return `${y}-${String(m[1]).padStart(2, '0')}-${String(m[2]).padStart(2, '0')}`;
+    }
+    const d = new Date(t);
+    return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+  }
+
+  function initCsvImport() {
+    const input = $('#csv-import-file');
+    if (!input) return;
+    input.addEventListener('change', () => {
+      const file = input.files && input.files[0];
+      input.value = '';
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const rows = parseCsv(String(reader.result || ''));
+        if (rows.length < 2) { toast('That CSV needs a header row plus at least one record'); return; }
+        importCsvRows = rows;
+        openImportDialog();
+      };
+      reader.readAsText(file);
+    });
+    $('#import-cancel').addEventListener('click', () => $('#import-dialog').close());
+    $('#import-run').addEventListener('click', runCsvImport);
+  }
+
+  function openImportDialog() {
+    const header = importCsvRows[0];
+    $('#import-summary').textContent =
+      `${importCsvRows.length - 1} data row(s), ${header.length} column(s). Match each app field to a column (or leave unmapped).`;
+    const preview = importCsvRows.slice(0, 4);
+    $('#import-preview').innerHTML = `<table class="record-table">
+      ${preview.map((r, i) => `<tr>${r.map(c =>
+        `<${i === 0 ? 'th' : 'td'}>${esc(String(c).slice(0, 24))}</${i === 0 ? 'th' : 'td'}>`).join('')}</tr>`).join('')}
+    </table>`;
+    const colOptions = (selected) => `<option value="">— not in my sheet —</option>` +
+      header.map((h, i) =>
+        `<option value="${i}" ${i === selected ? 'selected' : ''}>${esc(h || 'column ' + (i + 1))}</option>`).join('');
+    $('#import-mapping').innerHTML = IMPORT_FIELDS.map(f => {
+      const guessIdx = header.findIndex(h => f.guess.test(h));
+      return `<label class="import-map-row">${f.label}${f.required ? ' <span class="req-star">*</span>' : ''}
+        <select data-import-key="${f.key}">${colOptions(guessIdx)}</select>
+      </label>`;
+    }).join('');
+    $('#import-dialog').showModal();
+  }
+
+  function runCsvImport() {
+    const map = {};
+    $$('#import-mapping [data-import-key]').forEach(sel => {
+      if (sel.value !== '') map[sel.dataset.importKey] = Number(sel.value);
+    });
+    if (map.date == null || map.productName == null) {
+      toast('Map at least the date and product name columns');
+      return;
+    }
+    const s = data.settings;
+    let imported = 0, skipped = 0;
+    const cell = (row, key) => map[key] != null ? String(row[map[key]] || '').trim() : '';
+    importCsvRows.slice(1).forEach(row => {
+      const date = parseImportDate(cell(row, 'date'));
+      const productName = cell(row, 'productName');
+      if (!date || !productName) { skipped++; return; }
+
+      let product = data.products.find(p => p.name.toLowerCase() === productName.toLowerCase());
+      if (!product) {
+        product = {
+          id: uid(), name: productName,
+          epaRegNo: cell(row, 'epaRegNo'), activeIngredient: '', type: '', signalWord: '',
+          rup: false, reiHours: null, phiDays: null,
+          rateAmount: null, rateUnit: 'fl oz', ratePer: 'acre',
+          notes: 'Imported from spreadsheet — verify against the label',
+          stateRegNo: '', omri: false, lotHint: '', barcode: '', photoIds: [],
+          createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+        };
+        data.products.push(product);
+      }
+
+      const fieldName = cell(row, 'fieldName');
+      let field = fieldName
+        ? data.fields.find(f => f.name.toLowerCase() === fieldName.toLowerCase())
+        : null;
+      if (fieldName && !field) {
+        field = {
+          id: uid(), name: fieldName, size: null, sizeUnit: 'acres',
+          crop: cell(row, 'crop'), location: '', siteId: '', boundary: null,
+          createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+        };
+        data.fields.push(field);
+      }
+
+      const num = (key) => {
+        const v = parseFloat(cell(row, key).replace(/[^0-9.\-]/g, ''));
+        return isFinite(v) ? v : null;
+      };
+
+      const app = {
+        id: uid(), date,
+        startTime: cell(row, 'startTime'), endTime: '',
+        products: [{
+          productId: product.id, productName: product.name,
+          epaRegNo: product.epaRegNo || cell(row, 'epaRegNo'),
+          activeIngredient: '', rup: false, type: '', signalWord: '', omri: false,
+          epaStatus: null, epaCheckedAt: null, epaLabelUrl: null, epaCompany: '', stateRegNo: '',
+          lotNumber: '', reiHours: null, phiDays: null, reiOverride: null, phiOverride: null,
+          rate: num('rate'), rateUnit: 'fl oz',
+          total: num('total'), totalUnit: 'fl oz'
+        }],
+        reiHours: null, phiDays: null, rup: false,
+        fieldId: field ? field.id : '', fieldName: field ? field.name : fieldName,
+        fieldLocation: '', locationNote: '', county: s.county || '', siteId: '', permitNumber: '',
+        crop: cell(row, 'crop'), targetPest: cell(row, 'targetPest'), applicationPurpose: '',
+        area: num('area'), areaUnit: 'acres', carrier: null, carrierUnit: 'gal',
+        dilution: '', concentration: '', mixLoadLocation: '',
+        windSpeed: null, windDir: '', temperature: null, sky: '',
+        applicationType: 'ground', method: '', nozzleType: '', sprayerPressure: '',
+        equipmentId: '', aircraftId: '',
+        applicatorName: cell(row, 'applicatorName') || s.applicatorName || '',
+        certNumber: cell(row, 'certNumber') || '',
+        supervisorName: '', usedNoncertified: false, noncertifiedApplicatorName: '',
+        ownerOperatorName: s.farmName || '', customerName: '', customerAddress: '', customerPhone: '',
+        businessNameAddress: '', companyLicense: '', pesticideSupplier: '', disposalMethod: '',
+        notes: cell(row, 'notes') ? cell(row, 'notes') + ' [imported]' : '[imported from spreadsheet]',
+        boomHeight: '', groundSpeed: '', bufferDistance: '', sensitiveSites: '',
+        inversionObserved: false, customerCopyProvided: false, customerCopyDate: '',
+        photoIds: [],
+        complianceState: s.state || '', complianceApplicatorClass: s.applicatorClass || 'private',
+        draft: true, deletedAt: null, history: [],
+        updatedAt: new Date().toISOString(), createdAt: new Date().toISOString()
+      };
+      const result = evaluateCompliance(app);
+      app.complianceComplete = result.complete;
+      app.complianceStatus = result.status;
+      app.complianceMissing = result.missing.slice();
+      app.retentionYears = result.retentionYears;
+      app.recordDueAt = computeRecordDueAt(app);
+      data.applications.push(app);
+      imported++;
+    });
+    save();
+    $('#import-dialog').close();
+    renderAppList();
+    renderProducts();
+    renderFieldOptions();
+    renderProductOptions();
+    renderDashboard();
+    toast(`Imported ${imported} record(s) as drafts${skipped ? `; skipped ${skipped} row(s) missing date/product` : ''} — finish them from the Spray Log`);
+  }
+
   // Nudge when records exist that no backup covers.
   function backupDue() {
     const m = data.meta;
@@ -4186,6 +4392,7 @@
   initOnboarding();
   initSprayForecast();
   initReminders();
+  initCsvImport();
   if ($('#history-close')) $('#history-close').addEventListener('click', () => $('#history-dialog').close());
   renderDashboard();
   renderRecentProducts();

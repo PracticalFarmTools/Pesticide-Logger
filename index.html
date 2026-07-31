@@ -754,6 +754,19 @@
         </label>
       </div>
     </div>
+
+    <div class="card">
+      <h3 class="card-title">Import from a spreadsheet</h3>
+      <p class="card-hint">Already keeping records in Excel or Google Sheets? Export them as CSV and bring
+        your history in — match your columns once, and rows import as drafts you can finish and verify.
+        Unknown products and fields are created automatically.</p>
+      <div class="form-actions">
+        <label class="btn btn-secondary file-btn">
+          Choose CSV file…
+          <input type="file" id="csv-import-file" accept=".csv,text/csv" hidden>
+        </label>
+      </div>
+    </div>
   </section>
 
   <!-- ============ SETTINGS ============ -->
@@ -914,6 +927,19 @@
     compliance pack.</p>
   <div class="form-actions">
     <button type="button" class="btn btn-secondary" id="history-close">Close</button>
+  </div>
+</dialog>
+
+<dialog id="import-dialog" class="app-dialog import-dialog-box">
+  <h3>Match your spreadsheet columns</h3>
+  <p class="card-hint" id="import-summary"></p>
+  <div id="import-preview" class="table-wrap"></div>
+  <div id="import-mapping" class="import-mapping"></div>
+  <p class="card-hint">Rows import as <strong>drafts</strong> — the compliance checker will show what each
+    record still needs for your state. Date and product name are required per row.</p>
+  <div class="form-actions">
+    <button type="button" class="btn btn-primary" id="import-run">Import records</button>
+    <button type="button" class="btn btn-secondary" id="import-cancel">Cancel</button>
   </div>
 </dialog>
 

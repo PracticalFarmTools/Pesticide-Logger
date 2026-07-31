@@ -535,6 +535,16 @@ input:hover, select:hover, textarea:hover { border-color: var(--border-color-hov
 .badge-rei { background: var(--danger-bg); color: var(--danger); }
 .badge-phi { background: var(--warn-bg); color: var(--warn); }
 
+.log-shape-controls {
+  align-items: center;
+  margin: 0.5rem 0 0.75rem;
+}
+.log-shape-controls .card-hint { margin: 0; }
+label.state-required-field {
+  box-shadow: inset 3px 0 0 var(--primary-green-light);
+  padding-left: 0.45rem;
+}
+
 .compliance-status {
   margin: 0.75rem 0 1rem;
   padding: 0.7rem 0.9rem;

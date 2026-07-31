@@ -18,7 +18,7 @@ application at the repository root.
 
 | Feature | Details |
 |---|---|
-| **50-state recordkeeping coverage** | Pick your state in Settings. The spray log tags and validates every researched required field for that state (permit/operator ID, county, site ID, weather, customer, equipment, etc.). Strict mode blocks incomplete saves; drafts are allowed. |
+| **Dynamic per-state spray log** | The log is not one national form. Selecting a state reshapes the Spray Log to core fields + that state’s required record fields (CA shows permit/site ID; many Plains states show wind; etc.). Optional toggle reveals recommended extras. Strict mode blocks incomplete saves; drafts are allowed. |
 | **Tank-mix spray log** | One application can contain any number of products. Each product keeps its own EPA number, rate, and total; the dashboard uses the mix's longest REI and PHI. |
 | **Post–Part 110 framing** | USDA rescinded 7 CFR Part 110 (effective July 11, 2025). The app no longer treats that rule as active law. State pesticide acts, labels, and WPS control. |
 | **REI / PHI tracking** | Label REI/PHI countdown for worker re-entry and harvest timing. |

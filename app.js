@@ -335,15 +335,114 @@
     updateCompliancePreview();
   }
 
-  function applyStateRequiredTags() {
-    $$('.state-req-tag').forEach(t => { t.hidden = true; });
+  // Core fields always present on every state's log (operational minimum).
+  const CORE_LOG_FIELDS = new Set([
+    'location', 'crop_treated', 'date', 'area_treated', 'area_unit',
+    'applicator_name', 'notes'
+  ]);
+
+  // Product-library fields are captured in the always-visible tank-mix section.
+  const PRODUCT_SECTION_FIELDS = new Set([
+    'brand_name', 'epa_reg_no', 'active_ingredient', 'amount_applied', 'rate',
+    'restricted_use_flag', 'rei_hours', 'phi_days', 'pesticide_formulation',
+    'manufacturer_name', 'state_registration_no'
+  ]);
+
+  // Aliases: showing one control satisfies related required keys.
+  const FIELD_ALIASES = {
+    application_time: ['start_time'],
+    total_mix_applied: ['carrier_volume'],
+    location_note: ['location']
+  };
+
+  function requiredFieldNames(law) {
+    if (!law) return new Set();
+    return new Set(law.fields.filter(f => f.required).map(f => f.name));
+  }
+
+  function visibleLogFields() {
     const law = stateLaw();
-    if (!law) return;
-    law.fields.forEach(f => {
-      if (!f.required) return;
-      const tag = document.getElementById('req-' + f.name);
+    const required = requiredFieldNames(law);
+    const showRec = $('#app-show-recommended') && $('#app-show-recommended').checked;
+    const visible = new Set(CORE_LOG_FIELDS);
+    required.forEach(n => visible.add(n));
+    // Expand aliases so required application_time shows start_time control, etc.
+    Object.keys(FIELD_ALIASES).forEach(key => {
+      if (visible.has(key)) FIELD_ALIASES[key].forEach(a => visible.add(a));
+    });
+    if (showRec && typeof BASE_RECORD_FIELDS !== 'undefined') {
+      BASE_RECORD_FIELDS.forEach(n => visible.add(n));
+    }
+    // Keep any filled optional fields visible while editing so values aren't stranded.
+    $$('#app-form [data-log-field]').forEach(label => {
+      const name = label.getAttribute('data-log-field');
+      if (!name || visible.has(name)) return;
+      const input = label.querySelector('input, select, textarea');
+      if (input && String(input.value || '').trim()) visible.add(name);
+    });
+    return { visible, required, law };
+  }
+
+  function applyStateRequiredTags() {
+    reshapeAppFormForState();
+  }
+
+  function reshapeAppFormForState() {
+    const { visible, required, law } = visibleLogFields();
+    const code = data.settings.state;
+    const stateName = code ? (STATE_NAMES[code] || code) : null;
+
+    $$('.state-req-tag').forEach(t => { t.hidden = true; });
+    required.forEach(name => {
+      const tag = document.getElementById('req-' + name);
       if (tag) tag.hidden = false;
     });
+
+    $$('#app-form [data-log-field]').forEach(label => {
+      const name = label.getAttribute('data-log-field');
+      const show = visible.has(name);
+      label.hidden = !show;
+      label.classList.toggle('state-required-field', required.has(name));
+      // Disable hidden controls so browser "required" doesn't block unrelated sections.
+      label.querySelectorAll('input, select, textarea').forEach(el => {
+        if (el.id === 'app-field' || el.id === 'app-crop' || el.id === 'app-date' ||
+            el.id === 'app-area' || el.id === 'app-applicator') return;
+        el.disabled = !show;
+      });
+    });
+
+    // Hide empty rows / sections after individual labels collapse.
+    $$('#app-form .form-row').forEach(row => {
+      const labels = [...row.querySelectorAll(':scope > label[data-log-field]')];
+      if (!labels.length) { row.hidden = false; return; }
+      row.hidden = labels.every(l => l.hidden);
+    });
+    $$('#app-form fieldset[data-log-section]').forEach(fs => {
+      if (fs.getAttribute('data-log-section') === 'products') {
+        fs.hidden = false;
+        return;
+      }
+      const labels = [...fs.querySelectorAll('label[data-log-field]')];
+      fs.hidden = labels.length > 0 && labels.every(l => l.hidden);
+    });
+
+    const hint = $('#app-form-hint');
+    const summary = $('#app-form-shape-summary');
+    if (hint) {
+      hint.innerHTML = stateName
+        ? `Showing the <strong>${esc(stateName)}</strong> spray log: core fields + ${required.size} state-required field(s)${$('#app-show-recommended') && $('#app-show-recommended').checked ? ' + recommended extras' : ''}. Hidden fields are not part of this state’s form.`
+        : 'Select your state in Settings — the spray log will reshape to that state’s required record fields instead of using one national form.';
+    }
+    if (summary) {
+      const shown = $$('#app-form label[data-log-field]:not([hidden])').length;
+      summary.textContent = stateName
+        ? `${stateName} form · ${shown} fields visible · retain ${(law && law.retentionYears) || '—'} yr`
+        : 'No state selected · core fields only';
+    }
+    const title = $('#app-form-title');
+    if (title && !title.textContent.startsWith('Edit record')) {
+      title.textContent = stateName ? `Log an application — ${stateName}` : 'Log an application';
+    }
   }
 
   function renderStateInfo() {
@@ -925,9 +1024,16 @@
     $('#log-search').addEventListener('input', renderAppList);
     $('#app-form').addEventListener('input', updateCompliancePreview);
     $('#app-form').addEventListener('change', updateCompliancePreview);
+    if ($('#app-show-recommended')) {
+      $('#app-show-recommended').addEventListener('change', () => {
+        reshapeAppFormForState();
+        updateCompliancePreview();
+      });
+    }
 
     addAppProductRow();
     renderAppList();
+    reshapeAppFormForState();
     updateCompliancePreview();
   }
 
@@ -1400,6 +1506,7 @@
     $('#app-notes').value = a.notes;
     $('#app-total-note').hidden = true;
     updateIntervalPreview();
+    reshapeAppFormForState();
     updateCompliancePreview();
     $('#app-form-title').textContent = `Edit record — ${appProductsLabel(a)} on ${fmtDate(a.date)}`;
     $('#app-save-btn').textContent = 'Update complete record';

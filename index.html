@@ -147,49 +147,56 @@
   <section id="tab-log" class="tab-panel" role="tabpanel">
     <div class="card">
       <h3 class="card-title" id="app-form-title">Log an application</h3>
-      <p class="card-hint">Fields marked <span class="req-star">*</span> are always required. Fields marked <span class="state-req-tag">state</span> are required by your selected state’s pesticide recordkeeping rules. USDA’s old 7 CFR Part 110 federal private-applicator RUP rule was rescinded July 11, 2025 — state rules, labels, and WPS now control. Strict mode blocks incomplete saves.</p>
+      <p class="card-hint" id="app-form-hint">This spray log reshapes for your selected state. Only core fields plus that state’s required record fields are shown.</p>
+      <div class="form-row form-row-2 log-shape-controls">
+        <label class="checkbox-label">
+          <input type="checkbox" id="app-show-recommended">
+          Also show recommended extra fields (drift defense / audit extras)
+        </label>
+        <p class="card-hint" id="app-form-shape-summary"></p>
+      </div>
       <div id="app-compliance-status" class="compliance-status" hidden></div>
 
       <form id="app-form" class="form-grid" autocomplete="off">
         <input type="hidden" id="app-id">
 
-        <fieldset>
+        <fieldset data-log-section="where">
           <legend>Where</legend>
           <div class="form-row form-row-3">
-            <label>Field / site <span class="req-star">*</span> <span id="req-location" class="state-req-tag" hidden>state</span>
+            <label data-log-field="location">Field / site <span class="req-star">*</span> <span id="req-location" class="state-req-tag" hidden>state</span>
               <select id="app-field" required>
                 <option value="">— Select field —</option>
               </select>
             </label>
-            <label>County of application <span id="req-county" class="state-req-tag" hidden>state</span>
+            <label data-log-field="county">County of application <span id="req-county" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-county" placeholder="e.g. Lincoln">
             </label>
-            <label>Site ID <span id="req-site_id" class="state-req-tag" hidden>state</span>
+            <label data-log-field="site_id">Site ID <span id="req-site_id" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-site-id" placeholder="County / state site ID">
             </label>
           </div>
           <div class="form-row form-row-3">
-            <label>Crop / commodity / site treated <span class="req-star">*</span> <span id="req-crop_treated" class="state-req-tag" hidden>state</span>
+            <label data-log-field="crop_treated">Crop / commodity / site treated <span class="req-star">*</span> <span id="req-crop_treated" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-crop" required placeholder="e.g. Sweet corn">
             </label>
-            <label>Target pest <span id="req-target_pest" class="state-req-tag" hidden>state</span>
+            <label data-log-field="target_pest">Target pest <span id="req-target_pest" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-pest" placeholder="e.g. Colorado potato beetle">
             </label>
-            <label>Purpose of application <span id="req-application_purpose" class="state-req-tag" hidden>state</span>
+            <label data-log-field="application_purpose">Purpose of application <span id="req-application_purpose" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-purpose" placeholder="e.g. Insect control, weed control">
             </label>
           </div>
           <div class="form-row form-row-2">
-            <label>Permit / operator ID <span id="req-permit_number" class="state-req-tag" hidden>state</span>
+            <label data-log-field="permit_number">Permit / operator ID <span id="req-permit_number" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-permit" placeholder="Required in CA, AZ, and similar programs">
             </label>
-            <label>Location description override
+            <label data-log-field="location_note">Location description override
               <input type="text" id="app-location-note" placeholder="Optional detail if field location needs clarifying">
             </label>
           </div>
         </fieldset>
 
-        <fieldset>
+        <fieldset data-log-section="products">
           <legend>Products applied (tank mix) <span class="req-star">*</span>
             <span id="req-brand_name" class="state-req-tag" hidden>state</span>
             <span id="req-epa_reg_no" class="state-req-tag" hidden>state</span>
@@ -204,153 +211,153 @@
           <div id="app-product-info" class="product-info-strip" hidden></div>
         </fieldset>
 
-        <fieldset>
+        <fieldset data-log-section="when">
           <legend>When</legend>
           <div class="form-row form-row-3">
-            <label>Date <span class="req-star">*</span> <span id="req-date" class="state-req-tag" hidden>state</span>
+            <label data-log-field="date">Date <span class="req-star">*</span> <span id="req-date" class="state-req-tag" hidden>state</span>
               <input type="date" id="app-date" required>
             </label>
-            <label>Start time <span id="req-start_time" class="state-req-tag" hidden>state</span> <span id="req-application_time" class="state-req-tag" hidden>state</span>
+            <label data-log-field="start_time">Start time <span id="req-start_time" class="state-req-tag" hidden>state</span> <span id="req-application_time" class="state-req-tag" hidden>state</span>
               <input type="time" id="app-start">
             </label>
-            <label>End time <span id="req-end_time" class="state-req-tag" hidden>state</span>
+            <label data-log-field="end_time">End time <span id="req-end_time" class="state-req-tag" hidden>state</span>
               <input type="time" id="app-end">
             </label>
           </div>
         </fieldset>
 
-        <fieldset>
+        <fieldset data-log-section="volume">
           <legend>Area &amp; spray volume</legend>
           <div class="form-row form-row-4">
-            <label>Area treated <span class="req-star">*</span> <span id="req-area_treated" class="state-req-tag" hidden>state</span>
+            <label data-log-field="area_treated">Area treated <span class="req-star">*</span> <span id="req-area_treated" class="state-req-tag" hidden>state</span>
               <input type="number" id="app-area" step="any" min="0" required>
             </label>
-            <label>Area unit <span id="req-area_unit" class="state-req-tag" hidden>state</span>
+            <label data-log-field="area_unit">Area unit <span id="req-area_unit" class="state-req-tag" hidden>state</span>
               <select id="app-area-unit">
                 <option value="acres">acres</option>
                 <option value="sqft">sq ft</option>
                 <option value="1000sqft">1,000 sq ft</option>
               </select>
             </label>
-            <label>Carrier / finished spray <span id="req-carrier_volume" class="state-req-tag" hidden>state</span> <span id="req-total_mix_applied" class="state-req-tag" hidden>state</span>
+            <label data-log-field="carrier_volume">Carrier / finished spray <span id="req-carrier_volume" class="state-req-tag" hidden>state</span> <span id="req-total_mix_applied" class="state-req-tag" hidden>state</span>
               <div class="input-pair">
                 <input type="number" id="app-carrier" step="any" min="0">
                 <select id="app-carrier-unit"><option>gal</option><option>L</option></select>
               </div>
             </label>
-            <label>Dilution rate <span id="req-dilution_rate" class="state-req-tag" hidden>state</span>
+            <label data-log-field="dilution_rate">Dilution rate <span id="req-dilution_rate" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-dilution" placeholder="e.g. 2 fl oz / gal">
             </label>
           </div>
           <div class="form-row form-row-2">
-            <label>Concentration <span id="req-concentration" class="state-req-tag" hidden>state</span>
+            <label data-log-field="concentration">Concentration <span id="req-concentration" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-concentration" placeholder="e.g. 1% solution">
             </label>
-            <label>Mix / load location <span id="req-mix_load_location" class="state-req-tag" hidden>state</span>
+            <label data-log-field="mix_load_location">Mix / load location <span id="req-mix_load_location" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-mix-load" placeholder="Where tank was filled">
             </label>
           </div>
           <p class="auto-calc-note" id="app-total-note" hidden></p>
         </fieldset>
 
-        <fieldset>
+        <fieldset data-log-section="conditions">
           <legend>Conditions
             <button type="button" class="btn btn-secondary btn-sm legend-btn" id="app-weather">Fetch current weather</button>
           </legend>
           <div class="form-row form-row-4">
-            <label>Wind speed (mph) <span id="req-wind_speed" class="state-req-tag" hidden>state</span>
+            <label data-log-field="wind_speed">Wind speed (mph) <span id="req-wind_speed" class="state-req-tag" hidden>state</span>
               <input type="number" id="app-wind" step="any" min="0" max="60">
             </label>
-            <label>Wind direction <span id="req-wind_direction" class="state-req-tag" hidden>state</span>
+            <label data-log-field="wind_direction">Wind direction <span id="req-wind_direction" class="state-req-tag" hidden>state</span>
               <select id="app-wind-dir">
                 <option value="">—</option>
                 <option>N</option><option>NNE</option><option>NE</option><option>ENE</option><option>E</option><option>ESE</option><option>SE</option><option>SSE</option><option>S</option><option>SSW</option><option>SW</option><option>WSW</option><option>W</option><option>WNW</option><option>NW</option><option>NNW</option><option>Calm</option>
               </select>
             </label>
-            <label>Temperature (°F) <span id="req-temperature" class="state-req-tag" hidden>state</span>
+            <label data-log-field="temperature">Temperature (°F) <span id="req-temperature" class="state-req-tag" hidden>state</span>
               <input type="number" id="app-temp" step="any" min="-20" max="120">
             </label>
-            <label>Sky / humidity <span id="req-sky" class="state-req-tag" hidden>state</span>
+            <label data-log-field="sky">Sky / humidity <span id="req-sky" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-sky" placeholder="e.g. Clear, 60% RH">
             </label>
           </div>
         </fieldset>
 
-        <fieldset>
+        <fieldset data-log-section="equipment">
           <legend>Equipment</legend>
           <div class="form-row form-row-3">
-            <label>Method / equipment <span id="req-method" class="state-req-tag" hidden>state</span>
+            <label data-log-field="method">Method / equipment <span id="req-method" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-method" placeholder="e.g. Boom sprayer, backpack, aerial">
             </label>
-            <label>Nozzle type <span id="req-nozzle_type" class="state-req-tag" hidden>state</span>
+            <label data-log-field="nozzle_type">Nozzle type <span id="req-nozzle_type" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-nozzle" placeholder="e.g. AIXR 11004">
             </label>
-            <label>Sprayer pressure <span id="req-sprayer_pressure" class="state-req-tag" hidden>state</span>
+            <label data-log-field="sprayer_pressure">Sprayer pressure <span id="req-sprayer_pressure" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-pressure" placeholder="e.g. 40 psi">
             </label>
           </div>
           <div class="form-row form-row-2">
-            <label>Equipment ID <span id="req-equipment_id" class="state-req-tag" hidden>state</span>
+            <label data-log-field="equipment_id">Equipment ID <span id="req-equipment_id" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-equipment-id" placeholder="Sprayer / unit ID">
             </label>
-            <label>Aircraft ID <span id="req-aircraft_id" class="state-req-tag" hidden>state</span>
+            <label data-log-field="aircraft_id">Aircraft ID <span id="req-aircraft_id" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-aircraft-id" placeholder="FAA / state aircraft ID if aerial">
             </label>
           </div>
         </fieldset>
 
-        <fieldset>
+        <fieldset data-log-section="who">
           <legend>Who</legend>
           <div class="form-row form-row-3">
-            <label>Applicator name <span class="req-star">*</span> <span id="req-applicator_name" class="state-req-tag" hidden>state</span>
+            <label data-log-field="applicator_name">Applicator name <span class="req-star">*</span> <span id="req-applicator_name" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-applicator" required>
             </label>
-            <label>Certification / license # <span id="req-applicator_license" class="state-req-tag" hidden>state</span>
+            <label data-log-field="applicator_license">Certification / license # <span id="req-applicator_license" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-cert">
             </label>
-            <label>Supervising applicator <span id="req-supervisor_name" class="state-req-tag" hidden>state</span>
+            <label data-log-field="supervisor_name">Supervising applicator <span id="req-supervisor_name" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-supervisor" placeholder="If required / direct supervision">
             </label>
           </div>
           <div class="form-row form-row-2">
-            <label>Noncertified / trainee applicator <span id="req-noncertified_applicator_name" class="state-req-tag" hidden>state</span>
+            <label data-log-field="noncertified_applicator_name">Noncertified / trainee applicator <span id="req-noncertified_applicator_name" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-noncertified" placeholder="If a trainee applied under supervision">
             </label>
-            <label>Owner / operator name <span id="req-owner_operator_name" class="state-req-tag" hidden>state</span>
+            <label data-log-field="owner_operator_name">Owner / operator name <span id="req-owner_operator_name" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-owner" placeholder="Defaults to farm name">
             </label>
           </div>
           <div class="form-row form-row-3">
-            <label>Customer / for whom applied <span id="req-customer_name" class="state-req-tag" hidden>state</span>
+            <label data-log-field="customer_name">Customer / for whom applied <span id="req-customer_name" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-customer" placeholder="Own farm or customer name">
             </label>
-            <label>Customer address <span id="req-customer_address" class="state-req-tag" hidden>state</span>
+            <label data-log-field="customer_address">Customer address <span id="req-customer_address" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-customer-address">
             </label>
-            <label>Customer phone <span id="req-customer_phone" class="state-req-tag" hidden>state</span>
+            <label data-log-field="customer_phone">Customer phone <span id="req-customer_phone" class="state-req-tag" hidden>state</span>
               <input type="tel" id="app-customer-phone">
             </label>
           </div>
           <div class="form-row form-row-3">
-            <label>Business name &amp; address <span id="req-business_name_address" class="state-req-tag" hidden>state</span>
+            <label data-log-field="business_name_address">Business name &amp; address <span id="req-business_name_address" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-business" placeholder="Commercial applicator business">
             </label>
-            <label>Company license # <span id="req-company_license" class="state-req-tag" hidden>state</span>
+            <label data-log-field="company_license">Company license # <span id="req-company_license" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-company-license">
             </label>
-            <label>Pesticide supplier <span id="req-pesticide_supplier" class="state-req-tag" hidden>state</span>
+            <label data-log-field="pesticide_supplier">Pesticide supplier <span id="req-pesticide_supplier" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-supplier">
             </label>
           </div>
         </fieldset>
 
-        <fieldset>
+        <fieldset data-log-section="notes">
           <legend>Notes &amp; disposal</legend>
           <div class="form-row form-row-2">
-            <label>Disposal of unused pesticide <span id="req-disposal_method" class="state-req-tag" hidden>state</span>
+            <label data-log-field="disposal_method">Disposal of unused pesticide <span id="req-disposal_method" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-disposal" placeholder="e.g. Applied to labeled site, triple-rinsed">
             </label>
-            <label>Notes <span id="req-notes" class="state-req-tag" hidden>state</span>
+            <label data-log-field="notes">Notes <span id="req-notes" class="state-req-tag" hidden>state</span>
               <textarea id="app-notes" rows="2" placeholder="Buffer zones, label deviations, unexpected occurrences, tank order…"></textarea>
             </label>
           </div>

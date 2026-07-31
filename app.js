@@ -2118,6 +2118,8 @@
     if ($('#app-ground-speed')) $('#app-ground-speed').value = '';
     if ($('#app-buffer-distance')) $('#app-buffer-distance').value = '';
     if ($('#app-sensitive-sites')) $('#app-sensitive-sites').value = '';
+    appFormPhotoIds = [];
+    renderPhotoThumbs(appFormPhotoIds, $('#app-photo-thumbs'));
     $('#app-products').innerHTML = '';
     addAppProductRow();
     $('#app-product-info').hidden = true;
@@ -2187,6 +2189,8 @@
     if ($('#app-inversion')) $('#app-inversion').checked = !!a.inversionObserved;
     if ($('#app-customer-copy')) $('#app-customer-copy').checked = !!a.customerCopyProvided;
     if ($('#app-customer-copy-date')) $('#app-customer-copy-date').value = a.customerCopyDate || '';
+    appFormPhotoIds = (a.photoIds || []).slice();
+    renderPhotoThumbs(appFormPhotoIds, $('#app-photo-thumbs'));
     $('#app-total-note').hidden = true;
     updateIntervalPreview();
     reshapeAppFormForState();

@@ -852,39 +852,28 @@ label.state-required-field {
 .legal-body { margin-top: 0.6rem; }
 .legal-body p { font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--text-muted); }
 
-/* ---------- Spray window forecast ---------- */
-.forecast-controls { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
-.forecast-controls select {
-  padding: 0.4rem 0.6rem;
+/* ---------- Photos & barcode ---------- */
+.photo-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.5rem; }
+.photo-thumbs { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.photo-thumb {
+  appearance: none;
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  font: inherit;
-  font-size: 0.85rem;
+  padding: 0;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  cursor: pointer;
   background: var(--bg-white);
 }
-.fc-day { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.45rem; }
-.fc-day-label { flex: 0 0 4.6rem; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); }
-.fc-blocks { display: flex; flex-wrap: wrap; gap: 3px; }
-.fc-block {
-  appearance: none;
-  border: none;
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-  font-size: 0.62rem;
-  font-weight: 700;
-  color: rgba(0, 0, 0, 0.55);
-  cursor: pointer;
-}
+.photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo-thumb:hover, .photo-thumb:focus-visible { outline: 2px solid var(--primary-green); }
+.photo-dialog-box { max-width: 640px; }
+.photo-dialog-box img { width: 100%; border-radius: 8px; margin-bottom: 0.5rem; }
+#scan-video { width: 100%; border-radius: 10px; background: #000; margin-bottom: 0.5rem; }
 .fc-block:hover, .fc-block:focus-visible { outline: 2px solid var(--primary-green); }
-.fc-good { background: #9ecf9e; }
-.fc-fair { background: #eeda8f; }
-.fc-bad { background: #e5a3a3; }
-.fc-legend { display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; margin: 0.5rem 0 0.25rem; }
-.fc-key { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
 @media (max-width: 720px) {
-  .fc-block { width: 22px; height: 22px; }
-  .fc-day { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+  .fc-block { width: 1.7rem; height: 1.7rem; }
 }
 
 /* ---------- Toast ---------- */

@@ -799,6 +799,49 @@ label.state-required-field {
   margin-bottom: 1rem;
   background: var(--bg-white);
 }
+/* ---------- Spray window forecast ---------- */
+.forecast-controls { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.forecast-controls select {
+  min-height: 2.4rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font: inherit;
+  background: var(--bg-white);
+}
+.fc-day { margin: 0.55rem 0; }
+.fc-day-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 0.3rem;
+}
+.fc-blocks { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.fc-block {
+  appearance: none;
+  border: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--text-dark);
+}
+.fc-good { background: #c8e6c9; }
+.fc-fair { background: #ffe082; }
+.fc-bad { background: #ef9a9a; }
+.fc-legend { margin-top: 0.6rem; font-size: 0.82rem; display: flex; flex-wrap: wrap; gap: 0.55rem; align-items: center; }
+.fc-key {
+  display: inline-block;
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 3px;
+  vertical-align: middle;
+}
+
 .legal-details { margin-top: 0.75rem; }
 .legal-details summary {
   cursor: pointer;
@@ -808,6 +851,41 @@ label.state-required-field {
 }
 .legal-body { margin-top: 0.6rem; }
 .legal-body p { font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--text-muted); }
+
+/* ---------- Spray window forecast ---------- */
+.forecast-controls { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.forecast-controls select {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.85rem;
+  background: var(--bg-white);
+}
+.fc-day { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.45rem; }
+.fc-day-label { flex: 0 0 4.6rem; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); }
+.fc-blocks { display: flex; flex-wrap: wrap; gap: 3px; }
+.fc-block {
+  appearance: none;
+  border: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.55);
+  cursor: pointer;
+}
+.fc-block:hover, .fc-block:focus-visible { outline: 2px solid var(--primary-green); }
+.fc-good { background: #9ecf9e; }
+.fc-fair { background: #eeda8f; }
+.fc-bad { background: #e5a3a3; }
+.fc-legend { display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; margin: 0.5rem 0 0.25rem; }
+.fc-key { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+@media (max-width: 720px) {
+  .fc-block { width: 22px; height: 22px; }
+  .fc-day { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+}
 
 /* ---------- Toast ---------- */
 .toast {

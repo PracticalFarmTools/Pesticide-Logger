@@ -2504,6 +2504,8 @@
     }
 
     renderDueBanner();
+    renderForecastFieldOptions();
+    renderSprayForecast();
   }
 
   // -------------------------------------------------------------- calculator
@@ -3396,6 +3398,149 @@
       poly.on('click', (e) => { L.DomEvent.stop(e); editField(f.id); });
       savedPolysLayer.addLayer(poly);
     });
+  }
+
+  // -------------------------------------------------------------- spray window forecast
+
+  // Score one forecast hour against common drift guidance. The label rules.
+  function scoreSprayHour(h) {
+    const reasons = [];
+    let score = 'good';
+    const bump = (level, why) => {
+      reasons.push(why);
+      if (level === 'bad' || score === 'bad') score = 'bad';
+      else score = 'fair';
+    };
+    if (h.wind > 12 || h.gusts > 18) bump('bad', `wind ${Math.round(h.wind)} mph (gusts ${Math.round(h.gusts)})`);
+    else if (h.wind > 10 || h.gusts > 15) bump('fair', `breezy — ${Math.round(h.wind)} mph`);
+    if (h.wind < 2) bump('fair', 'near-calm — temperature inversion risk');
+    else if (h.wind < 3 && score !== 'bad') bump('fair', 'light wind — watch for inversion');
+    if (h.precipProb >= 50 || h.precip > 0.02) bump('bad', `rain likely (${h.precipProb}%)`);
+    else if (h.precipProb >= 30) bump('fair', `rain chance ${h.precipProb}%`);
+    if (h.temp >= 90) bump('fair', `hot (${Math.round(h.temp)} °F) — volatility/evaporation`);
+    if (reasons.length === 0) reasons.push(`${Math.round(h.wind)} mph, ${h.precipProb}% rain`);
+    return { score, reasons };
+  }
+
+  function forecastCoords() {
+    const fieldId = $('#forecast-field') ? $('#forecast-field').value : '';
+    const f = getField(fieldId);
+    if (f && f.boundary && f.boundary.length >= 3) {
+      const lat = f.boundary.reduce((s, p) => s + p[0], 0) / f.boundary.length;
+      const lng = f.boundary.reduce((s, p) => s + p[1], 0) / f.boundary.length;
+      return Promise.resolve({ lat, lng });
+    }
+    return new Promise(res => {
+      if (!navigator.geolocation) return res(null);
+      navigator.geolocation.getCurrentPosition(
+        p => res({ lat: p.coords.latitude, lng: p.coords.longitude }),
+        () => res(null), { timeout: 8000 });
+    });
+  }
+
+  async function fetchSprayForecast() {
+    if (!requirePro('Spray window outlook')) return;
+    const btn = $('#forecast-refresh');
+    btn.disabled = true;
+    btn.textContent = 'Updating…';
+    try {
+      const c = await forecastCoords();
+      if (!c) { toast('Pick a mapped field, or allow location access'); return; }
+      const res = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${c.lat.toFixed(4)}&longitude=${c.lng.toFixed(4)}` +
+        `&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,wind_speed_10m,wind_gusts_10m` +
+        `&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&forecast_days=3&timezone=auto`);
+      const j = await res.json();
+      const hh = j.hourly;
+      const nowIso = new Date();
+      const hours = [];
+      for (let i = 0; i < hh.time.length && hours.length < 48; i++) {
+        const t = new Date(hh.time[i]);
+        if (t < nowIso) continue;
+        hours.push({
+          time: hh.time[i],
+          temp: hh.temperature_2m[i],
+          rh: hh.relative_humidity_2m[i],
+          precipProb: hh.precipitation_probability[i] ?? 0,
+          precip: hh.precipitation[i] ?? 0,
+          wind: hh.wind_speed_10m[i],
+          gusts: hh.wind_gusts_10m[i] ?? hh.wind_speed_10m[i]
+        });
+      }
+      data.meta.forecastCache = { at: Date.now(), fieldId: $('#forecast-field').value, hours };
+      save();
+      renderSprayForecast();
+      toast('Outlook updated from Open-Meteo');
+    } catch (e) {
+      toast('Could not fetch the forecast — check your connection');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Update outlook';
+    }
+  }
+
+  function renderForecastFieldOptions() {
+    const sel = $('#forecast-field');
+    if (!sel) return;
+    const keep = sel.value;
+    sel.innerHTML = '<option value="">My location (GPS)</option>' +
+      data.fields.filter(f => f.boundary && f.boundary.length >= 3)
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map(f => `<option value="${f.id}">${esc(f.name)}</option>`).join('');
+    sel.value = keep;
+  }
+
+  function renderSprayForecast() {
+    const host = $('#forecast-body');
+    if (!host) return;
+    if (!isPro()) {
+      host.innerHTML = `<p class="empty-note">See the next 48 hours scored into good / marginal / poor spray
+        windows for any mapped field. <button type="button" class="btn btn-secondary btn-sm" id="forecast-upgrade">Part of Pro — try free</button></p>`;
+      const b = host.querySelector('#forecast-upgrade');
+      if (b) b.addEventListener('click', () => requirePro('Spray window outlook'));
+      return;
+    }
+    const cache = data.meta.forecastCache;
+    if (!cache || !cache.hours || !cache.hours.length) {
+      host.innerHTML = `<p class="empty-note">Tap <strong>Update outlook</strong> to score the next 48 hours for spraying.</p>`;
+      return;
+    }
+    const stale = Date.now() - cache.at > 3 * 3600000;
+    const byDay = {};
+    cache.hours.forEach(h => {
+      const day = h.time.slice(0, 10);
+      (byDay[day] = byDay[day] || []).push(h);
+    });
+    const dayHtml = Object.entries(byDay).map(([day, hours]) => {
+      const label = new Date(day + 'T12:00:00')
+        .toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+      const blocks = hours.map(h => {
+        const { score, reasons } = scoreSprayHour(h);
+        const hr = new Date(h.time).getHours();
+        return `<button type="button" class="fc-block fc-${score}"
+          data-fc-detail="${esc(`${label} ${hr}:00 — ${reasons.join('; ')} · ${Math.round(h.temp)} °F, RH ${h.rh}%`)}"
+          aria-label="${esc(`${label} ${hr}:00 ${score}`)}">${hr}</button>`;
+      }).join('');
+      return `<div class="fc-day"><span class="fc-day-label">${label}</span><div class="fc-blocks">${blocks}</div></div>`;
+    }).join('');
+    host.innerHTML = `
+      ${stale ? `<p class="card-hint">Outlook is ${Math.round((Date.now() - cache.at) / 3600000)}h old — update before deciding.</p>` : ''}
+      ${dayHtml}
+      <p class="fc-legend"><span class="fc-key fc-good"></span> good
+        <span class="fc-key fc-fair"></span> marginal
+        <span class="fc-key fc-bad"></span> poor
+        <span class="card-hint">· tap an hour for details</span></p>
+      <p class="card-hint" id="fc-detail">Updated ${new Date(cache.at).toLocaleString()}.</p>`;
+    host.querySelectorAll('[data-fc-detail]').forEach(b =>
+      b.addEventListener('click', () => { $('#fc-detail').textContent = b.dataset.fcDetail; }));
+  }
+
+  function initSprayForecast() {
+    if (!$('#spray-window-card')) return;
+    renderForecastFieldOptions();
+    renderSprayForecast();
+    $('#forecast-refresh').addEventListener('click', fetchSprayForecast);
+    $('#forecast-field').addEventListener('change', renderSprayForecast);
   }
 
   // -------------------------------------------------------------- licensing

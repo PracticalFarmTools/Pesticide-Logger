@@ -11,6 +11,7 @@ const APP_SHELL = [
   './state_pesticide_laws.js',
   './deadline.js',
   './license.js',
+  './i18n.js',
   './manifest.json',
   './favicon.svg',
   './icon-192.png',

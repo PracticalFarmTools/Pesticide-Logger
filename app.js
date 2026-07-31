@@ -54,6 +54,7 @@
       strictCompliance: true
     }, d.settings || {});
     if (d.settings.strictCompliance == null) d.settings.strictCompliance = true;
+    if (d.settings.language == null) d.settings.language = '';
 
     d.applications.forEach(a => {
       if (!a.products) {
@@ -486,9 +487,11 @@
     $('#set-company-license').value = s.companyLicense || '';
     $('#set-business').value = s.businessNameAddress || '';
     $('#set-strict-compliance').checked = s.strictCompliance !== false;
+    if ($('#set-language')) $('#set-language').value = s.language || '';
 
     $('#settings-form').addEventListener('submit', (e) => {
       e.preventDefault();
+      const langBefore = data.settings.language || '';
       data.settings = {
         farmName: $('#set-farm').value.trim(),
         state: $('#set-state').value,
@@ -500,10 +503,16 @@
         permitNumber: $('#set-permit').value.trim(),
         companyLicense: $('#set-company-license').value.trim(),
         businessNameAddress: $('#set-business').value.trim(),
-        strictCompliance: $('#set-strict-compliance').checked
+        strictCompliance: $('#set-strict-compliance').checked,
+        language: ($('#set-language') && $('#set-language').value) || ''
       };
       save();
       applySettings();
+      if ((data.settings.language || '') !== langBefore) {
+        // Reload so the translator applies (or reverts) to a clean DOM.
+        location.reload();
+        return;
+      }
       toast('Settings saved');
     });
 
@@ -4393,6 +4402,9 @@
   initSprayForecast();
   initReminders();
   initCsvImport();
+  if (typeof I18n !== 'undefined' && data.settings.language === 'es') {
+    I18n.applyLanguage('es');
+  }
   if ($('#history-close')) $('#history-close').addEventListener('click', () => $('#history-dialog').close());
   renderDashboard();
   renderRecentProducts();

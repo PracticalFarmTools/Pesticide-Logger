@@ -24,7 +24,7 @@
       </svg>
       <div>
         <h1>Pesticide Logger</h1>
-        <span class="header-sub">Practical Farm Tools · v2.4.2</span>
+        <span class="header-sub">Practical Farm Tools · v2.5</span>
       </div>
     </div>
     <div class="header-right">
@@ -148,13 +148,17 @@
     <div class="card">
       <h3 class="card-title" id="app-form-title">Log an application</h3>
       <p class="card-hint" id="app-form-hint">This spray log reshapes for your selected state and applicator class. Completion means required fields are filled — not a legal determination.</p>
-      <div class="form-row form-row-2 log-shape-controls">
-        <label class="checkbox-label">
+      <div class="cab-toolbar">
+        <button type="button" class="btn btn-primary btn-lg" id="app-spray-now">Spray now</button>
+        <button type="button" class="btn btn-secondary btn-lg" id="app-duplicate-last">Duplicate last spray</button>
+        <label class="checkbox-label cab-toggle">
           <input type="checkbox" id="app-show-recommended">
-          Also show recommended extra fields (drift defense / audit extras)
+          Show recommended extras
         </label>
-        <p class="card-hint" id="app-form-shape-summary"></p>
       </div>
+      <div id="recent-products" class="recent-products" hidden></div>
+      <p class="card-hint" id="app-form-shape-summary"></p>
+      <div id="app-due-banner" class="due-banner" hidden></div>
       <div id="app-compliance-status" class="compliance-status" hidden></div>
 
       <form id="app-form" class="form-grid" autocomplete="off">
@@ -281,6 +285,26 @@
               <input type="text" id="app-sky" placeholder="e.g. Clear, 60% RH">
             </label>
           </div>
+          <div class="form-row form-row-4">
+            <label data-log-field="boom_height">Boom / release height
+              <input type="text" id="app-boom-height" placeholder="e.g. 20 in">
+            </label>
+            <label data-log-field="ground_speed">Ground speed
+              <input type="text" id="app-ground-speed" placeholder="e.g. 8 mph">
+            </label>
+            <label data-log-field="buffer_distance">Buffer distance
+              <input type="text" id="app-buffer-distance" placeholder="e.g. 50 ft">
+            </label>
+            <label data-log-field="inversion_observed" class="checkbox-label">
+              <input type="checkbox" id="app-inversion">
+              Temperature inversion suspected
+            </label>
+          </div>
+          <div class="form-row">
+            <label data-log-field="sensitive_sites">Sensitive sites / neighbors noted
+              <input type="text" id="app-sensitive-sites" placeholder="Schools, organic fields, residences, water…">
+            </label>
+          </div>
         </fieldset>
 
         <fieldset data-log-section="equipment">
@@ -350,6 +374,15 @@
               <input type="tel" id="app-customer-phone">
             </label>
           </div>
+          <div class="form-row form-row-2">
+            <label data-log-field="customer_copy_provided" class="checkbox-label">
+              <input type="checkbox" id="app-customer-copy">
+              Customer copy of this record provided
+            </label>
+            <label data-log-field="customer_copy_date">Customer copy date
+              <input type="date" id="app-customer-copy-date">
+            </label>
+          </div>
           <div class="form-row form-row-3">
             <label data-log-field="business_name_address">Business name &amp; address <span id="req-business_name_address" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-business" placeholder="Commercial applicator business">
@@ -378,9 +411,9 @@
         <div id="app-interval-preview" class="interval-preview" hidden></div>
         <div id="app-missing-fields" class="missing-fields" hidden></div>
 
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary" id="app-save-btn">Save complete record</button>
-          <button type="button" class="btn btn-secondary" id="app-save-draft-btn">Save incomplete draft</button>
+        <div class="form-actions sticky-actions">
+          <button type="submit" class="btn btn-primary btn-lg" id="app-save-btn">Save complete record</button>
+          <button type="button" class="btn btn-secondary btn-lg" id="app-save-draft-btn">Save incomplete draft</button>
           <button type="button" class="btn btn-secondary" id="app-cancel-btn" hidden>Cancel edit</button>
         </div>
       </form>
@@ -389,7 +422,13 @@
     <div class="card">
       <div class="card-title-row">
         <h3 class="card-title">Application history</h3>
-        <input type="search" id="log-search" class="search-input" placeholder="Search product, field, crop…">
+        <div class="history-controls">
+          <input type="search" id="log-search" class="search-input" placeholder="Search product, field, crop…">
+          <label class="checkbox-label">
+            <input type="checkbox" id="log-show-deleted">
+            Show deleted
+          </label>
+        </div>
       </div>
       <div id="app-list"></div>
     </div>
@@ -537,6 +576,15 @@
             Restricted-use pesticide (RUP)
           </label>
         </div>
+        <div class="form-row form-row-2">
+          <label class="checkbox-label">
+            <input type="checkbox" id="prod-omri">
+            OMRI Listed / organic-approved input
+          </label>
+          <label>Default lot / batch # pattern
+            <input type="text" id="prod-lot-hint" placeholder="Optional reminder, e.g. jug lot">
+          </label>
+        </div>
         <div class="form-row">
           <label>Notes
             <input type="text" id="prod-notes" placeholder="Max apps per season, buffer requirements…">
@@ -636,8 +684,9 @@
         </div>
       </div>
       <div class="form-actions report-actions">
-        <button class="btn btn-primary" id="report-print">Print / PDF inspection report</button>
-        <button class="btn btn-secondary" id="report-csv">Download CSV</button>
+        <button class="btn btn-primary btn-lg" id="report-print">Print / PDF inspection report</button>
+        <button class="btn btn-secondary btn-lg" id="report-csv">Download CSV</button>
+        <button class="btn btn-secondary btn-lg" id="report-state-pack">Download state compliance pack</button>
       </div>
       <p class="card-hint" id="report-count"></p>
     </div>
@@ -645,7 +694,7 @@
     <div class="card">
       <h3 class="card-title">Backup &amp; restore</h3>
       <p class="card-hint">Your records live only in this browser. Download a backup regularly and keep it with your farm files.
-        To move records between phone and PC: download (or share) a backup on one device, then restore it on the other and choose <strong>Merge</strong> — records combine without duplicates.</p>
+        To move records between phone and PC: download (or share) a backup on one device, then restore it on the other and choose <strong>Merge</strong> — newest edits win, audit history is kept, and nothing silently duplicates.</p>
       <div class="form-actions">
         <button class="btn btn-primary" id="backup-download">Download full backup (.json)</button>
         <button class="btn btn-secondary" id="backup-share" hidden>Share to another device</button>
@@ -731,8 +780,8 @@
 
     <div class="card about-card">
       <h3 class="card-title">About</h3>
-      <p>Pesticide Logger v2.4 — part of the <strong>Practical Farm Tools</strong> suite. Free forever, works offline, and your farm records stay on this device.</p>
-      <p class="card-hint">This tool provides 50-state application <em>recordkeeping field coverage</em>. It is not legal advice, does not replace WPS employer duties, and does not file California PUR, New York PRL, or other electronic reports for you. Always follow the product label and confirm requirements with your state pesticide agency.</p>
+      <p>Pesticide Logger v2.5 — part of the <strong>Practical Farm Tools</strong> suite. Free forever, works offline, and your farm records stay on this device.</p>
+      <p class="card-hint">This tool provides 50-state application <em>recordkeeping field coverage</em> with audit history, lot tracking, and in-cab workflows. It is not legal advice, does not replace WPS employer duties, and does not file California PUR, New York PRL, or other electronic reports for you. Always follow the product label and confirm requirements with your state pesticide agency.</p>
     </div>
   </section>
 

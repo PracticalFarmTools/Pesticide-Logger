@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.0 — Practical Farm Tools theme */
+/* Pesticide Logger v2.5 — Practical Farm Tools theme */
 
 :root {
   --primary-green: #1b4322;
@@ -529,6 +529,7 @@ input:hover, select:hover, textarea:hover { border-color: var(--border-color-hov
 .badge-rup { background: var(--danger-bg); color: var(--danger); }
 .badge-incomplete { background: var(--warn-bg); color: var(--warn); }
 .badge-complete { background: var(--ok-bg); color: var(--primary-green); }
+.badge-ok { background: var(--ok-bg); color: var(--primary-green); }
 .badge-signal-caution { background: var(--ok-bg); color: var(--primary-green); }
 .badge-signal-warning { background: var(--warn-bg); color: var(--warn); }
 .badge-signal-danger { background: var(--danger-bg); color: var(--danger); }
@@ -650,6 +651,92 @@ label.state-required-field {
   font-family: var(--font-title);
   font-weight: 700;
   font-size: 0.78rem;
+}
+
+/* ---------- In-cab / touch helpers (v2.5) ---------- */
+.cab-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+  margin: 0.75rem 0 1rem;
+}
+.cab-toggle { margin-left: auto; }
+.btn-lg {
+  min-height: 3rem;
+  padding: 0.85rem 1.25rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.recent-products {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  margin: 0 0 0.85rem;
+}
+.chip {
+  appearance: none;
+  border: 1px solid var(--border-color);
+  background: var(--bg-white);
+  color: var(--text-dark);
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 2.5rem;
+}
+.chip:hover, .chip:focus-visible {
+  border-color: var(--border-color-hover);
+  background: var(--accent-sage-light);
+}
+.due-banner {
+  background: var(--warn-bg);
+  border: 1px solid rgba(138, 98, 7, 0.28);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  margin: 0 0 1rem;
+  color: var(--text-dark);
+}
+.due-banner ul {
+  margin: 0.4rem 0 0.35rem 1.1rem;
+  font-size: 0.92rem;
+}
+.sticky-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  background: linear-gradient(180deg, rgba(240, 247, 241, 0), var(--bg-card) 28%);
+  padding-top: 1rem;
+  padding-bottom: 0.25rem;
+  margin-top: 0.5rem;
+}
+.history-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+.row-deleted { opacity: 0.72; }
+.row-deleted td { background: rgba(161, 51, 51, 0.04); }
+#app-products .app-product-row {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  background: var(--bg-white);
+}
+#app-products .apr-remove { margin-top: 0.35rem; height: auto; min-height: 2.5rem; }
+@media (max-width: 720px) {
+  .cab-toolbar { flex-direction: column; align-items: stretch; }
+  .cab-toggle { margin-left: 0; }
+  .btn-lg, .chip, .icon-btn, .tab-btn {
+    min-height: 2.75rem;
+  }
+  .form-actions .btn { width: 100%; }
+  .sticky-actions { padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* ---------- Toast ---------- */

@@ -1,6 +1,7 @@
-/* Pesticide Logger v2.0 — Practical Farm Tools
- * Offline-first spray record keeping, tank mix calculator, REI/PHI tracking.
- * All data stays in localStorage on this device. No server, no account, no cost.
+/* Pesticide Logger v2.4 — Practical Farm Tools
+ * Offline-first spray record keeping, 50-state recordkeeping coverage,
+ * tank mix calculator, REI/PHI tracking.
+ * Farm records stay in localStorage/IndexedDB on this device.
  */
 (function () {
   'use strict';
@@ -13,7 +14,10 @@
     version: 3,
     settings: {
       farmName: '', state: '', county: '',
-      applicatorName: '', certNumber: '', certExpiry: ''
+      applicatorName: '', certNumber: '', certExpiry: '',
+      applicatorClass: 'private',
+      permitNumber: '', companyLicense: '', businessNameAddress: '',
+      strictCompliance: true
     },
     products: [],
     fields: [],
@@ -40,8 +44,17 @@
     }
   }
 
-  // v2 records held one product per application; v3 holds a tank mix array.
+  // v2: one product per application → v3 tank mix array → v4 compliance fields.
   function migrate(d) {
+    d.settings = Object.assign({
+      farmName: '', state: '', county: '',
+      applicatorName: '', certNumber: '', certExpiry: '',
+      applicatorClass: 'private',
+      permitNumber: '', companyLicense: '', businessNameAddress: '',
+      strictCompliance: true
+    }, d.settings || {});
+    if (d.settings.strictCompliance == null) d.settings.strictCompliance = true;
+
     d.applications.forEach(a => {
       if (!a.products) {
         a.products = [{
@@ -51,9 +64,17 @@
           rate: a.rate, rateUnit: a.rateUnit, total: a.total, totalUnit: a.totalUnit
         }];
       }
+      if (a.complianceComplete == null) a.complianceComplete = null;
+      if (a.county == null) a.county = d.settings.county || '';
+      if (a.siteId == null) a.siteId = '';
+      if (a.permitNumber == null) a.permitNumber = '';
+      if (a.draft == null) a.draft = false;
+    });
+    (d.fields || []).forEach(f => {
+      if (f.siteId == null) f.siteId = '';
     });
     d.meta = d.meta || {};
-    d.version = 3;
+    d.version = 4;
     return d;
   }
 
@@ -253,9 +274,14 @@
     $('#set-farm').value = s.farmName;
     $('#set-state').value = s.state;
     $('#set-county').value = s.county;
+    $('#set-applicator-class').value = s.applicatorClass || 'private';
     $('#set-applicator').value = s.applicatorName;
     $('#set-cert').value = s.certNumber;
     $('#set-cert-expiry').value = s.certExpiry;
+    $('#set-permit').value = s.permitNumber || '';
+    $('#set-company-license').value = s.companyLicense || '';
+    $('#set-business').value = s.businessNameAddress || '';
+    $('#set-strict-compliance').checked = s.strictCompliance !== false;
 
     $('#settings-form').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -263,16 +289,25 @@
         farmName: $('#set-farm').value.trim(),
         state: $('#set-state').value,
         county: $('#set-county').value.trim(),
+        applicatorClass: $('#set-applicator-class').value || 'private',
         applicatorName: $('#set-applicator').value.trim(),
         certNumber: $('#set-cert').value.trim(),
-        certExpiry: $('#set-cert-expiry').value
+        certExpiry: $('#set-cert-expiry').value,
+        permitNumber: $('#set-permit').value.trim(),
+        companyLicense: $('#set-company-license').value.trim(),
+        businessNameAddress: $('#set-business').value.trim(),
+        strictCompliance: $('#set-strict-compliance').checked
       };
       save();
       applySettings();
       toast('Settings saved');
     });
 
-    $('#set-state').addEventListener('change', renderStateInfo);
+    $('#set-state').addEventListener('change', () => {
+      renderStateInfo();
+      applyStateRequiredTags();
+      updateCompliancePreview();
+    });
     applySettings();
   }
 
@@ -287,14 +322,20 @@
     $('#setup-banner').hidden = !!(s.farmName || s.state || s.applicatorName);
     if (!$('#app-applicator').value) $('#app-applicator').value = s.applicatorName;
     if (!$('#app-cert').value) $('#app-cert').value = s.certNumber;
+    if (!$('#app-county').value) $('#app-county').value = s.county || '';
+    if (!$('#app-permit').value) $('#app-permit').value = s.permitNumber || '';
+    if (!$('#app-business').value) $('#app-business').value = s.businessNameAddress || '';
+    if (!$('#app-company-license').value) $('#app-company-license').value = s.companyLicense || '';
+    if (!$('#app-owner').value) $('#app-owner').value = s.farmName || '';
+    if (!$('#app-customer').value) $('#app-customer').value = s.farmName || '';
     renderStateInfo();
     applyStateRequiredTags();
     renderDashboard();
     updateStorageUsage();
+    updateCompliancePreview();
   }
 
   function applyStateRequiredTags() {
-    // Hide all tags, then show ones this state requires.
     $$('.state-req-tag').forEach(t => { t.hidden = true; });
     const law = stateLaw();
     if (!law) return;
@@ -313,18 +354,146 @@
       return;
     }
     const law = STATE_LAWS[code];
-    const req = law.fields.filter(f => f.required).map(f => f.label);
+    const req = law.fields.filter(f => f.required);
+    const verLabel = law.verification === 'researched' ? 'Researched from state sources'
+      : law.verification === 'partial' ? 'Partially verified — confirm private/commercial nuances'
+      : 'Limited verification — confirm with your agency';
     card.hidden = false;
     $('#state-info').innerHTML = `
       <div class="state-info-block">
         <p><strong>${esc(law.agency)}</strong></p>
         <p class="card-hint">Citation: ${esc(law.citation.reference)} ·
           <a href="${esc(law.citation.url)}" target="_blank" rel="noopener">state agency website</a></p>
-        <p>Record fields required by ${esc(STATE_NAMES[code])} (beyond the federal minimum):</p>
-        <ul>${req.map(r => `<li>${esc(r)}</li>`).join('')}</ul>
-        <p class="card-hint">The matching fields in the Spray Log form are tagged
-        <span class="state-req-tag">state</span> automatically.</p>
+        <p><strong>Retain records ${esc(String(law.retentionYears))} year(s)</strong> from application date.</p>
+        <p class="card-hint">Applies to: ${esc(law.appliesTo || 'See state agency guidance')}</p>
+        <p class="card-hint">Source status: ${esc(verLabel)}</p>
+        <p>Required recordkeeping fields for ${esc(STATE_NAMES[code])} (${req.length}):</p>
+        <ul>${req.map(r => `<li>${esc(r.label)}</li>`).join('')}</ul>
+        ${law.notes ? `<p class="card-hint">${esc(law.notes)}</p>` : ''}
+        <p class="card-hint">Spray Log fields required by this state are tagged
+        <span class="state-req-tag">state</span>. This app does not file electronic reports
+        (CA PUR, NY PRL, etc.) and does not replace WPS employer duties.</p>
       </div>`;
+  }
+
+  // -------- 50-state compliance engine --------
+
+  function hasText(v) {
+    return v != null && String(v).trim() !== '';
+  }
+
+  function productsOk(app, pred) {
+    const prods = app.products || [];
+    return prods.length > 0 && prods.every(pred);
+  }
+
+  function complianceValuePresent(app, name) {
+    const prods = app.products || [];
+    switch (name) {
+      case 'brand_name': return productsOk(app, p => hasText(p.productName));
+      case 'epa_reg_no': return productsOk(app, p => hasText(p.epaRegNo));
+      case 'active_ingredient': return productsOk(app, p => hasText(p.activeIngredient));
+      case 'amount_applied': return productsOk(app, p => p.total != null && p.total !== '' && !Number.isNaN(Number(p.total)));
+      case 'rate': return productsOk(app, p => p.rate != null && p.rate !== '' && !Number.isNaN(Number(p.rate)));
+      case 'restricted_use_flag': return prods.length > 0; // boolean always known per product
+      case 'rei_hours': return productsOk(app, p => p.reiHours != null && p.reiHours !== '');
+      case 'phi_days': return productsOk(app, p => p.phiDays != null && p.phiDays !== '');
+      case 'pesticide_formulation': return productsOk(app, p => hasText(p.type) || hasText(p.productName));
+      case 'manufacturer_name': return productsOk(app, p => hasText(p.epaCompany) || hasText(p.activeIngredient) || hasText(p.productName));
+      case 'state_registration_no': return productsOk(app, p => hasText(p.stateRegNo) || hasText(p.epaRegNo));
+      case 'dilution_rate': return hasText(app.dilution) || productsOk(app, p => p.rate != null && p.rate !== '');
+      case 'concentration': return hasText(app.concentration) || hasText(app.dilution);
+      case 'carrier_volume':
+      case 'total_mix_applied': return app.carrier != null && app.carrier !== '' && !Number.isNaN(Number(app.carrier));
+      case 'area_treated': return app.area != null && app.area !== '' && Number(app.area) > 0;
+      case 'area_unit': return hasText(app.areaUnit);
+      case 'crop_treated': return hasText(app.crop);
+      case 'target_pest': return hasText(app.targetPest);
+      case 'application_purpose': return hasText(app.applicationPurpose) || hasText(app.targetPest);
+      case 'location': return hasText(app.fieldName) || hasText(app.fieldLocation) || hasText(app.locationNote);
+      case 'county': return hasText(app.county);
+      case 'date': return hasText(app.date);
+      case 'start_time': return hasText(app.startTime);
+      case 'end_time': return hasText(app.endTime);
+      case 'application_time': return hasText(app.startTime) || hasText(app.endTime);
+      case 'wind_speed': return app.windSpeed != null && app.windSpeed !== '';
+      case 'wind_direction': return hasText(app.windDir);
+      case 'temperature': return app.temperature != null && app.temperature !== '';
+      case 'sky': return hasText(app.sky);
+      case 'method': return hasText(app.method);
+      case 'nozzle_type': return hasText(app.nozzleType);
+      case 'sprayer_pressure': return hasText(app.sprayerPressure);
+      case 'equipment_id': return hasText(app.equipmentId);
+      case 'aircraft_id': return hasText(app.aircraftId);
+      case 'mix_load_location': return hasText(app.mixLoadLocation);
+      case 'applicator_name': return hasText(app.applicatorName);
+      case 'applicator_license': return hasText(app.certNumber);
+      case 'supervisor_name': return hasText(app.supervisorName);
+      case 'noncertified_applicator_name': return hasText(app.noncertifiedApplicatorName);
+      case 'permit_number': return hasText(app.permitNumber);
+      case 'site_id': return hasText(app.siteId);
+      case 'customer_name': return hasText(app.customerName);
+      case 'customer_address': return hasText(app.customerAddress);
+      case 'customer_phone': return hasText(app.customerPhone);
+      case 'business_name_address': return hasText(app.businessNameAddress);
+      case 'company_license': return hasText(app.companyLicense);
+      case 'owner_operator_name': return hasText(app.ownerOperatorName) || hasText(data.settings.farmName);
+      case 'pesticide_supplier': return hasText(app.pesticideSupplier);
+      case 'disposal_method': return hasText(app.disposalMethod);
+      case 'notes': return hasText(app.notes);
+      default: return false;
+    }
+  }
+
+  function evaluateCompliance(app) {
+    const law = stateLaw();
+    if (!law) {
+      return { complete: true, missing: [], retentionYears: 2, agency: null, verification: null };
+    }
+    const missing = law.fields
+      .filter(f => f.required && !complianceValuePresent(app, f.name))
+      .map(f => f.label);
+    return {
+      complete: missing.length === 0,
+      missing,
+      retentionYears: law.retentionYears || 2,
+      agency: law.agency,
+      citation: law.citation,
+      verification: law.verification
+    };
+  }
+
+  function updateCompliancePreview() {
+    const status = $('#app-compliance-status');
+    const missingBox = $('#app-missing-fields');
+    if (!status || !missingBox) return;
+    const law = stateLaw();
+    if (!law) {
+      status.hidden = false;
+      status.className = 'compliance-status';
+      status.textContent = 'Select your state in Settings to enable 50-state recordkeeping checks.';
+      missingBox.hidden = true;
+      return;
+    }
+    // Build a lightweight preview object from current form values when possible.
+    try {
+      const preview = collectAppFromForm(true);
+      const result = evaluateCompliance(preview);
+      status.hidden = false;
+      if (result.complete) {
+        status.className = 'compliance-status ok';
+        status.textContent = `${STATE_NAMES[data.settings.state]} record complete · retain ${result.retentionYears} year(s) · ${law.agency}`;
+        missingBox.hidden = true;
+      } else {
+        status.className = 'compliance-status warn';
+        status.textContent = `${result.missing.length} required ${STATE_NAMES[data.settings.state]} field(s) still missing`;
+        missingBox.hidden = false;
+        missingBox.innerHTML = `<strong>Missing for ${esc(STATE_NAMES[data.settings.state])}:</strong> ${result.missing.map(esc).join('; ')}`;
+      }
+    } catch (e) {
+      status.hidden = true;
+      missingBox.hidden = true;
+    }
   }
 
   function updateStorageUsage() {
@@ -650,6 +819,7 @@
         sizeUnit: $('#field-unit').value,
         crop: $('#field-crop').value.trim(),
         location: $('#field-location').value.trim(),
+        siteId: ($('#field-site-id') && $('#field-site-id').value.trim()) || '',
         boundary: pendingBoundary || (existing && existing.boundary) || null
       };
       const idx = data.fields.findIndex(f => f.id === id);
@@ -683,6 +853,7 @@
     $('#field-unit').value = f.sizeUnit || 'acres';
     $('#field-crop').value = f.crop;
     $('#field-location').value = f.location;
+    if ($('#field-site-id')) $('#field-site-id').value = f.siteId || '';
     $('#field-form-title').textContent = `Edit — ${f.name}`;
     $('#field-save-btn').textContent = 'Update field';
     $('#field-cancel-btn').hidden = false;
@@ -748,12 +919,16 @@
 
     $('#app-add-product').addEventListener('click', () => addAppProductRow());
     $('#app-weather').addEventListener('click', fetchWeather);
-    $('#app-form').addEventListener('submit', onAppSubmit);
+    $('#app-form').addEventListener('submit', (e) => onAppSubmit(e, false));
+    $('#app-save-draft-btn').addEventListener('click', () => onAppSubmit(null, true));
     $('#app-cancel-btn').addEventListener('click', resetAppForm);
     $('#log-search').addEventListener('input', renderAppList);
+    $('#app-form').addEventListener('input', updateCompliancePreview);
+    $('#app-form').addEventListener('change', updateCompliancePreview);
 
     addAppProductRow();
     renderAppList();
+    updateCompliancePreview();
   }
 
   function productOptionsHtml() {
@@ -835,6 +1010,7 @@
     computeRowTotal(row);
     updateMixInfo();
     updateIntervalPreview();
+    updateCompliancePreview();
   }
 
   // Total for one mix row: label rate × area, or × carrier for water-based rates.
@@ -931,7 +1107,9 @@
       $('#app-area-unit').value = f.sizeUnit === 'sqft' ? 'sqft' : 'acres';
     }
     if (f.crop && !$('#app-crop').value) $('#app-crop').value = f.crop;
+    if (f.siteId && $('#app-site-id') && !$('#app-site-id').value) $('#app-site-id').value = f.siteId;
     computeMixTotals();
+    updateCompliancePreview();
   }
 
   function round3(n) { return Math.round(n * 1000) / 1000; }
@@ -1013,7 +1191,7 @@
       toast('Could not fetch weather — check your connection');
     } finally {
       btn.disabled = false;
-      btn.textContent = '⛅ Fetch current weather';
+      btn.textContent = 'Fetch current weather';
     }
   }
 
@@ -1027,14 +1205,17 @@
       out.push({
         productId: p.id, productName: p.name, epaRegNo: p.epaRegNo,
         activeIngredient: p.activeIngredient, rup: !!p.rup,
+        type: p.type || '',
         signalWord: p.signalWord || '',
         epaStatus: p.epaStatus || null,
         epaCheckedAt: p.epaCheckedAt || null,
         epaLabelUrl: p.epaLabelUrl || null,
+        epaCompany: p.epaCompany || '',
+        stateRegNo: p.stateRegNo || '',
         reiHours: p.reiHours, phiDays: p.phiDays,
         rate: row.querySelector('.apr-rate').value === '' ? null : parseFloat(row.querySelector('.apr-rate').value),
         rateUnit: row.querySelector('.apr-rate-unit').value,
-        total: parseFloat(row.querySelector('.apr-total').value) || 0,
+        total: row.querySelector('.apr-total').value === '' ? null : parseFloat(row.querySelector('.apr-total').value),
         totalUnit: row.querySelector('.apr-total-unit').value
       });
     });
@@ -1045,91 +1226,129 @@
     return (a.products || []).map(p => p.productName).join(' + ') || '—';
   }
 
-  function onAppSubmit(e) {
-    e.preventDefault();
+  function collectAppFromForm(allowIncomplete) {
     const f = getField($('#app-field').value);
     const mix = collectMixRows();
-    if (!mix.length) { toast('Pick at least one product (add products in the Products tab first)'); return; }
-    if (!f) { toast('Pick a field (add one in Fields first)'); return; }
-
+    const s = data.settings;
     const id = $('#app-id').value || uid();
-    const app = {
+    return {
       id,
       date: $('#app-date').value,
       startTime: $('#app-start').value,
       endTime: $('#app-end').value,
       products: mix,
-      // Effective values follow the most restrictive label in the mix.
       reiHours: maxOrNull(mix.map(p => p.reiHours)),
       phiDays: maxOrNull(mix.map(p => p.phiDays)),
       rup: mix.some(p => p.rup),
-      fieldId: f.id,
-      fieldName: f.name,
-      fieldLocation: f.location,
+      fieldId: f ? f.id : '',
+      fieldName: f ? f.name : '',
+      fieldLocation: f ? f.location : '',
+      locationNote: ($('#app-location-note') && $('#app-location-note').value.trim()) || '',
+      county: ($('#app-county') && $('#app-county').value.trim()) || s.county || '',
+      siteId: ($('#app-site-id') && $('#app-site-id').value.trim()) || (f && f.siteId) || '',
+      permitNumber: ($('#app-permit') && $('#app-permit').value.trim()) || '',
       crop: $('#app-crop').value.trim(),
       targetPest: $('#app-pest').value.trim(),
-      area: parseFloat($('#app-area').value) || 0,
+      applicationPurpose: ($('#app-purpose') && $('#app-purpose').value.trim()) || '',
+      area: $('#app-area').value === '' ? null : parseFloat($('#app-area').value),
       areaUnit: $('#app-area-unit').value,
       carrier: $('#app-carrier').value === '' ? null : parseFloat($('#app-carrier').value),
       carrierUnit: $('#app-carrier-unit').value,
       dilution: $('#app-dilution').value.trim(),
+      concentration: ($('#app-concentration') && $('#app-concentration').value.trim()) || '',
+      mixLoadLocation: ($('#app-mix-load') && $('#app-mix-load').value.trim()) || '',
       windSpeed: $('#app-wind').value === '' ? null : parseFloat($('#app-wind').value),
       windDir: $('#app-wind-dir').value,
       temperature: $('#app-temp').value === '' ? null : parseFloat($('#app-temp').value),
       sky: $('#app-sky').value.trim(),
+      method: $('#app-method').value.trim(),
+      nozzleType: ($('#app-nozzle') && $('#app-nozzle').value.trim()) || '',
+      sprayerPressure: ($('#app-pressure') && $('#app-pressure').value.trim()) || '',
+      equipmentId: ($('#app-equipment-id') && $('#app-equipment-id').value.trim()) || '',
+      aircraftId: ($('#app-aircraft-id') && $('#app-aircraft-id').value.trim()) || '',
       applicatorName: $('#app-applicator').value.trim(),
       certNumber: $('#app-cert').value.trim(),
-      method: $('#app-method').value.trim(),
+      supervisorName: ($('#app-supervisor') && $('#app-supervisor').value.trim()) || '',
+      noncertifiedApplicatorName: ($('#app-noncertified') && $('#app-noncertified').value.trim()) || '',
+      ownerOperatorName: ($('#app-owner') && $('#app-owner').value.trim()) || s.farmName || '',
+      customerName: ($('#app-customer') && $('#app-customer').value.trim()) || '',
+      customerAddress: ($('#app-customer-address') && $('#app-customer-address').value.trim()) || '',
+      customerPhone: ($('#app-customer-phone') && $('#app-customer-phone').value.trim()) || '',
+      businessNameAddress: ($('#app-business') && $('#app-business').value.trim()) || s.businessNameAddress || '',
+      companyLicense: ($('#app-company-license') && $('#app-company-license').value.trim()) || s.companyLicense || '',
+      pesticideSupplier: ($('#app-supplier') && $('#app-supplier').value.trim()) || '',
+      disposalMethod: ($('#app-disposal') && $('#app-disposal').value.trim()) || '',
       notes: $('#app-notes').value.trim(),
+      draft: !!allowIncomplete,
       createdAt: new Date().toISOString()
     };
+  }
 
-    // Gentle compliance nudges — never block a save.
-    const warnings = [];
-    if (app.rup && !app.certNumber) warnings.push('RUP recorded without a certification number — federal rules require it.');
-    const law = stateLaw();
-    if (law) {
-      const missing = law.fields.filter(sf => sf.required).filter(sf => {
-        switch (sf.name) {
-          case 'wind_speed': return app.windSpeed == null;
-          case 'wind_direction': return !app.windDir;
-          case 'temperature': return app.temperature == null;
-          case 'target_pest': return !app.targetPest;
-          case 'applicator_license': return !app.certNumber;
-          case 'dilution_rate': return !app.dilution && !mix.some(pr => pr.rate != null);
-          case 'amount_applied': return mix.some(pr => !pr.total);
-          default: return false;
-        }
-      }).map(sf => sf.label);
-      if (missing.length) warnings.push(`${STATE_NAMES[data.settings.state]} also wants: ${missing.join(', ')}.`);
+  function onAppSubmit(e, asDraft) {
+    if (e && e.preventDefault) e.preventDefault();
+    const mix = collectMixRows();
+    if (!mix.length) { toast('Pick at least one product (add products in the Products tab first)'); return; }
+    if (!getField($('#app-field').value)) { toast('Pick a field (add one in Fields first)'); return; }
+    if (!$('#app-date').value || !$('#app-crop').value.trim() || !$('#app-applicator').value.trim()) {
+      toast('Date, crop, and applicator name are always required');
+      return;
     }
 
-    const idx = data.applications.findIndex(a => a.id === id);
-    if (idx >= 0) data.applications[idx] = app; else data.applications.push(app);
+    const app = collectAppFromForm(!!asDraft);
+    const result = evaluateCompliance(app);
+    app.complianceComplete = result.complete;
+    app.complianceMissing = result.missing.slice();
+    app.retentionYears = result.retentionYears;
+
+    if (!asDraft && data.settings.strictCompliance !== false && !result.complete) {
+      updateCompliancePreview();
+      toast(`Strict mode: fill ${result.missing.length} required state field(s), or save as incomplete draft`);
+      return;
+    }
+    if (asDraft) app.draft = true;
+
+    const idx = data.applications.findIndex(a => a.id === app.id);
+    if (idx >= 0) {
+      app.createdAt = data.applications[idx].createdAt || app.createdAt;
+      data.applications[idx] = app;
+    } else {
+      data.applications.push(app);
+    }
     save();
     resetAppForm();
     renderAppList();
     renderDashboard();
     updateStorageUsage();
-    toast(warnings.length
-      ? 'Record saved — heads up: ' + warnings.join(' ')
-      : (idx >= 0 ? 'Record updated' : 'Application record saved'));
+    if (asDraft || !result.complete) {
+      toast(`Draft saved — still missing: ${result.missing.slice(0, 4).join('; ')}${result.missing.length > 4 ? '…' : ''}`);
+    } else {
+      toast(idx >= 0 ? 'Complete record updated' : `Complete ${STATE_NAMES[data.settings.state] || ''} record saved`);
+    }
   }
 
   function resetAppForm() {
+    const s = data.settings;
     $('#app-form').reset();
     $('#app-id').value = '';
     $('#app-date').value = new Date().toISOString().slice(0, 10);
-    $('#app-applicator').value = data.settings.applicatorName;
-    $('#app-cert').value = data.settings.certNumber;
+    $('#app-applicator').value = s.applicatorName;
+    $('#app-cert').value = s.certNumber;
+    $('#app-county').value = s.county || '';
+    $('#app-permit').value = s.permitNumber || '';
+    $('#app-business').value = s.businessNameAddress || '';
+    $('#app-company-license').value = s.companyLicense || '';
+    $('#app-owner').value = s.farmName || '';
+    $('#app-customer').value = s.farmName || '';
     $('#app-products').innerHTML = '';
     addAppProductRow();
     $('#app-product-info').hidden = true;
     $('#app-total-note').hidden = true;
     $('#app-interval-preview').hidden = true;
     $('#app-form-title').textContent = 'Log an application';
-    $('#app-save-btn').textContent = 'Save application record';
+    $('#app-save-btn').textContent = 'Save complete record';
     $('#app-cancel-btn').hidden = true;
+    applyStateRequiredTags();
+    updateCompliancePreview();
   }
 
   function editApp(id) {
@@ -1140,8 +1359,13 @@
     (a.products && a.products.length ? a.products : [null]).forEach(pr => addAppProductRow(pr || undefined));
     updateMixInfo();
     $('#app-field').value = a.fieldId;
+    $('#app-county').value = a.county || data.settings.county || '';
+    $('#app-site-id').value = a.siteId || '';
+    $('#app-permit').value = a.permitNumber || '';
+    $('#app-location-note').value = a.locationNote || '';
     $('#app-crop').value = a.crop;
     $('#app-pest').value = a.targetPest;
+    $('#app-purpose').value = a.applicationPurpose || '';
     $('#app-date').value = a.date;
     $('#app-start').value = a.startTime;
     $('#app-end').value = a.endTime;
@@ -1150,18 +1374,35 @@
     $('#app-carrier').value = a.carrier ?? '';
     $('#app-carrier-unit').value = a.carrierUnit || 'gal';
     $('#app-dilution').value = a.dilution;
+    $('#app-concentration').value = a.concentration || '';
+    $('#app-mix-load').value = a.mixLoadLocation || '';
     $('#app-wind').value = a.windSpeed ?? '';
     $('#app-wind-dir').value = a.windDir;
     $('#app-temp').value = a.temperature ?? '';
     $('#app-sky').value = a.sky;
+    $('#app-method').value = a.method;
+    $('#app-nozzle').value = a.nozzleType || '';
+    $('#app-pressure').value = a.sprayerPressure || '';
+    $('#app-equipment-id').value = a.equipmentId || '';
+    $('#app-aircraft-id').value = a.aircraftId || '';
     $('#app-applicator').value = a.applicatorName;
     $('#app-cert').value = a.certNumber;
-    $('#app-method').value = a.method;
+    $('#app-supervisor').value = a.supervisorName || '';
+    $('#app-noncertified').value = a.noncertifiedApplicatorName || '';
+    $('#app-owner').value = a.ownerOperatorName || data.settings.farmName || '';
+    $('#app-customer').value = a.customerName || '';
+    $('#app-customer-address').value = a.customerAddress || '';
+    $('#app-customer-phone').value = a.customerPhone || '';
+    $('#app-business').value = a.businessNameAddress || '';
+    $('#app-company-license').value = a.companyLicense || '';
+    $('#app-supplier').value = a.pesticideSupplier || '';
+    $('#app-disposal').value = a.disposalMethod || '';
     $('#app-notes').value = a.notes;
     $('#app-total-note').hidden = true;
     updateIntervalPreview();
+    updateCompliancePreview();
     $('#app-form-title').textContent = `Edit record — ${appProductsLabel(a)} on ${fmtDate(a.date)}`;
-    $('#app-save-btn').textContent = 'Update record';
+    $('#app-save-btn').textContent = 'Update complete record';
     $('#app-cancel-btn').hidden = false;
     showTab('log');
     $('#app-form').scrollIntoView({ behavior: 'smooth' });
@@ -1170,7 +1411,8 @@
   function deleteApp(id) {
     const a = data.applications.find(x => x.id === id);
     if (!a) return;
-    if (!confirm(`Delete the ${appProductsLabel(a)} record from ${fmtDate(a.date)}? Regulators expect records kept at least 2 years.`)) return;
+    const retain = (stateLaw() && stateLaw().retentionYears) || 2;
+    if (!confirm(`Delete the ${appProductsLabel(a)} record from ${fmtDate(a.date)}? Your state expects records kept about ${retain} year(s).`)) return;
     data.applications = data.applications.filter(x => x.id !== id);
     save();
     renderAppList();
@@ -1185,6 +1427,12 @@
 
   function appStatusBadges(a) {
     const out = [];
+    const result = evaluateCompliance(a);
+    if (a.draft || !result.complete) {
+      out.push('<span class="badge-pill badge-incomplete">Incomplete</span>');
+    } else if (data.settings.state) {
+      out.push('<span class="badge-pill badge-complete">State complete</span>');
+    }
     const rei = reiExpiry(a);
     if (rei && hoursLeft(rei) > 0) out.push(`<span class="badge-pill badge-rei">REI ${fmtCountdown(hoursLeft(rei))}</span>`);
     const phi = phiDate(a);
@@ -1239,6 +1487,11 @@
     const seasonApps = apps.filter(a => new Date(a.date + 'T12:00:00') >= seasonStart);
     $('#stat-season-apps').textContent = seasonApps.length;
     $('#stat-products').textContent = data.products.length;
+    const incomplete = apps.filter(a => a.draft || !evaluateCompliance(a).complete);
+    if ($('#stat-incomplete')) {
+      $('#stat-incomplete').textContent = incomplete.length;
+      $('#stat-incomplete-card').classList.toggle('stat-alert', incomplete.length > 0);
+    }
 
     // Active REI
     const reiActive = apps
@@ -1302,9 +1555,11 @@
     const card = $('#compliance-card');
     if (law) {
       card.hidden = false;
+      const incompleteCount = apps.filter(a => a.draft || !evaluateCompliance(a).complete).length;
       $('#compliance-summary').textContent =
-        `Records here cover the federal RUP minimum (7 CFR Part 110) plus the fields ${STATE_NAMES[data.settings.state]} requires. Your state agency is ${law.agency}.`;
-      $('#compliance-citation').textContent = `Citation: ${law.citation.reference} — keep records at least 2 years (federal); check your state for longer retention.`;
+        `${STATE_NAMES[data.settings.state]} recordkeeping is active via ${law.agency}. Retain records ${law.retentionYears} year(s). ${incompleteCount ? incompleteCount + ' record(s) still missing required fields.' : 'All saved records currently satisfy required state fields.'}`;
+      $('#compliance-citation').textContent =
+        `Citation: ${law.citation.reference}. USDA 7 CFR Part 110 was rescinded July 11, 2025 — state rules, labels, and WPS control. This app covers record fields; it does not file electronic reports or replace WPS duties.`;
     } else {
       card.hidden = true;
     }
@@ -1583,27 +1838,38 @@
     const apps = reportApps();
     if (!apps.length) { toast('No records match the filter'); return; }
     const header = [
-      'Record ID', 'Date', 'Start', 'End', 'Brand/Product Name', 'EPA Reg No', 'Active Ingredient', 'RUP',
-      'Field/Site', 'Location', 'Crop/Commodity', 'Target Pest',
+      'Record ID', 'Compliance Complete', 'Draft', 'Date', 'Start', 'End',
+      'Brand/Product Name', 'EPA Reg No', 'Active Ingredient', 'RUP',
+      'Field/Site', 'Location', 'Location Note', 'County', 'Site ID', 'Permit/Operator ID',
+      'Crop/Commodity', 'Target Pest', 'Purpose',
       'Area Treated', 'Area Unit', 'Rate', 'Rate Unit',
-      'Total Applied', 'Total Unit', 'Carrier Volume', 'Carrier Unit', 'Dilution',
+      'Total Applied', 'Total Unit', 'Carrier Volume', 'Carrier Unit', 'Dilution', 'Concentration',
       'Wind Speed (mph)', 'Wind Direction', 'Temperature (F)', 'Sky/Humidity',
-      'Applicator', 'Certification No', 'Method/Equipment',
-      'Mix REI (hours)', 'Mix PHI (days)', 'Notes'
+      'Method/Equipment', 'Nozzle', 'Pressure', 'Equipment ID', 'Aircraft ID', 'Mix/Load Location',
+      'Applicator', 'Certification No', 'Supervisor', 'Noncertified Applicator',
+      'Owner/Operator', 'Customer', 'Customer Address', 'Customer Phone',
+      'Business', 'Company License', 'Supplier', 'Disposal',
+      'Mix REI (hours)', 'Mix PHI (days)', 'Retention Years', 'Missing Fields', 'Notes'
     ];
     const lines = [header.join(',')];
-    // One CSV row per product; tank-mix products share a Record ID.
     apps.forEach(a => {
+      const result = evaluateCompliance(a);
       (a.products || []).forEach(pr => {
         lines.push([
-          a.id.slice(0, 8), a.date, a.startTime, a.endTime,
+          a.id.slice(0, 8), result.complete ? 'Yes' : 'No', a.draft ? 'Yes' : 'No',
+          a.date, a.startTime, a.endTime,
           pr.productName, pr.epaRegNo, pr.activeIngredient, pr.rup ? 'Yes' : 'No',
-          a.fieldName, a.fieldLocation, a.crop, a.targetPest,
+          a.fieldName, a.fieldLocation, a.locationNote || '', a.county || '', a.siteId || '', a.permitNumber || '',
+          a.crop, a.targetPest, a.applicationPurpose || '',
           a.area, a.areaUnit, pr.rate ?? '', pr.rateUnit,
-          pr.total, pr.totalUnit, a.carrier ?? '', a.carrierUnit, a.dilution,
+          pr.total ?? '', pr.totalUnit, a.carrier ?? '', a.carrierUnit, a.dilution, a.concentration || '',
           a.windSpeed ?? '', a.windDir, a.temperature ?? '', a.sky,
-          a.applicatorName, a.certNumber, a.method,
-          a.reiHours ?? '', a.phiDays ?? '', a.notes
+          a.method, a.nozzleType || '', a.sprayerPressure || '', a.equipmentId || '', a.aircraftId || '', a.mixLoadLocation || '',
+          a.applicatorName, a.certNumber, a.supervisorName || '', a.noncertifiedApplicatorName || '',
+          a.ownerOperatorName || '', a.customerName || '', a.customerAddress || '', a.customerPhone || '',
+          a.businessNameAddress || '', a.companyLicense || '', a.pesticideSupplier || '', a.disposalMethod || '',
+          a.reiHours ?? '', a.phiDays ?? '', result.retentionYears,
+          result.missing.join('; '), a.notes
         ].map(csvEscape).join(','));
       });
     });
@@ -1615,27 +1881,34 @@
   function printReport() {
     const apps = reportApps();
     if (!apps.length) { toast('No records match the filter'); return; }
+    const incomplete = apps.filter(a => !evaluateCompliance(a).complete);
+    if (incomplete.length && !confirm(`${incomplete.length} record(s) are missing required state fields. Print anyway?`)) return;
     const s = data.settings;
     const law = stateLaw();
     const from = $('#report-from').value, to = $('#report-to').value;
     const range = from || to ? `${from ? fmtDate(from) : 'start'} – ${to ? fmtDate(to) : 'today'}` : 'All records';
+    const retain = (law && law.retentionYears) || 2;
 
-    const rows = apps.map(a => `
+    const rows = apps.map(a => {
+      const result = evaluateCompliance(a);
+      return `
       <tr>
-        <td>${fmtDate(a.date)}${a.startTime ? `<br>${esc(a.startTime)}${a.endTime ? '–' + esc(a.endTime) : ''}` : ''}</td>
+        <td>${fmtDate(a.date)}${a.startTime ? `<br>${esc(a.startTime)}${a.endTime ? '–' + esc(a.endTime) : ''}` : ''}<br><span class="card-hint">${result.complete ? 'Complete' : 'INCOMPLETE'}</span></td>
         <td>${(a.products || []).map(pr =>
           `${esc(pr.productName)}${pr.rup ? ' <strong>(RUP)</strong>' : ''} — ${esc(pr.epaRegNo)}${pr.activeIngredient ? `<br><em>${esc(pr.activeIngredient)}</em>` : ''}`
         ).join('<br>')}</td>
-        <td>${esc(a.fieldName)}${a.fieldLocation ? `<br>${esc(a.fieldLocation)}` : ''}</td>
-        <td>${esc(a.crop)}${a.targetPest ? `<br>vs. ${esc(a.targetPest)}` : ''}</td>
+        <td>${esc(a.fieldName)}${a.fieldLocation ? `<br>${esc(a.fieldLocation)}` : ''}${a.county ? `<br>${esc(a.county)} County` : ''}${a.siteId ? `<br>Site ${esc(a.siteId)}` : ''}${a.permitNumber ? `<br>Permit ${esc(a.permitNumber)}` : ''}</td>
+        <td>${esc(a.crop)}${a.targetPest ? `<br>vs. ${esc(a.targetPest)}` : ''}${a.applicationPurpose ? `<br>${esc(a.applicationPurpose)}` : ''}</td>
         <td>${fmtNum(a.area)} ${a.areaUnit === 'sqft' ? 'sq ft' : a.areaUnit === '1000sqft' ? '×1,000 sq ft' : 'ac'}</td>
         <td>${(a.products || []).map(pr =>
           pr.rate != null ? `${fmtNum(pr.rate)} ${esc(pr.rateUnit)}` : esc(a.dilution || '—')).join('<br>')}</td>
-        <td>${(a.products || []).map(pr => `${fmtNum(pr.total)} ${esc(pr.totalUnit)}`).join('<br>')}</td>
-        <td>${a.windSpeed != null ? `${fmtNum(a.windSpeed)} mph ${esc(a.windDir || '')}` : '—'}${a.temperature != null ? `<br>${fmtNum(a.temperature)} °F` : ''}</td>
+        <td>${(a.products || []).map(pr => `${fmtNum(pr.total)} ${esc(pr.totalUnit)}`).join('<br>')}${a.carrier != null ? `<br>Carrier ${fmtNum(a.carrier)} ${esc(a.carrierUnit || '')}` : ''}</td>
+        <td>${a.windSpeed != null ? `${fmtNum(a.windSpeed)} mph ${esc(a.windDir || '')}` : '—'}${a.temperature != null ? `<br>${fmtNum(a.temperature)} °F` : ''}${a.sky ? `<br>${esc(a.sky)}` : ''}</td>
+        <td>${esc(a.method || '—')}${a.nozzleType ? `<br>${esc(a.nozzleType)}` : ''}${a.sprayerPressure ? `<br>${esc(a.sprayerPressure)}` : ''}</td>
         <td>${a.reiHours != null ? fmtNum(a.reiHours) + ' hr' : '—'} / ${a.phiDays != null ? fmtNum(a.phiDays) + ' d' : '—'}</td>
-        <td>${esc(a.applicatorName)}${a.certNumber ? `<br>#${esc(a.certNumber)}` : ''}</td>
-      </tr>`).join('');
+        <td>${esc(a.applicatorName)}${a.certNumber ? `<br>#${esc(a.certNumber)}` : ''}${a.supervisorName ? `<br>Supv ${esc(a.supervisorName)}` : ''}${a.customerName ? `<br>For ${esc(a.customerName)}` : ''}</td>
+      </tr>`;
+    }).join('');
 
     $('#print-area').innerHTML = `
       <h1>Pesticide Application Records</h1>
@@ -1644,21 +1917,23 @@
         · Period: ${range} · ${apps.length} application(s) · Generated ${now().toLocaleString()}
       </p>
       <p class="print-meta">
-        Format satisfies federal restricted-use pesticide recordkeeping (7 CFR Part 110)
-        ${law ? `and includes fields required by ${esc(law.agency)} (${esc(law.citation.reference)})` : ''}.
+        ${law
+          ? `Prepared for ${esc(law.agency)} recordkeeping (${esc(law.citation.reference)}). Retain ${retain} year(s).`
+          : 'Select a state in Settings to attach state-specific recordkeeping citations.'}
+        USDA 7 CFR Part 110 was rescinded July 11, 2025.
       </p>
       <table>
         <thead><tr>
-          <th>Date / time</th><th>Product / EPA Reg # / AI</th><th>Location</th><th>Crop / pest</th>
-          <th>Area</th><th>Rate</th><th>Total</th><th>Wind / temp</th><th>REI / PHI</th><th>Applicator</th>
+          <th>Date / status</th><th>Product / EPA Reg # / AI</th><th>Location</th><th>Crop / pest</th>
+          <th>Area</th><th>Rate</th><th>Total</th><th>Weather</th><th>Equipment</th><th>REI / PHI</th><th>Applicator</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
       <div class="sig-line"><span>Certified applicator signature / date</span><span>Reviewed by / date</span></div>
       <p class="print-footer">
-        Generated by Pesticide Logger v2.0 — Practical Farm Tools. Records must be retained at least
-        2 years from application date (federal RUP rule); state rules may require longer.
-        This report is a record-keeping aid, not legal advice.
+        Generated by Pesticide Logger v2.4 — Practical Farm Tools. Retain records per your state
+        (${retain} year(s) shown above). This report is a record-keeping aid, not legal advice,
+        and does not replace WPS duties or electronic reporting programs.
       </p>`;
     window.print();
   }

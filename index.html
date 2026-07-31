@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="description" content="Pesticide Logger — free, offline-first spray record keeping, tank mix calculator, and REI/PHI tracking for farms. Federal RUP and WPS compliant records with zero subscription cost.">
+  <meta name="description" content="Pesticide Logger — free, offline-first spray record keeping with 50-state recordkeeping field coverage, tank mix calculator, and REI/PHI tracking for farms.">
   <meta name="theme-color" content="#0f2814">
   <title>Pesticide Logger · Practical Farm Tools</title>
   <link rel="manifest" href="manifest.json">
@@ -24,7 +24,7 @@
       </svg>
       <div>
         <h1>Pesticide Logger</h1>
-        <span class="header-sub">Practical Farm Tools · v2.0</span>
+        <span class="header-sub">Practical Farm Tools · v2.4</span>
       </div>
     </div>
     <div class="header-right">
@@ -101,6 +101,10 @@
         <span class="stat-value" id="stat-active-phi">0</span>
         <span class="stat-label">Crops in PHI wait</span>
       </div>
+      <div class="stat-card stat-warn" id="stat-incomplete-card">
+        <span class="stat-value" id="stat-incomplete">0</span>
+        <span class="stat-label">Incomplete state records</span>
+      </div>
       <div class="stat-card">
         <span class="stat-value" id="stat-products">0</span>
         <span class="stat-label">Products in library</span>
@@ -143,7 +147,8 @@
   <section id="tab-log" class="tab-panel" role="tabpanel">
     <div class="card">
       <h3 class="card-title" id="app-form-title">Log an application</h3>
-      <p class="card-hint">Fields marked <span class="req-star">*</span> satisfy federal restricted-use pesticide (RUP) record requirements (7 CFR Part 110). Fields marked <span class="state-req-tag">state</span> are additionally required by your state.</p>
+      <p class="card-hint">Fields marked <span class="req-star">*</span> are always required. Fields marked <span class="state-req-tag">state</span> are required by your selected state’s pesticide recordkeeping rules. USDA’s old 7 CFR Part 110 federal private-applicator RUP rule was rescinded July 11, 2025 — state rules, labels, and WPS now control. Strict mode blocks incomplete saves.</p>
+      <div id="app-compliance-status" class="compliance-status" hidden></div>
 
       <form id="app-form" class="form-grid" autocomplete="off">
         <input type="hidden" id="app-id">
@@ -151,22 +156,49 @@
         <fieldset>
           <legend>Where</legend>
           <div class="form-row form-row-3">
-            <label>Field / site <span class="req-star">*</span>
+            <label>Field / site <span class="req-star">*</span> <span id="req-location" class="state-req-tag" hidden>state</span>
               <select id="app-field" required>
                 <option value="">— Select field —</option>
               </select>
             </label>
-            <label>Crop / commodity treated <span class="req-star">*</span>
+            <label>County of application <span id="req-county" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-county" placeholder="e.g. Lincoln">
+            </label>
+            <label>Site ID <span id="req-site_id" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-site-id" placeholder="County / state site ID">
+            </label>
+          </div>
+          <div class="form-row form-row-3">
+            <label>Crop / commodity / site treated <span class="req-star">*</span> <span id="req-crop_treated" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-crop" required placeholder="e.g. Sweet corn">
             </label>
             <label>Target pest <span id="req-target_pest" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-pest" placeholder="e.g. Colorado potato beetle">
             </label>
+            <label>Purpose of application <span id="req-application_purpose" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-purpose" placeholder="e.g. Insect control, weed control">
+            </label>
+          </div>
+          <div class="form-row form-row-2">
+            <label>Permit / operator ID <span id="req-permit_number" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-permit" placeholder="Required in CA, AZ, and similar programs">
+            </label>
+            <label>Location description override
+              <input type="text" id="app-location-note" placeholder="Optional detail if field location needs clarifying">
+            </label>
           </div>
         </fieldset>
 
         <fieldset>
-          <legend>Products applied (tank mix) <span class="req-star">*</span></legend>
+          <legend>Products applied (tank mix) <span class="req-star">*</span>
+            <span id="req-brand_name" class="state-req-tag" hidden>state</span>
+            <span id="req-epa_reg_no" class="state-req-tag" hidden>state</span>
+            <span id="req-amount_applied" class="state-req-tag" hidden>state</span>
+            <span id="req-rate" class="state-req-tag" hidden>state</span>
+            <span id="req-active_ingredient" class="state-req-tag" hidden>state</span>
+            <span id="req-rei_hours" class="state-req-tag" hidden>state</span>
+            <span id="req-phi_days" class="state-req-tag" hidden>state</span>
+          </legend>
           <div id="app-products"></div>
           <button type="button" class="btn btn-secondary btn-sm" id="app-add-product">+ Add product to mix</button>
           <div id="app-product-info" class="product-info-strip" hidden></div>
@@ -175,13 +207,13 @@
         <fieldset>
           <legend>When</legend>
           <div class="form-row form-row-3">
-            <label>Date <span class="req-star">*</span>
+            <label>Date <span class="req-star">*</span> <span id="req-date" class="state-req-tag" hidden>state</span>
               <input type="date" id="app-date" required>
             </label>
-            <label>Start time
+            <label>Start time <span id="req-start_time" class="state-req-tag" hidden>state</span> <span id="req-application_time" class="state-req-tag" hidden>state</span>
               <input type="time" id="app-start">
             </label>
-            <label>End time
+            <label>End time <span id="req-end_time" class="state-req-tag" hidden>state</span>
               <input type="time" id="app-end">
             </label>
           </div>
@@ -190,17 +222,17 @@
         <fieldset>
           <legend>Area &amp; spray volume</legend>
           <div class="form-row form-row-4">
-            <label>Area treated <span class="req-star">*</span>
+            <label>Area treated <span class="req-star">*</span> <span id="req-area_treated" class="state-req-tag" hidden>state</span>
               <input type="number" id="app-area" step="any" min="0" required>
             </label>
-            <label>Area unit
+            <label>Area unit <span id="req-area_unit" class="state-req-tag" hidden>state</span>
               <select id="app-area-unit">
                 <option value="acres">acres</option>
                 <option value="sqft">sq ft</option>
                 <option value="1000sqft">1,000 sq ft</option>
               </select>
             </label>
-            <label>Carrier volume (finished spray)
+            <label>Carrier / finished spray <span id="req-carrier_volume" class="state-req-tag" hidden>state</span> <span id="req-total_mix_applied" class="state-req-tag" hidden>state</span>
               <div class="input-pair">
                 <input type="number" id="app-carrier" step="any" min="0">
                 <select id="app-carrier-unit"><option>gal</option><option>L</option></select>
@@ -210,12 +242,20 @@
               <input type="text" id="app-dilution" placeholder="e.g. 2 fl oz / gal">
             </label>
           </div>
+          <div class="form-row form-row-2">
+            <label>Concentration <span id="req-concentration" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-concentration" placeholder="e.g. 1% solution">
+            </label>
+            <label>Mix / load location <span id="req-mix_load_location" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-mix-load" placeholder="Where tank was filled">
+            </label>
+          </div>
           <p class="auto-calc-note" id="app-total-note" hidden></p>
         </fieldset>
 
         <fieldset>
           <legend>Conditions
-            <button type="button" class="btn btn-secondary btn-sm legend-btn" id="app-weather">⛅ Fetch current weather</button>
+            <button type="button" class="btn btn-secondary btn-sm legend-btn" id="app-weather">Fetch current weather</button>
           </legend>
           <div class="form-row form-row-4">
             <label>Wind speed (mph) <span id="req-wind_speed" class="state-req-tag" hidden>state</span>
@@ -230,36 +270,98 @@
             <label>Temperature (°F) <span id="req-temperature" class="state-req-tag" hidden>state</span>
               <input type="number" id="app-temp" step="any" min="-20" max="120">
             </label>
-            <label>Sky / humidity
+            <label>Sky / humidity <span id="req-sky" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-sky" placeholder="e.g. Clear, 60% RH">
             </label>
           </div>
         </fieldset>
 
         <fieldset>
-          <legend>Who &amp; how</legend>
+          <legend>Equipment</legend>
           <div class="form-row form-row-3">
-            <label>Applicator name <span class="req-star">*</span>
-              <input type="text" id="app-applicator" required>
+            <label>Method / equipment <span id="req-method" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-method" placeholder="e.g. Boom sprayer, backpack, aerial">
             </label>
-            <label>Certification / license # <span class="req-star">*</span> <span id="req-applicator_license" class="state-req-tag" hidden>state</span>
-              <input type="text" id="app-cert">
+            <label>Nozzle type <span id="req-nozzle_type" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-nozzle" placeholder="e.g. AIXR 11004">
             </label>
-            <label>Method / equipment
-              <input type="text" id="app-method" placeholder="e.g. Boom sprayer, backpack">
+            <label>Sprayer pressure <span id="req-sprayer_pressure" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-pressure" placeholder="e.g. 40 psi">
             </label>
           </div>
-          <div class="form-row">
-            <label>Notes
-              <textarea id="app-notes" rows="2" placeholder="Buffer zones observed, nozzle type, tank order…"></textarea>
+          <div class="form-row form-row-2">
+            <label>Equipment ID <span id="req-equipment_id" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-equipment-id" placeholder="Sprayer / unit ID">
+            </label>
+            <label>Aircraft ID <span id="req-aircraft_id" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-aircraft-id" placeholder="FAA / state aircraft ID if aerial">
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Who</legend>
+          <div class="form-row form-row-3">
+            <label>Applicator name <span class="req-star">*</span> <span id="req-applicator_name" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-applicator" required>
+            </label>
+            <label>Certification / license # <span id="req-applicator_license" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-cert">
+            </label>
+            <label>Supervising applicator <span id="req-supervisor_name" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-supervisor" placeholder="If required / direct supervision">
+            </label>
+          </div>
+          <div class="form-row form-row-2">
+            <label>Noncertified / trainee applicator <span id="req-noncertified_applicator_name" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-noncertified" placeholder="If a trainee applied under supervision">
+            </label>
+            <label>Owner / operator name <span id="req-owner_operator_name" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-owner" placeholder="Defaults to farm name">
+            </label>
+          </div>
+          <div class="form-row form-row-3">
+            <label>Customer / for whom applied <span id="req-customer_name" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-customer" placeholder="Own farm or customer name">
+            </label>
+            <label>Customer address <span id="req-customer_address" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-customer-address">
+            </label>
+            <label>Customer phone <span id="req-customer_phone" class="state-req-tag" hidden>state</span>
+              <input type="tel" id="app-customer-phone">
+            </label>
+          </div>
+          <div class="form-row form-row-3">
+            <label>Business name &amp; address <span id="req-business_name_address" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-business" placeholder="Commercial applicator business">
+            </label>
+            <label>Company license # <span id="req-company_license" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-company-license">
+            </label>
+            <label>Pesticide supplier <span id="req-pesticide_supplier" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-supplier">
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Notes &amp; disposal</legend>
+          <div class="form-row form-row-2">
+            <label>Disposal of unused pesticide <span id="req-disposal_method" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-disposal" placeholder="e.g. Applied to labeled site, triple-rinsed">
+            </label>
+            <label>Notes <span id="req-notes" class="state-req-tag" hidden>state</span>
+              <textarea id="app-notes" rows="2" placeholder="Buffer zones, label deviations, unexpected occurrences, tank order…"></textarea>
             </label>
           </div>
         </fieldset>
 
         <div id="app-interval-preview" class="interval-preview" hidden></div>
+        <div id="app-missing-fields" class="missing-fields" hidden></div>
 
         <div class="form-actions">
-          <button type="submit" class="btn btn-primary" id="app-save-btn">Save application record</button>
+          <button type="submit" class="btn btn-primary" id="app-save-btn">Save complete record</button>
+          <button type="button" class="btn btn-secondary" id="app-save-draft-btn">Save incomplete draft</button>
           <button type="button" class="btn btn-secondary" id="app-cancel-btn" hidden>Cancel edit</button>
         </div>
       </form>
@@ -465,9 +567,12 @@
             <input type="text" id="field-crop" placeholder="e.g. Mixed vegetables">
           </label>
         </div>
-        <div class="form-row">
+        <div class="form-row form-row-2">
           <label>Location description <span class="req-star">*</span>
             <input type="text" id="field-location" placeholder="e.g. East of barn, 123 Farm Rd, Nobleboro ME — or GPS coords">
+          </label>
+          <label>Site ID
+            <input type="text" id="field-site-id" placeholder="County / state site ID (e.g. CA)">
           </label>
         </div>
         <div class="form-actions">
@@ -486,7 +591,7 @@
   <section id="tab-reports" class="tab-panel" role="tabpanel">
     <div class="card">
       <h3 class="card-title">Reports &amp; export</h3>
-      <p class="card-hint">Federal law requires RUP records be kept for 2 years (7 CFR 110); many states require longer for all pesticides. Everything below runs on this device — nothing is uploaded anywhere.</p>
+      <p class="card-hint">Keep records for the retention period your state requires (shown in Settings). USDA’s 7 CFR Part 110 federal private-applicator RUP rule was rescinded July 11, 2025. Everything below runs on this device — nothing is uploaded anywhere.</p>
       <div class="form-grid">
         <div class="form-row form-row-4">
           <label>From
@@ -537,19 +642,45 @@
           <label>State
             <select id="set-state"><option value="">— Select state —</option></select>
           </label>
-          <label>County <span id="req-county" class="state-req-tag" hidden>state</span>
+          <label>Default county
             <input type="text" id="set-county" placeholder="e.g. Lincoln">
           </label>
         </div>
         <div class="form-row form-row-3">
+          <label>Applicator class
+            <select id="set-applicator-class">
+              <option value="private">Private / grower</option>
+              <option value="commercial">Commercial / for-hire</option>
+              <option value="both">Both (strictest fields)</option>
+            </select>
+          </label>
           <label>Default applicator name
             <input type="text" id="set-applicator">
           </label>
           <label>Certification / license #
             <input type="text" id="set-cert">
           </label>
+        </div>
+        <div class="form-row form-row-3">
           <label>Certification expiry
             <input type="date" id="set-cert-expiry">
+          </label>
+          <label>Default permit / operator ID
+            <input type="text" id="set-permit" placeholder="CA operator ID, AZ permit, etc.">
+          </label>
+          <label>Company license #
+            <input type="text" id="set-company-license">
+          </label>
+        </div>
+        <div class="form-row">
+          <label>Business name &amp; address
+            <input type="text" id="set-business" placeholder="Used for commercial applicator records">
+          </label>
+        </div>
+        <div class="form-row">
+          <label class="checkbox-label">
+            <input type="checkbox" id="set-strict-compliance" checked>
+            Strict compliance mode — block incomplete state-required fields on save (drafts still allowed)
           </label>
         </div>
         <div class="form-actions">
@@ -559,7 +690,7 @@
     </div>
 
     <div class="card" id="state-info-card" hidden>
-      <h3 class="card-title">State requirements</h3>
+      <h3 class="card-title">State recordkeeping requirements</h3>
       <div id="state-info"></div>
     </div>
 
@@ -573,8 +704,8 @@
 
     <div class="card about-card">
       <h3 class="card-title">About</h3>
-      <p>Pesticide Logger v2.0 — part of the <strong>Practical Farm Tools</strong> suite. Free forever, works offline, and your data never leaves your device.</p>
-      <p class="card-hint">This tool helps you keep records; it is not legal advice. Always follow the product label and confirm requirements with your state pesticide agency.</p>
+      <p>Pesticide Logger v2.4 — part of the <strong>Practical Farm Tools</strong> suite. Free forever, works offline, and your farm records stay on this device.</p>
+      <p class="card-hint">This tool provides 50-state application <em>recordkeeping field coverage</em>. It is not legal advice, does not replace WPS employer duties, and does not file California PUR, New York PRL, or other electronic reports for you. Always follow the product label and confirm requirements with your state pesticide agency.</p>
     </div>
   </section>
 

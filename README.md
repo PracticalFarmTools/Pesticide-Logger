@@ -1,4 +1,4 @@
-# Pesticide Logger v2.0
+# Pesticide Logger v2.4
 
 **Free, offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite.
@@ -14,44 +14,57 @@ recovered into `archive/vercel-2026.1.0/` with a SHA-256 source manifest. It is
 preserved for reference only. Reviewed features are ported into the maintained
 application at the repository root.
 
-Spray records are one of the most audited documents on a farm — and most growers
-keep them on paper, in a spreadsheet, or in a $600/year subscription app.
-Pesticide Logger does the whole job in the browser, works with zero cell signal,
-and costs nothing to run: no server, no account, no subscription.
-
 ## What it does
 
 | Feature | Details |
 |---|---|
-| **Tank-mix spray log** | One application can contain any number of products. Each product keeps its own EPA number, rate, and total; the dashboard automatically enforces the mix's longest REI and PHI. The form captures every federal RUP field (7 CFR Part 110), plus weather, method, and target pest. |
-| **State-aware compliance** | Pick your state in Settings and the form automatically tags the extra fields *your* state requires (wind speed, temperature, dilution rate, license #, …), with the agency name and legal citation. Covers all 50 states. |
-| **REI / PHI tracking** | Every product stores its label REI and PHI. The dashboard counts down live: which fields workers can't re-enter yet, and the earliest legal harvest date for each treated crop. |
-| **Tank mix calculator** | Enter area, tank size, and spray volume; add any number of products (per-acre, per-1,000 sq ft, per-gallon, or per-100-gal rates). Get total spray, tank loads, product per full tank and per partial fill, and a printable mix worksheet with W-A-L-E fill order. |
-| **Product & field libraries** | Save label facts once (REI, PHI, rate, signal word, RUP flag) and every record auto-fills. Records snapshot product details, so history stays accurate even after label edits. |
-| **Live EPA product lookup** | Search the official EPA PPLS by product name or registration number. Import product identity, active ingredients, RUP classification, signal word, status, and official label link; verify the whole local library for cancellation/status changes. Rates, REI, and PHI deliberately remain label-entered because the API does not provide crop-specific values. |
-| **Field mapper** | Draw any field on satellite imagery by tapping its corners — acreage (geodesic, Turf.js-equivalent math), square footage, and perimeter compute live and auto-fill the field form. Drag corners to fine-tune. Saved boundaries stay on the map; tap one to edit. |
-| **Weather auto-fill** | One tap fills current wind speed/direction, temperature, sky, and humidity from free Open-Meteo data at the mapped field centroid (or device GPS). Values remain editable because conditions at the sprayer govern. |
-| **Inspection-ready reports** | Filter by date, field, or product. One-click print/PDF report formatted for an inspector, with signature lines — or CSV export for a spreadsheet. |
-| **Durable, portable records** | Every save is mirrored to IndexedDB and the browser is asked for persistent storage. Backup reminders protect legally required records. JSON restore can merge phone and PC data by stable IDs without duplicates; supported phones can share the backup directly. |
-| **Offline-first PWA** | Installable on a phone home screen. After first load, everything — including the calculator and reports — works with no connectivity at all. |
+| **50-state recordkeeping coverage** | Pick your state in Settings. The spray log tags and validates every researched required field for that state (permit/operator ID, county, site ID, weather, customer, equipment, etc.). Strict mode blocks incomplete saves; drafts are allowed. |
+| **Tank-mix spray log** | One application can contain any number of products. Each product keeps its own EPA number, rate, and total; the dashboard uses the mix's longest REI and PHI. |
+| **Post–Part 110 framing** | USDA rescinded 7 CFR Part 110 (effective July 11, 2025). The app no longer treats that rule as active law. State pesticide acts, labels, and WPS control. |
+| **REI / PHI tracking** | Label REI/PHI countdown for worker re-entry and harvest timing. |
+| **Tank mix calculator** | Area, tank size, spray volume, multi-product rates, printable W-A-L-E worksheet. |
+| **Live EPA product lookup** | Official EPA PPLS identity/status import via optional Vercel proxy. Rates, REI, and PHI stay label-entered. |
+| **Field mapper** | Satellite corner tapping with geodesic acreage; boundaries stay local. |
+| **Weather auto-fill** | Open-Meteo fill for wind, temperature, sky/humidity at field centroid or GPS. |
+| **Inspection output** | Print/PDF and CSV include state compliance fields and completeness status. |
+| **Durable, portable records** | IndexedDB mirror, persistent-storage request, backup reminders, merge-by-ID restore, Web Share. |
+| **Offline-first PWA** | Installable; core logging works with no connectivity after first load. |
+
+## Compliance scope (read this)
+
+This app aims for **complete application recordkeeping field coverage** across
+all 50 states based on researched state statutes, rules, and agency guidance
+(dataset research date: 2026-07-31).
+
+**It does:**
+
+- Capture and validate the record fields each state requires (when known)
+- Show agency, citation, retention years, and source verification status
+- Mark incomplete records and block complete-save under strict mode
+- Export complete field sets for inspections and backups
+
+**It does not:**
+
+- Replace Worker Protection Standard (40 CFR Part 170) employer duties
+  (central posting, SDS availability, training, AEZ, etc.)
+- File California PUR / CalAgPermits, New York PRL, or other electronic reports
+- Guarantee legal advice or inspectable perfection for every license class nuance
+- Auto-fill crop-specific rates, REI, or PHI from EPA (the label is the law)
+
+States marked `partial` or `uncertain` in Settings need grower confirmation with
+the state agency. Always follow the product label.
 
 ## $0 overhead
 
-- **No record backend.** All farm records live only in the browser's local
-  storage and IndexedDB mirror. Nothing is uploaded.
-- **One stateless lookup function.** `api/epa.js` proxies official EPA PPLS
-  queries because the EPA API does not publish browser CORS headers. It stores
-  no farm or user data and runs within Vercel's free tier.
-- **No build step.** No npm, no framework, no dependencies to patch.
-- **Free hosting.** Deploy the repo root as a static site:
-  - **GitHub Pages** — the offline logger works, but live EPA lookup requires a
-    serverless host or local proxy.
-  - **Vercel** — `vercel.json` is included; import the repo and deploy.
-  - Or just open `index.html` from a USB stick. It works from `file://` too.
+- **No record backend.** Farm records live only in the browser’s local storage
+  and IndexedDB mirror.
+- **One optional lookup function.** `api/epa.js` proxies official EPA PPLS
+  queries (no CORS on EPA). It stores no farm data.
+- **No build step.** No npm, no framework.
+- **Free hosting.** GitHub Pages (static core) or Vercel (`vercel.json` included).
+  Or open `index.html` from a USB stick.
 
 ## Running locally
-
-No install needed:
 
 ```bash
 python3 -m http.server 8000
@@ -61,32 +74,16 @@ python3 -m http.server 8000
 ## Files
 
 ```
-index.html                 App shell (dashboard, log, calculator, products, fields, reports, settings)
-styles.css                 Practical Farm Tools theme + print stylesheet
-app.js                     All application logic (vanilla JS, no dependencies)
-state_pesticide_laws.js    Per-state agencies, citations, and required record fields (50 states)
+index.html                 App shell
+styles.css                 Theme + print stylesheet
+app.js                     Application + compliance engine
+state_pesticide_laws.js    50-state agencies, citations, retention, required fields
 api/epa.js                 Stateless Vercel proxy to official EPA PPLS
-vendor/leaflet/            Leaflet 1.9.4, vendored locally (no CDN dependency)
-sw.js                      Service worker (cache-first app shell)
+vendor/leaflet/            Leaflet 1.9.4 (vendored)
+sw.js                      Service worker
 manifest.json              PWA manifest
-icon-192.png / icon-512.png / favicon.svg
-vercel.json                Optional static-hosting headers
+archive/vercel-2026.1.0/   Historical recovered deployment (reference only)
 ```
-
-## Compliance notes
-
-- Federal RUP records must be kept **2 years** (7 CFR Part 110); many states
-  require longer — the app shows your state's agency and citation in Settings.
-- REI/PHI values are entered from the product label by the user.
-  **The label is the law**; this tool never overrides it.
-- This software is a record-keeping aid, not legal advice.
-
-## Map tiles
-
-The field mapper uses free tile services (Esri World Imagery for satellite,
-OpenStreetMap for streets) with attribution, fetched live — the only feature
-other than EPA/weather lookup that needs connectivity. Drawn boundaries and
-computed acreage are stored locally and remain available offline.
 
 ## License
 

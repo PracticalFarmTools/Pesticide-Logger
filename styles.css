@@ -297,14 +297,15 @@ legend {
   margin-bottom: 0.75rem;
 }
 .form-row:last-child { margin-bottom: 0; }
+.form-row-2 { grid-template-columns: repeat(2, 1fr); }
 .form-row-3 { grid-template-columns: repeat(3, 1fr); }
 .form-row-4 { grid-template-columns: repeat(4, 1fr); }
 
 @media (max-width: 760px) {
-  .form-row, .form-row-3, .form-row-4 { grid-template-columns: 1fr 1fr; }
+  .form-row, .form-row-2, .form-row-3, .form-row-4 { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 480px) {
-  .form-row, .form-row-3, .form-row-4 { grid-template-columns: 1fr; }
+  .form-row, .form-row-2, .form-row-3, .form-row-4 { grid-template-columns: 1fr; }
 }
 
 label {
@@ -526,11 +527,33 @@ input:hover, select:hover, textarea:hover { border-color: var(--border-color-hov
   border-radius: 10px;
 }
 .badge-rup { background: var(--danger-bg); color: var(--danger); }
+.badge-incomplete { background: var(--warn-bg); color: var(--warn); }
+.badge-complete { background: var(--ok-bg); color: var(--primary-green); }
 .badge-signal-caution { background: var(--ok-bg); color: var(--primary-green); }
 .badge-signal-warning { background: var(--warn-bg); color: var(--warn); }
 .badge-signal-danger { background: var(--danger-bg); color: var(--danger); }
 .badge-rei { background: var(--danger-bg); color: var(--danger); }
 .badge-phi { background: var(--warn-bg); color: var(--warn); }
+
+.compliance-status {
+  margin: 0.75rem 0 1rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 8px;
+  background: var(--accent-sage-light);
+  color: var(--text-dark);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.compliance-status.ok { background: var(--ok-bg); color: var(--primary-green); }
+.compliance-status.warn { background: var(--warn-bg); color: var(--warn); }
+.missing-fields {
+  margin: 0.5rem 0 1rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 8px;
+  background: var(--warn-bg);
+  color: var(--warn);
+  font-size: 0.88rem;
+}
 
 /* ---------- Calculator ---------- */
 .calc-product-row {

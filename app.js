@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.4 — Practical Farm Tools
+/* Pesticide Logger v2.4.2 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in localStorage/IndexedDB on this device.
@@ -11,7 +11,7 @@
   const STORE_KEY = 'pesticide-logger.v2';
 
   const defaultData = () => ({
-    version: 3,
+    version: 4,
     settings: {
       farmName: '', state: '', county: '',
       applicatorName: '', certNumber: '', certExpiry: '',
@@ -30,10 +30,10 @@
   function load() {
     try {
       const raw = localStorage.getItem(STORE_KEY);
-      if (!raw) return defaultData();
+      if (!raw) return migrate(defaultData());
       const parsed = JSON.parse(raw);
       const loaded = migrate(Object.assign(defaultData(), parsed));
-      // Persist schema upgrades immediately so exports and future loads are v3.
+      // Persist schema upgrades immediately so exports/future loads stay current.
       localStorage.setItem(STORE_KEY, JSON.stringify(loaded));
       return loaded;
     } catch (e) {
@@ -65,10 +65,22 @@
         }];
       }
       if (a.complianceComplete == null) a.complianceComplete = null;
+      if (a.complianceState == null) a.complianceState = d.settings.state || '';
+      if (a.complianceApplicatorClass == null) {
+        a.complianceApplicatorClass = d.settings.applicatorClass || 'private';
+      }
+      if (a.applicationType == null) a.applicationType = 'ground';
+      if (a.usedNoncertified == null) a.usedNoncertified = !!a.noncertifiedApplicatorName;
       if (a.county == null) a.county = d.settings.county || '';
       if (a.siteId == null) a.siteId = '';
       if (a.permitNumber == null) a.permitNumber = '';
       if (a.draft == null) a.draft = false;
+      (a.products || []).forEach(p => {
+        if (p.epaCompany == null) p.epaCompany = '';
+        if (p.stateRegNo == null) p.stateRegNo = '';
+        if (p.type == null) p.type = '';
+        if (p.rup == null) p.rup = false;
+      });
     });
     (d.fields || []).forEach(f => {
       if (f.siteId == null) f.siteId = '';
@@ -308,6 +320,15 @@
       applyStateRequiredTags();
       updateCompliancePreview();
     });
+    if ($('#set-applicator-class')) {
+      $('#set-applicator-class').addEventListener('change', () => {
+        // Live preview while editing settings before save.
+        data.settings.applicatorClass = $('#set-applicator-class').value || 'private';
+        renderStateInfo();
+        reshapeAppFormForState();
+        updateCompliancePreview();
+      });
+    }
     applySettings();
   }
 
@@ -338,7 +359,7 @@
   // Core fields always present on every state's log (operational minimum).
   const CORE_LOG_FIELDS = new Set([
     'location', 'crop_treated', 'date', 'area_treated', 'area_unit',
-    'applicator_name', 'notes'
+    'applicator_name', 'notes', 'application_type'
   ]);
 
   // Product-library fields are captured in the always-visible tank-mix section.
@@ -348,39 +369,118 @@
     'manufacturer_name', 'state_registration_no'
   ]);
 
-  // Aliases: showing one control satisfies related required keys.
+  // Typically commercial / for-hire record fields.
+  const COMMERCIAL_ONLY_FIELDS = new Set([
+    'business_name_address', 'company_license'
+  ]);
+
   const FIELD_ALIASES = {
     application_time: ['start_time'],
     total_mix_applied: ['carrier_volume'],
     location_note: ['location']
   };
 
-  function requiredFieldNames(law) {
+  function hasText(v) {
+    return v != null && String(v).trim() !== '';
+  }
+
+  function applicatorClassFor(app) {
+    return (app && app.complianceApplicatorClass) ||
+      data.settings.applicatorClass || 'private';
+  }
+
+  function lawFor(app) {
+    const code = (app && app.complianceState) || data.settings.state;
+    return (code && typeof STATE_LAWS !== 'undefined' && STATE_LAWS[code])
+      ? { code, law: STATE_LAWS[code] }
+      : { code: null, law: null };
+  }
+
+  function isAerialApp(app) {
+    if (!app) return false;
+    if (app.applicationType === 'aerial') return true;
+    return /\b(aerial|airplane|aircraft|helicopter)\b/i.test(app.method || '');
+  }
+
+  function usedTrainee(app) {
+    return !!(app && (app.usedNoncertified || hasText(app.noncertifiedApplicatorName)));
+  }
+
+  function fieldAppliesToApp(app, fieldName) {
+    const cls = applicatorClassFor(app);
+    if (COMMERCIAL_ONLY_FIELDS.has(fieldName) && cls === 'private') return false;
+    if (fieldName === 'aircraft_id') return isAerialApp(app);
+    if (fieldName === 'noncertified_applicator_name') return usedTrainee(app);
+    return true;
+  }
+
+  function formContextApp() {
+    return {
+      complianceState: data.settings.state,
+      complianceApplicatorClass: data.settings.applicatorClass || 'private',
+      applicationType: ($('#app-type') && $('#app-type').value) || 'ground',
+      usedNoncertified: !!( $('#app-used-trainee') && $('#app-used-trainee').checked ),
+      method: ($('#app-method') && $('#app-method').value) || '',
+      noncertifiedApplicatorName: ($('#app-noncertified') && $('#app-noncertified').value) || '',
+      aircraftId: ($('#app-aircraft-id') && $('#app-aircraft-id').value) || ''
+    };
+  }
+
+  function requiredFieldNames(law, app) {
     if (!law) return new Set();
-    return new Set(law.fields.filter(f => f.required).map(f => f.name));
+    const ctx = app || formContextApp();
+    return new Set(
+      law.fields
+        .filter(f => f.required && fieldAppliesToApp(ctx, f.name))
+        .map(f => f.name)
+    );
   }
 
   function visibleLogFields() {
-    const law = stateLaw();
-    const required = requiredFieldNames(law);
+    const ctx = formContextApp();
+    const { law } = lawFor(ctx);
+    const required = requiredFieldNames(law, ctx);
     const showRec = $('#app-show-recommended') && $('#app-show-recommended').checked;
+    const cls = applicatorClassFor(ctx);
     const visible = new Set(CORE_LOG_FIELDS);
+
     required.forEach(n => visible.add(n));
-    // Expand aliases so required application_time shows start_time control, etc.
     Object.keys(FIELD_ALIASES).forEach(key => {
       if (visible.has(key)) FIELD_ALIASES[key].forEach(a => visible.add(a));
     });
-    if (showRec && typeof BASE_RECORD_FIELDS !== 'undefined') {
-      BASE_RECORD_FIELDS.forEach(n => visible.add(n));
+
+    visible.add('application_type');
+    if (law && law.fields.some(f => f.name === 'noncertified_applicator_name' && f.required)) {
+      visible.add('used_noncertified');
     }
-    // Keep any filled optional fields visible while editing so values aren't stranded.
+    if (isAerialApp(ctx) || hasText(ctx.aircraftId)) visible.add('aircraft_id');
+    if (usedTrainee(ctx)) {
+      visible.add('used_noncertified');
+      visible.add('noncertified_applicator_name');
+    }
+
+    if (showRec && typeof BASE_RECORD_FIELDS !== 'undefined') {
+      BASE_RECORD_FIELDS.forEach(n => {
+        if (COMMERCIAL_ONLY_FIELDS.has(n) && cls === 'private') return;
+        visible.add(n);
+      });
+      visible.add('used_noncertified');
+    }
+
+    if (cls === 'private' && !showRec) {
+      COMMERCIAL_ONLY_FIELDS.forEach(n => visible.delete(n));
+    }
+
     $$('#app-form [data-log-field]').forEach(label => {
       const name = label.getAttribute('data-log-field');
       if (!name || visible.has(name)) return;
       const input = label.querySelector('input, select, textarea');
-      if (input && String(input.value || '').trim()) visible.add(name);
+      if (!input) return;
+      if (input.type === 'checkbox' ? input.checked : String(input.value || '').trim()) {
+        visible.add(name);
+      }
     });
-    return { visible, required, law };
+    return { visible, required, law, ctx };
   }
 
   function applyStateRequiredTags() {
@@ -388,9 +488,11 @@
   }
 
   function reshapeAppFormForState() {
-    const { visible, required, law } = visibleLogFields();
+    const { visible, required, law, ctx } = visibleLogFields();
     const code = data.settings.state;
     const stateName = code ? (STATE_NAMES[code] || code) : null;
+    const cls = applicatorClassFor(ctx);
+    const ver = law && law.verification;
 
     $$('.state-req-tag').forEach(t => { t.hidden = true; });
     required.forEach(name => {
@@ -403,15 +505,14 @@
       const show = visible.has(name);
       label.hidden = !show;
       label.classList.toggle('state-required-field', required.has(name));
-      // Disable hidden controls so browser "required" doesn't block unrelated sections.
       label.querySelectorAll('input, select, textarea').forEach(el => {
         if (el.id === 'app-field' || el.id === 'app-crop' || el.id === 'app-date' ||
-            el.id === 'app-area' || el.id === 'app-applicator') return;
+            el.id === 'app-area' || el.id === 'app-applicator' || el.id === 'app-type' ||
+            el.id === 'app-used-trainee') return;
         el.disabled = !show;
       });
     });
 
-    // Hide empty rows / sections after individual labels collapse.
     $$('#app-form .form-row').forEach(row => {
       const labels = [...row.querySelectorAll(':scope > label[data-log-field]')];
       if (!labels.length) { row.hidden = false; return; }
@@ -429,14 +530,18 @@
     const hint = $('#app-form-hint');
     const summary = $('#app-form-shape-summary');
     if (hint) {
+      const verNote = ver === 'researched' ? ''
+        : ver === 'partial' ? ' Dataset for this state is only partially verified.'
+        : ver === 'uncertain' ? ' Dataset confidence for this state is limited — confirm with your agency.'
+        : '';
       hint.innerHTML = stateName
-        ? `Showing the <strong>${esc(stateName)}</strong> spray log: core fields + ${required.size} state-required field(s)${$('#app-show-recommended') && $('#app-show-recommended').checked ? ' + recommended extras' : ''}. Hidden fields are not part of this state’s form.`
+        ? `Showing the <strong>${esc(stateName)}</strong> / <strong>${esc(cls)}</strong> spray log: core fields + ${required.size} applicable required field(s)${$('#app-show-recommended') && $('#app-show-recommended').checked ? ' + recommended extras' : ''}.${verNote}`
         : 'Select your state in Settings — the spray log will reshape to that state’s required record fields instead of using one national form.';
     }
     if (summary) {
       const shown = $$('#app-form label[data-log-field]:not([hidden])').length;
       summary.textContent = stateName
-        ? `${stateName} form · ${shown} fields visible · retain ${(law && law.retentionYears) || '—'} yr`
+        ? `${stateName} · ${cls} · ${shown} fields · retain ${(law && law.retentionYears) || '—'} yr${ver && ver !== 'researched' ? ' · ' + ver : ''}`
         : 'No state selected · core fields only';
     }
     const title = $('#app-form-title');
@@ -453,7 +558,8 @@
       return;
     }
     const law = STATE_LAWS[code];
-    const req = law.fields.filter(f => f.required);
+    const ctx = formContextApp();
+    const req = law.fields.filter(f => f.required && fieldAppliesToApp(ctx, f.name));
     const verLabel = law.verification === 'researched' ? 'Researched from state sources'
       : law.verification === 'partial' ? 'Partially verified — confirm private/commercial nuances'
       : 'Limited verification — confirm with your agency';
@@ -466,20 +572,15 @@
         <p><strong>Retain records ${esc(String(law.retentionYears))} year(s)</strong> from application date.</p>
         <p class="card-hint">Applies to: ${esc(law.appliesTo || 'See state agency guidance')}</p>
         <p class="card-hint">Source status: ${esc(verLabel)}</p>
-        <p>Required recordkeeping fields for ${esc(STATE_NAMES[code])} (${req.length}):</p>
+        <p>Applicable required fields for ${esc(STATE_NAMES[code])} as a <strong>${esc(applicatorClassFor(ctx))}</strong> applicator (${req.length}):</p>
         <ul>${req.map(r => `<li>${esc(r.label)}</li>`).join('')}</ul>
         ${law.notes ? `<p class="card-hint">${esc(law.notes)}</p>` : ''}
-        <p class="card-hint">Spray Log fields required by this state are tagged
-        <span class="state-req-tag">state</span>. This app does not file electronic reports
-        (CA PUR, NY PRL, etc.) and does not replace WPS employer duties.</p>
+        <p class="card-hint">Completion means required fields are filled for this context — not a legal determination.
+        This app does not file electronic reports (CA PUR, NY PRL, etc.) and does not replace WPS employer duties.</p>
       </div>`;
   }
 
   // -------- 50-state compliance engine --------
-
-  function hasText(v) {
-    return v != null && String(v).trim() !== '';
-  }
 
   function productsOk(app, pred) {
     const prods = app.products || [];
@@ -494,12 +595,12 @@
       case 'active_ingredient': return productsOk(app, p => hasText(p.activeIngredient));
       case 'amount_applied': return productsOk(app, p => p.total != null && p.total !== '' && !Number.isNaN(Number(p.total)));
       case 'rate': return productsOk(app, p => p.rate != null && p.rate !== '' && !Number.isNaN(Number(p.rate)));
-      case 'restricted_use_flag': return prods.length > 0; // boolean always known per product
+      case 'restricted_use_flag': return productsOk(app, p => typeof p.rup === 'boolean');
       case 'rei_hours': return productsOk(app, p => p.reiHours != null && p.reiHours !== '');
       case 'phi_days': return productsOk(app, p => p.phiDays != null && p.phiDays !== '');
-      case 'pesticide_formulation': return productsOk(app, p => hasText(p.type) || hasText(p.productName));
-      case 'manufacturer_name': return productsOk(app, p => hasText(p.epaCompany) || hasText(p.activeIngredient) || hasText(p.productName));
-      case 'state_registration_no': return productsOk(app, p => hasText(p.stateRegNo) || hasText(p.epaRegNo));
+      case 'pesticide_formulation': return productsOk(app, p => hasText(p.type));
+      case 'manufacturer_name': return productsOk(app, p => hasText(p.epaCompany));
+      case 'state_registration_no': return productsOk(app, p => hasText(p.stateRegNo));
       case 'dilution_rate': return hasText(app.dilution) || productsOk(app, p => p.rate != null && p.rate !== '');
       case 'concentration': return hasText(app.concentration) || hasText(app.dilution);
       case 'carrier_volume':
@@ -544,56 +645,125 @@
     }
   }
 
-  function evaluateCompliance(app) {
-    const law = stateLaw();
-    if (!law) {
-      return { complete: true, missing: [], retentionYears: 2, agency: null, verification: null };
+  function intervalsStatus(app) {
+    const prods = app.products || [];
+    if (!prods.length) {
+      return { ok: false, missingRei: true, missingPhi: true, message: 'Add products with label REI and PHI' };
     }
-    const missing = law.fields
-      .filter(f => f.required && !complianceValuePresent(app, f.name))
-      .map(f => f.label);
+    const missingRei = prods.some(p => p.reiHours == null || p.reiHours === '');
+    const missingPhi = prods.some(p => p.phiDays == null || p.phiDays === '');
     return {
-      complete: missing.length === 0,
+      ok: !missingRei && !missingPhi,
+      missingRei,
+      missingPhi,
+      message: missingRei || missingPhi
+        ? `Label intervals missing: ${[missingRei ? 'REI' : null, missingPhi ? 'PHI' : null].filter(Boolean).join(' + ')}`
+        : ''
+    };
+  }
+
+  function evaluateCompliance(app) {
+    const { code, law } = lawFor(app);
+    const warnings = [];
+    if (!law) {
+      return {
+        complete: false,
+        status: 'no_state',
+        missing: ['Select a state in Settings'],
+        warnings,
+        retentionYears: 2,
+        agency: null,
+        citation: null,
+        verification: null,
+        stateCode: code,
+        intervalsOk: intervalsStatus(app).ok
+      };
+    }
+
+    const missing = law.fields
+      .filter(f => f.required && fieldAppliesToApp(app, f.name) && !complianceValuePresent(app, f.name))
+      .map(f => f.label);
+
+    if (app.rup && !hasText(app.certNumber)) {
+      missing.push('Certification / license # (required when mix includes RUP)');
+    }
+
+    const intervals = intervalsStatus(app);
+    if (!intervals.ok) warnings.push(intervals.message);
+
+    if (law.verification === 'partial' || law.verification === 'uncertain') {
+      warnings.push(`State dataset is ${law.verification} — confirm requirements with ${law.agency}`);
+    }
+
+    const fieldsOk = missing.length === 0;
+    let status = 'incomplete';
+    if (fieldsOk && intervals.ok && law.verification === 'researched') status = 'fields_complete';
+    else if (fieldsOk && (!intervals.ok || law.verification !== 'researched')) status = 'needs_review';
+
+    return {
+      // "complete" for strict save = applicable required fields filled.
+      // Interval / dataset warnings still surface as needs_review.
+      complete: fieldsOk,
+      status,
       missing,
+      warnings,
       retentionYears: law.retentionYears || 2,
       agency: law.agency,
       citation: law.citation,
-      verification: law.verification
+      verification: law.verification,
+      stateCode: code,
+      intervalsOk: intervals.ok
     };
+  }
+
+  function statusLabel(result) {
+    if (result.status === 'no_state') return 'No state selected';
+    if (result.status === 'fields_complete') return 'Fields complete';
+    if (result.status === 'needs_review') return 'Needs review';
+    return 'Incomplete';
   }
 
   function updateCompliancePreview() {
     const status = $('#app-compliance-status');
     const missingBox = $('#app-missing-fields');
     if (!status || !missingBox) return;
-    const law = stateLaw();
+    const { law, code } = lawFor(formContextApp());
     if (!law) {
       status.hidden = false;
       status.className = 'compliance-status';
-      status.textContent = 'Select your state in Settings to enable 50-state recordkeeping checks.';
+      status.textContent = 'Select your state in Settings to enable state-shaped recordkeeping checks.';
       missingBox.hidden = true;
       return;
     }
-    // Build a lightweight preview object from current form values when possible.
     try {
       const preview = collectAppFromForm(true);
       const result = evaluateCompliance(preview);
       status.hidden = false;
-      if (result.complete) {
+      const name = STATE_NAMES[code] || code;
+      if (result.status === 'fields_complete') {
         status.className = 'compliance-status ok';
-        status.textContent = `${STATE_NAMES[data.settings.state]} record complete · retain ${result.retentionYears} year(s) · ${law.agency}`;
+        status.textContent = `${name} required fields filled · retain ${result.retentionYears} year(s) · not a legal determination`;
         missingBox.hidden = true;
+      } else if (result.status === 'needs_review') {
+        status.className = 'compliance-status warn';
+        status.textContent = `${name}: fields filled but needs review`;
+        missingBox.hidden = false;
+        missingBox.innerHTML = `<strong>Review:</strong> ${result.warnings.map(esc).join('; ')}`;
       } else {
         status.className = 'compliance-status warn';
-        status.textContent = `${result.missing.length} required ${STATE_NAMES[data.settings.state]} field(s) still missing`;
+        status.textContent = `${result.missing.length} applicable ${name} field(s) still missing`;
         missingBox.hidden = false;
-        missingBox.innerHTML = `<strong>Missing for ${esc(STATE_NAMES[data.settings.state])}:</strong> ${result.missing.map(esc).join('; ')}`;
+        const bits = [];
+        if (result.missing.length) bits.push(`<strong>Missing:</strong> ${result.missing.map(esc).join('; ')}`);
+        if (result.warnings.length) bits.push(`<strong>Also:</strong> ${result.warnings.map(esc).join('; ')}`);
+        missingBox.innerHTML = bits.join('<br>');
       }
     } catch (e) {
       status.hidden = true;
       missingBox.hidden = true;
     }
   }
+
 
   function updateStorageUsage() {
     try {
@@ -712,6 +882,7 @@
     $('#prod-ai').value = epaAiText(result);
     $('#prod-signal').value = normalizedSignalWord(result.signalWord);
     $('#prod-rup').checked = !!result.rup;
+    if ($('#prod-company')) $('#prod-company').value = result.company || '';
     pendingEpaImport = { ...result, ...verifiedFields(result) };
 
     $('#product-form-title').textContent = existing
@@ -781,12 +952,13 @@
         rateUnit: $('#prod-rate-unit').value,
         ratePer: $('#prod-rate-per').value,
         notes: $('#prod-notes').value.trim(),
+        stateRegNo: ($('#prod-state-reg') && $('#prod-state-reg').value.trim()) || '',
         epaStatus: verified?.epaStatus || null,
         epaCancelled: !!verified?.epaCancelled,
         epaCheckedAt: verified?.epaCheckedAt || null,
         epaLabelUrl: verified?.epaLabelUrl || null,
         epaLabelAcceptedDate: verified?.epaLabelAcceptedDate || null,
-        epaCompany: verified?.epaCompany || null,
+        epaCompany: ($('#prod-company') && $('#prod-company').value.trim()) || verified?.epaCompany || '',
         epaActiveIngredient: verified?.epaActiveIngredient || null,
         epaSource: verified?.epaSource || null
       };
@@ -828,6 +1000,8 @@
     $('#prod-rate').value = p.rateAmount ?? '';
     $('#prod-rate-unit').value = p.rateUnit;
     $('#prod-rate-per').value = p.ratePer;
+    if ($('#prod-company')) $('#prod-company').value = p.epaCompany || '';
+    if ($('#prod-state-reg')) $('#prod-state-reg').value = p.stateRegNo || '';
     $('#prod-notes').value = p.notes;
     $('#product-form-title').textContent = `Edit — ${p.name}`;
     $('#prod-save-btn').textContent = 'Update product';
@@ -1030,6 +1204,12 @@
         updateCompliancePreview();
       });
     }
+    ['#app-type', '#app-used-trainee', '#app-method'].forEach(sel => {
+      if ($(sel)) $(sel).addEventListener('change', () => {
+        reshapeAppFormForState();
+        updateCompliancePreview();
+      });
+    });
 
     addAppProductRow();
     renderAppList();
@@ -1367,6 +1547,7 @@
       windDir: $('#app-wind-dir').value,
       temperature: $('#app-temp').value === '' ? null : parseFloat($('#app-temp').value),
       sky: $('#app-sky').value.trim(),
+      applicationType: ($('#app-type') && $('#app-type').value) || 'ground',
       method: $('#app-method').value.trim(),
       nozzleType: ($('#app-nozzle') && $('#app-nozzle').value.trim()) || '',
       sprayerPressure: ($('#app-pressure') && $('#app-pressure').value.trim()) || '',
@@ -1375,6 +1556,7 @@
       applicatorName: $('#app-applicator').value.trim(),
       certNumber: $('#app-cert').value.trim(),
       supervisorName: ($('#app-supervisor') && $('#app-supervisor').value.trim()) || '',
+      usedNoncertified: !!( $('#app-used-trainee') && $('#app-used-trainee').checked ),
       noncertifiedApplicatorName: ($('#app-noncertified') && $('#app-noncertified').value.trim()) || '',
       ownerOperatorName: ($('#app-owner') && $('#app-owner').value.trim()) || s.farmName || '',
       customerName: ($('#app-customer') && $('#app-customer').value.trim()) || '',
@@ -1385,6 +1567,10 @@
       pesticideSupplier: ($('#app-supplier') && $('#app-supplier').value.trim()) || '',
       disposalMethod: ($('#app-disposal') && $('#app-disposal').value.trim()) || '',
       notes: $('#app-notes').value.trim(),
+      // Freeze compliance context on the record so history does not re-score
+      // when Settings later change.
+      complianceState: s.state || '',
+      complianceApplicatorClass: s.applicatorClass || 'private',
       draft: !!allowIncomplete,
       createdAt: new Date().toISOString()
     };
@@ -1403,12 +1589,21 @@
     const app = collectAppFromForm(!!asDraft);
     const result = evaluateCompliance(app);
     app.complianceComplete = result.complete;
+    app.complianceStatus = result.status;
     app.complianceMissing = result.missing.slice();
+    app.complianceWarnings = result.warnings.slice();
+    app.complianceVerification = result.verification;
     app.retentionYears = result.retentionYears;
+    app.complianceCheckedAt = new Date().toISOString();
 
     if (!asDraft && data.settings.strictCompliance !== false && !result.complete) {
       updateCompliancePreview();
-      toast(`Strict mode: fill ${result.missing.length} required state field(s), or save as incomplete draft`);
+      toast(`Strict mode: fill ${result.missing.length} required field(s), or save as incomplete draft`);
+      return;
+    }
+    if (!asDraft && data.settings.strictCompliance !== false && !result.intervalsOk) {
+      updateCompliancePreview();
+      toast('Strict mode: enter label REI and PHI on every product (or save as draft)');
       return;
     }
     if (asDraft) app.draft = true;
@@ -1427,8 +1622,10 @@
     updateStorageUsage();
     if (asDraft || !result.complete) {
       toast(`Draft saved — still missing: ${result.missing.slice(0, 4).join('; ')}${result.missing.length > 4 ? '…' : ''}`);
+    } else if (result.status === 'needs_review') {
+      toast('Saved — fields filled, but review warnings remain (intervals or dataset confidence)');
     } else {
-      toast(idx >= 0 ? 'Complete record updated' : `Complete ${STATE_NAMES[data.settings.state] || ''} record saved`);
+      toast(idx >= 0 ? 'Record updated (required fields filled)' : 'Record saved (required fields filled)');
     }
   }
 
@@ -1445,6 +1642,8 @@
     $('#app-company-license').value = s.companyLicense || '';
     $('#app-owner').value = s.farmName || '';
     $('#app-customer').value = s.farmName || '';
+    if ($('#app-type')) $('#app-type').value = 'ground';
+    if ($('#app-used-trainee')) $('#app-used-trainee').checked = false;
     $('#app-products').innerHTML = '';
     addAppProductRow();
     $('#app-product-info').hidden = true;
@@ -1486,6 +1685,7 @@
     $('#app-wind-dir').value = a.windDir;
     $('#app-temp').value = a.temperature ?? '';
     $('#app-sky').value = a.sky;
+    if ($('#app-type')) $('#app-type').value = a.applicationType || 'ground';
     $('#app-method').value = a.method;
     $('#app-nozzle').value = a.nozzleType || '';
     $('#app-pressure').value = a.sprayerPressure || '';
@@ -1494,6 +1694,7 @@
     $('#app-applicator').value = a.applicatorName;
     $('#app-cert').value = a.certNumber;
     $('#app-supervisor').value = a.supervisorName || '';
+    if ($('#app-used-trainee')) $('#app-used-trainee').checked = !!a.usedNoncertified || !!a.noncertifiedApplicatorName;
     $('#app-noncertified').value = a.noncertifiedApplicatorName || '';
     $('#app-owner').value = a.ownerOperatorName || data.settings.farmName || '';
     $('#app-customer').value = a.customerName || '';
@@ -1535,10 +1736,15 @@
   function appStatusBadges(a) {
     const out = [];
     const result = evaluateCompliance(a);
-    if (a.draft || !result.complete) {
+    if (a.draft || result.status === 'incomplete' || result.status === 'no_state') {
       out.push('<span class="badge-pill badge-incomplete">Incomplete</span>');
-    } else if (data.settings.state) {
-      out.push('<span class="badge-pill badge-complete">State complete</span>');
+    } else if (result.status === 'needs_review') {
+      out.push('<span class="badge-pill badge-incomplete">Needs review</span>');
+    } else if (result.status === 'fields_complete') {
+      out.push('<span class="badge-pill badge-complete">Fields complete</span>');
+    }
+    if (!result.intervalsOk) {
+      out.push('<span class="badge-pill badge-incomplete">REI/PHI missing</span>');
     }
     const rei = reiExpiry(a);
     if (rei && hoursLeft(rei) > 0) out.push(`<span class="badge-pill badge-rei">REI ${fmtCountdown(hoursLeft(rei))}</span>`);
@@ -1594,33 +1800,42 @@
     const seasonApps = apps.filter(a => new Date(a.date + 'T12:00:00') >= seasonStart);
     $('#stat-season-apps').textContent = seasonApps.length;
     $('#stat-products').textContent = data.products.length;
-    const incomplete = apps.filter(a => a.draft || !evaluateCompliance(a).complete);
+    const incomplete = apps.filter(a => {
+      const r = evaluateCompliance(a);
+      return a.draft || !r.complete || !r.intervalsOk || r.status === 'needs_review';
+    });
     if ($('#stat-incomplete')) {
       $('#stat-incomplete').textContent = incomplete.length;
       $('#stat-incomplete-card').classList.toggle('stat-alert', incomplete.length > 0);
     }
 
     // Active REI
+    const missingIntervals = apps.filter(a => !intervalsStatus(a).ok);
     const reiActive = apps
       .map(a => ({ a, exp: reiExpiry(a) }))
       .filter(x => x.exp && hoursLeft(x.exp) > 0)
       .sort((x, y) => x.exp - y.exp);
     $('#stat-active-rei').textContent = reiActive.length;
-    $('#stat-rei-card').classList.toggle('stat-alert', reiActive.length > 0);
+    $('#stat-rei-card').classList.toggle('stat-alert', reiActive.length > 0 || missingIntervals.length > 0);
 
     const reiHost = $('#rei-list');
-    reiHost.innerHTML = reiActive.length
-      ? reiActive.map(({ a, exp }) => `
-          <div class="interval-item blocked">
-            <div>
-              <div class="where">${esc(a.fieldName)}</div>
-              <div class="what">${esc(appProductsLabel(a))} · sprayed ${fmtDate(a.date)}</div>
-            </div>
-            <div class="when">${fmtCountdown(hoursLeft(exp))}<br>
-              <span class="card-hint">${exp.toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}</span>
-            </div>
-          </div>`).join('')
-      : `<p class="empty-note">No active re-entry restrictions. All treated areas are clear to enter.</p>`;
+    if (missingIntervals.length && !reiActive.length) {
+      reiHost.innerHTML = `<p class="empty-note">REI unknown for ${missingIntervals.length} record(s) — enter label REI on each product. Do not assume areas are clear to enter.</p>`;
+    } else {
+      reiHost.innerHTML = reiActive.length
+        ? reiActive.map(({ a, exp }) => `
+            <div class="interval-item blocked">
+              <div>
+                <div class="where">${esc(a.fieldName)}</div>
+                <div class="what">${esc(appProductsLabel(a))} · sprayed ${fmtDate(a.date)}</div>
+              </div>
+              <div class="when">${fmtCountdown(hoursLeft(exp))}<br>
+                <span class="card-hint">${exp.toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}</span>
+              </div>
+            </div>`).join('') + (missingIntervals.length
+              ? `<p class="empty-note">${missingIntervals.length} other record(s) have missing REI — not shown as clear.</p>` : '')
+        : `<p class="empty-note">No active REI countdowns from records that have label REI entered.</p>`;
+    }
 
     // Active PHI
     const phiActive = apps
@@ -1630,18 +1845,22 @@
     $('#stat-active-phi').textContent = phiActive.length;
 
     const phiHost = $('#phi-list');
-    phiHost.innerHTML = phiActive.length
-      ? phiActive.map(({ a, d }) => `
-          <div class="interval-item waiting">
-            <div>
-              <div class="where">${esc(a.crop || a.fieldName)} — ${esc(a.fieldName)}</div>
-              <div class="what">${esc(appProductsLabel(a))} · sprayed ${fmtDate(a.date)}</div>
-            </div>
-            <div class="when">harvest ${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}<br>
-              <span class="card-hint">${plural(Math.ceil((d - now()) / 86400000), 'day')}</span>
-            </div>
-          </div>`).join('')
-      : `<p class="empty-note">No crops waiting on a pre-harvest interval.</p>`;
+    if (missingIntervals.length && !phiActive.length) {
+      phiHost.innerHTML = `<p class="empty-note">PHI unknown for ${missingIntervals.length} record(s) — enter label PHI on each product. Do not assume harvest is legal.</p>`;
+    } else {
+      phiHost.innerHTML = phiActive.length
+        ? phiActive.map(({ a, d }) => `
+            <div class="interval-item waiting">
+              <div>
+                <div class="where">${esc(a.crop || a.fieldName)} — ${esc(a.fieldName)}</div>
+                <div class="what">${esc(appProductsLabel(a))} · sprayed ${fmtDate(a.date)}</div>
+              </div>
+              <div class="when">harvest ${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}<br>
+                <span class="card-hint">${plural(Math.ceil((d - now()) / 86400000), 'day')}</span>
+              </div>
+            </div>`).join('')
+        : `<p class="empty-note">No PHI countdowns from records that have label PHI entered.</p>`;
+    }
 
     // Recent applications
     const recentHost = $('#recent-apps');
@@ -1663,8 +1882,10 @@
     if (law) {
       card.hidden = false;
       const incompleteCount = apps.filter(a => a.draft || !evaluateCompliance(a).complete).length;
+      const needsReview = apps.filter(a => evaluateCompliance(a).status === 'needs_review').length;
+      const filled = apps.filter(a => evaluateCompliance(a).complete && evaluateCompliance(a).intervalsOk).length;
       $('#compliance-summary').textContent =
-        `${STATE_NAMES[data.settings.state]} recordkeeping is active via ${law.agency}. Retain records ${law.retentionYears} year(s). ${incompleteCount ? incompleteCount + ' record(s) still missing required fields.' : 'All saved records currently satisfy required state fields.'}`;
+        `${STATE_NAMES[data.settings.state]} recordkeeping via ${law.agency}. Retain ${law.retentionYears} year(s). ${filled} record(s) have required fields + intervals filled; ${incompleteCount} incomplete; ${needsReview} need review. Not a legal determination.`;
       $('#compliance-citation').textContent =
         `Citation: ${law.citation.reference}. USDA 7 CFR Part 110 was rescinded July 11, 2025 — state rules, labels, and WPS control. This app covers record fields; it does not file electronic reports or replace WPS duties.`;
     } else {
@@ -2038,7 +2259,7 @@
       </table>
       <div class="sig-line"><span>Certified applicator signature / date</span><span>Reviewed by / date</span></div>
       <p class="print-footer">
-        Generated by Pesticide Logger v2.4 — Practical Farm Tools. Retain records per your state
+        Generated by Pesticide Logger v2.4.2 — Practical Farm Tools. Retain records per your state
         (${retain} year(s) shown above). This report is a record-keeping aid, not legal advice,
         and does not replace WPS duties or electronic reporting programs.
       </p>`;

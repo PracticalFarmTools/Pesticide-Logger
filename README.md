@@ -1,4 +1,4 @@
-# Pesticide Logger v2.4
+# Pesticide Logger v2.4.2
 
 **Free, offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite.

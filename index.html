@@ -24,7 +24,7 @@
       </svg>
       <div>
         <h1>Pesticide Logger</h1>
-        <span class="header-sub">Practical Farm Tools · v2.4</span>
+        <span class="header-sub">Practical Farm Tools · v2.4.2</span>
       </div>
     </div>
     <div class="header-right">
@@ -116,14 +116,14 @@
         <h3 class="card-title">
           <span class="dot dot-red"></span> Re-Entry Intervals (REI)
         </h3>
-        <p class="card-hint">Workers may not enter these areas without PPE until the REI expires.</p>
+        <p class="card-hint">Based on entered label REI values. Missing REI means status is unknown — follow the label.</p>
         <div id="rei-list" class="interval-list"></div>
       </div>
       <div class="card">
         <h3 class="card-title">
           <span class="dot dot-amber"></span> Pre-Harvest Intervals (PHI)
         </h3>
-        <p class="card-hint">Earliest legal harvest date for each treated crop.</p>
+        <p class="card-hint">Earliest harvest date from entered label PHI values (not a legal determination).</p>
         <div id="phi-list" class="interval-list"></div>
       </div>
     </div>
@@ -147,7 +147,7 @@
   <section id="tab-log" class="tab-panel" role="tabpanel">
     <div class="card">
       <h3 class="card-title" id="app-form-title">Log an application</h3>
-      <p class="card-hint" id="app-form-hint">This spray log reshapes for your selected state. Only core fields plus that state’s required record fields are shown.</p>
+      <p class="card-hint" id="app-form-hint">This spray log reshapes for your selected state and applicator class. Completion means required fields are filled — not a legal determination.</p>
       <div class="form-row form-row-2 log-shape-controls">
         <label class="checkbox-label">
           <input type="checkbox" id="app-show-recommended">
@@ -286,17 +286,25 @@
         <fieldset data-log-section="equipment">
           <legend>Equipment</legend>
           <div class="form-row form-row-3">
+            <label data-log-field="application_type">Application type
+              <select id="app-type">
+                <option value="ground">Ground</option>
+                <option value="aerial">Aerial</option>
+                <option value="chemigation">Chemigation</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
             <label data-log-field="method">Method / equipment <span id="req-method" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-method" placeholder="e.g. Boom sprayer, backpack, aerial">
             </label>
             <label data-log-field="nozzle_type">Nozzle type <span id="req-nozzle_type" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-nozzle" placeholder="e.g. AIXR 11004">
             </label>
+          </div>
+          <div class="form-row form-row-3">
             <label data-log-field="sprayer_pressure">Sprayer pressure <span id="req-sprayer_pressure" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-pressure" placeholder="e.g. 40 psi">
             </label>
-          </div>
-          <div class="form-row form-row-2">
             <label data-log-field="equipment_id">Equipment ID <span id="req-equipment_id" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-equipment-id" placeholder="Sprayer / unit ID">
             </label>
@@ -320,8 +328,12 @@
             </label>
           </div>
           <div class="form-row form-row-2">
-            <label data-log-field="noncertified_applicator_name">Noncertified / trainee applicator <span id="req-noncertified_applicator_name" class="state-req-tag" hidden>state</span>
-              <input type="text" id="app-noncertified" placeholder="If a trainee applied under supervision">
+            <label data-log-field="used_noncertified" class="checkbox-label">
+              <input type="checkbox" id="app-used-trainee">
+              Noncertified / trainee applicator participated
+            </label>
+            <label data-log-field="noncertified_applicator_name">Noncertified / trainee name <span id="req-noncertified_applicator_name" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-noncertified" placeholder="Required when trainee participated">
             </label>
             <label data-log-field="owner_operator_name">Owner / operator name <span id="req-owner_operator_name" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-owner" placeholder="Defaults to farm name">
@@ -513,11 +525,19 @@
             </select>
           </label>
         </div>
-        <div class="form-row">
+        <div class="form-row form-row-3">
+          <label>Manufacturer / registrant
+            <input type="text" id="prod-company" placeholder="From EPA import or label">
+          </label>
+          <label>State registration / SLN #
+            <input type="text" id="prod-state-reg" placeholder="If your state issues one">
+          </label>
           <label class="checkbox-label">
             <input type="checkbox" id="prod-rup">
             Restricted-use pesticide (RUP)
           </label>
+        </div>
+        <div class="form-row">
           <label>Notes
             <input type="text" id="prod-notes" placeholder="Max apps per season, buffer requirements…">
           </label>

@@ -1,8 +1,8 @@
-/* Pesticide Logger v2.4 — offline-first service worker.
+/* Pesticide Logger v2.4.2 — offline-first service worker.
  * Cache-first for the app shell; records live in localStorage so the app
  * is fully functional with zero connectivity after first load.
  */
-const CACHE_NAME = 'pesticide-logger-v2.4.1';
+const CACHE_NAME = 'pesticide-logger-v2.4.2';
 const APP_SHELL = [
   './',
   './index.html',
@@ -25,7 +25,14 @@ const APP_SHELL = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(APP_SHELL))
+      .then((cache) => Promise.all(
+        APP_SHELL.map((url) =>
+          cache.add(url).catch((err) => {
+            // One missing asset must not block the whole offline shell.
+            console.warn('[sw] skip cache', url, err);
+          })
+        )
+      ))
       .then(() => self.skipWaiting())
   );
 });

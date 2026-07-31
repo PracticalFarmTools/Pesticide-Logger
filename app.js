@@ -4100,13 +4100,16 @@
   initLicense();
   initOnboarding();
   initSprayForecast();
+  initReminders();
   if ($('#history-close')) $('#history-close').addEventListener('click', () => $('#history-dialog').close());
   renderDashboard();
   renderRecentProducts();
   renderDueBanner();
+  checkReminders();
 
-  // Keep REI countdowns fresh.
+  // Keep REI countdowns fresh; fire due reminders while the app is open.
   setInterval(() => {
     if ($('#tab-dashboard').classList.contains('active')) renderDashboard();
+    checkReminders();
   }, 60000);
 })();

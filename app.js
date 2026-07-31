@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.6.0 — Practical Farm Tools
+/* Pesticide Logger v2.6.1 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in localStorage/IndexedDB on this device.
@@ -122,6 +122,7 @@
   function save() {
     localStorage.setItem(STORE_KEY, JSON.stringify(data));
     idbMirror();
+    scheduleAutoBackup();
   }
 
   // ---- durability: IndexedDB mirror + persistent storage ----
@@ -147,6 +148,7 @@
     req.onupgradeneeded = () => req.result.createObjectStore('kv');
     req.onsuccess = () => {
       idbDb = req.result;
+      resumeAutoBackup();
       if (localStorage.getItem(STORE_KEY)) { idbMirror(); return; }
       // localStorage is empty — recover from the mirror if it has real data.
       const get = idbDb.transaction('kv', 'readonly').objectStore('kv').get('data');
@@ -161,6 +163,126 @@
         } catch (e) { /* corrupt mirror; ignore */ }
       };
     };
+  }
+
+  // ---- automatic backup file (File System Access API, Chromium) ----
+  // Opt-in: the farmer picks a real file (USB stick, synced folder…) and every
+  // save rewrites it. Survives cleared browser data — the #1 loss scenario.
+
+  let autoBackupHandle = null;
+  let autoBackupState = 'off'; // off | on | needs_permission | unsupported
+  let autoBackupTimer = null;
+
+  function autoBackupSupported() {
+    return typeof window !== 'undefined' && 'showSaveFilePicker' in window;
+  }
+
+  function idbPutHandle(handle) {
+    if (!idbDb) return;
+    try {
+      const store = idbDb.transaction('kv', 'readwrite').objectStore('kv');
+      if (handle) store.put(handle, 'backupHandle');
+      else store.delete('backupHandle');
+    } catch (e) { /* best effort */ }
+  }
+
+  function resumeAutoBackup() {
+    if (!autoBackupSupported()) { autoBackupState = 'unsupported'; renderAutoBackupUI(); return; }
+    if (!idbDb) return;
+    try {
+      const get = idbDb.transaction('kv', 'readonly').objectStore('kv').get('backupHandle');
+      get.onsuccess = async () => {
+        const handle = get.result;
+        if (!handle) { autoBackupState = 'off'; renderAutoBackupUI(); return; }
+        autoBackupHandle = handle;
+        try {
+          const perm = await handle.queryPermission({ mode: 'readwrite' });
+          autoBackupState = perm === 'granted' ? 'on' : 'needs_permission';
+        } catch (e) {
+          autoBackupState = 'needs_permission';
+        }
+        renderAutoBackupUI();
+      };
+      get.onerror = () => { autoBackupState = 'off'; renderAutoBackupUI(); };
+    } catch (e) { /* ignore */ }
+  }
+
+  function scheduleAutoBackup() {
+    if (autoBackupState !== 'on' || !autoBackupHandle) return;
+    clearTimeout(autoBackupTimer);
+    autoBackupTimer = setTimeout(writeAutoBackup, 1500);
+  }
+
+  async function writeAutoBackup() {
+    if (!autoBackupHandle) return;
+    try {
+      data.meta.lastBackupAt = new Date().toISOString();
+      localStorage.setItem(STORE_KEY, JSON.stringify(data));
+      idbMirror();
+      const writable = await autoBackupHandle.createWritable();
+      await writable.write(JSON.stringify(data, null, 2));
+      await writable.close();
+      renderBackupBanner();
+    } catch (e) {
+      autoBackupState = 'needs_permission';
+      renderAutoBackupUI();
+    }
+  }
+
+  async function connectAutoBackup() {
+    if (!autoBackupSupported()) return;
+    try {
+      autoBackupHandle = await window.showSaveFilePicker({
+        suggestedName: 'pesticide-logger-auto-backup.json',
+        types: [{ description: 'JSON backup', accept: { 'application/json': ['.json'] } }]
+      });
+      autoBackupState = 'on';
+      idbPutHandle(autoBackupHandle);
+      await writeAutoBackup();
+      renderAutoBackupUI();
+      toast('Automatic backup connected — this file now updates on every save');
+    } catch (e) { /* user cancelled the picker */ }
+  }
+
+  async function reauthorizeAutoBackup() {
+    if (!autoBackupHandle) return;
+    try {
+      const perm = await autoBackupHandle.requestPermission({ mode: 'readwrite' });
+      if (perm === 'granted') {
+        autoBackupState = 'on';
+        await writeAutoBackup();
+        toast('Automatic backup re-enabled');
+      }
+    } catch (e) { /* ignored */ }
+    renderAutoBackupUI();
+  }
+
+  function disconnectAutoBackup() {
+    autoBackupHandle = null;
+    autoBackupState = 'off';
+    idbPutHandle(null);
+    renderAutoBackupUI();
+    toast('Automatic backup disconnected — manual backups still work');
+  }
+
+  function renderAutoBackupUI() {
+    const status = $('#auto-backup-status');
+    if (!status) return;
+    const connectBtn = $('#auto-backup-connect');
+    const resumeBtn = $('#auto-backup-resume');
+    const stopBtn = $('#auto-backup-disconnect');
+    if (autoBackupState === 'unsupported') {
+      status.textContent = 'Automatic backup files need a Chromium browser (Chrome / Edge). Manual backups below always work.';
+      connectBtn.hidden = resumeBtn.hidden = stopBtn.hidden = true;
+      return;
+    }
+    connectBtn.hidden = autoBackupState !== 'off';
+    resumeBtn.hidden = autoBackupState !== 'needs_permission';
+    stopBtn.hidden = autoBackupState === 'off';
+    status.textContent =
+      autoBackupState === 'on' ? `Automatic backup is ON — ${autoBackupHandle && autoBackupHandle.name ? autoBackupHandle.name : 'backup file'} rewrites on every save.`
+      : autoBackupState === 'needs_permission' ? 'Automatic backup is connected but needs permission again (browsers reset it between visits).'
+      : 'Connect a backup file (USB stick or synced folder) and every save writes to it automatically.';
   }
 
   const uid = () => (crypto.randomUUID ? crypto.randomUUID()
@@ -271,6 +393,7 @@
       const on = b.dataset.tab === name;
       b.classList.toggle('active', on);
       b.setAttribute('aria-selected', on);
+      b.tabIndex = on ? 0 : -1;
     });
     $$('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
     window.scrollTo({ top: 0 });
@@ -285,6 +408,36 @@
     const goto = e.target.closest('[data-goto]');
     if (goto) showTab(goto.dataset.goto);
   });
+
+  // Proper ARIA tabs: controls/labelledby links, roving tabindex, arrow keys.
+  (function initA11yTabs() {
+    const tabs = $$('.tab-btn');
+    tabs.forEach(b => {
+      b.id = 'tabbtn-' + b.dataset.tab;
+      b.setAttribute('aria-controls', 'tab-' + b.dataset.tab);
+      b.tabIndex = b.classList.contains('active') ? 0 : -1;
+    });
+    $$('.tab-panel').forEach(p => {
+      p.setAttribute('aria-labelledby', 'tabbtn-' + p.id.replace('tab-', ''));
+    });
+    const nav = document.querySelector('.tab-nav');
+    if (!nav) return;
+    nav.addEventListener('keydown', (e) => {
+      const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
+      if (!keys.includes(e.key)) return;
+      const current = tabs.indexOf(document.activeElement);
+      if (current < 0) return;
+      e.preventDefault();
+      let next = current;
+      if (e.key === 'ArrowLeft') next = (current - 1 + tabs.length) % tabs.length;
+      if (e.key === 'ArrowRight') next = (current + 1) % tabs.length;
+      if (e.key === 'Home') next = 0;
+      if (e.key === 'End') next = tabs.length - 1;
+      tabs.forEach((t, i) => { t.tabIndex = i === next ? 0 : -1; });
+      tabs[next].focus();
+      showTab(tabs[next].dataset.tab);
+    });
+  })();
 
   // -------------------------------------------------------------- settings
 
@@ -2547,7 +2700,7 @@
       </tr>`).join('');
     $('#print-area').innerHTML = `
       <h1>Tank Mix Worksheet</h1>
-      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.6.0 (Practical Farm Tools)</p>
+      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.6.1 (Practical Farm Tools)</p>
       <table>
         <tr><th>Area treated</th><td>${fmtNum(c.area)} ${c.areaUnit === 'sqft' ? 'sq ft' : c.areaUnit === '1000sqft' ? '× 1,000 sq ft' : 'acres'} (${fmtNum(c.acres, 3)} ac)</td>
             <th>Spray volume</th><td>${fmtNum(c.gpa)} ${c.gpaUnit === 'gal_acre' ? 'gal/acre' : 'gal/1,000 sq ft'}</td></tr>
@@ -2618,6 +2771,13 @@
       save();
       renderBackupBanner();
     });
+
+    if ($('#auto-backup-connect')) {
+      $('#auto-backup-connect').addEventListener('click', connectAutoBackup);
+      $('#auto-backup-resume').addEventListener('click', reauthorizeAutoBackup);
+      $('#auto-backup-disconnect').addEventListener('click', disconnectAutoBackup);
+      renderAutoBackupUI();
+    }
   }
 
   function csvEscape(v) {
@@ -2732,7 +2892,7 @@
       </table>
       <div class="sig-line"><span>Certified applicator signature / date</span><span>Reviewed by / date</span></div>
       <p class="print-footer">
-        Generated by Pesticide Logger v2.6.0 — Practical Farm Tools. Retain records per your state
+        Generated by Pesticide Logger v2.6.1 — Practical Farm Tools. Retain records per your state
         (${retain} year(s) shown above). This report is a record-keeping aid, not legal advice,
         and does not replace WPS duties or electronic reporting programs.
       </p>`;
@@ -2797,7 +2957,7 @@
       format: 'pesticide-logger-state-pack',
       version: 5,
       generatedAt: new Date().toISOString(),
-      app: 'Pesticide Logger v2.6.0 — Practical Farm Tools',
+      app: 'Pesticide Logger v2.6.1 — Practical Farm Tools',
       disclaimer: 'Completion means required fields are filled for this context — not a legal determination. Does not replace WPS duties or e-filing programs.',
       farm: {
         name: s.farmName || '',

@@ -24,7 +24,7 @@
       </svg>
       <div>
         <h1>Pesticide Logger</h1>
-        <span class="header-sub">Practical Farm Tools · v2.6.0</span>
+        <span class="header-sub">Practical Farm Tools · v2.6.1</span>
       </div>
     </div>
     <div class="header-right">
@@ -702,6 +702,14 @@
       <h3 class="card-title">Backup &amp; restore</h3>
       <p class="card-hint">Your records live only in this browser. Download a backup regularly and keep it with your farm files.
         To move records between phone and PC: download (or share) a backup on one device, then restore it on the other and choose <strong>Merge</strong> — newest edits win, audit history is kept, and nothing silently duplicates.</p>
+      <div class="auto-backup-box">
+        <p class="card-hint" id="auto-backup-status"></p>
+        <div class="form-actions">
+          <button class="btn btn-secondary" id="auto-backup-connect" hidden>Connect automatic backup file</button>
+          <button class="btn btn-primary" id="auto-backup-resume" hidden>Re-enable automatic backup</button>
+          <button class="btn btn-secondary" id="auto-backup-disconnect" hidden>Disconnect</button>
+        </div>
+      </div>
       <div class="form-actions">
         <button class="btn btn-primary" id="backup-download">Download full backup (.json)</button>
         <button class="btn btn-secondary" id="backup-share" hidden>Share to another device</button>
@@ -807,8 +815,29 @@
 
     <div class="card about-card">
       <h3 class="card-title">About</h3>
-      <p>Pesticide Logger v2.6.0 — part of the <strong>Practical Farm Tools</strong> suite. Free forever, works offline, and your farm records stay on this device.</p>
+      <p>Pesticide Logger v2.6.1 — part of the <strong>Practical Farm Tools</strong> suite. Core recordkeeping is free forever, works offline, and your farm records stay on this device.</p>
       <p class="card-hint">This tool provides 50-state application <em>recordkeeping field coverage</em> with audit history, lot tracking, and in-cab workflows. It is not legal advice, does not replace WPS employer duties, and does not file California PUR, New York PRL, or other electronic reports for you. Always follow the product label and confirm requirements with your state pesticide agency.</p>
+      <details class="legal-details">
+        <summary>Terms of use, license &amp; privacy</summary>
+        <div class="legal-body">
+          <p><strong>Your data:</strong> all records live in this browser and in backup files you create.
+            There is no account, server database, analytics, or telemetry. Optional EPA lookups and weather
+            fetches send only the query — never your records. Because we hold no copy of your data,
+            we cannot recover it — use the backup tools.</p>
+          <p><strong>Not legal advice:</strong> “Fields complete” means required fields are filled for your
+            selected context — a checklist result, not a compliance determination or certification.
+            State datasets marked partial/uncertain need agency confirmation; even researched entries can
+            lag rule changes. The product label is the law.</p>
+          <p><strong>Free vs Pro:</strong> the free tier is perpetual and covers everything legally
+            important. A Pro key licenses one farm operation across its devices; keys verify offline and
+            never phone home. Refunds follow the payment processor’s policy.</p>
+          <p><strong>No warranty:</strong> the software is provided “as is”, without warranty of any kind.
+            To the maximum extent permitted by law, the authors are not liable for claims, fines, crop
+            loss, or damages arising from its use, including reliance on compliance fields, deadlines, or
+            interval calculations. Recordkeeping obligations remain yours.</p>
+          <p class="card-hint">Full text: <code>TERMS.md</code> in the source repository. Code is MIT-licensed.</p>
+        </div>
+      </details>
     </div>
   </section>
 

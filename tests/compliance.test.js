@@ -216,17 +216,23 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.6.0 + deadline/license wiring', () => {
+check('source files advertise v2.6.1 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.6.0'));
-  assert.ok(sw.includes('pesticide-logger-v2.6.0'));
-  assert.ok(html.includes('v2.6.0'));
+  assert.ok(app.includes('v2.6.1'));
+  assert.ok(sw.includes('pesticide-logger-v2.6.1'));
+  assert.ok(html.includes('v2.6.1'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));
   assert.ok(sw.includes('./deadline.js'));
   assert.ok(sw.includes('./license.js'));
+  assert.ok(html.includes('auto-backup-connect'), 'auto backup UI present');
+  assert.ok(app.includes('function connectAutoBackup'), 'auto backup wired');
+  assert.ok(html.includes('Terms of use, license'), 'in-app legal terms present');
+  assert.ok(fs.existsSync(path.join(root, 'TERMS.md')));
+  assert.ok(fs.existsSync(path.join(root, 'PRICING.md')));
+  assert.ok(app.includes("aria-controls"), 'a11y tabs wired');
   assert.ok(app.includes('DeadlineUtils.computeRecordDueAtFromLaw'));
   assert.ok(app.includes('function downloadStatePack'));
   assert.ok(app.includes('Preserve frozen compliance context'));

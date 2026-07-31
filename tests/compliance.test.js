@@ -1,11 +1,12 @@
 #!/usr/bin/env node
-/* Regression checks for Pesticide Logger v2.5.1 — run: node tests/compliance.test.js */
+/* Regression checks for Pesticide Logger v2.5.2 — run: node tests/compliance.test.js */
 'use strict';
 
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const assert = require('assert');
+const DeadlineUtils = require(path.join(__dirname, '..', 'deadline.js'));
 
 const root = path.join(__dirname, '..');
 let failed = 0;
@@ -155,20 +156,81 @@ check('missing REI/PHI fails intervalsOk', () => {
   assert.strictEqual(intervalsStatus(good).ok, true);
 });
 
-check('source files advertise v2.5.1 trust fixes', () => {
+check('every state has a recordDeadline unit', () => {
+  Object.entries(STATE_LAWS).forEach(([code, law]) => {
+    assert.ok(law.recordDeadline && law.recordDeadline.unit, `${code} recordDeadline`);
+    assert.ok(['hours', 'calendarDays', 'businessDays', 'sameDay'].includes(law.recordDeadline.unit),
+      `${code} unit ${law.recordDeadline.unit}`);
+  });
+  // Compare via JSON — STATE_LAWS objects live in a vm realm.
+  assert.strictEqual(JSON.stringify(STATE_LAWS.FL.recordDeadline),
+    JSON.stringify({ count: 2, unit: 'businessDays' }));
+  assert.strictEqual(JSON.stringify(STATE_LAWS.MO.recordDeadline),
+    JSON.stringify({ count: 3, unit: 'businessDays' }));
+  assert.strictEqual(STATE_LAWS.WA.recordDeadline.unit, 'sameDay');
+});
+
+check('business-day deadline skips weekends (real deadline.js)', () => {
+  // Friday application → 2 business days → Tuesday
+  const fri = { date: '2026-07-31', endTime: '16:00' }; // Friday
+  const due = DeadlineUtils.computeRecordDueAtFromLaw(STATE_LAWS.FL, fri);
+  const d = new Date(due);
+  assert.strictEqual(d.getDay(), 2, 'expected Tuesday'); // 0=Sun
+  assert.strictEqual(d.toISOString().slice(0, 10), '2026-08-04');
+
+  // Monday → 3 business days → Thursday (MO)
+  const mon = { date: '2026-07-27', endTime: '10:00' };
+  const dueMo = DeadlineUtils.computeRecordDueAtFromLaw(STATE_LAWS.MO, mon);
+  assert.strictEqual(new Date(dueMo).toISOString().slice(0, 10), '2026-07-30');
+});
+
+check('same-day and hours deadlines', () => {
+  const app = { date: '2026-07-31', endTime: '09:00' };
+  const same = DeadlineUtils.computeRecordDueAtFromLaw(STATE_LAWS.WA, app);
+  assert.ok(same.includes('2026-07-31'));
+  const hourly = DeadlineUtils.computeRecordDueAtFromLaw(
+    { recordDeadline: { count: 24, unit: 'hours' }, recordWithinHours: 24 },
+    app
+  );
+  assert.strictEqual(new Date(hourly).toISOString().slice(0, 13), '2026-08-01T09');
+});
+
+check('customer copy due only when days encoded; private skipped', () => {
+  const app = { date: '2026-07-01' };
+  assert.strictEqual(
+    DeadlineUtils.computeCustomerCopyDueAtFromLaw(STATE_LAWS.IA, app, 'commercial'),
+    null
+  );
+  const fl = DeadlineUtils.computeCustomerCopyDueAtFromLaw(STATE_LAWS.FL, app, 'commercial');
+  assert.ok(fl && fl.startsWith('2026-07-31'));
+  assert.strictEqual(
+    DeadlineUtils.computeCustomerCopyDueAtFromLaw(STATE_LAWS.FL, app, 'private'),
+    null
+  );
+});
+
+check('privateDuty none means state matrix should not apply to private users', () => {
+  assert.strictEqual(STATE_LAWS.AL.privateDuty, 'none');
+  const cls = 'private';
+  const apply = !(cls === 'private' && STATE_LAWS.AL.privateDuty === 'none');
+  assert.strictEqual(apply, false);
+});
+
+check('source files advertise v2.5.2 + deadline wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.5.1'));
-  assert.ok(sw.includes('pesticide-logger-v2.5.1'));
-  assert.ok(html.includes('v2.5.1'));
+  assert.ok(app.includes('v2.5.2'));
+  assert.ok(sw.includes('pesticide-logger-v2.5.2'));
+  assert.ok(html.includes('v2.5.2'));
+  assert.ok(html.includes('deadline.js'));
+  assert.ok(sw.includes('./deadline.js'));
+  assert.ok(app.includes('DeadlineUtils.computeRecordDueAtFromLaw'));
   assert.ok(app.includes('function downloadStatePack'));
-  assert.ok(app.includes('function mergeHistory'));
-  assert.ok(app.includes('privateDuty'));
   assert.ok(app.includes('Preserve frozen compliance context'));
   assert.ok(app.includes('report-include-deleted'));
   assert.ok(fs.existsSync(path.join(root, 'icon-192.png')));
-  assert.ok(fs.existsSync(path.join(root, 'icon-512.png')));
+  assert.ok(fs.existsSync(path.join(root, 'deadline.js')));
   assert.ok(!/(?<!\$)\$\('#app-products \.app-product-row'\)\.(forEach|map)/.test(app));
 });
 

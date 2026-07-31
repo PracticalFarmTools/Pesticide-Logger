@@ -1,4 +1,4 @@
-# Pesticide Logger v2.5.1
+# Pesticide Logger v2.5.2
 
 **Free, offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite.
@@ -23,7 +23,7 @@ application at the repository root.
 | **In-cab workflow** | Spray now, duplicate last spray, recent-product chips, sticky large save buttons, and touch-friendly targets for phone/tablet use in the tractor. |
 | **Audit trail & soft-delete** | Edits keep snapshot history. Deletes are soft (recoverable) with retention-aware prompts. |
 | **Lot / batch + OMRI + PHI overrides** | Per-mix-row lot numbers, OMRI flags, and crop-specific REI/PHI overrides that beat library defaults. |
-| **Commercial clocks** | Record-completion due times from state `recordWithinHours`. Customer-copy clocks only for states with a researched copy duty (never invented). |
+| **Commercial clocks** | Record-completion deadlines use `recordDeadline` units (`hours` / `calendarDays` / `businessDays` / `sameDay`). Customer-copy clocks only for researched copy duties (never invented). |
 | **Tank-mix spray log** | One application can contain any number of products. Dashboard uses the mix's longest REI and PHI. |
 | **Post–Part 110 framing** | USDA rescinded 7 CFR Part 110 (effective July 11, 2025). State pesticide acts, labels, and WPS control. |
 | **REI / PHI tracking** | Label REI/PHI countdown for worker re-entry and harvest timing. |
@@ -82,9 +82,19 @@ python3 -m http.server 8000
 ```bash
 node --check app.js
 node --check state_pesticide_laws.js
+node --check deadline.js
 node --check sw.js
 node tests/compliance.test.js
 ```
+
+## Intentional non-goals
+
+These are scope boundaries, not unfinished work:
+
+- Worker Protection Standard employer duties (posting, training, AEZ, SDS)
+- California PUR / CalAgPermits or New York PRL electronic filing
+- Holiday-aware government calendars (business days = Mon–Fri only)
+- Auto-filled rates / REI / PHI from EPA (label remains authoritative)
 
 ## Files
 
@@ -92,6 +102,7 @@ node tests/compliance.test.js
 index.html                 App shell
 styles.css                 Theme + print stylesheet
 app.js                     Application + compliance engine
+deadline.js                Record / customer-copy deadline math
 state_pesticide_laws.js    50-state agencies, citations, retention, required fields
 api/epa.js                 Stateless Vercel proxy to official EPA PPLS
 vendor/leaflet/            Leaflet 1.9.4 (vendored)

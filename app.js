@@ -1383,6 +1383,10 @@
           toast('Barcode linked — you can now scan this jug in the spray log');
         }));
     }
+    if ($('#scan-label-row') && ocrSupported()) {
+      $('#scan-label-row').hidden = false;
+      $('#scan-label-btn').addEventListener('click', scanProductLabel);
+    }
     $('#product-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const id = $('#prod-id').value || uid();
@@ -1707,6 +1711,10 @@
     if ($('#scan-cancel')) $('#scan-cancel').addEventListener('click', closeScanner);
     if ($('#quick-field-save')) $('#quick-field-save').addEventListener('click', saveQuickAddField);
     if ($('#quick-product-save')) $('#quick-product-save').addEventListener('click', saveQuickAddProduct);
+    if ($('#qp-scan-label-row') && ocrSupported()) {
+      $('#qp-scan-label-row').hidden = false;
+      $('#qp-scan-label-btn').addEventListener('click', scanQuickAddProductLabel);
+    }
 
     renderProductOptions();
     renderFieldOptions();
@@ -4211,7 +4219,7 @@
     } catch (e) { /* sweep is best-effort */ }
   }
 
-  function compressImage(file, maxDim) {
+  function compressImage(file, maxDim, quality) {
     return new Promise((res, rej) => {
       const img = new Image();
       const url = URL.createObjectURL(file);
@@ -4222,7 +4230,7 @@
         canvas.width = Math.round(img.width * scale);
         canvas.height = Math.round(img.height * scale);
         canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        res(canvas.toDataURL('image/jpeg', 0.8));
+        res(canvas.toDataURL('image/jpeg', quality || 0.8));
       };
       img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('bad image')); };
       img.src = url;
@@ -4369,6 +4377,189 @@
       onRowProductChange(row);
       toast(`Scanned: ${p.name}`);
     });
+  }
+
+  // ---- OCR label scanning (Tesseract.js, vendored + lazy-loaded on first use) ----
+  //
+  // Unlike barcode scanning (a live video loop — see openScanner() above),
+  // label text needs a single well-focused photo: the phone's native camera
+  // app (autofocus, flash, HDR) reads small print far more reliably than a
+  // raw getUserMedia frame grab. Nothing here ever leaves the device except
+  // the extracted EPA registration number, sent to the same /api/epa lookup
+  // the manual search box already uses — no image or raw text is sent
+  // anywhere. High-confidence facts (EPA reg #, signal word) come from
+  // label-ocr.js's parseLabelText(); the reg # additionally has to pass a
+  // real EPA lookup before anything is ever written to a record — OCR
+  // output alone never populates a saved record.
+
+  let tesseractWorkerPromise = null;
+
+  function ocrSupported() {
+    return typeof WebAssembly !== 'undefined';
+  }
+
+  function loadTesseractScript() {
+    if (window.Tesseract) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'vendor/tesseract/tesseract.min.js';
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error('load-failed'));
+      document.head.appendChild(s);
+    });
+  }
+
+  // One worker, reused across scans for the rest of the session. First call
+  // downloads ~7MB (core + English data); the browser's normal HTTP/service
+  // worker cache keeps it available offline after that.
+  async function getTesseractWorker(onProgress) {
+    if (!tesseractWorkerPromise) {
+      tesseractWorkerPromise = (async () => {
+        await loadTesseractScript();
+        return Tesseract.createWorker('eng', 1, {
+          workerPath: 'vendor/tesseract/worker.min.js',
+          corePath: 'vendor/tesseract/',
+          langPath: 'vendor/tesseract',
+          gzip: true,
+          logger: onProgress || (() => {})
+        });
+      })();
+    }
+    return tesseractWorkerPromise;
+  }
+
+  function dataUrlToImage(dataUrl) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('bad image'));
+      img.src = dataUrl;
+    });
+  }
+
+  // Opportunistic: if a barcode happens to be visible in the same label
+  // photo, link it too. Best-effort only — never blocks the OCR result.
+  async function detectBarcodeInImage(img) {
+    if (!barcodeSupported()) return null;
+    try {
+      const detector = new BarcodeDetector({
+        formats: ['upc_a', 'upc_e', 'ean_13', 'ean_8', 'code_128', 'code_39', 'qr_code']
+      });
+      const codes = await detector.detect(img);
+      return codes.length ? codes[0].rawValue : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Captures one photo via the native camera app, runs OCR (plus a bonus
+  // barcode check) on it, and returns the parsed facts. `onStatus(text)` is
+  // called with human-readable progress ("Downloading text reader…",
+  // "Reading label…") so callers can show it however fits their UI.
+  function captureAndReadLabel(onStatus) {
+    return new Promise((resolve, reject) => {
+      if (!ocrSupported()) { reject(new Error('unsupported')); return; }
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.capture = 'environment';
+      input.addEventListener('cancel', () => reject(new Error('cancelled')));
+      input.addEventListener('change', async () => {
+        const file = input.files && input.files[0];
+        if (!file) { reject(new Error('cancelled')); return; }
+        try {
+          if (onStatus) onStatus('Reading label…');
+          const dataUrl = await compressImage(file, 1900, 0.9);
+          const img = await dataUrlToImage(dataUrl);
+          const barcode = await detectBarcodeInImage(img);
+          const worker = await getTesseractWorker((m) => {
+            if (!onStatus) return;
+            if (m.status === 'loading language traineddata' || m.status === 'loading tesseract core') {
+              onStatus('Downloading a one-time text reader (~7 MB)…');
+            } else if (m.status === 'recognizing text') {
+              onStatus(`Reading label… ${Math.round((m.progress || 0) * 100)}%`);
+            }
+          });
+          const { data } = await worker.recognize(dataUrl);
+          const facts = LabelOcr.parseLabelText(data.text || '');
+          resolve(Object.assign({ barcode }, facts));
+        } catch (e) {
+          reject(e);
+        }
+      });
+      input.click();
+    });
+  }
+
+  // Product-form entry point: reads identity facts from a label photo, then
+  // reuses the existing EPA search UI as the confirmation step — nothing is
+  // written to the library until the user reviews a real EPA match and taps
+  // "Add to library" themselves, exactly like a manual search.
+  async function scanProductLabel() {
+    if (!ocrSupported()) { toast('Label scanning needs a browser with WebAssembly support'); return; }
+    toast('Opening camera…');
+    try {
+      const facts = await captureAndReadLabel(status => toast(status));
+      if (facts.signalWord) $('#prod-signal').value = facts.signalWord;
+      if (facts.epaRegNo) {
+        $('#epa-search-input').value = facts.epaRegNo;
+        await searchEpaProducts(facts.epaRegNo);
+        $('#epa-search-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        toast(`Found a possible match for ${facts.epaRegNo} — review and add it below`);
+      } else {
+        $('#epa-search-input').value = facts.activeIngredientGuess || '';
+        $('#epa-search-input').focus();
+        toast('Couldn\u2019t read an EPA registration number — search manually below');
+      }
+    } catch (e) {
+      if (e.message === 'cancelled') return;
+      if (e.message === 'unsupported') toast('Label scanning needs a browser with WebAssembly support');
+      else if (e.message === 'load-failed') toast('Could not download the text reader — check your connection and try again');
+      else toast('Could not read that label — try again with better light, or search manually');
+    }
+  }
+
+  // Quick-add-product entry point (cab flow): same recognition pipeline,
+  // pre-fills the small dialog's own fields. The user still has to tap
+  // "Save & select" — that's the confirmation step here, same principle as
+  // scanProductLabel()'s EPA-search-results review.
+  async function scanQuickAddProductLabel() {
+    if (!ocrSupported()) { toast('Label scanning needs a browser with WebAssembly support'); return; }
+    toast('Opening camera…');
+    try {
+      const facts = await captureAndReadLabel(status => toast(status));
+      if (facts.barcode) {
+        $('#qp-barcode').value = facts.barcode;
+        $('#qp-barcode-hint').hidden = false;
+        $('#qp-barcode-hint').textContent = `Linking scanned barcode ${facts.barcode} to this product for next time.`;
+      }
+      if (!facts.epaRegNo) {
+        if (facts.activeIngredientGuess) $('#qp-ai').value = facts.activeIngredientGuess;
+        toast('Couldn\u2019t read an EPA registration number — fill in the rest manually');
+        return;
+      }
+      $('#qp-epa').value = facts.epaRegNo;
+      toast('Looking up EPA registration…');
+      try {
+        const payload = await fetchEpa({ reg: facts.epaRegNo });
+        if (payload.results && payload.results.length === 1) {
+          const result = payload.results[0];
+          $('#qp-name').value = result.name;
+          $('#qp-epa').value = result.epaRegNo;
+          $('#qp-ai').value = epaAiText(result);
+          $('#qp-rup').checked = !!result.rup;
+          $('#qp-company').value = result.company || '';
+          toast(`Found: ${result.name} — review and Save & select`);
+        } else {
+          toast('EPA match was not unique — verify the details before saving');
+        }
+      } catch (e) {
+        toast('Could not verify with EPA — fill in the rest and save');
+      }
+    } catch (e) {
+      if (e.message === 'cancelled') return;
+      toast('Could not read that label — try again, or fill in the form manually');
+    }
   }
 
   // -------------------------------------------------------------- spray window forecast

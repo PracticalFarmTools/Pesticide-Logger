@@ -565,6 +565,12 @@
     <div class="card">
       <h3 class="card-title" id="product-form-title">Add a product</h3>
       <p class="card-hint">Copy REI, PHI, and rates straight from the product label. The label is the law — this tool never overrides it.</p>
+      <div class="ocr-scan-row" id="scan-label-row" hidden>
+        <button type="button" class="btn btn-secondary" id="scan-label-btn">📷 Scan label</button>
+        <p class="card-hint">Reads the EPA registration number and signal word from a photo, then looks
+          up the rest for you to review below. First use downloads a one-time text reader (~7 MB).
+          Scanning happens on this device — only the registration number is looked up online.</p>
+      </div>
       <form id="product-form" class="form-grid" autocomplete="off">
         <input type="hidden" id="prod-id">
         <div class="form-row form-row-3">
@@ -1047,6 +1053,11 @@
 <dialog id="quick-add-product-dialog" class="app-dialog quick-add-dialog-box">
   <h3>Add a new product</h3>
   <p class="card-hint">Adds it to your product library and drops it into this mix — no tab switch needed. Copy REI, PHI from the label; open the full product form later for a label photo.</p>
+  <div class="ocr-scan-row" id="qp-scan-label-row" hidden>
+    <button type="button" class="btn btn-secondary btn-sm" id="qp-scan-label-btn">📷 Scan label</button>
+    <p class="card-hint">Reads the name, EPA #, and active ingredient for you. First use downloads a
+      one-time text reader (~7 MB).</p>
+  </div>
   <p class="card-hint" id="qp-barcode-hint" hidden></p>
   <input type="hidden" id="qp-barcode">
   <div class="form-grid">
@@ -1128,6 +1139,7 @@
 <script src="state_pesticide_laws.js"></script>
 <script src="deadline.js"></script>
 <script src="license.js"></script>
+<script src="label-ocr.js"></script>
 <script src="i18n.js"></script>
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="app.js"></script>

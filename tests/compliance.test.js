@@ -267,6 +267,38 @@ check('v2.7 features wired: forecast, photos, barcode, posting, import, i18n', (
     .forEach(fn => assert.ok(app.indexOf(fn) > 0, fn));
 });
 
+check('OCR label scanning wired: parser, lazy loader, both entry points, hardened CSP', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
+  assert.ok(fs.existsSync(path.join(root, 'label-ocr.js')));
+  assert.ok(html.includes('label-ocr.js'), 'loaded in the page');
+  assert.ok(sw.includes('./label-ocr.js'), 'precached like the other small shared modules');
+  // The vendored OCR engine is deliberately NOT app-shell-precached — it's
+  // multi-megabyte and only needed by the handful of users who scan a label.
+  assert.ok(!sw.includes('vendor/tesseract'), 'Tesseract assets stay lazy-loaded, not precached');
+  assert.ok(fs.existsSync(path.join(root, 'vendor', 'tesseract', 'tesseract.min.js')));
+  assert.ok(fs.existsSync(path.join(root, 'vendor', 'tesseract', 'worker.min.js')));
+  assert.ok(fs.existsSync(path.join(root, 'vendor', 'tesseract', 'eng.traineddata.gz')));
+  // All three WASM capability tiers must be present — vendoring only one
+  // causes a hard failure on any device that resolves to a different tier.
+  ['tesseract-core-lstm.wasm.js', 'tesseract-core-simd-lstm.wasm.js', 'tesseract-core-relaxedsimd-lstm.wasm.js']
+    .forEach(f => assert.ok(fs.existsSync(path.join(root, 'vendor', 'tesseract', f)), f));
+  assert.ok(app.includes('function captureAndReadLabel'), 'capture+recognize pipeline');
+  assert.ok(app.includes('function scanProductLabel'), 'product-form entry point');
+  assert.ok(app.includes('function scanQuickAddProductLabel'), 'cab quick-add entry point');
+  assert.ok(html.includes('id="scan-label-btn"'), 'product-form button present');
+  assert.ok(html.includes('id="qp-scan-label-btn"'), 'quick-add dialog button present');
+  // Never a silent write: the reg # always goes through a real EPA lookup
+  // before it reaches a saved record.
+  assert.ok(app.includes('searchEpaProducts(facts.epaRegNo)') || app.includes('fetchEpa({ reg: facts.epaRegNo })'),
+    'OCR reg # is verified via the real EPA API, never trusted directly');
+  // CSP required for the vendored worker + WASM engine.
+  assert.ok(html.includes("worker-src 'self' blob:"), 'worker-src allows the Tesseract worker');
+  assert.ok(html.includes("'wasm-unsafe-eval'"), 'wasm-unsafe-eval allows WASM compilation');
+  assert.ok(html.includes('img-src') && html.includes('blob:'), 'img-src allows blob: for canvas-based capture');
+});
+
 check('paid-only: whole app is gated by license/trial, no per-feature Pro gate', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');

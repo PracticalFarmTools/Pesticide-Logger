@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="description" content="Pesticide Logger — free, offline-first spray record keeping with 50-state recordkeeping field coverage, tank mix calculator, and REI/PHI tracking for farms.">
+  <meta name="description" content="Pesticide Logger — offline-first spray record keeping with 50-state recordkeeping field coverage, tank mix calculator, and REI/PHI tracking for farms. 30-day free trial.">
   <meta name="theme-color" content="#0f2814">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://server.arcgisonline.com https://tile.openstreetmap.org; connect-src 'self' https://api.open-meteo.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>Pesticide Logger · Practical Farm Tools</title>
@@ -36,6 +36,28 @@
   </div>
 </header>
 
+<div id="license-checking" class="license-checking"><p>Loading…</p></div>
+
+<section id="license-lock-screen" class="license-lock-screen" hidden>
+  <div class="card license-lock-card">
+    <h2>Pesticide Logger</h2>
+    <p id="lock-status" class="card-hint"></p>
+    <p class="card-hint">Your records stay exactly as you left them on this device — nothing is deleted.
+      Activating a license restores full access immediately.</p>
+    <div class="form-row form-row-license">
+      <label>License key
+        <input type="text" id="lock-key-input" placeholder="PLPRO.…" autocomplete="off" spellcheck="false">
+      </label>
+      <button type="button" class="btn btn-primary" id="lock-activate">Activate</button>
+      <button type="button" class="btn btn-secondary" id="lock-buy">Buy a license</button>
+    </div>
+    <p class="card-hint">$29/year per farm, or $79 one-time perpetual. One purchase per farm, works
+      offline, no account, no telemetry — keys are verified on this device with a cryptographic
+      signature, nothing is sent anywhere.</p>
+  </div>
+</section>
+
+<div id="app-shell" hidden>
 <nav class="tab-nav" role="tablist" aria-label="Main navigation">
   <button class="tab-btn active" data-tab="dashboard" role="tab" aria-selected="true">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
@@ -876,21 +898,17 @@
     </div>
 
     <div class="card" id="license-card">
-      <h3 class="card-title">License — Pesticide Logger Pro</h3>
+      <h3 class="card-title">License</h3>
       <p id="license-status" class="card-hint"></p>
-      <p class="card-hint"><strong>Free forever, no key needed:</strong> the full state-shaped spray log,
-        strict compliance checks, REI/PHI dashboard, due clocks, backups, restore/merge, print/PDF, and CSV.
-        Your records are never locked behind payment.</p>
-      <p class="card-hint"><strong>Pro adds the time-savers:</strong> tank-mix calculator, weather auto-fill,
-        spray-now / duplicate-last / recent-product cab tools, one-click state compliance pack, bulk EPA
-        library verification, spray window outlook, barcode jug scanning (Chromium + camera), and the
-        certifier / buyer packet export.</p>
+      <p class="card-hint">Pesticide Logger is $29/year per farm, or $79 one-time perpetual — every
+        feature included, no separate tiers. A 30-day free trial covers the whole app with no card
+        required; after that, a license keeps it working. Your records stay on this device either way.</p>
       <div class="form-row form-row-license">
         <label>License key
           <input type="text" id="license-key-input" placeholder="PLPRO.…" autocomplete="off" spellcheck="false">
         </label>
         <button type="button" class="btn btn-primary" id="license-activate">Activate</button>
-        <button type="button" class="btn btn-secondary" id="license-buy">Get Pro</button>
+        <button type="button" class="btn btn-secondary" id="license-buy">Buy a license</button>
       </div>
       <p class="card-hint">One purchase per farm, works offline, no account, no telemetry.
         Keys are verified on this device with a cryptographic signature — nothing is sent anywhere.</p>
@@ -906,7 +924,7 @@
 
     <div class="card about-card">
       <h3 class="card-title">About</h3>
-      <p>Pesticide Logger v2.7.0 — part of the <strong>Practical Farm Tools</strong> suite. Core recordkeeping is free forever, works offline, and your farm records stay on this device.</p>
+      <p>Pesticide Logger v2.7.0 — part of the <strong>Practical Farm Tools</strong> suite. A licensed, offline-first tool; your farm records stay on this device.</p>
       <p class="card-hint">This tool provides 50-state application <em>recordkeeping field coverage</em> with audit history, lot tracking, and in-cab workflows. It is not legal advice, does not replace WPS employer duties, and does not file California PUR, New York PRL, or other electronic reports for you. Always follow the product label and confirm requirements with your state pesticide agency.</p>
       <details class="legal-details">
         <summary>Terms of use, license &amp; privacy</summary>
@@ -919,9 +937,9 @@
             selected context — a checklist result, not a compliance determination or certification.
             State datasets marked partial/uncertain need agency confirmation; even researched entries can
             lag rule changes. The product label is the law.</p>
-          <p><strong>Free vs Pro:</strong> the free tier is perpetual and covers everything legally
-            important. A Pro key licenses one farm operation across its devices; keys verify offline and
-            never phone home. Refunds follow the payment processor’s policy.</p>
+          <p><strong>License:</strong> a paid license is required after the 30-day free trial. A key
+            licenses one farm operation across its devices; keys verify offline and never phone home.
+            Refunds follow the payment processor’s policy.</p>
           <p><strong>No warranty:</strong> the software is provided “as is”, without warranty of any kind.
             To the maximum extent permitted by law, the authors are not liable for claims, fines, crop
             loss, or damages arising from its use, including reliance on compliance fields, deadlines, or
@@ -934,6 +952,9 @@
 
 </main>
 
+</div>
+<!-- /#app-shell -->
+
 <div id="update-banner" class="update-banner" role="status" hidden>
   <span>A new version of Pesticide Logger is ready.</span>
   <button type="button" class="btn btn-primary btn-sm" id="update-banner-reload">Reload</button>
@@ -943,20 +964,6 @@
 
 <!-- Print report container (populated at print time) -->
 <div id="print-area" class="print-area" aria-hidden="true"></div>
-
-<dialog id="upgrade-dialog" class="app-dialog">
-  <h3 id="upgrade-title">Pesticide Logger Pro</h3>
-  <p id="upgrade-feature" class="card-hint"></p>
-  <p><strong>$29/year per farm</strong> (or one-time perpetual option) — versus $500–$2,000+/year for
-    comparable ag record platforms. Works offline, no account, no data harvesting.</p>
-  <p class="card-hint">Everything legally important stays free forever: state-shaped logging, compliance
-    checks, REI/PHI tracking, backups, print, and CSV. Pro only unlocks the time-savers.</p>
-  <div class="form-actions">
-    <button type="button" class="btn btn-primary" id="upgrade-buy">Get Pro</button>
-    <button type="button" class="btn btn-secondary" id="upgrade-enter-key">I have a license key</button>
-    <button type="button" class="btn btn-secondary" id="upgrade-close">Not now</button>
-  </div>
-</dialog>
 
 <dialog id="history-dialog" class="app-dialog">
   <h3 id="history-dialog-title">Record audit history</h3>
@@ -1109,8 +1116,9 @@
       <input type="text" id="onboard-farm" placeholder="e.g. Spear Farm">
     </label>
   </div>
-  <p class="card-hint">Every feature is unlocked free for 30 days. After that, logging, compliance
-    checks, backups, and exports stay free forever.</p>
+  <p class="card-hint">You get a free 30-day trial with everything unlocked, no card required. After
+    that, a license ($29/year or $79 perpetual) keeps it working — your records stay safe on this
+    device either way.</p>
   <div class="form-actions">
     <button type="button" class="btn btn-primary" id="onboard-save">Start logging</button>
     <button type="button" class="btn btn-secondary" id="onboard-skip">Skip for now</button>

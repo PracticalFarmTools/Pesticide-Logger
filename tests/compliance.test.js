@@ -263,34 +263,33 @@ check('v2.7 features wired: forecast, photos, barcode, posting, import, i18n', (
   const i18n = require(path.join(root, 'i18n.js'));
   assert.ok(Object.keys(i18n.ES).length >= 180, 'spanish dictionary size');
   assert.strictEqual(i18n.ES['Spray Log'], 'Registro');
-  // Pro/free split for new features: forecast + barcode + certifier gated,
-  // photos + posting + reminders + import free.
-  assert.ok(app.includes("requirePro('Spray window outlook')"));
-  assert.ok(app.includes("requirePro('Barcode jug scanning')"));
-  assert.ok(app.includes("requirePro('Certifier / buyer packet')"));
   ['function printReiPosting', 'function capturePhotoInto', 'function checkReminders', 'function runCsvImport']
-    .forEach(fn => {
-      const idx = app.indexOf(fn);
-      assert.ok(idx > 0, fn);
-      assert.ok(!app.slice(idx, idx + 400).includes('requirePro'), fn + ' must stay free');
-    });
+    .forEach(fn => assert.ok(app.indexOf(fn) > 0, fn));
 });
 
-check('free tier never gates legal-safety features', () => {
+check('paid-only: whole app is gated by license/trial, no per-feature Pro gate', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
-  // Gated (Pro): calculator, weather, cab tools, state pack, bulk verify.
-  assert.ok(app.includes("requirePro('Tank mix calculator')"));
-  assert.ok(app.includes("requirePro('Weather auto-fill')"));
-  assert.ok(app.includes("requirePro('State compliance pack export')"));
-  assert.ok(app.includes("requirePro('Bulk EPA library verification')"));
-  // Never gated: record save, CSV, print, backup, restore, delete/restore.
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  // The old per-feature upsell pattern must be fully removed, not half-migrated.
+  assert.ok(!app.includes('function requirePro'), 'requirePro() removed');
+  assert.ok(!app.includes('requirePro('), 'no requirePro() call sites remain');
+  assert.ok(!html.includes('upgrade-dialog'), 'per-feature upgrade dialog removed');
+  // Whole-app gate: a single check hides the app shell and shows a lock
+  // screen when the trial has ended and no valid key is stored.
+  assert.ok(app.includes('function applyLicenseGate'), 'applyLicenseGate exists');
+  assert.ok(app.includes('function isPro'), 'isPro exists');
+  assert.ok(html.includes('id="app-shell"'), 'app-shell wrapper exists');
+  assert.ok(html.includes('id="license-lock-screen"'), 'lock screen exists');
+  assert.ok(html.includes('id="lock-key-input"') && html.includes('id="lock-activate"'),
+    'lock screen can activate a key without navigating elsewhere');
+  // Every feature works the same regardless of trial vs. paid key — no
+  // separate "Pro" bucket left to gate any one of them differently.
   ['function onAppSubmit', 'function downloadCsv', 'function printReport',
     'function downloadBackup', 'function restoreBackup', 'function deleteApp',
-    'function restoreApp'].forEach(fn => {
-    const idx = app.indexOf(fn);
-    assert.ok(idx > 0, fn + ' exists');
-    const body = app.slice(idx, idx + 400);
-    assert.ok(!body.includes('requirePro'), fn + ' must stay free');
+    'function restoreApp', 'function runCalc', 'function fetchWeather',
+    'function scanJugIntoMix', 'function fetchSprayForecast',
+    'function printCertifierPacket', 'function downloadStatePack'].forEach(fn => {
+    assert.ok(app.indexOf(fn) > 0, fn + ' exists');
   });
 });
 

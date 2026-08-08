@@ -1335,7 +1335,6 @@
   }
 
   async function verifyProductLibrary() {
-    if (!requirePro('Bulk EPA library verification')) return;
     const button = $('#epa-verify-all');
     if (!data.products.length) { toast('Add products before verifying the library'); return; }
     button.disabled = true;
@@ -2172,7 +2171,6 @@
   }
 
   async function fetchWeather() {
-    if (!requirePro('Weather auto-fill')) return;
     const btn = $('#app-weather');
     btn.disabled = true;
     btn.textContent = 'Fetching…';
@@ -2650,7 +2648,6 @@
   }
 
   function sprayNow() {
-    if (!requirePro('Spray-now quick logging')) return;
     resetAppForm();
     const d = new Date();
     $('#app-date').value = d.toISOString().slice(0, 10);
@@ -2663,7 +2660,6 @@
   }
 
   function duplicateLastSpray() {
-    if (!requirePro('Duplicate last spray')) return;
     const last = sortedApps()[0];
     if (!last) { toast('No previous spray to duplicate'); return; }
     editApp(last.id);
@@ -2686,15 +2682,6 @@
   function renderRecentProducts() {
     const host = $('#recent-products');
     if (!host) return;
-    if (!isPro()) {
-      host.hidden = sortedApps().length === 0;
-      host.innerHTML = sortedApps().length
-        ? `<button type="button" class="chip chip-locked" id="recent-locked">Recent-product shortcuts · Pro</button>`
-        : '';
-      const lockBtn = host.querySelector('#recent-locked');
-      if (lockBtn) lockBtn.addEventListener('click', () => requirePro('Recent-product shortcuts'));
-      return;
-    }
     const counts = {};
     sortedApps().forEach(a => (a.products || []).forEach(p => {
       if (!p.productId) return;
@@ -2896,14 +2883,8 @@
 
   function initCalculator() {
     $('#calc-add-product').addEventListener('click', () => addCalcRow());
-    $('#calc-run').addEventListener('click', () => {
-      if (!requirePro('Tank mix calculator')) return;
-      runCalc();
-    });
-    $('#calc-print').addEventListener('click', () => {
-      if (!requirePro('Tank mix calculator')) return;
-      printCalcWorksheet();
-    });
+    $('#calc-run').addEventListener('click', runCalc);
+    $('#calc-print').addEventListener('click', printCalcWorksheet);
     addCalcRow();
   }
 
@@ -3272,7 +3253,6 @@
   // Certifier / buyer packet: the same records, shaped the way organic
   // certifiers and GAP auditors ask for them — materials list + per-crop log.
   function printCertifierPacket() {
-    if (!requirePro('Certifier / buyer packet')) return;
     const apps = reportApps();
     if (!apps.length) { toast('No records match the filter'); return; }
     const s = data.settings;
@@ -3354,7 +3334,6 @@
   }
 
   function downloadStatePack() {
-    if (!requirePro('State compliance pack export')) return;
     const apps = reportApps();
     const s = data.settings;
     const law = stateLaw();
@@ -4373,7 +4352,6 @@
   }
 
   function scanJugIntoMix() {
-    if (!requirePro('Barcode jug scanning')) return;
     openScanner(code => {
       const p = data.products.find(pr => pr.barcode === code);
       const rows = $$('#app-products .app-product-row');
@@ -4432,7 +4410,6 @@
   }
 
   async function fetchSprayForecast() {
-    if (!requirePro('Spray window outlook')) return;
     const btn = $('#forecast-refresh');
     btn.disabled = true;
     btn.textContent = 'Updating…';
@@ -4486,13 +4463,6 @@
   function renderSprayForecast() {
     const host = $('#forecast-body');
     if (!host) return;
-    if (!isPro()) {
-      host.innerHTML = `<p class="empty-note">See the next 48 hours scored into good / marginal / poor spray
-        windows for any mapped field. <button type="button" class="btn btn-secondary btn-sm" id="forecast-upgrade">Part of Pro — try free</button></p>`;
-      const b = host.querySelector('#forecast-upgrade');
-      if (b) b.addEventListener('click', () => requirePro('Spray window outlook'));
-      return;
-    }
     const cache = data.meta.forecastCache;
     if (!cache || !cache.hours || !cache.hours.length) {
       host.innerHTML = `<p class="empty-note">Tap <strong>Update outlook</strong> to score the next 48 hours for spraying.</p>`;
@@ -4542,23 +4512,12 @@
   // Payment Link product that emails buyers a key from tools/sign-license.js.
   const BUY_URL = 'https://practicalfarmtools.github.io/pesticide-logger-pro';
 
-  const licenseState = { pro: false, mode: 'free', daysLeft: 0, holder: '' };
+  const licenseState = { pro: false, mode: 'checking', daysLeft: 0, holder: '' };
 
   function isPro() { return licenseState.pro; }
 
-  function requirePro(featureLabel) {
-    if (isPro()) return true;
-    const dlg = $('#upgrade-dialog');
-    if (!dlg || !dlg.showModal) {
-      toast(`${featureLabel} is a Pro feature — see Settings → License`);
-      return false;
-    }
-    $('#upgrade-feature').textContent =
-      `${featureLabel} is part of Pro. Your 30-day full trial ${licenseState.mode === 'trial_expired' ? 'has ended' : 'covers it automatically'}.`;
-    dlg.showModal();
-    return false;
-  }
-
+  // Paid-only: there is no per-feature Pro gate. Whole-app access is decided
+  // once, here, from licenseState — see applyLicenseGate().
   async function refreshLicenseState() {
     const trial = LicenseUtils.trialStatus(data.meta.trialStartedAt, Date.now());
     let keyValid = false;
@@ -4584,30 +4543,66 @@
       licenseState.keyReason = keyReason;
     }
     renderLicenseUI();
-    renderRecentProducts();
-    renderSprayForecast();
+    applyLicenseGate();
   }
 
   function renderLicenseUI() {
     const badge = $('#license-badge');
     if (badge) {
       badge.hidden = false;
-      if (licenseState.mode === 'licensed') badge.textContent = 'Pro';
+      if (licenseState.mode === 'licensed') badge.textContent = 'Licensed';
       else if (licenseState.mode === 'trial') badge.textContent = `Trial · ${licenseState.daysLeft}d`;
-      else badge.textContent = 'Free';
+      else badge.textContent = 'Locked';
       badge.classList.toggle('license-badge-pro', licenseState.pro);
     }
     const status = $('#license-status');
     if (status) {
       if (licenseState.mode === 'licensed') {
-        status.textContent = `Pro license active${licenseState.holder ? ' — ' + licenseState.holder : ''}. Thank you for supporting free farm software.`;
+        status.textContent = `License active${licenseState.holder ? ' — ' + licenseState.holder : ''}. Thank you for your purchase.`;
       } else if (licenseState.mode === 'trial') {
-        status.textContent = `Full Pro trial active — ${licenseState.daysLeft} day(s) left. No key needed yet.`;
+        status.textContent = `Free trial active — ${licenseState.daysLeft} day(s) left. No key needed yet.`;
       } else if (licenseState.mode === 'key_invalid') {
-        status.textContent = `Stored license key is not valid (${licenseState.keyReason}). Core features remain free.`;
+        status.textContent = `Stored license key is not valid (${licenseState.keyReason}). Activate a valid key to keep using the app.`;
       } else {
-        status.textContent = 'Free plan. Core recordkeeping is free forever; Pro unlocks the time-savers below.';
+        status.textContent = 'Trial ended. Activate a license to keep using the app — your records are still here.';
       }
+    }
+    const lockStatus = $('#lock-status');
+    if (lockStatus) {
+      lockStatus.textContent = licenseState.mode === 'key_invalid'
+        ? `Your stored license key is not valid (${licenseState.keyReason}).`
+        : 'Your 30-day free trial has ended.';
+    }
+  }
+
+  // Whole-app gate: shows either the app shell or the lock screen, decided
+  // once refreshLicenseState() has resolved (so it never flashes the wrong
+  // one). Re-run after every license-state change (activation, trial tick).
+  function applyLicenseGate() {
+    const checking = $('#license-checking');
+    const shell = $('#app-shell');
+    const lock = $('#license-lock-screen');
+    if (checking) checking.hidden = true;
+    if (shell) shell.hidden = !isPro();
+    if (lock) lock.hidden = isPro();
+  }
+
+  async function activateLicenseKeyFrom(inputSel) {
+    const input = $(inputSel);
+    const key = input ? input.value.trim() : '';
+    if (!key) { toast('Paste the license key from your purchase email'); return; }
+    const res = await LicenseUtils.verifyLicenseKey(key);
+    if (res.valid) {
+      data.meta.licenseKey = key;
+      save();
+      await refreshLicenseState();
+      toast('License activated on this device — thank you!');
+    } else if (res.reason === 'unconfigured') {
+      toast('Sales are not configured for this build yet — your trial still works');
+    } else if (res.reason === 'expired') {
+      toast('That license has expired — renew from the purchase page');
+    } else {
+      toast('That key is not valid — check for missing characters');
     }
   }
 
@@ -4617,37 +4612,14 @@
       save();
     }
     if ($('#license-activate')) {
-      $('#license-activate').addEventListener('click', async () => {
-        const key = $('#license-key-input').value.trim();
-        if (!key) { toast('Paste the license key from your purchase email'); return; }
-        const res = await LicenseUtils.verifyLicenseKey(key);
-        if (res.valid) {
-          data.meta.licenseKey = key;
-          save();
-          await refreshLicenseState();
-          toast('Pro activated on this device — thank you!');
-        } else if (res.reason === 'unconfigured') {
-          toast('Sales are not configured for this build yet — Pro trial and free tier still work');
-        } else if (res.reason === 'expired') {
-          toast('That license has expired — renew from the purchase page');
-        } else {
-          toast('That key is not valid — check for missing characters');
-        }
-      });
+      $('#license-activate').addEventListener('click', () => activateLicenseKeyFrom('#license-key-input'));
     }
-    ['#license-buy', '#upgrade-buy'].forEach(sel => {
+    if ($('#lock-activate')) {
+      $('#lock-activate').addEventListener('click', () => activateLicenseKeyFrom('#lock-key-input'));
+    }
+    ['#license-buy', '#lock-buy'].forEach(sel => {
       if ($(sel)) $(sel).addEventListener('click', () => window.open(BUY_URL, '_blank', 'noopener'));
     });
-    if ($('#upgrade-enter-key')) {
-      $('#upgrade-enter-key').addEventListener('click', () => {
-        $('#upgrade-dialog').close();
-        showTab('settings');
-        $('#license-key-input').focus();
-      });
-    }
-    if ($('#upgrade-close')) {
-      $('#upgrade-close').addEventListener('click', () => $('#upgrade-dialog').close());
-    }
     if ($('#license-key-input') && data.meta.licenseKey) {
       $('#license-key-input').value = data.meta.licenseKey;
     }

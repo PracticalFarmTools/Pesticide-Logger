@@ -833,7 +833,26 @@ label.state-required-field {
   flex-wrap: wrap;
 }
 .form-row-license label { flex: 1 1 260px; }
-.chip-locked { opacity: 0.8; border-style: dashed; }
+
+.license-checking {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+.license-lock-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  padding: 1.25rem;
+}
+.license-lock-card { max-width: 480px; width: 100%; text-align: center; }
+.license-lock-card h2 { font-family: var(--font-title); color: var(--primary-green-dark); margin-bottom: 0.5rem; }
+.license-lock-card .form-row-license { justify-content: center; }
+
 .app-dialog {
   border: 1px solid var(--border-color);
   border-radius: 14px;

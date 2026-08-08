@@ -175,6 +175,7 @@ main {
 .card-title-row .card-title { margin-bottom: 0; }
 
 .card-hint { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; }
+.field-req-legend { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; margin: 0 0 0.75rem; }
 
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .dot-red { background: var(--danger); }

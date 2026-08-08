@@ -177,6 +177,46 @@ main {
 .card-hint { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; }
 .field-req-legend { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; margin: 0 0 0.75rem; }
 
+.log-section-nav {
+  position: sticky;
+  top: var(--tab-nav-h, 56px);
+  z-index: 40;
+  display: flex;
+  gap: 0.3rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: var(--bg-card);
+  padding: 0.5rem 0 0.75rem;
+  margin: 0 0 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.log-section-nav::-webkit-scrollbar { display: none; }
+.log-section-nav-item {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--text-dark);
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.log-section-nav-item:hover, .log-section-nav-item:focus-visible { border-color: var(--primary-green); }
+.log-section-nav-item::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ok-bg);
+  border: 1px solid var(--primary-green);
+}
+.log-section-nav-item.incomplete::before { background: var(--warn); border-color: var(--warn); }
+#app-form fieldset { scroll-margin-top: calc(var(--tab-nav-h, 56px) + 52px); }
+
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .dot-red { background: var(--danger); }
 .dot-amber { background: #c99b1d; }

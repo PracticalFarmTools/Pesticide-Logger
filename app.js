@@ -1102,6 +1102,7 @@
       status.className = 'compliance-status';
       status.textContent = 'Select your state in Settings to enable state-shaped recordkeeping checks.';
       missingBox.hidden = true;
+      updateLogSectionNavDots([]);
       return;
     }
     try {
@@ -1109,6 +1110,7 @@
       const result = evaluateCompliance(preview);
       status.hidden = false;
       const name = STATE_NAMES[code] || code;
+      updateLogSectionNavDots(result.missingFields);
       if (result.status === 'fields_complete') {
         status.className = 'compliance-status ok';
         status.textContent = `${name} required fields filled · retain ${result.retentionYears} year(s) · not a legal determination`;
@@ -1648,8 +1650,50 @@
 
   let appFormPhotoIds = [];
 
+  // Sticky section-jump nav for the long spray-log form: click a chip to
+  // scroll to that fieldset; each chip's dot flips amber when that section
+  // still has an unresolved required field (see updateLogSectionNavDots()).
+  function initLogSectionNav() {
+    const nav = $('#log-section-nav');
+    if (!nav) return;
+    const setNavOffset = () => {
+      const tabNav = $('.tab-nav');
+      document.documentElement.style.setProperty('--tab-nav-h', (tabNav ? tabNav.offsetHeight : 56) + 'px');
+    };
+    setNavOffset();
+    window.addEventListener('resize', setNavOffset);
+    nav.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-jump-section]');
+      if (!btn) return;
+      const section = document.querySelector(`[data-log-section="${btn.dataset.jumpSection}"]`);
+      if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  // Product-related missing fields don't live in a single [data-log-field]
+  // wrapper (see focusMissingField()), so they're mapped to "products" here
+  // to keep this in sync with how those chips already jump.
+  function sectionForMissingField(name) {
+    const resolved = MISSING_FIELD_ALIASES[name] || name;
+    if (resolved === 'products' || PRODUCT_ROW_FIELD_CLASS[resolved] || PRODUCT_IDENTITY_FIELD_PROP[resolved]) {
+      return 'products';
+    }
+    const label = document.querySelector(`[data-log-field="${resolved}"]`);
+    const fieldset = label && label.closest('[data-log-section]');
+    return fieldset ? fieldset.dataset.logSection : null;
+  }
+
+  function updateLogSectionNavDots(missingFields) {
+    const nav = $('#log-section-nav');
+    if (!nav) return;
+    const incomplete = new Set((missingFields || []).map(m => sectionForMissingField(m.name)).filter(Boolean));
+    $$('.log-section-nav-item').forEach(btn =>
+      btn.classList.toggle('incomplete', incomplete.has(btn.dataset.jumpSection)));
+  }
+
   function initAppForm() {
     $('#app-date').value = new Date().toISOString().slice(0, 10);
+    initLogSectionNav();
 
     if ($('#app-add-photo')) {
       $('#app-add-photo').addEventListener('click', () =>

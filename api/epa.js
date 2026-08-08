@@ -9,6 +9,36 @@
 
 const EPA_BASE = 'https://ordspub.epa.gov/ords/pesticides/cswu';
 
+// In-memory per-IP rate limit. This only protects a single warm function
+// instance (it resets on cold start and isn't shared across regions), so it
+// is a speed bump rather than a hard guarantee — for real enforcement, add a
+// Vercel Firewall rate-limit rule on /api/epa in the project dashboard.
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 30;
+const rateLimitHits = new Map();
+
+function isRateLimited(ip) {
+  const now = Date.now();
+  const hit = rateLimitHits.get(ip);
+  if (!hit || now - hit.windowStart >= RATE_LIMIT_WINDOW_MS) {
+    rateLimitHits.set(ip, { windowStart: now, count: 1 });
+    if (rateLimitHits.size > 5000) {
+      for (const [key, value] of rateLimitHits) {
+        if (now - value.windowStart >= RATE_LIMIT_WINDOW_MS) rateLimitHits.delete(key);
+      }
+    }
+    return false;
+  }
+  hit.count += 1;
+  return hit.count > RATE_LIMIT_MAX;
+}
+
+function clientIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string' && forwarded.length) return forwarded.split(',')[0].trim();
+  return req.socket?.remoteAddress || 'unknown';
+}
+
 function normalize(item) {
   const pdf = Array.isArray(item.pdffiles) ? item.pdffiles[0] : null;
   const ingredients = (item.active_ingredients || []).map((x) => ({
@@ -39,6 +69,11 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET');
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  if (isRateLimited(clientIp(req))) {
+    res.setHeader('Retry-After', '60');
+    return res.status(429).json({ error: 'Too many requests. Please wait a minute and try again.' });
   }
 
   const reg = String(req.query.reg || '').trim();

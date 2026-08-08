@@ -733,15 +733,27 @@
           </label>
         </div>
       </div>
-      <div class="form-actions report-actions">
-        <button class="btn btn-primary btn-lg" id="report-print">Print / PDF inspection report</button>
-        <button class="btn btn-secondary btn-lg" id="report-csv">Download CSV</button>
-        <button class="btn btn-secondary btn-lg" id="report-state-pack">Download state compliance pack</button>
-        <button class="btn btn-secondary btn-lg" id="report-certifier">Print certifier / buyer packet</button>
+      <div class="report-action-group">
+        <p class="report-action-group-label">For inspectors</p>
+        <div class="form-actions report-actions">
+          <button class="btn btn-primary btn-lg" id="report-print">Print / PDF inspection report</button>
+          <button class="btn btn-secondary btn-lg" id="report-state-pack">Download state compliance pack</button>
+        </div>
       </div>
-      <p class="card-hint">The certifier packet formats the same records for organic certifiers and
-        GAP / buyer audits: a materials list with OMRI status plus a per-crop application log with
-        PHI clearance dates.</p>
+      <div class="report-action-group">
+        <p class="report-action-group-label">For your records</p>
+        <div class="form-actions report-actions">
+          <button class="btn btn-secondary btn-lg" id="report-csv">Download CSV</button>
+        </div>
+      </div>
+      <div class="report-action-group">
+        <p class="report-action-group-label">For buyers &amp; certifiers</p>
+        <div class="form-actions report-actions">
+          <button class="btn btn-secondary btn-lg" id="report-certifier">Print certifier / buyer packet</button>
+        </div>
+        <p class="card-hint">Formats the same records for organic certifiers and GAP / buyer audits: a
+          materials list with OMRI status plus a per-crop application log with PHI clearance dates.</p>
+      </div>
       <p class="card-hint" id="report-count"></p>
     </div>
 

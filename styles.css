@@ -400,6 +400,16 @@ input:hover, select:hover, textarea:hover { border-color: var(--border-color-hov
 
 .form-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
 
+.report-action-group { margin-bottom: 1rem; }
+.report-action-group-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+
 .app-product-row { align-items: end; }
 .app-product-row .apr-remove { align-self: end; height: 38px; }
 #app-add-product { margin-top: 0.25rem; }

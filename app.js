@@ -4436,10 +4436,32 @@
     window.addEventListener('offline', sync);
     sync();
 
+    $('#update-banner-reload')?.addEventListener('click', () => location.reload());
+
     if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-      navigator.serviceWorker.register('sw.js').catch(err =>
-        console.warn('Service worker registration failed:', err));
+      navigator.serviceWorker.register('sw.js')
+        .then((registration) => {
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (!newWorker) return;
+            newWorker.addEventListener('statechange', () => {
+              // A controller already existing means this is an update to an
+              // app the browser already had open, not the very first install.
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                showUpdateBanner();
+              }
+            });
+          });
+        })
+        .catch(err => console.warn('Service worker registration failed:', err));
     }
+  }
+
+  function showUpdateBanner() {
+    const el = $('#update-banner');
+    if (!el || el.dataset.shown) return;
+    el.dataset.shown = '1';
+    el.hidden = false;
   }
 
   // -------------------------------------------------------------- boot

@@ -256,7 +256,12 @@ main {
   border-radius: 14px;
   padding: 1rem 1.1rem;
   box-shadow: var(--shadow-sm);
+  display: block;
+  width: 100%;
+  text-align: left;
+  appearance: none;
 }
+.stat-card:hover, .stat-card:focus-visible { border-color: var(--primary-green); }
 .stat-value {
   font-family: var(--font-title);
   font-size: 2rem;

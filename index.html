@@ -91,26 +91,26 @@
     </div>
 
     <div class="stat-grid">
-      <div class="stat-card">
+      <button type="button" class="stat-card" data-goto="log" data-scroll-to="app-history-card">
         <span class="stat-value" id="stat-season-apps">0</span>
         <span class="stat-label">Applications this season</span>
-      </div>
-      <div class="stat-card stat-warn" id="stat-rei-card">
+      </button>
+      <button type="button" class="stat-card stat-warn" id="stat-rei-card" data-scroll-to="rei-list">
         <span class="stat-value" id="stat-active-rei">0</span>
         <span class="stat-label">Fields under REI now</span>
-      </div>
-      <div class="stat-card" id="stat-phi-card">
+      </button>
+      <button type="button" class="stat-card" id="stat-phi-card" data-scroll-to="phi-list">
         <span class="stat-value" id="stat-active-phi">0</span>
         <span class="stat-label">Crops in PHI wait</span>
-      </div>
-      <div class="stat-card stat-warn" id="stat-incomplete-card">
+      </button>
+      <button type="button" class="stat-card stat-warn" id="stat-incomplete-card" data-goto="log" data-scroll-to="app-history-card">
         <span class="stat-value" id="stat-incomplete">0</span>
         <span class="stat-label">Incomplete state records</span>
-      </div>
-      <div class="stat-card">
+      </button>
+      <button type="button" class="stat-card" data-goto="products">
         <span class="stat-value" id="stat-products">0</span>
         <span class="stat-label">Products in library</span>
-      </div>
+      </button>
     </div>
 
     <div class="card" id="spray-window-card">
@@ -451,7 +451,7 @@
       </form>
     </div>
 
-    <div class="card">
+    <div class="card" id="app-history-card">
       <div class="card-title-row">
         <h3 class="card-title">Application history</h3>
         <div class="history-controls">

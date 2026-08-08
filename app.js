@@ -488,6 +488,8 @@
     if (closeDialog) closeDialog.closest('dialog')?.close();
     const missingChip = e.target.closest('[data-missing-field]');
     if (missingChip) focusMissingField(missingChip.dataset.missingField);
+    const scrollTarget = e.target.closest('[data-scroll-to]');
+    if (scrollTarget) document.getElementById(scrollTarget.dataset.scrollTo)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
   // Proper ARIA tabs: controls/labelledby links, roving tabindex, arrow keys.

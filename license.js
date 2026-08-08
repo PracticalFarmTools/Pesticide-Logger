@@ -1,7 +1,9 @@
-/* Offline license verification for Pesticide Logger Pro.
+/* Offline license verification for Pesticide Logger.
  * $0-overhead model: the owner signs license keys locally (tools/), the app
  * verifies signatures in the browser with WebCrypto. No license server,
- * no phone-home, works fully offline.
+ * no phone-home, works fully offline. Paid-only: a 30-day trial, then a
+ * valid key is required to keep using the app — see app.js's
+ * applyLicenseGate().
  *
  * Key format:  PLPRO.<base64url payload JSON>.<base64url ECDSA-P256 signature>
  * Payload:     { n: name, e: email, p: "pro", iat: issuedMs, exp?: expiresMs }
@@ -13,8 +15,8 @@
 (function (root) {
   'use strict';
 
-  // Set by tools/generate-signing-keys.js. Until then, only the free tier and
-  // the built-in trial work — no fake "valid" licenses.
+  // Set by tools/generate-signing-keys.js. Until then, only the built-in
+  // trial works — no fake "valid" licenses.
   const LICENSE_PUBLIC_KEY_SPKI_B64 = '';
 
   const TRIAL_DAYS = 30;

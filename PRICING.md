@@ -5,38 +5,30 @@
 1. **$0 fixed overhead.** Static hosting (GitHub Pages / Vercel free tier), no
    license server, no database, no telemetry. The only per-sale cost is the
    payment processor's cut.
-2. **Records are never hostage.** Everything a farmer legally needs is free
-   forever. Paying unlocks time-savers, not safety.
+2. **Paid-only, one product.** There is no free tier and no feature-gated
+   upsell — a license unlocks the entire app. A farmer who won't pay for
+   record-keeping software isn't the customer; a farmer who will gets
+   everything, not a crippled trial of it.
 3. **Fairly priced vs. the market.** Comparable ag record platforms run
    $500–$2,000+/year. This is a single-farm tool, priced like one.
 
-## Tiers
+## Product
 
-### Free — forever, no account
-- State-shaped spray log (all 50 states, private/commercial)
-- Strict compliance checks, drafts, honest completion badges
-- REI/PHI dashboard, record-completion due clocks
-- Soft-delete audit trail, edit history
-- Backups, restore, cross-device merge
-- Print/PDF inspection report, CSV export
-- Field list, product library, single EPA lookup
-- Field mapper with satellite acreage drawing
+### Pesticide Logger — $29/year per farm (or $79 perpetual)
+Every feature, no tiers: state-shaped spray log (all 50 states,
+private/commercial), strict compliance checks, REI/PHI dashboard,
+record-completion due clocks, soft-delete audit trail, backups/restore/
+cross-device merge, print/PDF inspection report, CSV export, field mapper,
+product library with live EPA lookup, tank-mix calculator, weather
+auto-fill, in-cab speed tools (Spray now, Duplicate last spray,
+recent-product chips), one-click state compliance pack export, bulk EPA
+library verification, spray window outlook, barcode jug scanning, and the
+certifier/buyer packet export.
 
-### Pro — $29/year per farm (or $79 perpetual)
-- Tank-mix calculator + printable W-A-L-E worksheet
-- Weather auto-fill (wind / temp / sky at the field)
-- In-cab speed tools: Spray now, Duplicate last spray, recent-product chips
-- One-click state compliance pack export (JSON audit bundle)
-- Bulk EPA library verification
-- Spray window outlook (48-hour scored spray forecast per field)
-- Barcode jug scanning to pull products from a photo (Chromium + camera)
-- Certifier / buyer packet export (OMRI materials list + per-crop log)
-- 30-day full trial for everyone, automatic, no card
-
-**Why this split:** an inspector will never care whether you used the
-calculator or typed the weather by hand. Everything they *do* care about —
-the record itself — is free. That is the ethical line, and it is also the
-marketing line.
+**30-day free trial for everyone, automatic, no card.** The whole app is
+unlocked during the trial; after it ends, a license is required to keep
+using the app. Records already on the device are never altered or deleted
+by trial expiry — activating a license restores access to them immediately.
 
 ## Competitive position
 
@@ -48,7 +40,7 @@ marketing line.
 | Climate FieldView | $99+/yr | Agronomy focus, data sharing concerns |
 | Bushel Farm (FarmLogs) | ~$300+/yr | General farm records |
 | Paper + state PDF forms | $0 | No clocks, no search, no backup |
-| **Pesticide Logger Pro** | **$29/yr** | Recordkeeping-only, offline, private |
+| **Pesticide Logger** | **$29/yr** | Recordkeeping-only, offline, private |
 
 ## How selling works with $0 infrastructure
 

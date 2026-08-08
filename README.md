@@ -1,7 +1,8 @@
 # Pesticide Logger v2.7.0
 
-**Free, offline-first pesticide record keeping for real farms.**
-Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite.
+**Offline-first pesticide record keeping for real farms.**
+Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite. Licensed software with
+a 30-day free trial — see `PRICING.md`.
 
 ## Canonical source
 
@@ -32,8 +33,8 @@ application at the repository root.
 | **Field mapper** | Satellite corner tapping with geodesic acreage; boundaries stay local. |
 | **Weather auto-fill** | Open-Meteo fill for wind, temperature, sky/humidity at field centroid or GPS. |
 | **Inspection output** | Print/PDF, CSV, **state compliance pack** (JSON with citation, field matrix, due/copy status, audit history), and a **certifier/buyer packet** for organic & GAP audits. |
-| **Spray window outlook** | Next 48 hours scored good/marginal/poor per mapped field from free Open-Meteo wind/gust/rain data (Pro). |
-| **Photos & barcode** | Attach label/lot/condition photos to records (free, device-local); scan a jug's UPC to drop it into the tank mix (Pro). |
+| **Spray window outlook** | Next 48 hours scored good/marginal/poor per mapped field from free Open-Meteo wind/gust/rain data. |
+| **Photos & barcode** | Attach label/lot/condition photos to records (device-local); scan a jug's UPC to drop it into the tank mix. |
 | **REI posting & reminders** | Bilingual DO NOT ENTER / NO ENTRE posting sheet from any active REI, plus opt-in browser notifications when REI clears or PHI dates arrive. |
 | **CSV import** | Bring existing Excel/Sheets records in with a column-mapping wizard — rows land as compliance-checked drafts. |
 | **Spanish interface** | One-tap Español toggle covering interface labels (210-entry dictionary). |
@@ -75,14 +76,15 @@ the state agency. Always follow the product label.
 - **Free hosting.** GitHub Pages (static core) or Vercel (`vercel.json` included).
   Or open `index.html` from a USB stick.
 
-## Free vs Pro
+## Pricing & licensing
 
-Core recordkeeping is **free forever** — records are never hostage. Pro
-($29/yr per farm, 30-day automatic trial) unlocks the time-savers: tank-mix
-calculator, weather auto-fill, in-cab quick tools, state compliance pack
-export, and bulk EPA verification. Licensing is fully offline — ECDSA-signed
-keys verified on-device, no license server, no telemetry. See `PRICING.md`
-for the model and `tools/` for the owner's key-signing workflow.
+Pesticide Logger is paid software: $29/year per farm, or $79 one-time
+perpetual. Every feature is included — there is no separate free tier or
+feature-gated upgrade. A 30-day trial unlocks the entire app with no card
+required; after that, a license is required to keep using it. Licensing is
+fully offline — ECDSA-signed keys verified on-device, no license server, no
+telemetry. See `PRICING.md` for the model and `tools/` for the owner's
+key-signing workflow.
 
 ## Running locally
 
@@ -119,14 +121,14 @@ index.html                 App shell
 styles.css                 Theme + print stylesheet
 app.js                     Application + compliance engine
 deadline.js                Record / customer-copy deadline math
-license.js                 Offline Pro license verification (WebCrypto)
+license.js                 Offline license verification (WebCrypto)
 state_pesticide_laws.js    50-state agencies, citations, retention, required fields
 api/epa.js                 Stateless Vercel proxy to official EPA PPLS
 tools/                     Owner key-signing scripts (generate/sign licenses)
 vendor/leaflet/            Leaflet 1.9.4 (vendored)
 sw.js                      Service worker
 manifest.json              PWA manifest
-PRICING.md                 Business model: free-forever core + $29/yr Pro
+PRICING.md                 Business model: paid-only, $29/yr or $79 perpetual, 30-day trial
 tests/                     Node regression checks (no npm)
 archive/vercel-2026.1.0/   Historical recovered deployment (reference only)
 ```

@@ -214,18 +214,16 @@
     'Reminders': 'Recordatorios',
     'Notify me when a field clears REI or a crop reaches its earliest harvest date':
       'Avisarme cuando un campo termine el REI o un cultivo llegue a su primera fecha de cosecha',
-    'License — Pesticide Logger Pro': 'Licencia — Pesticide Logger Pro',
+    'License': 'Licencia',
     'License key': 'Clave de licencia',
     'Activate': 'Activar',
-    'Get Pro': 'Obtener Pro',
+    'Buy a license': 'Comprar una licencia',
     'Data': 'Datos',
     'Erase all data on this device': 'Borrar todos los datos de este dispositivo',
     'About': 'Acerca de',
     'Terms of use, license & privacy': 'Términos de uso, licencia y privacidad',
 
     // Dialogs
-    'Not now': 'Ahora no',
-    'I have a license key': 'Tengo una clave de licencia',
     'Close': 'Cerrar',
     'Cancel': 'Cancelar',
     'Remove photo': 'Quitar foto',

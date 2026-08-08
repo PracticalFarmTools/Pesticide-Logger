@@ -5,7 +5,9 @@ _Last updated: 2026-07-31. Plain-English summary first; farmers are busy._
 ## The short version
 
 - Your farm records belong to you and stay on your device. We never see them.
-- The free tier is free forever. Pro is a convenience upgrade, not a records ransom.
+- This is paid software: a 30-day free trial, then a license is required to
+  keep using it. Records already saved are never altered or deleted when a
+  trial ends — activating a license restores full access to them.
 - This is a recordkeeping aid, **not legal advice** and **not a compliance guarantee**.
 - The product label is the law. Your state agency has the final word.
 
@@ -38,13 +40,17 @@ It is a checklist result, not a certification. State datasets marked
   Use the backup tools. Losing your device without a backup means losing
   your records.
 
-## 3. Free tier and Pro license
+## 3. License and trial
 
-- The free tier (state-shaped logging, compliance checks, REI/PHI tracking,
-  backups, print, CSV) is perpetual and requires no key.
-- A Pro key licenses **one farm operation** across its own devices. Annual
+- Pesticide Logger is paid software. A 30-day free trial unlocks the entire
+  app with no card required; after the trial ends, a valid license key is
+  required to keep using it.
+- A license key covers **one farm operation** across its own devices. Annual
   keys expire; perpetual keys do not. Keys are non-transferable but
   survive offline and do not phone home.
+- Your saved records are not deleted or modified when a trial ends or a key
+  lapses — they remain in the browser's storage on your device. Activating a
+  valid license restores app access to them immediately.
 - Refunds are handled by the payment processor per its policy.
 
 ## 4. Disclaimer of warranty & liability
@@ -59,5 +65,6 @@ agency and always follow the product label.
 
 ## 5. Open source
 
-The application source code is MIT-licensed. The Pro license applies to the
-convenience features' *service of issued keys*, not the code itself.
+The application source code is MIT-licensed. The paid license applies to
+the *service of issued keys* that unlock use of the hosted app, not the
+code itself — you're free to read, audit, or self-host the source.

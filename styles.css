@@ -891,6 +891,7 @@ label.state-required-field {
 #scan-video { width: 100%; border-radius: 10px; background: #000; margin-bottom: 0.5rem; }
 
 /* ---------- CSV import ---------- */
+.quick-add-dialog-box { max-width: 560px; }
 .import-dialog-box { max-width: 620px; }
 .import-dialog-box .table-wrap { max-height: 140px; overflow: auto; margin-bottom: 0.75rem; }
 .import-dialog-box .record-table th, .import-dialog-box .record-table td {

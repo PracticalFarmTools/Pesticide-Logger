@@ -1660,6 +1660,8 @@
       $('#app-scan-jug').addEventListener('click', scanJugIntoMix);
     }
     if ($('#scan-cancel')) $('#scan-cancel').addEventListener('click', closeScanner);
+    if ($('#quick-field-save')) $('#quick-field-save').addEventListener('click', saveQuickAddField);
+    if ($('#quick-product-save')) $('#quick-product-save').addEventListener('click', saveQuickAddProduct);
 
     renderProductOptions();
     renderFieldOptions();
@@ -1714,7 +1716,8 @@
   function productOptionsHtml() {
     return '<option value="">— Select product —</option>' +
       data.products.slice().sort((a, b) => a.name.localeCompare(b.name))
-        .map(p => `<option value="${p.id}">${esc(p.name)}${p.rup ? ' (RUP)' : ''}</option>`).join('');
+        .map(p => `<option value="${p.id}">${esc(p.name)}${p.rup ? ' (RUP)' : ''}</option>`).join('') +
+      '<option value="__new__">+ Add new product…</option>';
   }
 
   function renderProductOptions() {
@@ -1811,8 +1814,74 @@
     return row;
   }
 
+  // Quick-add a product without leaving the spray log — same rationale as
+  // openQuickAddField() above. Only the compliance-relevant fields are
+  // offered here; open the full product form later for barcode/photo/notes.
+  let quickAddProductRow = null;
+
+  function openQuickAddProduct(row, barcode) {
+    quickAddProductRow = row;
+    const dlg = $('#quick-add-product-dialog');
+    if (!dlg || !dlg.showModal) return;
+    ['#qp-name', '#qp-epa', '#qp-ai', '#qp-company', '#qp-state-reg', '#qp-rei', '#qp-phi']
+      .forEach(sel => { $(sel).value = ''; });
+    $('#qp-type').value = 'Insecticide';
+    $('#qp-rup').checked = false;
+    $('#qp-barcode').value = barcode || '';
+    $('#qp-barcode-hint').hidden = !barcode;
+    if (barcode) $('#qp-barcode-hint').textContent = `Linking scanned barcode ${barcode} to this product for next time.`;
+    dlg.showModal();
+    $('#qp-name').focus();
+  }
+
+  function saveQuickAddProduct() {
+    const name = $('#qp-name').value.trim();
+    const epaRegNo = $('#qp-epa').value.trim();
+    if (!name || !epaRegNo) {
+      toast('Product name and EPA registration # are required');
+      (name ? $('#qp-epa') : $('#qp-name')).focus();
+      return;
+    }
+    const product = {
+      id: uid(), name, epaRegNo,
+      activeIngredient: $('#qp-ai').value.trim(),
+      type: $('#qp-type').value,
+      signalWord: '',
+      rup: $('#qp-rup').checked,
+      reiHours: $('#qp-rei').value === '' ? null : Number($('#qp-rei').value),
+      phiDays: $('#qp-phi').value === '' ? null : Number($('#qp-phi').value),
+      rateAmount: null, rateUnit: 'fl oz', ratePer: 'acre',
+      notes: '',
+      stateRegNo: $('#qp-state-reg').value.trim(),
+      epaStatus: null, epaCancelled: false, epaCheckedAt: null, epaLabelUrl: null,
+      epaLabelAcceptedDate: null,
+      epaCompany: $('#qp-company').value.trim(),
+      epaActiveIngredient: null, epaSource: null,
+      omri: false, lotHint: '', barcode: $('#qp-barcode').value.trim(), photoIds: [],
+      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+    };
+    data.products.push(product);
+    save();
+    renderProducts();
+    renderProductOptions();
+    renderDashboard();
+    $('#quick-add-product-dialog').close();
+    if (quickAddProductRow && quickAddProductRow.isConnected) {
+      quickAddProductRow.querySelector('.apr-product').value = product.id;
+      onRowProductChange(quickAddProductRow);
+    }
+    quickAddProductRow = null;
+    toast(`Product "${product.name}" added and selected`);
+  }
+
   function onRowProductChange(row) {
-    const p = getProduct(row.querySelector('.apr-product').value);
+    const sel = row.querySelector('.apr-product');
+    if (sel.value === '__new__') {
+      sel.value = '';
+      openQuickAddProduct(row);
+      return;
+    }
+    const p = getProduct(sel.value);
     if (p) {
       if (p.rateAmount != null) {
         if (p.ratePer === 'acre' || p.ratePer === '1000sqft') {
@@ -1933,11 +2002,59 @@
         o.textContent = f.name;
         sel.appendChild(o);
       });
+      if (i === 0) {
+        const o = document.createElement('option');
+        o.value = '__new__';
+        o.textContent = '+ Add new field…';
+        sel.appendChild(o);
+      }
       sel.value = keep;
     });
   }
 
+  // Quick-add a field without leaving the spray log (avoids the tab-switch
+  // round trip: Log -> Fields -> fill form -> Log -> re-pick from dropdown).
+  function openQuickAddField() {
+    const dlg = $('#quick-add-field-dialog');
+    if (!dlg || !dlg.showModal) return;
+    ['#qf-name', '#qf-crop', '#qf-location', '#qf-site-id', '#qf-size'].forEach(sel => { $(sel).value = ''; });
+    $('#qf-unit').value = 'acres';
+    dlg.showModal();
+    $('#qf-name').focus();
+  }
+
+  function saveQuickAddField() {
+    const name = $('#qf-name').value.trim();
+    if (!name) { toast('Field name is required'); $('#qf-name').focus(); return; }
+    const field = {
+      id: uid(),
+      name,
+      size: $('#qf-size').value === '' ? null : Number($('#qf-size').value),
+      sizeUnit: $('#qf-unit').value,
+      crop: $('#qf-crop').value.trim(),
+      location: $('#qf-location').value.trim(),
+      siteId: $('#qf-site-id').value.trim(),
+      boundary: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    data.fields.push(field);
+    save();
+    renderFields();
+    renderFieldOptions();
+    renderFieldPolys();
+    $('#app-field').value = field.id;
+    $('#quick-add-field-dialog').close();
+    onAppFieldChange();
+    toast(`Field "${field.name}" added and selected`);
+  }
+
   function onAppFieldChange() {
+    if ($('#app-field').value === '__new__') {
+      $('#app-field').value = '';
+      openQuickAddField();
+      return;
+    }
     const f = getField($('#app-field').value);
     if (!f) return;
     if (f.size != null) {
@@ -4180,7 +4297,15 @@
       return;
     }
     video.srcObject = scanStream;
-    await video.play();
+    try {
+      await video.play();
+    } catch (e) {
+      // Previously unhandled: a play() rejection here left the user staring
+      // at a tap that silently did nothing, with the camera light still on.
+      toast('Could not start the camera preview — try again');
+      closeScanner();
+      return;
+    }
     dlg.showModal();
     const detector = new BarcodeDetector({
       formats: ['upc_a', 'upc_e', 'ean_13', 'ean_8', 'code_128', 'code_39', 'qr_code']
@@ -4205,13 +4330,17 @@
     if (!requirePro('Barcode jug scanning')) return;
     openScanner(code => {
       const p = data.products.find(pr => pr.barcode === code);
-      if (!p) {
-        toast('No product with this barcode yet — scan it once in the product form to link it');
-        return;
-      }
       const rows = $$('#app-products .app-product-row');
       const empty = rows.find(r => !r.querySelector('.apr-product').value);
       const row = empty || addAppProductRow();
+      if (!p) {
+        // Previously a dead end (toast + go set it up yourself later). Now
+        // opens the same quick-add-product flow used from the mix row, with
+        // the scanned code pre-linked, so setup happens on the spot.
+        toast('New barcode — add this jug\u2019s product now');
+        openQuickAddProduct(row, code);
+        return;
+      }
       row.querySelector('.apr-product').value = p.id;
       onRowProductChange(row);
       toast(`Scanned: ${p.name}`);

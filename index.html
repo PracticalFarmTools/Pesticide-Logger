@@ -977,6 +977,97 @@
   </div>
 </dialog>
 
+<dialog id="quick-add-field-dialog" class="app-dialog quick-add-dialog-box">
+  <h3>Add a new field</h3>
+  <p class="card-hint">Adds it to your field library and selects it here — no tab switch needed. Draw its map boundary later on the Fields tab if you want acreage tracked automatically.</p>
+  <div class="form-grid">
+    <div class="form-row form-row-2">
+      <label>Field name <span class="req-star">*</span>
+        <input type="text" id="qf-name" placeholder="e.g. North block">
+      </label>
+      <label>Usual crop
+        <input type="text" id="qf-crop" placeholder="e.g. Mixed vegetables">
+      </label>
+    </div>
+    <div class="form-row form-row-2">
+      <label>Size
+        <input type="number" id="qf-size" step="any" min="0" placeholder="e.g. 2.5">
+      </label>
+      <label>Unit
+        <select id="qf-unit">
+          <option value="acres">acres</option>
+          <option value="sqft">sq ft</option>
+        </select>
+      </label>
+    </div>
+    <div class="form-row form-row-2">
+      <label>Location description
+        <input type="text" id="qf-location" placeholder="e.g. East of barn, 123 Farm Rd">
+      </label>
+      <label>Site ID
+        <input type="text" id="qf-site-id" placeholder="County / state site ID">
+      </label>
+    </div>
+  </div>
+  <div class="form-actions">
+    <button type="button" class="btn btn-primary" id="quick-field-save">Save &amp; select</button>
+    <button type="button" class="btn btn-secondary" data-close-dialog>Cancel</button>
+  </div>
+</dialog>
+
+<dialog id="quick-add-product-dialog" class="app-dialog quick-add-dialog-box">
+  <h3>Add a new product</h3>
+  <p class="card-hint">Adds it to your product library and drops it into this mix — no tab switch needed. Copy REI, PHI from the label; open the full product form later for a label photo.</p>
+  <p class="card-hint" id="qp-barcode-hint" hidden></p>
+  <input type="hidden" id="qp-barcode">
+  <div class="form-grid">
+    <div class="form-row form-row-2">
+      <label>Brand / product name <span class="req-star">*</span>
+        <input type="text" id="qp-name" placeholder="e.g. Entrust SC">
+      </label>
+      <label>EPA registration # <span class="req-star">*</span>
+        <input type="text" id="qp-epa" placeholder="e.g. 62719-621">
+      </label>
+    </div>
+    <div class="form-row form-row-2">
+      <label>Active ingredient
+        <input type="text" id="qp-ai" placeholder="e.g. Spinosad 22.5%">
+      </label>
+      <label>Type
+        <select id="qp-type">
+          <option>Insecticide</option><option>Fungicide</option><option>Herbicide</option>
+          <option>Bactericide</option><option>Miticide</option><option>Nematicide</option>
+          <option>Plant growth regulator</option><option>Adjuvant</option><option>Other</option>
+        </select>
+      </label>
+    </div>
+    <div class="form-row form-row-3">
+      <label>REI (hours)
+        <input type="number" id="qp-rei" step="any" min="0" placeholder="e.g. 4">
+      </label>
+      <label>PHI (days)
+        <input type="number" id="qp-phi" step="any" min="0" placeholder="e.g. 1">
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" id="qp-rup">
+        Restricted-use (RUP)
+      </label>
+    </div>
+    <div class="form-row form-row-2">
+      <label>Manufacturer / registrant
+        <input type="text" id="qp-company" placeholder="From label">
+      </label>
+      <label>State registration / SLN #
+        <input type="text" id="qp-state-reg" placeholder="If your state issues one">
+      </label>
+    </div>
+  </div>
+  <div class="form-actions">
+    <button type="button" class="btn btn-primary" id="quick-product-save">Save &amp; select</button>
+    <button type="button" class="btn btn-secondary" data-close-dialog>Cancel</button>
+  </div>
+</dialog>
+
 <dialog id="onboarding-dialog" class="app-dialog">
   <h3>Welcome — set up your farm in 30 seconds</h3>
   <p class="card-hint">The spray log reshapes itself to your state’s required record fields.

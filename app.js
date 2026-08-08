@@ -26,6 +26,28 @@
   });
 
   let data = load();
+  purgeExpiredSoftDeletes();
+
+  // Hard-delete soft-deleted records well past their state retention window
+  // so localStorage doesn't grow forever. Anchored to the application date
+  // (the legal retention clock — see the "Retain records ... from
+  // application date" copy elsewhere) plus a one-year safety margin;
+  // deletedAt is the fallback when the application date is missing/invalid.
+  function purgeExpiredSoftDeletes() {
+    const before = data.applications.length;
+    const now = Date.now();
+    data.applications = data.applications.filter((a) => {
+      if (!a.deletedAt) return true;
+      const retain = a.retentionYears || (stateLaw() && stateLaw().retentionYears) || 2;
+      const anchorMs = Date.parse(a.date) || Date.parse(a.deletedAt);
+      if (!anchorMs) return true;
+      const purgeAfterMs = anchorMs + (retain + 1) * 365.25 * 24 * 60 * 60 * 1000;
+      return now < purgeAfterMs;
+    });
+    if (data.applications.length !== before) {
+      try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch (e) { /* best-effort */ }
+    }
+  }
 
   function load() {
     try {

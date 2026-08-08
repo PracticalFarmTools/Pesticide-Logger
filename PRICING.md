@@ -28,6 +28,9 @@
 - In-cab speed tools: Spray now, Duplicate last spray, recent-product chips
 - One-click state compliance pack export (JSON audit bundle)
 - Bulk EPA library verification
+- Spray window outlook (48-hour scored spray forecast per field)
+- Barcode jug scanning to pull products from a photo (Chromium + camera)
+- Certifier / buyer packet export (OMRI materials list + per-crop log)
 - 30-day full trial for everyone, automatic, no card
 
 **Why this split:** an inspector will never care whether you used the

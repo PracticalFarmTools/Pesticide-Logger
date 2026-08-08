@@ -35,6 +35,7 @@ application at the repository root.
 | **Inspection output** | Print/PDF, CSV, **state compliance pack** (JSON with citation, field matrix, due/copy status, audit history), and a **certifier/buyer packet** for organic & GAP audits. |
 | **Spray window outlook** | Next 48 hours scored good/marginal/poor per mapped field from free Open-Meteo wind/gust/rain data. |
 | **Photos & barcode** | Attach label/lot/condition photos to records (device-local); scan a jug's UPC to drop it into the tank mix. |
+| **OCR label scanning** | Photograph a product label to read its EPA registration number and signal word on-device (Tesseract.js, ~7MB one-time download), then verifies the match through the same live EPA lookup as manual search before anything is saved. |
 | **REI posting & reminders** | Bilingual DO NOT ENTER / NO ENTRE posting sheet from any active REI, plus opt-in browser notifications when REI clears or PHI dates arrive. |
 | **CSV import** | Bring existing Excel/Sheets records in with a column-mapping wizard — rows land as compliance-checked drafts. |
 | **Spanish interface** | One-tap Español toggle covering interface labels (210-entry dictionary). |
@@ -100,9 +101,11 @@ node --check app.js
 node --check state_pesticide_laws.js
 node --check deadline.js
 node --check license.js
+node --check label-ocr.js
 node --check sw.js
 node tests/compliance.test.js
 node tests/license.test.js
+node tests/label-ocr.test.js
 ```
 
 ## Intentional non-goals
@@ -126,6 +129,8 @@ state_pesticide_laws.js    50-state agencies, citations, retention, required fie
 api/epa.js                 Stateless Vercel proxy to official EPA PPLS
 tools/                     Owner key-signing scripts (generate/sign licenses)
 vendor/leaflet/            Leaflet 1.9.4 (vendored)
+label-ocr.js               Label-photo text parsing (EPA reg #, signal word) — pure functions
+vendor/tesseract/          Tesseract.js 7.0.0 OCR engine (vendored, lazy-loaded)
 sw.js                      Service worker
 manifest.json              PWA manifest
 PRICING.md                 Business model: paid-only, $29/yr or $79 perpetual, 30-day trial

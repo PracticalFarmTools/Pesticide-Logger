@@ -22,7 +22,9 @@ cross-device merge, print/PDF inspection report, CSV export, field mapper,
 product library with live EPA lookup, tank-mix calculator, weather
 auto-fill, in-cab speed tools (Spray now, Duplicate last spray,
 recent-product chips), one-click state compliance pack export, bulk EPA
-library verification, spray window outlook, barcode jug scanning, and the
+library verification, spray window outlook, barcode jug scanning, OCR
+label scanning (reads the EPA registration number and signal word from a
+label photo), and the
 certifier/buyer packet export.
 
 **30-day free trial for everyone, automatic, no card.** The whole app is

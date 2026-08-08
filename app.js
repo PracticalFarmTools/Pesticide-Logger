@@ -44,6 +44,23 @@
     }
   }
 
+  // Restored backups and CSV imports are untrusted input. Ids are rendered
+  // into HTML attributes and label URLs into href, so both are constrained
+  // when data enters the store (load, restore, and merge all pass through
+  // migrate()).
+  function sanitizeId(v) {
+    const s = String(v == null ? '' : v);
+    if (!s) return '';
+    if (/^[A-Za-z0-9._:-]+$/.test(s)) return s;
+    return s.replace(/[^A-Za-z0-9._:-]/g, '') ||
+      ('id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10));
+  }
+
+  function safeUrl(u) {
+    const s = String(u == null ? '' : u).trim();
+    return /^https:\/\//i.test(s) ? s : '';
+  }
+
   // v2→v3 tank mix → v4 compliance → v5 audit/ops fields.
   function migrate(d) {
     d.settings = Object.assign({
@@ -120,15 +137,42 @@
       if (f.updatedAt == null) f.updatedAt = f.createdAt || new Date().toISOString();
       if (f.createdAt == null) f.createdAt = f.updatedAt;
     });
+    d.applications.forEach(a => {
+      a.id = sanitizeId(a.id);
+      if (a.fieldId != null && a.fieldId !== '') a.fieldId = sanitizeId(a.fieldId);
+      a.photoIds = a.photoIds.map(sanitizeId).filter(Boolean);
+      (a.products || []).forEach(p => {
+        if (p.productId != null && p.productId !== '') p.productId = sanitizeId(p.productId);
+        if (p.epaLabelUrl != null) p.epaLabelUrl = safeUrl(p.epaLabelUrl) || null;
+      });
+    });
+    (d.products || []).forEach(p => {
+      p.id = sanitizeId(p.id);
+      p.photoIds = p.photoIds.map(sanitizeId).filter(Boolean);
+      if (p.epaLabelUrl != null) p.epaLabelUrl = safeUrl(p.epaLabelUrl) || null;
+    });
+    (d.fields || []).forEach(f => { f.id = sanitizeId(f.id); });
     d.meta = d.meta || {};
     d.version = 5;
     return d;
   }
 
   function save() {
-    localStorage.setItem(STORE_KEY, JSON.stringify(data));
+    let stored = true;
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(data));
+    } catch (e) {
+      // Quota exceeded / storage disabled: a compliance record must never
+      // die silently. The IndexedDB mirror and auto-backup file below still
+      // get the in-memory data, and the user is told loudly.
+      stored = false;
+      console.error('[save] localStorage write failed', e);
+    }
     idbMirror();
     scheduleAutoBackup();
+    if (!stored) {
+      toast('⚠ Browser storage is full — this change may not persist. Download a backup now (Settings → Data), then free up space.');
+    }
   }
 
   // ---- durability: IndexedDB mirror + persistent storage ----
@@ -1140,7 +1184,7 @@
           </div>
         </div>
         <div class="epa-result-actions">
-          <a class="btn btn-secondary btn-sm" href="${esc(result.labelUrl)}" target="_blank" rel="noopener">Official label</a>
+          <a class="btn btn-secondary btn-sm" href="${esc(safeUrl(result.labelUrl))}" target="_blank" rel="noopener">Official label</a>
           <button type="button" class="btn btn-primary btn-sm" data-epa-import="${index}">
             ${data.products.some(p => p.epaRegNo === result.epaRegNo) ? 'Update library entry' : 'Add to library'}
           </button>
@@ -1380,7 +1424,7 @@
               ? '<br><span class="epa-mismatch">Official active ingredient differs—review label</span>' : ''}
           </td>
           <td>${esc(p.epaRegNo)}
-            ${p.epaLabelUrl ? `<br><a class="epa-label-link" href="${esc(p.epaLabelUrl)}" target="_blank" rel="noopener">Official label ↗</a>` : ''}
+            ${safeUrl(p.epaLabelUrl) ? `<br><a class="epa-label-link" href="${esc(safeUrl(p.epaLabelUrl))}" target="_blank" rel="noopener">Official label ↗</a>` : ''}
             ${p.epaCheckedAt ? `<br><span class="card-hint">Checked ${fmtDate(p.epaCheckedAt.slice(0, 10))}</span>` : ''}
           </td>
           <td>${esc(p.type)}</td>
@@ -3515,8 +3559,10 @@
     if (!confirm('Last check — this cannot be undone. Erase everything?')) return;
     if (idbDb) {
       try {
-        const tx = idbDb.transaction('kv', 'readwrite');
+        const tx = idbDb.transaction(['kv', 'photos'], 'readwrite');
         tx.objectStore('kv').delete('data');
+        tx.objectStore('kv').delete('backupHandle');
+        tx.objectStore('photos').clear();
         tx.oncomplete = () => location.reload();
         tx.onerror = () => location.reload();
       } catch (e) { location.reload(); }
@@ -3745,7 +3791,7 @@
       const acres = ringAreaSqm(f.boundary.map(([lat, lng]) => L.latLng(lat, lng))) / SQM_PER_ACRE;
       const poly = L.polygon(f.boundary, {
         color: '#2d6b38', weight: 2, fillColor: '#2d6b38', fillOpacity: 0.22
-      }).bindTooltip(`${f.name} · ${fmtNum(acres, acres < 1 ? 3 : 2)} ac`,
+      }).bindTooltip(`${esc(f.name)} · ${fmtNum(acres, acres < 1 ? 3 : 2)} ac`,
         { className: 'field-poly-tooltip', sticky: true });
       poly.on('click', (e) => { L.DomEvent.stop(e); editField(f.id); });
       savedPolysLayer.addLayer(poly);
@@ -3964,13 +4010,20 @@
     input.click();
   }
 
+  // Photos are only ever created via canvas.toDataURL('image/jpeg'); anything
+  // else in the store (tampered IDB) must not reach an img src.
+  function photoDataSrc(p) {
+    const u = String((p && p.dataUrl) || '');
+    return /^data:image\//.test(u) ? u : '';
+  }
+
   async function renderPhotoThumbs(idList, host) {
     if (!host) return;
     if (!idList.length) { host.innerHTML = ''; return; }
     const photos = (await Promise.all(idList.map(idbPhotoGet))).filter(Boolean);
     host.innerHTML = photos.map(p =>
-      `<button type="button" class="photo-thumb" data-photo-id="${p.id}" aria-label="View photo">
-        <img src="${p.dataUrl}" alt="">
+      `<button type="button" class="photo-thumb" data-photo-id="${esc(p.id)}" aria-label="View photo">
+        <img src="${photoDataSrc(p)}" alt="">
       </button>`).join('');
     host.querySelectorAll('[data-photo-id]').forEach(b =>
       b.addEventListener('click', () => openPhotoViewer(b.dataset.photoId, idList, host)));
@@ -3980,7 +4033,7 @@
     const p = await idbPhotoGet(photoId);
     if (!p) { toast('Photo not found on this device'); return; }
     const dlg = $('#photo-dialog');
-    $('#photo-dialog-img').src = p.dataUrl;
+    $('#photo-dialog-img').src = photoDataSrc(p);
     $('#photo-dialog-meta').textContent =
       `Taken ${new Date(p.createdAt).toLocaleString()} — photos stay in this browser and are not part of JSON backups.`;
     $('#photo-dialog-delete').onclick = async () => {

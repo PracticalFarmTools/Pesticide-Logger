@@ -486,6 +486,8 @@
     if (goto) showTab(goto.dataset.goto);
     const closeDialog = e.target.closest('[data-close-dialog]');
     if (closeDialog) closeDialog.closest('dialog')?.close();
+    const missingChip = e.target.closest('[data-missing-field]');
+    if (missingChip) focusMissingField(missingChip.dataset.missingField);
   });
 
   // Proper ARIA tabs: controls/labelledby links, roving tabindex, arrow keys.
@@ -993,6 +995,7 @@
         complete: false,
         status: 'no_state',
         missing: ['Select a state in Settings'],
+        missingFields: [{ name: 'state_select', label: 'Select a state in Settings' }],
         warnings,
         retentionYears: 2,
         agency: null,
@@ -1007,10 +1010,13 @@
     const privateDuty = privateDutyFor(law);
     const applyStateMatrix = stateFieldsApply(app, law);
 
+    // Each entry keeps both the human label (used everywhere missing fields
+    // are displayed/exported) and a canonical field name (used only to jump
+    // the UI to that field — see focusMissingField()).
     const missing = applyStateMatrix
       ? law.fields
           .filter(f => f.required && fieldAppliesToApp(app, f.name) && !complianceValuePresent(app, f.name))
-          .map(f => f.label)
+          .map(f => ({ name: f.name, label: f.label }))
       : [];
 
     if (!applyStateMatrix && cls === 'private' && privateDuty === 'none') {
@@ -1018,18 +1024,20 @@
     }
 
     if (app.rup && !hasText(app.certNumber)) {
-      missing.push('Certification / license # (required when mix includes RUP)');
+      missing.push({ name: 'applicator_license', label: 'Certification / license # (required when mix includes RUP)' });
     }
 
     // Always require operational core for any saved “complete” record.
     [
       ['date', 'Application date', hasText(app.date)],
-      ['crop', 'Crop / commodity / site treated', hasText(app.crop)],
+      ['crop_treated', 'Crop / commodity / site treated', hasText(app.crop)],
       ['location', 'Field / site', hasText(app.fieldName) || hasText(app.locationNote)],
-      ['applicator', 'Applicator name', hasText(app.applicatorName)],
+      ['applicator_name', 'Applicator name', hasText(app.applicatorName)],
       ['products', 'At least one product with amount applied',
         productsOk(app, p => hasText(p.productName) && p.total != null && p.total !== '')]
-    ].forEach(([_, label, ok]) => { if (!ok && !missing.includes(label)) missing.push(label); });
+    ].forEach(([name, label, ok]) => {
+      if (!ok && !missing.some(m => m.label === label)) missing.push({ name, label });
+    });
 
     const intervals = intervalsStatus(app);
     if (!intervals.ok) warnings.push(intervals.message);
@@ -1064,7 +1072,8 @@
       // Interval / dataset warnings still surface as needs_review.
       complete: fieldsOk,
       status,
-      missing,
+      missing: missing.map(m => m.label),
+      missingFields: missing,
       warnings,
       retentionYears: law.retentionYears || 2,
       agency: law.agency,
@@ -1114,7 +1123,12 @@
         status.textContent = `${result.missing.length} applicable ${name} field(s) still missing`;
         missingBox.hidden = false;
         const bits = [];
-        if (result.missing.length) bits.push(`<strong>Missing:</strong> ${result.missing.map(esc).join('; ')}`);
+        if (result.missingFields.length) {
+          const chips = result.missingFields.map(m =>
+            `<button type="button" class="missing-field-chip" data-missing-field="${esc(m.name || '')}">${esc(m.label)}</button>`
+          ).join(' ');
+          bits.push(`<strong>Missing — tap to jump:</strong><br>${chips}`);
+        }
         if (result.warnings.length) bits.push(`<strong>Also:</strong> ${result.warnings.map(esc).join('; ')}`);
         missingBox.innerHTML = bits.join('<br>');
       }
@@ -1122,6 +1136,67 @@
       status.hidden = true;
       missingBox.hidden = true;
     }
+  }
+
+  // Canonical compliance field name -> where to send focus. Most top-level
+  // fields have a matching [data-log-field] wrapper; product-identity fields
+  // (brand, EPA #, active ingredient...) live on the Product record, not the
+  // log form, so those jump to editing that product instead.
+  const MISSING_FIELD_ALIASES = { total_mix_applied: 'carrier_volume', application_time: 'start_time' };
+  const PRODUCT_ROW_FIELD_CLASS = {
+    amount_applied: 'apr-total', rate: 'apr-rate',
+    rei_hours: 'apr-rei', phi_days: 'apr-phi', lot_number: 'apr-lot'
+  };
+  const PRODUCT_IDENTITY_FIELD_PROP = {
+    brand_name: 'name', epa_reg_no: 'epaRegNo', active_ingredient: 'activeIngredient',
+    manufacturer_name: 'epaCompany', state_registration_no: 'stateRegNo', pesticide_formulation: 'type'
+  };
+
+  function focusProductsSection() {
+    const section = document.querySelector('[data-log-section="products"]');
+    if (!section) return;
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const target = section.querySelector('.apr-product') || $('#app-add-product');
+    if (target) target.focus({ preventScroll: true });
+  }
+
+  function focusProductRowInput(name) {
+    const rows = $$('#app-products .app-product-row');
+    if (!rows.length) { focusProductsSection(); return; }
+    const row = rows.find(r => getProduct(r.querySelector('.apr-product').value)) || rows[0];
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const cls = PRODUCT_ROW_FIELD_CLASS[name];
+    const input = cls && row.querySelector('.' + cls);
+    (input || row.querySelector('.apr-product')).focus({ preventScroll: true });
+  }
+
+  function focusProductIdentityIssue(name) {
+    const prop = PRODUCT_IDENTITY_FIELD_PROP[name];
+    const rows = $$('#app-products .app-product-row');
+    for (const row of rows) {
+      const p = getProduct(row.querySelector('.apr-product').value);
+      if (p && !hasText(p[prop])) {
+        showTab('products');
+        editProduct(p.id);
+        return;
+      }
+    }
+    // No product picked yet in any row — that's the real blocker.
+    focusProductsSection();
+  }
+
+  function focusMissingField(rawName) {
+    const name = MISSING_FIELD_ALIASES[rawName] || rawName;
+    if (!name) return;
+    if (name === 'state_select') { showTab('settings'); $('#set-state')?.focus(); return; }
+    if (name === 'products') { focusProductsSection(); return; }
+    if (PRODUCT_ROW_FIELD_CLASS[name]) { focusProductRowInput(name); return; }
+    if (PRODUCT_IDENTITY_FIELD_PROP[name]) { focusProductIdentityIssue(name); return; }
+    const label = document.querySelector(`[data-log-field="${name}"]`);
+    if (!label) return;
+    label.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const input = label.querySelector('input, select, textarea');
+    if (input) input.focus({ preventScroll: true });
   }
 
 

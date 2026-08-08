@@ -565,6 +565,23 @@ label.state-required-field {
   color: var(--warn);
   font-size: 0.88rem;
 }
+.missing-field-chip {
+  display: inline-block;
+  margin: 0.3rem 0.3rem 0 0;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--warn);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--warn);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  width: auto;
+}
+.missing-field-chip:hover, .missing-field-chip:focus-visible {
+  background: var(--warn);
+  color: #fff;
+}
 
 /* ---------- Calculator ---------- */
 .calc-product-row {

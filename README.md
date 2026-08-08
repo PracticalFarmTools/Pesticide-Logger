@@ -36,8 +36,8 @@ application at the repository root.
 | **Photos & barcode** | Attach label/lot/condition photos to records (free, device-local); scan a jug's UPC to drop it into the tank mix (Pro). |
 | **REI posting & reminders** | Bilingual DO NOT ENTER / NO ENTRE posting sheet from any active REI, plus opt-in browser notifications when REI clears or PHI dates arrive. |
 | **CSV import** | Bring existing Excel/Sheets records in with a column-mapping wizard — rows land as compliance-checked drafts. |
-| **Spanish interface** | One-tap Español toggle covering interface labels (212-entry dictionary). |
-| **Smarter backup merge** | Newest `updatedAt` wins; audit histories union; no silent loss when syncing phone ↔ PC. |
+| **Spanish interface** | One-tap Español toggle covering interface labels (210-entry dictionary). |
+| **Smarter backup merge** | Newest `updatedAt` wins; audit histories union; no silent loss when syncing phone ↔ PC. Photos stay on-device and are not included in JSON backups — migrating to a new device needs a manual photo re-attach. |
 | **Offline-first PWA** | Installable; core logging works with no connectivity after first load. |
 
 ## Compliance scope (read this)

@@ -462,6 +462,8 @@
   document.body.addEventListener('click', (e) => {
     const goto = e.target.closest('[data-goto]');
     if (goto) showTab(goto.dataset.goto);
+    const closeDialog = e.target.closest('[data-close-dialog]');
+    if (closeDialog) closeDialog.closest('dialog')?.close();
   });
 
   // Proper ARIA tabs: controls/labelledby links, roving tabindex, arrow keys.

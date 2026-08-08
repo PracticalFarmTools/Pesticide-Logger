@@ -172,6 +172,7 @@
       p.id = sanitizeId(p.id);
       p.photoIds = p.photoIds.map(sanitizeId).filter(Boolean);
       if (p.epaLabelUrl != null) p.epaLabelUrl = safeUrl(p.epaLabelUrl) || null;
+      p.signalWord = normalizedSignalWord(p.signalWord);
     });
     (d.fields || []).forEach(f => { f.id = sanitizeId(f.id); });
     d.meta = d.meta || {};
@@ -432,9 +433,13 @@
 
   const now = () => new Date();
 
+  // Without an application end/start time, count from end-of-day so the
+  // countdown never reports "clear" before a same-day afternoon spray's REI
+  // would actually expire. Prefer endTime, then startTime, then 23:59.
   function reiExpiry(app) {
-    if (!app.reiHours && app.reiHours !== 0) return null;
-    const start = new Date(`${app.date}T${app.endTime || app.startTime || '12:00'}`);
+    if (!Number.isFinite(Number(app.reiHours)) || Number(app.reiHours) < 0) return null;
+    const clock = app.endTime || app.startTime || '23:59';
+    const start = new Date(`${app.date}T${clock}`);
     if (isNaN(start)) return null;
     return new Date(start.getTime() + Number(app.reiHours) * 3600 * 1000);
   }
@@ -914,8 +919,8 @@
       case 'amount_applied': return productsOk(app, p => p.total != null && p.total !== '' && !Number.isNaN(Number(p.total)));
       case 'rate': return productsOk(app, p => p.rate != null && p.rate !== '' && !Number.isNaN(Number(p.rate)));
       case 'restricted_use_flag': return productsOk(app, p => typeof p.rup === 'boolean');
-      case 'rei_hours': return productsOk(app, p => p.reiHours != null && p.reiHours !== '');
-      case 'phi_days': return productsOk(app, p => p.phiDays != null && p.phiDays !== '');
+      case 'rei_hours': return productsOk(app, p => intervalHoursPresent(p.reiHours));
+      case 'phi_days': return productsOk(app, p => intervalDaysPresent(p.phiDays));
       case 'pesticide_formulation': return productsOk(app, p => hasText(p.type));
       case 'manufacturer_name': return productsOk(app, p => hasText(p.epaCompany));
       case 'state_registration_no': return productsOk(app, p => hasText(p.stateRegNo));
@@ -972,13 +977,23 @@
     }
   }
 
+  // Non-finite / negative values (bad imports, Number('') edge cases) must
+  // not count as a filled label interval — countdowns and compliance both
+  // treat them as missing.
+  function intervalHoursPresent(v) {
+    return v != null && v !== '' && Number.isFinite(Number(v)) && Number(v) >= 0;
+  }
+  function intervalDaysPresent(v) {
+    return intervalHoursPresent(v);
+  }
+
   function intervalsStatus(app) {
     const prods = app.products || [];
     if (!prods.length) {
       return { ok: false, missingRei: true, missingPhi: true, message: 'Add products with label REI and PHI' };
     }
-    const missingRei = prods.some(p => p.reiHours == null || p.reiHours === '');
-    const missingPhi = prods.some(p => p.phiDays == null || p.phiDays === '');
+    const missingRei = prods.some(p => !intervalHoursPresent(p.reiHours));
+    const missingPhi = prods.some(p => !intervalDaysPresent(p.phiDays));
     return {
       ok: !missingRei && !missingPhi,
       missingRei,
@@ -1085,13 +1100,6 @@
       intervalsOk: intervals.ok,
       privateDuty
     };
-  }
-
-  function statusLabel(result) {
-    if (result.status === 'no_state') return 'No state selected';
-    if (result.status === 'fields_complete') return 'Fields complete';
-    if (result.status === 'needs_review') return 'Needs review';
-    return 'Incomplete';
   }
 
   function updateCompliancePreview() {
@@ -1231,7 +1239,11 @@
       headers: { Accept: 'application/json' }
     });
     const body = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(body.error || 'EPA lookup failed.');
+    if (!response.ok) {
+      const err = new Error(body.error || 'EPA lookup failed.');
+      err.status = response.status;
+      throw err;
+    }
     return body;
   }
 
@@ -1248,7 +1260,10 @@
     return ['CAUTION', 'WARNING', 'DANGER'].includes(value) ? value : '';
   }
 
+  let epaSearchSeq = 0;
+
   async function searchEpaProducts(query) {
+    const seq = ++epaSearchSeq;
     const status = $('#epa-search-status');
     const host = $('#epa-search-results');
     status.textContent = 'Searching the official EPA database…';
@@ -1256,11 +1271,13 @@
     try {
       const isReg = /^\d{1,6}-\d{1,6}(?:-\d{1,6})?$/.test(query);
       const payload = await fetchEpa(isReg ? { reg: query } : { q: query });
+      if (seq !== epaSearchSeq) return;
       status.textContent = payload.results.length
         ? `${payload.results.length} EPA record${payload.results.length === 1 ? '' : 's'} found.`
         : 'No matching EPA records found.';
       renderEpaResults(payload.results);
     } catch (error) {
+      if (seq !== epaSearchSeq) return;
       status.textContent = error.message ||
         'EPA lookup is unavailable. You can still enter the product manually.';
     }
@@ -1339,23 +1356,38 @@
     if (!data.products.length) { toast('Add products before verifying the library'); return; }
     button.disabled = true;
     let verified = 0, failed = 0, cancelled = 0;
+    // Stay under the /api/epa 30 req/min speed bump: ~2.1s between lookups.
+    const GAP_MS = 2100;
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     try {
       for (let i = 0; i < data.products.length; i++) {
+        if (i > 0) await sleep(GAP_MS);
         const product = data.products[i];
         button.textContent = `Verifying ${i + 1}/${data.products.length}…`;
-        try {
-          const payload = await fetchEpa({ reg: product.epaRegNo });
-          const result = payload.results[0];
-          if (!result) { failed++; continue; }
-          Object.assign(product, verifiedFields(result));
-          product.rup = !!result.rup;
-          const signal = normalizedSignalWord(result.signalWord);
-          if (signal) product.signalWord = signal;
-          if (!product.activeIngredient) product.activeIngredient = epaAiText(result);
-          if (result.cancelled || result.status !== 'Active') cancelled++;
-          verified++;
-        } catch (error) {
-          failed++;
+        let attempt = 0;
+        while (attempt < 2) {
+          attempt += 1;
+          try {
+            const payload = await fetchEpa({ reg: product.epaRegNo });
+            const result = payload.results[0];
+            if (!result) { failed++; break; }
+            Object.assign(product, verifiedFields(result));
+            product.rup = !!result.rup;
+            const signal = normalizedSignalWord(result.signalWord);
+            if (signal) product.signalWord = signal;
+            if (!product.activeIngredient) product.activeIngredient = epaAiText(result);
+            if (result.cancelled || result.status !== 'Active') cancelled++;
+            verified++;
+            break;
+          } catch (error) {
+            if (error.status === 429 && attempt < 2) {
+              button.textContent = `Rate limited — waiting… (${i + 1}/${data.products.length})`;
+              await sleep(60000);
+              continue;
+            }
+            failed++;
+            break;
+          }
         }
       }
       save();
@@ -1496,9 +1528,9 @@
   }
 
   function signalBadge(p) {
-    if (!p.signalWord) return '';
-    const cls = 'badge-signal-' + p.signalWord.toLowerCase();
-    return `<span class="badge-pill ${cls}">${esc(p.signalWord)}</span>`;
+    const word = normalizedSignalWord(p.signalWord);
+    if (!word) return '';
+    return `<span class="badge-pill badge-signal-${word.toLowerCase()}">${esc(word)}</span>`;
   }
 
   function epaStatusBadge(p) {
@@ -4263,7 +4295,7 @@
   // else in the store (tampered IDB) must not reach an img src.
   function photoDataSrc(p) {
     const u = String((p && p.dataUrl) || '');
-    return /^data:image\//.test(u) ? u : '';
+    return /^data:image\/jpeg(;|,)/i.test(u) ? u : '';
   }
 
   async function renderPhotoThumbs(idList, host) {
@@ -4393,6 +4425,9 @@
   // output alone never populates a saved record.
 
   let tesseractWorkerPromise = null;
+  // Tesseract.js v7 only accepts logger at createWorker time. Keep a mutable
+  // pointer so each scan's onStatus reaches the shared worker's logger.
+  let ocrProgressHandler = null;
 
   function ocrSupported() {
     return typeof WebAssembly !== 'undefined';
@@ -4413,6 +4448,7 @@
   // downloads ~7MB (core + English data); the browser's normal HTTP/service
   // worker cache keeps it available offline after that.
   async function getTesseractWorker(onProgress) {
+    ocrProgressHandler = typeof onProgress === 'function' ? onProgress : null;
     if (!tesseractWorkerPromise) {
       tesseractWorkerPromise = (async () => {
         await loadTesseractScript();
@@ -4421,7 +4457,9 @@
           corePath: 'vendor/tesseract/',
           langPath: 'vendor/tesseract',
           gzip: true,
-          logger: onProgress || (() => {})
+          logger: (m) => {
+            if (ocrProgressHandler) ocrProgressHandler(m);
+          }
         });
       })();
     }

@@ -145,15 +145,20 @@ check('related fields are not interchangeable aliases', () => {
 check('missing REI/PHI fails intervalsOk', () => {
   const bad = { products: [{ productName: 'X', epaRegNo: '1', total: 1, reiHours: null, phiDays: 7 }] };
   const good = { products: [{ productName: 'X', epaRegNo: '1', total: 1, reiHours: 12, phiDays: 7 }] };
+  const nanish = { products: [{ productName: 'X', epaRegNo: '1', total: 1, reiHours: NaN, phiDays: 7 }] };
+  const neg = { products: [{ productName: 'X', epaRegNo: '1', total: 1, reiHours: -1, phiDays: 7 }] };
+  const intervalPresent = (v) => v != null && v !== '' && Number.isFinite(Number(v)) && Number(v) >= 0;
   const intervalsStatus = (app) => {
     const prods = app.products || [];
     if (!prods.length) return { ok: false };
     return {
-      ok: !prods.some(p => p.reiHours == null || p.reiHours === '' || p.phiDays == null || p.phiDays === '')
+      ok: !prods.some(p => !intervalPresent(p.reiHours) || !intervalPresent(p.phiDays))
     };
   };
   assert.strictEqual(intervalsStatus(bad).ok, false);
   assert.strictEqual(intervalsStatus(good).ok, true);
+  assert.strictEqual(intervalsStatus(nanish).ok, false);
+  assert.strictEqual(intervalsStatus(neg).ok, false);
 });
 
 check('every state has a recordDeadline unit', () => {
@@ -193,6 +198,24 @@ check('same-day and hours deadlines', () => {
     app
   );
   assert.strictEqual(new Date(hourly).toISOString().slice(0, 13), '2026-08-01T09');
+});
+
+check('HH:MM:SS application times still produce record deadlines', () => {
+  const app = { date: '2026-07-31', endTime: '16:00:00' };
+  const due = DeadlineUtils.computeRecordDueAtFromLaw(
+    { recordDeadline: { count: 24, unit: 'hours' }, recordWithinHours: 24 },
+    app
+  );
+  assert.ok(due, 'deadline must not be null for HH:MM:SS');
+  assert.strictEqual(new Date(due).toISOString().slice(0, 13), '2026-08-01T16');
+});
+
+check('EPA product-name charset allows percent signs', () => {
+  // Mirrors api/epa.js query allowlist — keep in sync.
+  const invalid = /[^\p{L}\p{N}\s®™().,'&+/-/%]/u;
+  assert.ok(!invalid.test('NEEM OIL 70%'));
+  assert.ok(!invalid.test("Joe's Fungicide (SC)"));
+  assert.ok(invalid.test('bad<script>'));
 });
 
 check('customer copy due only when days encoded; private skipped', () => {
@@ -297,6 +320,25 @@ check('OCR label scanning wired: parser, lazy loader, both entry points, hardene
   assert.ok(html.includes("worker-src 'self' blob:"), 'worker-src allows the Tesseract worker');
   assert.ok(html.includes("'wasm-unsafe-eval'"), 'wasm-unsafe-eval allows WASM compilation');
   assert.ok(html.includes('img-src') && html.includes('blob:'), 'img-src allows blob: for canvas-based capture');
+  // Shared worker must forward progress to the *current* scan's callback.
+  assert.ok(app.includes('ocrProgressHandler'), 'OCR progress logger is mutable across scans');
+  assert.ok(!app.includes('function statusLabel'), 'dead statusLabel() removed');
+});
+
+check('audit hardening: EPA proxy + interval/deadline correctness', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const epa = fs.readFileSync(path.join(root, 'api/epa.js'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  const deadline = fs.readFileSync(path.join(root, 'deadline.js'), 'utf8');
+  assert.ok(epa.includes('%'), 'product-name search allows percent');
+  assert.ok(epa.includes('upstream.status === 404'), 'EPA 404 returns empty results, not 502');
+  assert.ok(app.includes('GAP_MS') || app.includes('2100'), 'library verify throttles under rate limit');
+  assert.ok(app.includes('intervalHoursPresent'), 'REI/PHI require finite non-negative values');
+  assert.ok(app.includes("|| '23:59'"), 'REI countdown defaults to end-of-day, not noon');
+  assert.ok(deadline.includes('normalizeClockTime'), 'HH:MM:SS times normalize before parsing');
+  assert.ok(app.includes('data:image\\/jpeg'), 'photo allowlist is JPEG-only');
+  assert.ok(app.includes('epaSearchSeq'), 'EPA search results ignore stale responses');
+  assert.ok(!css.includes('.log-shape-controls'), 'unused .log-shape-controls CSS removed');
 });
 
 check('paid-only: whole app is gated by license/trial, no per-feature Pro gate', () => {

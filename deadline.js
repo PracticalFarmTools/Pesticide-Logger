@@ -5,10 +5,20 @@
 (function (root) {
   'use strict';
 
+  // Accepts HH:MM or HH:MM:SS. Appending ":00" to a value that already has
+  // seconds produces an invalid Date and silently drops record deadlines.
+  function normalizeClockTime(t) {
+    const s = String(t == null ? '' : t).trim();
+    if (/^\d{1,2}:\d{2}:\d{2}$/.test(s)) return s;
+    if (/^\d{1,2}:\d{2}$/.test(s)) return s + ':00';
+    return null;
+  }
+
   function parseAppBase(app, fallbackTime) {
     if (!app || !app.date) return null;
-    const t = app.endTime || app.startTime || fallbackTime || '23:59';
-    const d = new Date(`${app.date}T${t}:00`);
+    const clock = normalizeClockTime(app.endTime || app.startTime || fallbackTime || '23:59');
+    if (!clock) return null;
+    const d = new Date(`${app.date}T${clock}`);
     return isNaN(d.getTime()) ? null : d;
   }
 

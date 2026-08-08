@@ -84,7 +84,8 @@ module.exports = async function handler(req, res) {
   if (reg && !/^\d{1,6}-\d{1,6}(?:-\d{1,6})?$/.test(reg)) {
     return res.status(400).json({ error: 'Invalid EPA registration number format.' });
   }
-  if (query.length > 100 || /[^\p{L}\p{N}\s®™().,'&+/-]/u.test(query)) {
+  // Percent signs are common in real product names ("NEEM OIL 70%").
+  if (query.length > 100 || /[^\p{L}\p{N}\s®™().,'&+/-/%]/u.test(query)) {
     return res.status(400).json({ error: 'Invalid search text.' });
   }
 
@@ -97,6 +98,16 @@ module.exports = async function handler(req, res) {
       headers: { Accept: 'application/json', 'User-Agent': 'PracticalFarmTools-PesticideLogger/2.2' },
       signal: AbortSignal.timeout(12000)
     });
+    // Unknown / mistyped registration numbers should read as "no match",
+    // not as an EPA outage — callers treat empty results as not-found.
+    if (upstream.status === 404) {
+      res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=3600');
+      return res.status(200).json({
+        results: [],
+        source: 'U.S. EPA Pesticide Product Label System',
+        checkedAt: new Date().toISOString()
+      });
+    }
     if (!upstream.ok) throw new Error(`EPA returned ${upstream.status}`);
     const payload = await upstream.json();
     const seen = new Set();

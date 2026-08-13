@@ -495,6 +495,8 @@ check('paid-only: whole app is gated by license/trial, no per-feature Pro gate',
   assert.ok(!/function applyLicenseGate[\s\S]{0,1200}clearAllData/.test(app),
     'license gate does not wipe records');
   assert.ok(app.includes('function renderLockRecords'), 'lock screen renders existing logs');
+  assert.ok(app.includes('FarmScale.adoptForecastFromMeta'), 'outlook hours leave farm JSON before the next save');
+  assert.ok(app.includes('dropForecast'), 'deleted fields do not leave forecast rows behind');
   // Every feature works the same regardless of trial vs. paid key — no
   // separate "Pro" bucket left to gate any one of them differently.
   ['function onAppSubmit', 'function downloadCsv', 'function printReport',

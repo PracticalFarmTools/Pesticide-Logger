@@ -34,7 +34,8 @@
     'complianceState', 'complianceApplicatorClass',
     'complianceComplete', 'complianceStatus', 'complianceMissing', 'complianceWarnings',
     'complianceVerification', 'retentionYears', 'complianceCheckedAt',
-    'recordDueAt', 'draft', 'deletedAt'
+    'recordDueAt', 'draft', 'deletedAt',
+    'applicationType', 'createdAt', 'updatedAt'
   ];
 
   function norm(s) {
@@ -239,6 +240,27 @@
     return payload;
   }
 
+  // Pull outlook hours out of the farm JSON into a side store before any
+  // later save() can drop them. Mutates `data.meta` and `into`.
+  function adoptForecastFromMeta(data, into) {
+    const store = into && typeof into === 'object' ? into : {};
+    const from = data && data.meta && data.meta.forecastByField;
+    let moved = 0;
+    if (from && typeof from === 'object') {
+      Object.keys(from).forEach((k) => {
+        if (!store[k] && from[k]) {
+          store[k] = from[k];
+          moved++;
+        }
+      });
+    }
+    if (data && data.meta && typeof data.meta === 'object') {
+      delete data.meta.forecastByField;
+      delete data.meta.forecastCache;
+    }
+    return { store, moved };
+  }
+
   function jsonBytes(obj) {
     return JSON.stringify(obj == null ? {} : obj).length;
   }
@@ -287,6 +309,7 @@
     slimHistorySnapshot,
     pushSlimHistory,
     stripForecastFromFarm,
+    adoptForecastFromMeta,
     jsonBytes,
     licenseEndPreservesRecords
   };

@@ -210,9 +210,12 @@ check('backup omit of forecastByField still holds', () => {
   assert.strictEqual(clone.meta.farm, 'x');
 });
 
-check('slim history drops nested history and photo blobs; cap stays 25', () => {
+check('slim history keeps application type and timestamps; drops nested history and photo blobs', () => {
   const rec = app('r1', '2026-05-01', {
     photoIds: ['p1', 'p2'],
+    applicationType: 'aerial',
+    createdAt: '2026-05-01T12:00:00Z',
+    updatedAt: '2026-05-02T12:00:00Z',
     history: [{ at: '2025-01-01', snapshot: { date: 'old', history: [{ at: 'nested' }] } }],
     notes: 'keep me',
     windSpeed: 4
@@ -223,6 +226,9 @@ check('slim history drops nested history and photo blobs; cap stays 25', () => {
   assert.strictEqual(snap.notes, 'keep me');
   assert.strictEqual(snap.windSpeed, 4);
   assert.strictEqual(snap.date, '2026-05-01');
+  assert.strictEqual(snap.applicationType, 'aerial');
+  assert.strictEqual(snap.createdAt, '2026-05-01T12:00:00Z');
+  assert.ok(FS.HISTORY_SNAPSHOT_KEYS.indexOf('applicationType') !== -1);
   let existing = rec;
   for (let i = 0; i < 30; i++) {
     existing = Object.assign({}, rec, { history: FS.pushSlimHistory(existing, '2026-08-13T0' + (i % 10) + ':00:00Z') });
@@ -256,6 +262,38 @@ check('evaluateCompliance is not skipped for off-screen rows — windowing is di
   assert.ok(hidden.every((a) => a.date.startsWith('2026')));
   // Off-screen rows still exist on the farm object.
   assert.strictEqual(orchardApps.length, hidden.length + prior.length);
+});
+
+check('adoptForecastFromMeta moves hours out before a save can drop them', () => {
+  const farm = {
+    meta: {
+      forecastByField: { a: { fieldId: 'a', hours: [{ wind: 4 }] } },
+      forecastCache: { hours: [1] },
+      version: 5
+    },
+    applications: [app('1', '2026-05-01')]
+  };
+  const mem = {};
+  const result = FS.adoptForecastFromMeta(farm, mem);
+  assert.strictEqual(result.moved, 1);
+  assert.ok(mem.a && mem.a.hours && mem.a.hours[0].wind === 4);
+  assert.strictEqual(farm.meta.forecastByField, undefined);
+  assert.strictEqual(farm.meta.forecastCache, undefined);
+  const stripped = FS.stripForecastFromFarm(farm);
+  assert.strictEqual(stripped.meta.forecastByField, undefined);
+  assert.strictEqual(mem.a.hours[0].wind, 4);
+  assert.strictEqual(FS.adoptForecastFromMeta(farm, mem).moved, 0);
+});
+
+check('select filter keeps the already-picked field even if the query misses it', () => {
+  const options = [
+    { value: '', text: '— Select field —', reserved: true },
+    { value: 'a', text: 'North', haystack: 'North' },
+    { value: 'b', text: 'South', haystack: 'South' }
+  ];
+  const shown = FS.filterSelectOptions(options, 'south', 'a');
+  assert.ok(shown.some((o) => o.value === 'a'), 'keep the selected field visible');
+  assert.ok(shown.some((o) => o.value === 'b'));
 });
 
 check('product search haystack covers EPA # and AI', () => {

@@ -182,9 +182,17 @@
   }
 
   function save() {
+    persistForecastStore();
+    const forecastIdbReady = !!(idbDb && idbDb.objectStoreNames.contains('forecast'));
     if (data.meta) {
-      delete data.meta.forecastByField;
-      delete data.meta.forecastCache;
+      if (!forecastIdbReady && Object.keys(forecastMem).length) {
+        // Keep hours in the farm JSON until the forecast store exists so a
+        // save-before-IDB cannot drop last session's outlook.
+        data.meta.forecastByField = forecastMem;
+      } else {
+        delete data.meta.forecastByField;
+        delete data.meta.forecastCache;
+      }
     }
     let stored = true;
     try {
@@ -195,6 +203,10 @@
       // get the in-memory data, and the user is told loudly.
       stored = false;
       console.error('[save] localStorage write failed', e);
+    }
+    if (data.meta) {
+      delete data.meta.forecastByField;
+      delete data.meta.forecastCache;
     }
     idbMirror();
     scheduleAutoBackup();
@@ -209,6 +221,9 @@
 
   let idbDb = null;
   let forecastMem = {};
+  if (typeof FarmScale !== 'undefined' && FarmScale.adoptForecastFromMeta) {
+    FarmScale.adoptForecastFromMeta(data, forecastMem);
+  }
 
   function idbMirror() {
     if (!idbDb) return;
@@ -226,11 +241,18 @@
     try {
       const tx = idbDb.transaction('forecast', 'readwrite');
       const store = tx.objectStore('forecast');
+      store.clear();
       Object.keys(forecastMem).forEach((k) => {
         const entry = forecastMem[k];
         if (entry) store.put(Object.assign({ id: k }, entry));
       });
     } catch (e) { /* best-effort */ }
+  }
+
+  function dropForecast(id) {
+    if (!id || !forecastMem[id]) return;
+    delete forecastMem[id];
+    persistForecastStore();
   }
 
   function migrateForecastFromMeta() {
@@ -263,6 +285,11 @@
           forecastMem[id] = entry;
         });
         migrateForecastFromMeta();
+        try {
+          const raw = localStorage.getItem(STORE_KEY);
+          const parsed = raw ? JSON.parse(raw) : null;
+          if (parsed && parsed.meta && parsed.meta.forecastByField) save();
+        } catch (e) { /* leave localStorage as-is */ }
         if (typeof renderSprayForecast === 'function') renderSprayForecast();
       };
       getAll.onerror = () => migrateForecastFromMeta();
@@ -1826,6 +1853,7 @@
     if (!f) return;
     if (!confirm(`Delete "${f.name}"? Past spray records keep their saved copy of its details.`)) return;
     data.fields = data.fields.filter(x => x.id !== id);
+    dropForecast(id);
     save();
     renderFields();
     renderFieldOptions();
@@ -1835,6 +1863,8 @@
   }
 
   let fieldGroupFilter = '';
+  let logShowPriorYears = null;
+  let lockShowPriorYears = null;
 
   function renderFields() {
     const host = $('#field-list');
@@ -1979,7 +2009,8 @@
     if ($('#log-show-deleted')) $('#log-show-deleted').addEventListener('change', renderAppList);
     if ($('#log-show-prior-years')) {
       $('#log-show-prior-years').addEventListener('click', () => {
-        const all = sortedApps(true);
+        const showDeleted = !!( $('#log-show-deleted') && $('#log-show-deleted').checked );
+        const all = sortedApps(showDeleted);
         const flag = { value: logShowPriorYears };
         const open = priorYearsOpen(all, flag);
         logShowPriorYears = !open;
@@ -2905,16 +2936,15 @@
     return out.join(' ');
   }
 
-  let logShowPriorYears = null;
-  let lockShowPriorYears = null;
-
   function priorYearsOpen(apps, flagRef) {
+    const flag = flagRef || { value: null };
     if (typeof FarmScale === 'undefined') return true;
     if (!FarmScale.shouldShowPriorYearsControl(apps, now())) return true;
-    if (flagRef.value == null) {
-      flagRef.value = !FarmScale.shouldDefaultSeasonWindow(apps, now());
+    if (flag.value == null) {
+      flag.value = !FarmScale.shouldDefaultSeasonWindow(apps, now());
     }
-    return flagRef.value;
+    if (flagRef) flagRef.value = flag.value;
+    return flag.value;
   }
 
   function syncPriorYearsButton(btn, apps, open) {

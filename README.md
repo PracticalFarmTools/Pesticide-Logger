@@ -31,9 +31,9 @@ application at the repository root.
 | **Tank mix calculator** | Area, tank size, spray volume, multi-product rates, printable W-A-L-E worksheet. |
 | **Live EPA product lookup** | Official EPA PPLS identity/status import via optional Vercel proxy. Rates, REI, and PHI stay label-entered. |
 | **Field mapper** | Satellite corner tapping with geodesic acreage; boundaries stay local. |
-| **Weather auto-fill** | Open-Meteo fill for wind, temperature, sky/humidity at field centroid or GPS. |
+| **Weather auto-fill** | Open-Meteo fill for wind, temperature, sky/humidity at the field’s forecast pin (or GPS if you are logging on-site). |
 | **Inspection output** | Print/PDF, CSV, **state compliance pack** (JSON with citation, field matrix, due/copy status, audit history), and a **certifier/buyer packet** for organic & GAP audits. |
-| **Spray window outlook** | Next 48 hours scored good/marginal/poor per mapped field from Open-Meteo wind/gust/rain data (no API key). |
+| **Spray window outlook** | Per-field 48-hour good/marginal/poor strip at each field’s map pin (not the phone’s GPS). CONUS near-term uses NOAA HRRR; stale data is labeled and cannot be used as a go/no-go for a trip. Planning guidance — the label still rules. |
 | **Photos & barcode** | Attach label/lot/condition photos to records (device-local). Scan a jug's UPC in the cab: live camera on Android Chrome, still photo on iPhone (ZXing). |
 | **OCR label scanning** | Photograph a product label to read its EPA registration number and signal word on-device (Tesseract.js). Works on iPhone and Android via the native camera. A ~7MB text reader downloads in the background after first visit, then scans work offline. The match is verified through the same live EPA lookup as manual search before anything is saved. |
 | **REI posting & reminders** | Bilingual DO NOT ENTER / NO ENTRE posting sheet from any active REI, plus opt-in browser notifications when REI clears or PHI dates arrive. |
@@ -106,12 +106,14 @@ node --check deadline.js
 node --check license.js
 node --check label-ocr.js
 node --check backup-merge.js
+node --check spray-window.js
 node --check sw.js
 node tests/compliance.test.js
 node tests/license.test.js
 node tests/label-ocr.test.js
 node tests/backup-merge.test.js
 node tests/epa-proxy.test.js
+node tests/spray-window.test.js
 ```
 
 ## Intentional non-goals
@@ -131,6 +133,7 @@ styles.css                 Theme + print stylesheet
 app.js                     Application + compliance engine
 deadline.js                Record / customer-copy deadline math
 backup-merge.js            Conservative trial/license merge for backup restore
+spray-window.js            Per-field spray-window scoring, cache isolation, Open-Meteo stitch
 license.js                 Offline license verification (WebCrypto)
 state_pesticide_laws.js    50-state agencies, citations, retention, required fields
 api/epa.js                 Stateless Vercel proxy to official EPA PPLS

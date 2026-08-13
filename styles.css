@@ -962,6 +962,44 @@ label.state-required-field {
 .fc-good { background: #c8e6c9; }
 .fc-fair { background: #ffe082; }
 .fc-bad { background: #ef9a9a; }
+.fc-stale { filter: grayscale(0.85); opacity: 0.55; cursor: default; }
+.fc-legend { margin-top: 0.6rem; font-size: 0.82rem; display: flex; flex-wrap: wrap; gap: 0.55rem; align-items: center; }
+.fc-key {
+  display: inline-block;
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 3px;
+  vertical-align: middle;
+}
+.fc-banner {
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  margin: 0.5rem 0;
+}
+.fc-banner-stale, .fc-banner-offline { background: #f8d7da; color: #5a1a1a; }
+.fc-banner-aging { background: #fff3cd; color: #5c4a00; }
+.fc-banner-error { background: #f8d7da; color: #5a1a1a; }
+.fc-strip { display: flex; flex-direction: column; gap: 0.45rem; margin: 0.75rem 0 1rem; }
+.fc-strip-row {
+  appearance: none;
+  border: 1px solid var(--border-color);
+  background: var(--bg-white);
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  width: 100%;
+}
+.fc-strip-row:hover, .fc-strip-row:focus-visible { outline: 2px solid var(--primary-green); }
+.fc-strip-name { font-weight: 700; display: block; }
+.fc-strip-meta { font-size: 0.8rem; color: var(--text-muted); display: block; margin: 0.15rem 0 0.35rem; }
+.fc-strip-hours { display: flex; flex-wrap: wrap; gap: 0.2rem; }
+.fc-strip-hours .fc-block { width: 1.55rem; height: 1.55rem; font-size: 0.65rem; pointer-events: none; }
+.fc-evidence { font-size: 0.8rem; color: var(--text-muted); margin: 0.35rem 0; }
+.fc-seam { font-size: 0.78rem; color: var(--text-muted); margin: 0.25rem 0 0.5rem; }
 .fc-legend { margin-top: 0.6rem; font-size: 0.82rem; display: flex; flex-wrap: wrap; gap: 0.55rem; align-items: center; }
 .fc-key {
   display: inline-block;

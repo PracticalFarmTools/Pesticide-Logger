@@ -137,15 +137,18 @@
 
     <div class="card" id="spray-window-card">
       <div class="card-title-row">
-        <h3 class="card-title">Spray window outlook — next 48 hours</h3>
+        <h3 class="card-title">Spray windows by field</h3>
         <div class="forecast-controls">
-          <select id="forecast-field"><option value="">My location (GPS)</option></select>
+          <select id="forecast-field" aria-label="Field to show in detail">
+            <option value="">All fields (planning)</option>
+          </select>
           <button class="btn btn-secondary btn-sm" id="forecast-refresh">Update outlook</button>
         </div>
       </div>
-      <p class="card-hint">Wind, gusts, and rain from the Open-Meteo forecast (no API key), scored against common
-        drift guidance (steady 3–10 mph, no imminent rain). Planning guidance only — the label's wind and
-        rainfast rules control.</p>
+      <p class="card-hint">Forecast at each field’s map pin — check before you drive. Wind is 10 m model
+        wind, not boom height. Planning guidance only — the label’s wind and rainfast rules control.
+        Confirm conditions at the sprayer.</p>
+      <div id="forecast-strip"></div>
       <div id="forecast-body"></div>
     </div>
 
@@ -689,10 +692,12 @@
       <h3 class="card-title">Field mapper — draw your acreage</h3>
       <p class="card-hint">Zoom to your farm (or tap <strong>My location</strong>), then tap each corner of the field.
         Acreage is calculated live and fills the form below when you tap <strong>Use this shape</strong>.
-        Drag any corner to fine-tune it.</p>
+        Drag any corner to fine-tune it. The amber <strong>forecast pin</strong> is where the spray-window
+        weather is looked up — drag it onto the block you actually spray, not a neighbor’s woods.</p>
       <div class="map-toolbar">
         <button type="button" class="btn btn-secondary btn-sm" id="map-locate">📍 My location</button>
         <button type="button" class="btn btn-secondary btn-sm" id="map-basemap">🛰 Satellite / streets</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="map-weather-pin">Set forecast pin</button>
         <span class="map-toolbar-spacer"></span>
         <button type="button" class="btn btn-secondary btn-sm" id="map-undo" disabled>↩ Undo point</button>
         <button type="button" class="btn btn-secondary btn-sm" id="map-clear" disabled>✕ Clear</button>
@@ -1152,6 +1157,7 @@
 <script src="state_pesticide_laws.js"></script>
 <script src="deadline.js"></script>
 <script src="backup-merge.js"></script>
+<script src="spray-window.js"></script>
 <script src="license.js"></script>
 <script src="label-ocr.js"></script>
 <script src="i18n.js"></script>

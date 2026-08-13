@@ -297,8 +297,12 @@
       data.meta.lastBackupAt = new Date().toISOString();
       localStorage.setItem(STORE_KEY, JSON.stringify(data));
       idbMirror();
+      const exportData = (typeof SprayWindow !== 'undefined' && SprayWindow.backupClone)
+        ? SprayWindow.backupClone(data)
+        : data;
+      exportData.meta.lastBackupAt = data.meta.lastBackupAt;
       const writable = await autoBackupHandle.createWritable();
-      await writable.write(JSON.stringify(data, null, 2));
+      await writable.write(JSON.stringify(exportData, null, 2));
       await writable.close();
       renderBackupBanner();
     } catch (e) {
@@ -493,7 +497,10 @@
     });
     $$('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
     window.scrollTo({ top: 0 });
-    if (name === 'dashboard') renderDashboard();
+    if (name === 'dashboard') {
+      renderDashboard();
+      prefetchFieldForecasts(false);
+    }
     if (name === 'reports') renderReportFilters();
     if (name === 'calculator') refreshCalcProductOptions();
     if (name === 'fields') initFieldMap();
@@ -1596,6 +1603,23 @@
       e.preventDefault();
       const id = $('#field-id').value || uid();
       const existing = getField(id);
+      const boundary = pendingBoundary || (existing && existing.boundary) || null;
+      const pinInput = pendingWeatherPin
+        ? {
+            boundary,
+            weatherLat: pendingWeatherPin.lat,
+            weatherLng: pendingWeatherPin.lng,
+            weatherPinManual: !!pendingWeatherPin.manual
+          }
+        : {
+            boundary,
+            weatherLat: existing && existing.weatherLat,
+            weatherLng: existing && existing.weatherLng,
+            weatherPinManual: !!(existing && existing.weatherPinManual)
+          };
+      const pin = (typeof SprayWindow !== 'undefined' && SprayWindow.resolveWeatherPin)
+        ? SprayWindow.resolveWeatherPin(pinInput)
+        : { weatherLat: null, weatherLng: null, weatherPinManual: false };
       const field = {
         id,
         name: $('#field-name').value.trim(),
@@ -1604,7 +1628,10 @@
         crop: $('#field-crop').value.trim(),
         location: $('#field-location').value.trim(),
         siteId: ($('#field-site-id') && $('#field-site-id').value.trim()) || '',
-        boundary: pendingBoundary || (existing && existing.boundary) || null,
+        boundary,
+        weatherLat: pin.weatherLat,
+        weatherLng: pin.weatherLng,
+        weatherPinManual: pin.weatherPinManual,
         createdAt: existing?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -1615,6 +1642,7 @@
       renderFields();
       renderFieldOptions();
       renderFieldPolys();
+      renderForecastFieldOptions();
       toast(idx >= 0 ? 'Field updated' : 'Field added');
     });
     $('#field-cancel-btn').addEventListener('click', resetFieldForm);
@@ -1628,6 +1656,7 @@
     $('#field-save-btn').textContent = 'Save field';
     $('#field-cancel-btn').hidden = true;
     if (fieldMap) clearDrawing(true); else pendingBoundary = null;
+    clearWeatherPin();
   }
 
   function editField(id) {
@@ -1644,6 +1673,12 @@
     $('#field-save-btn').textContent = 'Update field';
     $('#field-cancel-btn').hidden = false;
     if (f.boundary && f.boundary.length >= 3) loadBoundaryForEdit(f.boundary);
+    if (Number.isFinite(Number(f.weatherLat)) && Number.isFinite(Number(f.weatherLng))) {
+      setPendingWeatherPin(Number(f.weatherLat), Number(f.weatherLng), !!f.weatherPinManual);
+    } else if (f.boundary && typeof SprayWindow !== 'undefined') {
+      const c = SprayWindow.ringCentroid(f.boundary);
+      if (c) setPendingWeatherPin(c.lat, c.lng, false);
+    }
     $('#field-form').scrollIntoView({ behavior: 'smooth' });
   }
 
@@ -1656,6 +1691,7 @@
     renderFields();
     renderFieldOptions();
     renderFieldPolys();
+    renderForecastFieldOptions();
     toast('Field deleted');
   }
 
@@ -1669,7 +1705,7 @@
       .slice().sort((a, b) => a.name.localeCompare(b.name))
       .map(f => `
         <tr>
-          <td><strong>${esc(f.name)}</strong>${f.boundary && f.boundary.length >= 3 ? ' <span class="badge-pill badge-signal-caution">Mapped</span>' : ''}</td>
+          <td><strong>${esc(f.name)}</strong>${f.boundary && f.boundary.length >= 3 ? ' <span class="badge-pill badge-signal-caution">Mapped</span>' : ''}${typeof SprayWindow !== 'undefined' && SprayWindow.fieldPin(f) ? ' <span class="badge-pill">Forecast pin</span>' : ''}</td>
           <td>${f.size != null ? `${fmtNum(f.size)} ${f.sizeUnit === 'sqft' ? 'sq ft' : 'acres'}` : '—'}</td>
           <td>${esc(f.crop || '—')}</td>
           <td>${esc(f.location || '—')}</td>
@@ -2191,14 +2227,13 @@
     return 'Thunderstorm';
   }
 
-  // Coordinates for the weather lookup: mapped-field centroid, else device GPS.
+  // Coordinates for the weather lookup: forecast pin, mapped-field centroid, else device GPS.
   function appCoords() {
     const f = getField($('#app-field').value);
-    if (f && f.boundary && f.boundary.length >= 3) {
-      const lat = f.boundary.reduce((s, p) => s + p[0], 0) / f.boundary.length;
-      const lng = f.boundary.reduce((s, p) => s + p[1], 0) / f.boundary.length;
-      return Promise.resolve({ lat, lng });
-    }
+    const pin = (typeof SprayWindow !== 'undefined' && SprayWindow.fieldPin)
+      ? SprayWindow.fieldPin(f)
+      : null;
+    if (pin) return Promise.resolve({ lat: pin.lat, lng: pin.lng });
     return new Promise(res => {
       if (!navigator.geolocation) return res(null);
       navigator.geolocation.getCurrentPosition(
@@ -3495,14 +3530,20 @@
   function downloadBackup() {
     data.meta.lastBackupAt = new Date().toISOString();
     save();
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const payload = (typeof SprayWindow !== 'undefined' && SprayWindow.backupClone)
+      ? SprayWindow.backupClone(data)
+      : JSON.parse(JSON.stringify(data));
+    payload.meta.lastBackupAt = data.meta.lastBackupAt;
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     triggerDownload(blob, backupFilename());
     renderBackupBanner();
     toast('Backup downloaded — keep it with your farm files');
   }
 
   async function shareBackup() {
-    const payload = JSON.parse(JSON.stringify(data));
+    const payload = (typeof SprayWindow !== 'undefined' && SprayWindow.backupClone)
+      ? SprayWindow.backupClone(data)
+      : JSON.parse(JSON.stringify(data));
     payload.meta.lastBackupAt = new Date().toISOString();
     const file = new File([JSON.stringify(payload, null, 2)], backupFilename(), { type: 'application/json' });
     try {
@@ -3587,6 +3628,10 @@
       try {
         const parsed = JSON.parse(reader.result);
         if (!parsed || !Array.isArray(parsed.applications)) throw new Error('Not a Pesticide Logger backup');
+        if (parsed.meta) {
+          delete parsed.meta.forecastByField;
+          delete parsed.meta.forecastCache;
+        }
         const counts = `${(parsed.applications || []).length} records, ${(parsed.products || []).length} products, ${(parsed.fields || []).length} fields`;
         const merge = confirm(
           `Backup contains ${counts}.\n\nOK = MERGE into this device (keeps both sets, no duplicates — use this to sync phone and PC)\nCancel = replace everything instead`);
@@ -3869,6 +3914,9 @@
   let drawPoly = null;        // live preview polygon
   let savedPolysLayer = null; // all saved field boundaries
   let pendingBoundary = null; // [[lat,lng],...] to store on the next field save
+  let pendingWeatherPin = null; // { lat, lng, manual }
+  let weatherPinMarker = null;
+  let mapClickMode = 'draw';
 
   const SQM_PER_ACRE = 4046.8564224;
 
@@ -3895,10 +3943,57 @@
     return d;
   }
 
+  function setPendingWeatherPin(lat, lng, manual) {
+    if (!Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) return;
+    pendingWeatherPin = { lat: Number(lat), lng: Number(lng), manual: !!manual };
+    drawWeatherPinMarker();
+  }
+
+  function clearWeatherPin() {
+    pendingWeatherPin = null;
+    mapClickMode = 'draw';
+    if (weatherPinMarker && fieldMap) fieldMap.removeLayer(weatherPinMarker);
+    weatherPinMarker = null;
+  }
+
+  function drawWeatherPinMarker() {
+    if (!fieldMap || !pendingWeatherPin) return;
+    if (weatherPinMarker) fieldMap.removeLayer(weatherPinMarker);
+    weatherPinMarker = L.circleMarker([pendingWeatherPin.lat, pendingWeatherPin.lng], {
+      radius: 9, color: '#ffffff', weight: 2, fillColor: '#c47b17', fillOpacity: 1,
+      pane: 'markerPane', interactive: true, bubblingMouseEvents: false
+    }).bindTooltip('Forecast pin', { className: 'field-poly-tooltip', sticky: true }).addTo(fieldMap);
+    enableWeatherPinDrag(weatherPinMarker);
+  }
+
+  function enableWeatherPinDrag(marker) {
+    let dragging = false;
+    marker.on('mousedown', (e) => {
+      dragging = true;
+      fieldMap.dragging.disable();
+      L.DomEvent.stop(e);
+      const move = (ev) => {
+        if (!dragging) return;
+        marker.setLatLng(ev.latlng);
+        pendingWeatherPin = { lat: ev.latlng.lat, lng: ev.latlng.lng, manual: true };
+      };
+      const up = () => {
+        dragging = false;
+        fieldMap.dragging.enable();
+        fieldMap.off('mousemove', move);
+        fieldMap.off('mouseup', up);
+      };
+      fieldMap.on('mousemove', move);
+      fieldMap.on('mouseup', up);
+    });
+    marker.on('click', (e) => L.DomEvent.stop(e));
+  }
+
   function initFieldMap() {
     if (typeof L === 'undefined') return; // Leaflet failed to load; app still works
     if (fieldMap) {
       setTimeout(() => fieldMap.invalidateSize(), 50);
+      if (pendingWeatherPin) drawWeatherPinMarker();
       return;
     }
 
@@ -3921,7 +4016,16 @@
     savedPolysLayer = L.layerGroup().addTo(fieldMap);
     renderFieldPolys();
 
-    fieldMap.on('click', (e) => addDrawPoint(e.latlng));
+    fieldMap.on('click', (e) => {
+      if (mapClickMode === 'pin') {
+        setPendingWeatherPin(e.latlng.lat, e.latlng.lng, true);
+        mapClickMode = 'draw';
+        toast('Forecast pin set — drag it onto the block you actually spray');
+        updateDrawUI();
+        return;
+      }
+      addDrawPoint(e.latlng);
+    });
     fieldMap.on('moveend', () => {
       const c = fieldMap.getCenter();
       localStorage.setItem(MAPVIEW_KEY, JSON.stringify({ lat: c.lat, lng: c.lng, zoom: fieldMap.getZoom() }));
@@ -3932,6 +4036,13 @@
     $('#map-undo').addEventListener('click', undoDrawPoint);
     $('#map-clear').addEventListener('click', () => clearDrawing(true));
     $('#map-use').addEventListener('click', useShape);
+    if ($('#map-weather-pin')) {
+      $('#map-weather-pin').addEventListener('click', () => {
+        mapClickMode = 'pin';
+        toast('Tap the map to drop the forecast pin');
+        updateDrawUI();
+      });
+    }
 
     setTimeout(() => fieldMap.invalidateSize(), 50);
   }
@@ -4008,7 +4119,9 @@
     $('#map-use').disabled = n < 3;
     const readout = $('#map-readout');
     if (n === 0) {
-      readout.innerHTML = 'Tap the map to start drawing a field boundary.';
+      readout.innerHTML = mapClickMode === 'pin'
+        ? 'Tap the field to drop the forecast pin. Your phone’s location is not this field.'
+        : 'Tap the map to start drawing a field boundary.';
     } else if (n < 3) {
       readout.innerHTML = `${n} point${n === 1 ? '' : 's'} placed — need at least 3 to close a shape.`;
     } else {
@@ -4051,6 +4164,12 @@
       Math.round(p.lat * 1e6) / 1e6,
       Math.round(p.lng * 1e6) / 1e6
     ]);
+    if (!pendingWeatherPin || !pendingWeatherPin.manual) {
+      const c = (typeof SprayWindow !== 'undefined' && SprayWindow.ringCentroid)
+        ? SprayWindow.ringCentroid(pendingBoundary)
+        : null;
+      if (c) setPendingWeatherPin(c.lat, c.lng, false);
+    }
     $('#field-acres').value = Math.round(acres * 1000) / 1000;
     $('#field-unit').value = 'acres';
     if (!$('#field-location').value) {
@@ -4830,130 +4949,373 @@
   }
 
   // -------------------------------------------------------------- spray window forecast
+  // Per-field caches. Never paint Field A's hours under Field B's name.
 
-  // Score one forecast hour against common drift guidance. The label rules.
-  function scoreSprayHour(h) {
-    const reasons = [];
-    let score = 'good';
-    const bump = (level, why) => {
-      reasons.push(why);
-      if (level === 'bad' || score === 'bad') score = 'bad';
-      else score = 'fair';
-    };
-    if (h.wind > 12 || h.gusts > 18) bump('bad', `wind ${Math.round(h.wind)} mph (gusts ${Math.round(h.gusts)})`);
-    else if (h.wind > 10 || h.gusts > 15) bump('fair', `breezy — ${Math.round(h.wind)} mph`);
-    if (h.wind < 2) bump('fair', 'near-calm — temperature inversion risk');
-    else if (h.wind < 3 && score !== 'bad') bump('fair', 'light wind — watch for inversion');
-    if (h.precipProb >= 50 || h.precip > 0.02) bump('bad', `rain likely (${h.precipProb}%)`);
-    else if (h.precipProb >= 30) bump('fair', `rain chance ${h.precipProb}%`);
-    if (h.temp >= 90) bump('fair', `hot (${Math.round(h.temp)} °F) — volatility/evaporation`);
-    if (reasons.length === 0) reasons.push(`${Math.round(h.wind)} mph, ${h.precipProb}% rain`);
-    return { score, reasons };
+  function scoreSprayHour(h, opts) {
+    return SprayWindow.scoreSprayHour(h, opts);
   }
 
-  function forecastCoords() {
-    const fieldId = $('#forecast-field') ? $('#forecast-field').value : '';
-    const f = getField(fieldId);
-    if (f && f.boundary && f.boundary.length >= 3) {
-      const lat = f.boundary.reduce((s, p) => s + p[0], 0) / f.boundary.length;
-      const lng = f.boundary.reduce((s, p) => s + p[1], 0) / f.boundary.length;
-      return Promise.resolve({ lat, lng });
+  let forecastSeq = 0;
+  const forecastErrors = {};
+
+  function forecastStore() {
+    if (!data.meta.forecastByField || typeof data.meta.forecastByField !== 'object') {
+      data.meta.forecastByField = {};
     }
-    return new Promise(res => {
+    delete data.meta.forecastCache;
+    return data.meta.forecastByField;
+  }
+
+  function selectedForecastKey() {
+    return $('#forecast-field') ? $('#forecast-field').value : '';
+  }
+
+  function forecastableTargets() {
+    return data.fields
+      .map((f) => ({ key: f.id, pin: SprayWindow.fieldPin(f), name: f.name }))
+      .filter((t) => t.pin);
+  }
+
+  function bestMatchUrl(lats, lngs) {
+    return `https://api.open-meteo.com/v1/forecast?latitude=${lats.join(',')}&longitude=${lngs.join(',')}`
+      + `&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,wind_speed_10m,wind_gusts_10m,wind_direction_10m,weather_code`
+      + `&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&forecast_days=3&timezone=auto&cell_selection=land`;
+  }
+
+  function hrrrUrl(lats, lngs) {
+    return `https://api.open-meteo.com/v1/gfs?latitude=${lats.join(',')}&longitude=${lngs.join(',')}`
+      + `&hourly=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m,wind_direction_10m,weather_code`
+      + `&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&forecast_hours=48&timezone=auto&models=hrrr_conus`;
+  }
+
+  async function fetchOpenMeteoJson(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Open-Meteo ' + res.status);
+    return res.json();
+  }
+
+  async function fetchForecastTargets(targets, seq) {
+    const store = forecastStore();
+    const nowMs = Date.now();
+    for (const group of SprayWindow.chunk(targets, SprayWindow.BATCH_SIZE)) {
+      if (seq !== forecastSeq) return;
+      const lats = group.map((t) => SprayWindow.roundCoord(t.pin.lat));
+      const lngs = group.map((t) => SprayWindow.roundCoord(t.pin.lng));
+      let fallbackList = [];
+      try {
+        fallbackList = SprayWindow.parseOpenMeteoPayload(await fetchOpenMeteoJson(bestMatchUrl(lats, lngs)));
+      } catch (err) {
+        group.forEach((t) => { forecastErrors[t.key] = 'Could not fetch the forecast — check your connection'; });
+        continue;
+      }
+      const conusIdx = [];
+      group.forEach((t, i) => {
+        if (SprayWindow.isConus(t.pin.lat, t.pin.lng)) conusIdx.push(i);
+      });
+      let hrrrList = [];
+      if (conusIdx.length) {
+        try {
+          const hlats = conusIdx.map((i) => lats[i]);
+          const hlngs = conusIdx.map((i) => lngs[i]);
+          hrrrList = SprayWindow.parseOpenMeteoPayload(await fetchOpenMeteoJson(hrrrUrl(hlats, hlngs)));
+        } catch (err) {
+          hrrrList = [];
+        }
+      }
+      group.forEach((t, i) => {
+        const fallback = fallbackList[i];
+        if (!fallback || !fallback.hourly) {
+          forecastErrors[t.key] = 'No forecast returned for this pin.';
+          return;
+        }
+        const slot = conusIdx.indexOf(i);
+        const hrrrJson = slot >= 0 ? hrrrList[slot] : null;
+        const hrrrOk = hrrrJson && hrrrJson.hourly && Array.isArray(hrrrJson.hourly.time)
+          && hrrrJson.hourly.time.length;
+        store[t.key] = SprayWindow.buildEntry(t.key, t.pin, hrrrOk ? hrrrJson : null, fallback, nowMs);
+        delete forecastErrors[t.key];
+      });
+    }
+    if (seq !== forecastSeq) return;
+    save();
+    renderSprayForecast();
+  }
+
+  async function prefetchFieldForecasts(force) {
+    if (!navigator.onLine && !force) {
+      renderSprayForecast();
+      return;
+    }
+    const stale = forecastableTargets().filter((t) => {
+      const cached = SprayWindow.getCached(forecastStore(), t.key, t.pin);
+      if (force || !cached) return true;
+      return SprayWindow.freshnessTier(cached.fetchedAt, Date.now()) !== 'fresh';
+    });
+    if (!stale.length) {
+      renderSprayForecast();
+      return;
+    }
+    const seq = ++forecastSeq;
+    await fetchForecastTargets(stale, seq);
+  }
+
+  async function fetchDeviceForecast() {
+    const pin = await new Promise((res) => {
       if (!navigator.geolocation) return res(null);
       navigator.geolocation.getCurrentPosition(
-        p => res({ lat: p.coords.latitude, lng: p.coords.longitude }),
-        () => res(null), { timeout: 8000 });
+        (p) => res({ lat: p.coords.latitude, lng: p.coords.longitude, source: 'gps' }),
+        () => res(null),
+        { timeout: 8000 }
+      );
     });
+    if (!pin) {
+      forecastErrors[SprayWindow.DEVICE_KEY] = 'Location permission is needed for weather here. That is not a field.';
+      renderSprayForecast();
+      return;
+    }
+    const seq = ++forecastSeq;
+    await fetchForecastTargets([{ key: SprayWindow.DEVICE_KEY, pin }], seq);
   }
 
   async function fetchSprayForecast() {
     const btn = $('#forecast-refresh');
-    btn.disabled = true;
-    btn.textContent = 'Updating…';
+    if (btn) { btn.disabled = true; btn.textContent = 'Updating…'; }
     try {
-      const c = await forecastCoords();
-      if (!c) { toast('Pick a mapped field, or allow location access'); return; }
-      const res = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${c.lat.toFixed(4)}&longitude=${c.lng.toFixed(4)}` +
-        `&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,wind_speed_10m,wind_gusts_10m` +
-        `&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&forecast_days=3&timezone=auto`);
-      const j = await res.json();
-      const hh = j.hourly;
-      const nowIso = new Date();
-      const hours = [];
-      for (let i = 0; i < hh.time.length && hours.length < 48; i++) {
-        const t = new Date(hh.time[i]);
-        if (t < nowIso) continue;
-        hours.push({
-          time: hh.time[i],
-          temp: hh.temperature_2m[i],
-          rh: hh.relative_humidity_2m[i],
-          precipProb: hh.precipitation_probability[i] ?? 0,
-          precip: hh.precipitation[i] ?? 0,
-          wind: hh.wind_speed_10m[i],
-          gusts: hh.wind_gusts_10m[i] ?? hh.wind_speed_10m[i]
-        });
+      const key = selectedForecastKey();
+      if (!key) {
+        if (!forecastableTargets().length) {
+          toast('Drop a forecast pin on a field first. Your phone’s location is not a field.');
+          return;
+        }
+        await prefetchFieldForecasts(true);
+        toast(navigator.onLine ? 'Outlook updated from Open-Meteo' : 'Offline — showing saved outlook');
+        return;
       }
-      data.meta.forecastCache = { at: Date.now(), fieldId: $('#forecast-field').value, hours };
-      save();
-      renderSprayForecast();
-      toast('Outlook updated from Open-Meteo');
+      if (key === SprayWindow.DEVICE_KEY) {
+        await fetchDeviceForecast();
+        return;
+      }
+      const field = getField(key);
+      const pin = SprayWindow.fieldPin(field);
+      if (!pin) {
+        toast('Drop a pin on this field to see its outlook. Your phone’s location is not this field.');
+        renderSprayForecast();
+        return;
+      }
+      const seq = ++forecastSeq;
+      await fetchForecastTargets([{ key, pin }], seq);
+      if (!forecastErrors[key]) toast('Outlook updated from Open-Meteo');
+      else toast(forecastErrors[key]);
     } catch (e) {
       toast('Could not fetch the forecast — check your connection');
     } finally {
-      btn.disabled = false;
-      btn.textContent = 'Update outlook';
+      if (btn) { btn.disabled = false; btn.textContent = 'Update outlook'; }
     }
   }
 
   function renderForecastFieldOptions() {
     const sel = $('#forecast-field');
     if (!sel) return;
-    const keep = sel.value;
-    sel.innerHTML = '<option value="">My location (GPS)</option>' +
-      data.fields.filter(f => f.boundary && f.boundary.length >= 3)
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .map(f => `<option value="${f.id}">${esc(f.name)}</option>`).join('');
-    sel.value = keep;
+    const keep = sel.value || data.meta.forecastSelectedKey || '';
+    const pinnable = data.fields.filter((f) => SprayWindow.fieldPin(f))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    const unmapped = data.fields.filter((f) => !SprayWindow.fieldPin(f))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    let html = '<option value="">All fields (planning)</option>';
+    pinnable.forEach((f) => { html += `<option value="${esc(f.id)}">${esc(f.name)}</option>`; });
+    unmapped.forEach((f) => {
+      html += `<option value="${esc(f.id)}">${esc(f.name)} — needs a map pin</option>`;
+    });
+    html += `<option value="${SprayWindow.DEVICE_KEY}">This device (not a field)</option>`;
+    sel.innerHTML = html;
+    if (keep && [...sel.options].some((o) => o.value === keep)) sel.value = keep;
+    else sel.value = '';
   }
 
-  function renderSprayForecast() {
-    const host = $('#forecast-body');
+  function hourBlocksHtml(hours, stale, interactive) {
+    const nowMs = Date.now();
+    const nextDay = nowMs + 24 * 3600000;
+    return hours.filter((h) => {
+      const t = new Date(h.time).getTime();
+      return t >= nowMs && t <= nextDay;
+    }).map((h) => {
+      const { score, reasons } = scoreSprayHour(h);
+      const hr = new Date(h.time).getHours();
+      const cls = `fc-block fc-${score}${stale ? ' fc-stale' : ''}`;
+      if (!interactive) return `<span class="${cls}">${hr}</span>`;
+      const detail = `${hr}:00 — ${reasons.join('; ')} · ${Math.round(h.temp)} °F, RH ${h.rh}%`;
+      return `<button type="button" class="${cls}" data-fc-detail="${esc(detail)}" aria-label="${esc(`${hr}:00 ${score}`)}">${hr}</button>`;
+    }).join('');
+  }
+
+  function renderForecastStrip() {
+    const host = $('#forecast-strip');
     if (!host) return;
-    const cache = data.meta.forecastCache;
-    if (!cache || !cache.hours || !cache.hours.length) {
-      host.innerHTML = `<p class="empty-note">Tap <strong>Update outlook</strong> to score the next 48 hours for spraying.</p>`;
+    const online = navigator.onLine;
+    const rows = [];
+    data.fields.slice().sort((a, b) => a.name.localeCompare(b.name)).forEach((f) => {
+      const pin = SprayWindow.fieldPin(f);
+      if (!pin) {
+        rows.push(`<button type="button" class="fc-strip-row" data-fc-field="${esc(f.id)}">
+          <span class="fc-strip-name">${esc(f.name)}</span>
+          <span class="fc-strip-meta">Drop a pin on this field to see its outlook. Your phone’s location is not this field.</span>
+        </button>`);
+        return;
+      }
+      const cached = SprayWindow.getCached(forecastStore(), f.id, pin);
+      const err = forecastErrors[f.id];
+      if (!cached) {
+        rows.push(`<button type="button" class="fc-strip-row" data-fc-field="${esc(f.id)}">
+          <span class="fc-strip-name">${esc(f.name)}</span>
+          <span class="fc-strip-meta">${esc(err || 'No outlook yet — tap Update outlook.')}</span>
+        </button>`);
+        return;
+      }
+      const tier = SprayWindow.freshnessTier(cached.fetchedAt, Date.now());
+      const copy = SprayWindow.freshnessCopy(tier, cached.fetchedAt, online);
+      const summary = SprayWindow.nextWindowSummary(cached.hours, Date.now());
+      const stale = tier === 'stale' || !online;
+      rows.push(`<button type="button" class="fc-strip-row" data-fc-field="${esc(f.id)}">
+        <span class="fc-strip-name">${esc(f.name)}</span>
+        <span class="fc-strip-meta">${esc(summary)}${copy.banner ? ' · ' + esc(copy.text) : ''}</span>
+        <span class="fc-strip-hours">${hourBlocksHtml(cached.hours, stale, false)}</span>
+      </button>`);
+    });
+    if (!rows.length) {
+      host.innerHTML = `<p class="empty-note">Add a field and drop a forecast pin to plan a drive. GPS here is not a destination field.</p>`;
       return;
     }
-    const stale = Date.now() - cache.at > 3 * 3600000;
+    host.innerHTML = `<div class="fc-strip">${rows.join('')}</div>`;
+    host.querySelectorAll('[data-fc-field]').forEach((b) => {
+      b.addEventListener('click', () => {
+        if ($('#forecast-field')) $('#forecast-field').value = b.dataset.fcField;
+        data.meta.forecastSelectedKey = b.dataset.fcField;
+        save();
+        renderSprayForecast();
+        const field = getField(b.dataset.fcField);
+        if (SprayWindow.fieldPin(field) && !SprayWindow.getCached(forecastStore(), field.id, SprayWindow.fieldPin(field))) {
+          fetchSprayForecast();
+        }
+      });
+    });
+  }
+
+  function renderHourChart(host, cache, title, pin) {
+    const online = navigator.onLine;
+    const tier = SprayWindow.freshnessTier(cache.fetchedAt, Date.now());
+    const copy = SprayWindow.freshnessCopy(tier, cache.fetchedAt, online);
+    const stale = tier === 'stale' || !online;
     const byDay = {};
-    cache.hours.forEach(h => {
-      const day = h.time.slice(0, 10);
+    cache.hours.forEach((h) => {
+      const day = String(h.time).slice(0, 10);
       (byDay[day] = byDay[day] || []).push(h);
     });
     const dayHtml = Object.entries(byDay).map(([day, hours]) => {
       const label = new Date(day + 'T12:00:00')
         .toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
-      const blocks = hours.map(h => {
+      const blocks = hours.map((h) => {
         const { score, reasons } = scoreSprayHour(h);
         const hr = new Date(h.time).getHours();
-        return `<button type="button" class="fc-block fc-${score}"
-          data-fc-detail="${esc(`${label} ${hr}:00 — ${reasons.join('; ')} · ${Math.round(h.temp)} °F, RH ${h.rh}%`)}"
-          aria-label="${esc(`${label} ${hr}:00 ${score}`)}">${hr}</button>`;
+        const detail = `${label} ${hr}:00 — ${reasons.join('; ')} · ${Math.round(h.temp)} °F, RH ${h.rh}%`
+          + (h.source === 'hrrr' ? ' · HRRR' : h.source ? ` · ${h.source}` : '');
+        return `<button type="button" class="fc-block fc-${score}${stale ? ' fc-stale' : ''}"
+          data-fc-detail="${esc(detail)}" aria-label="${esc(`${label} ${hr}:00 ${score}`)}">${hr}</button>`;
       }).join('');
       return `<div class="fc-day"><span class="fc-day-label">${label}</span><div class="fc-blocks">${blocks}</div></div>`;
     }).join('');
+    const seam = SprayWindow.hrrrEndLabel(cache.hours);
+    const coords = pin
+      ? `${Number(pin.lat).toFixed(4)}, ${Number(pin.lng).toFixed(4)}`
+      : `${cache.lat}, ${cache.lng}`;
+    const grid = (cache.gridLat != null && cache.gridLng != null)
+      ? ` · model point ${Number(cache.gridLat).toFixed(4)}, ${Number(cache.gridLng).toFixed(4)}`
+      : '';
+    const banner = copy.banner
+      ? `<p class="fc-banner fc-banner-${copy.banner}">${esc(copy.text)}</p>`
+      : '';
     host.innerHTML = `
-      ${stale ? `<p class="card-hint">Outlook is ${Math.round((Date.now() - cache.at) / 3600000)}h old — update before deciding.</p>` : ''}
+      <p class="fc-evidence"><strong>${esc(title)}</strong> · pin ${esc(coords)}${esc(grid)}
+        · ${esc(SprayWindow.modelLabel(cache.model))}</p>
+      ${banner}
+      ${seam ? `<p class="fc-seam">High-resolution (HRRR) through ${esc(seam)} · longer-range model after that.</p>` : ''}
       ${dayHtml}
       <p class="fc-legend"><span class="fc-key fc-good"></span> good
         <span class="fc-key fc-fair"></span> marginal
         <span class="fc-key fc-bad"></span> poor
         <span class="card-hint">· tap an hour for details</span></p>
-      <p class="card-hint" id="fc-detail">Updated ${new Date(cache.at).toLocaleString()}.</p>`;
-    host.querySelectorAll('[data-fc-detail]').forEach(b =>
+      <p class="card-hint" id="fc-detail">${esc(copy.text)}</p>`;
+    host.querySelectorAll('[data-fc-detail]').forEach((b) =>
       b.addEventListener('click', () => { $('#fc-detail').textContent = b.dataset.fcDetail; }));
+  }
+
+  function renderForecastDetail() {
+    const host = $('#forecast-body');
+    if (!host) return;
+    const key = selectedForecastKey();
+    if (!key) {
+      host.innerHTML = `<p class="empty-note">Tap a field above for the 48-hour chart, or Update outlook to refresh every pin.</p>`;
+      return;
+    }
+    if (key === SprayWindow.DEVICE_KEY) {
+      const pin = { lat: (forecastStore()[key] || {}).lat, lng: (forecastStore()[key] || {}).lng };
+      const cached = SprayWindow.getCached(forecastStore(), key, pin);
+      if (forecastErrors[key] && !cached) {
+        host.innerHTML = `<p class="fc-banner fc-banner-error">${esc(forecastErrors[key])}</p>`;
+        return;
+      }
+      if (!cached) {
+        host.innerHTML = `<p class="empty-note">Weather here uses this device’s GPS — it is not a field. Tap Update outlook after allowing location.</p>`;
+        return;
+      }
+      renderHourChart(host, cached, 'This device (not a field)', pin);
+      return;
+    }
+    const field = getField(key);
+    if (!field) {
+      host.innerHTML = '';
+      return;
+    }
+    const pin = SprayWindow.fieldPin(field);
+    if (!pin) {
+      host.innerHTML = `<p class="empty-note">Drop a pin on <strong>${esc(field.name)}</strong> to see its outlook. Your phone’s location is not this field.</p>`;
+      return;
+    }
+    const cached = SprayWindow.getCached(forecastStore(), key, pin);
+    if (forecastErrors[key] && !cached) {
+      host.innerHTML = `<p class="fc-banner fc-banner-error">${esc(forecastErrors[key])}</p>`;
+      return;
+    }
+    if (!cached) {
+      host.innerHTML = `<p class="empty-note">No outlook for <strong>${esc(field.name)}</strong> yet. Tap <strong>Update outlook</strong>.</p>`;
+      return;
+    }
+    renderHourChart(host, cached, field.name, pin);
+  }
+
+  function renderSprayForecast() {
+    renderForecastStrip();
+    renderForecastDetail();
+  }
+
+  function onForecastFieldChange() {
+    const key = selectedForecastKey();
+    data.meta.forecastSelectedKey = key;
+    save();
+    renderSprayForecast();
+    if (!key) return;
+    if (key === SprayWindow.DEVICE_KEY) {
+      const cached = forecastStore()[key];
+      const pin = cached ? { lat: cached.lat, lng: cached.lng } : null;
+      if (!SprayWindow.getCached(forecastStore(), key, pin)) fetchDeviceForecast();
+      return;
+    }
+    const field = getField(key);
+    const pin = SprayWindow.fieldPin(field);
+    if (!pin) return;
+    const cached = SprayWindow.getCached(forecastStore(), key, pin);
+    if (!cached || SprayWindow.freshnessTier(cached.fetchedAt, Date.now()) !== 'fresh') {
+      fetchSprayForecast();
+    }
   }
 
   function initSprayForecast() {
@@ -4961,7 +5323,15 @@
     renderForecastFieldOptions();
     renderSprayForecast();
     $('#forecast-refresh').addEventListener('click', fetchSprayForecast);
-    $('#forecast-field').addEventListener('change', renderSprayForecast);
+    $('#forecast-field').addEventListener('change', onForecastFieldChange);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible'
+        && $('#tab-dashboard')
+        && $('#tab-dashboard').classList.contains('active')) {
+        prefetchFieldForecasts(false);
+      }
+    });
+    prefetchFieldForecasts(false);
   }
 
   // -------------------------------------------------------------- licensing
@@ -5213,7 +5583,10 @@
   // Keep REI countdowns fresh; fire due reminders; lock the app when the
   // trial expires without requiring a reload.
   setInterval(() => {
-    if ($('#tab-dashboard') && $('#tab-dashboard').classList.contains('active')) renderDashboard();
+    if ($('#tab-dashboard') && $('#tab-dashboard').classList.contains('active')) {
+      renderDashboard();
+      prefetchFieldForecasts(false);
+    }
     checkReminders();
     refreshLicenseState();
   }, 60000);

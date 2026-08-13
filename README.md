@@ -30,7 +30,8 @@ application at the repository root.
 | **REI / PHI tracking** | Label REI/PHI countdown for worker re-entry and harvest timing. |
 | **Tank mix calculator** | Area, tank size, spray volume, multi-product rates, printable W-A-L-E worksheet. |
 | **Live EPA product lookup** | Official EPA PPLS identity/status import via optional Vercel proxy. Rates, REI, and PHI stay label-entered. |
-| **Field mapper** | Satellite corner tapping with geodesic acreage; boundaries stay local. |
+| **Field mapper** | Satellite corner tapping with geodesic acreage; boundaries stay local. **Fit all fields** when two or more rings exist. |
+| **Farm scale** | Same app for two tunnels or 150 named sites. Search appears on Fields/Products at 8+ rows; long pickers get a type-filter; Spray Log can default to this season on a long history — **Show prior years** is there for every farm size that has older logs. Optional field groups only if you actually named two. |
 | **Weather auto-fill** | Open-Meteo fill for wind, temperature, sky/humidity at the field’s forecast pin (or GPS if you are logging on-site). |
 | **Inspection output** | Print/PDF, CSV, **state compliance pack** (JSON with citation, field matrix, due/copy status, audit history), and a **certifier/buyer packet** for organic & GAP audits. |
 | **Spray window outlook** | Glance rows (Go / Wait / No) at each field’s map pin — not the phone’s GPS. Tap a field for the next 12 hours, then Details for the 48-hour chart. CONUS near-term uses NOAA HRRR; stale data is labeled and cannot be used as a go/no-go for a trip. Planning guidance — the label still rules. |
@@ -111,6 +112,7 @@ node --check spray-window.js
 node --check store.js
 node --check compliance.js
 node --check camera-scan.js
+node --check farm-scale.js
 node --check sw.js
 node tests/compliance.test.js
 node tests/license.test.js
@@ -121,6 +123,7 @@ node tests/spray-window.test.js
 node tests/store.test.js
 node tests/compliance-engine.test.js
 node tests/camera-scan.test.js
+node tests/farm-scale.test.js
 ```
 
 ## Intentional non-goals
@@ -137,10 +140,14 @@ These are scope boundaries, not unfinished work:
 ```
 index.html                 App shell
 styles.css                 Theme + print stylesheet
-app.js                     Application + compliance engine
+app.js                     UI shell
+store.js                   IndexedDB-primary farm persistence (localStorage is a boot cache)
+compliance.js              Recordkeeping completion / interval helpers
+camera-scan.js             Camera / still-photo / OCR scan path
 deadline.js                Record / customer-copy deadline math
 backup-merge.js            Conservative trial/license merge for backup restore
 spray-window.js            Per-field spray-window scoring, cache isolation, Open-Meteo stitch
+farm-scale.js              Find/pick/window helpers so the same UI fits 2 fields and 150 sites
 license.js                 Offline license verification (WebCrypto)
 state_pesticide_laws.js    50-state agencies, citations, retention, required fields
 api/epa.js                 Stateless Vercel proxy to official EPA PPLS

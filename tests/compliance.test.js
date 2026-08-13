@@ -248,6 +248,7 @@ check('source files advertise v2.8.0 + deadline/license wiring', () => {
   assert.ok(html.includes('v2.8.0'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));
+  assert.ok(html.includes('farm-scale.js'));
   assert.ok(html.includes('i18n.js'));
   assert.ok(html.includes('backup-merge.js'));
   assert.ok(html.includes('spray-window.js'));
@@ -256,6 +257,7 @@ check('source files advertise v2.8.0 + deadline/license wiring', () => {
   assert.ok(html.includes('camera-scan.js'));
   assert.ok(sw.includes('./deadline.js'));
   assert.ok(sw.includes('./license.js'));
+  assert.ok(sw.includes('./farm-scale.js'));
   assert.ok(sw.includes('./i18n.js'));
   assert.ok(sw.includes('./backup-merge.js'));
   assert.ok(sw.includes('./spray-window.js'));
@@ -527,6 +529,16 @@ check('paid-only: whole app is gated by license/trial, no per-feature Pro gate',
   assert.ok(html.includes('id="license-lock-screen"'), 'lock screen exists');
   assert.ok(html.includes('id="lock-key-input"') && html.includes('id="lock-activate"'),
     'lock screen can activate a key without navigating elsewhere');
+  assert.ok(html.includes('id="lock-records"') && html.includes('id="lock-download-backup"'),
+    'lapsed license still lets the grower review and export spray logs');
+  assert.ok(html.includes('id="log-show-prior-years"'), 'every farm size can review prior years');
+  assert.ok(!/async function refreshLicenseState[\s\S]{0,2500}clearAllData/.test(app),
+    'license refresh does not wipe records');
+  assert.ok(!/function applyLicenseGate[\s\S]{0,1200}clearAllData/.test(app),
+    'license gate does not wipe records');
+  assert.ok(app.includes('function renderLockRecords'), 'lock screen renders existing logs');
+  assert.ok(app.includes('FarmScale.adoptForecastFromMeta'), 'outlook hours leave farm JSON before the next save');
+  assert.ok(app.includes('dropForecast'), 'deleted fields do not leave forecast rows behind');
   // Every feature works the same regardless of trial vs. paid key — no
   // separate "Pro" bucket left to gate any one of them differently.
   ['function onAppSubmit', 'function downloadCsv', 'function printReport',

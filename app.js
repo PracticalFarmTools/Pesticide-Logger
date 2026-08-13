@@ -21,6 +21,10 @@
   let pendingFarmJson = null;
   let idbDb = null;
   let farmUiStarted = false;
+  let forecastMem = {};
+  if (typeof FarmScale !== 'undefined' && FarmScale.adoptForecastFromMeta) {
+    FarmScale.adoptForecastFromMeta(data, forecastMem);
+  }
 
   function loadBootCache() {
     try {
@@ -78,13 +82,32 @@
 
   function persistFarm(opts) {
     opts = opts || {};
+    persistForecastStore();
     FarmStore.touchSaved(data);
     delete data._boot;
-    const json = JSON.stringify(data);
+    const forecastIdbReady = !!(idbDb && idbDb.objectStoreNames.contains('forecast'));
+    if (data.meta) {
+      if (!forecastIdbReady && Object.keys(forecastMem).length) {
+        // Keep hours in the farm JSON until the forecast store exists so a
+        // save-before-IDB cannot drop last session's outlook.
+        data.meta.forecastByField = forecastMem;
+      } else {
+        delete data.meta.forecastByField;
+        delete data.meta.forecastCache;
+      }
+    }
+    const payload = (forecastIdbReady && typeof FarmScale !== 'undefined' && FarmScale.stripForecastFromFarm)
+      ? FarmScale.stripForecastFromFarm(data)
+      : data;
+    const json = JSON.stringify(payload);
+    if (data.meta) {
+      delete data.meta.forecastByField;
+      delete data.meta.forecastCache;
+    }
     pendingFarmJson = json;
     const durable = writeFarmToIdb(json);
     if (durable) pendingFarmJson = null;
-    const cached = writeBootCacheBestEffort(data, json);
+    const cached = writeBootCacheBestEffort(payload, json);
     if (!opts.quiet) scheduleAutoBackup();
     if (!durable && !cached && !opts.quiet) {
       toast('⚠ Browser storage is full — this change may not persist. Download a backup now (Settings → Data), then clear space.');
@@ -118,12 +141,78 @@
       return true;
     }
     data = next;
+    if (typeof FarmScale !== 'undefined' && FarmScale.adoptForecastFromMeta) {
+      FarmScale.adoptForecastFromMeta(data, forecastMem);
+    }
     writeBootCacheBestEffort(data);
     return false;
   }
 
+  function persistForecastStore() {
+    if (!idbDb || !idbDb.objectStoreNames.contains('forecast')) return;
+    try {
+      const tx = idbDb.transaction('forecast', 'readwrite');
+      const store = tx.objectStore('forecast');
+      store.clear();
+      Object.keys(forecastMem).forEach((k) => {
+        const entry = forecastMem[k];
+        if (entry) store.put(Object.assign({ id: k }, entry));
+      });
+    } catch (e) { /* best-effort */ }
+  }
+
+  function dropForecast(id) {
+    if (!id || !forecastMem[id]) return;
+    delete forecastMem[id];
+    persistForecastStore();
+  }
+
+  function migrateForecastFromMeta() {
+    const from = data.meta && data.meta.forecastByField;
+    if (from && typeof from === 'object') {
+      Object.keys(from).forEach((k) => {
+        if (!forecastMem[k]) forecastMem[k] = from[k];
+      });
+    }
+    if (data.meta) {
+      delete data.meta.forecastByField;
+      delete data.meta.forecastCache;
+    }
+    persistForecastStore();
+  }
+
+  function loadForecastStore() {
+    if (!idbDb || !idbDb.objectStoreNames.contains('forecast')) {
+      migrateForecastFromMeta();
+      return;
+    }
+    try {
+      const getAll = idbDb.transaction('forecast', 'readonly').objectStore('forecast').getAll();
+      getAll.onsuccess = () => {
+        (getAll.result || []).forEach((row) => {
+          const id = row && (row.id || row.fieldId);
+          if (!id) return;
+          const entry = Object.assign({}, row);
+          delete entry.id;
+          forecastMem[id] = entry;
+        });
+        migrateForecastFromMeta();
+        try {
+          const raw = localStorage.getItem(STORE_KEY);
+          const parsed = raw ? JSON.parse(raw) : null;
+          if (parsed && parsed.meta && parsed.meta.forecastByField) persistFarm({ quiet: true });
+        } catch (e) { /* leave boot cache as-is */ }
+        if (typeof renderSprayForecast === 'function') renderSprayForecast();
+      };
+      getAll.onerror = () => migrateForecastFromMeta();
+    } catch (e) {
+      migrateForecastFromMeta();
+    }
+  }
+
   // IndexedDB is the durable farm. localStorage is a boot cache so a return
   // visit can paint without waiting. Photos stay in a separate store.
+  // Outlook hours live in a forecast object store once IDB is at version 3.
   function initDurability() {
     try {
       if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
@@ -142,6 +231,7 @@
         const db = req.result;
         if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
         if (!db.objectStoreNames.contains('photos')) db.createObjectStore('photos', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('forecast')) db.createObjectStore('forecast', { keyPath: 'id' });
       };
       req.onsuccess = () => {
         idbDb = req.result;
@@ -153,6 +243,7 @@
             purgeExpiredSoftDeletes();
             if (pendingFarmJson) writeFarmToIdb(pendingFarmJson);
             else writeFarmToIdb(JSON.stringify(data));
+            loadForecastStore();
             resumeAutoBackup();
             setTimeout(sweepOrphanPhotos, 4000);
             resolve(idbFarm);
@@ -1224,6 +1315,7 @@
       toast(idx >= 0 ? 'Product updated' : 'Product added to library');
     });
     $('#prod-cancel-btn').addEventListener('click', resetProductForm);
+    if ($('#product-search')) $('#product-search').addEventListener('input', renderProducts);
     renderProducts();
   }
 
@@ -1300,13 +1392,27 @@
 
   function renderProducts() {
     const host = $('#product-list');
+    const searchEl = $('#product-search');
     if (!data.products.length) {
+      if (searchEl) searchEl.hidden = true;
       host.innerHTML = `<p class="empty-note">No products yet. Add the pesticides you use — REI, PHI, and rates come straight off the label.</p>`;
       return;
     }
-    const rows = data.products
-      .slice().sort((a, b) => a.name.localeCompare(b.name))
-      .map(p => `
+    if (searchEl) {
+      searchEl.hidden = !(typeof FarmScale !== 'undefined' && FarmScale.shouldShowListSearch(data.products.length));
+      if (searchEl.hidden) searchEl.value = '';
+    }
+    let list = data.products.slice();
+    if (typeof FarmScale !== 'undefined') {
+      const q = searchEl && !searchEl.hidden ? searchEl.value : '';
+      list = FarmScale.filterByQuery(list, q, FarmScale.productSearchHaystack);
+    }
+    list.sort((a, b) => a.name.localeCompare(b.name));
+    if (!list.length) {
+      host.innerHTML = `<p class="empty-note">No records match your search.</p>`;
+      return;
+    }
+    const rows = list.map(p => `
         <tr>
           <td><strong>${esc(p.name)}</strong><br>
             <span class="card-hint">${esc(p.activeIngredient || '')}</span>
@@ -1372,6 +1478,7 @@
         crop: $('#field-crop').value.trim(),
         location: $('#field-location').value.trim(),
         siteId: ($('#field-site-id') && $('#field-site-id').value.trim()) || '',
+        group: ($('#field-group') && $('#field-group').value.trim()) || '',
         boundary,
         weatherLat: pin.weatherLat,
         weatherLng: pin.weatherLng,
@@ -1387,9 +1494,14 @@
       renderFieldOptions();
       renderFieldPolys();
       renderForecastFieldOptions();
-      toast(idx >= 0 ? 'Field updated' : 'Field added');
+      const dup = typeof FarmScale !== 'undefined' && FarmScale.duplicateNameWarning
+        ? FarmScale.duplicateNameWarning(data.fields, field.name, field.id)
+        : null;
+      if (dup) toast(dup);
+      else toast(idx >= 0 ? 'Field updated' : 'Field added');
     });
     $('#field-cancel-btn').addEventListener('click', resetFieldForm);
+    if ($('#field-search')) $('#field-search').addEventListener('input', renderFields);
     renderFields();
   }
 
@@ -1399,6 +1511,7 @@
     $('#field-form-title').textContent = 'Add a field / site';
     $('#field-save-btn').textContent = 'Save field';
     $('#field-cancel-btn').hidden = true;
+    if ($('#field-group')) $('#field-group').value = '';
     if (fieldMap) clearDrawing(true); else pendingBoundary = null;
     clearWeatherPin();
     syncWeatherPinButton();
@@ -1414,6 +1527,7 @@
     $('#field-crop').value = f.crop;
     $('#field-location').value = f.location;
     if ($('#field-site-id')) $('#field-site-id').value = f.siteId || '';
+    if ($('#field-group')) $('#field-group').value = f.group || '';
     $('#field-form-title').textContent = `Edit — ${f.name}`;
     $('#field-save-btn').textContent = 'Update field';
     $('#field-cancel-btn').hidden = false;
@@ -1433,6 +1547,7 @@
     if (!f) return;
     if (!confirm(`Delete "${f.name}"? Past spray records keep their saved copy of its details.`)) return;
     data.fields = data.fields.filter(x => x.id !== id);
+    dropForecast(id);
     save();
     renderFields();
     renderFieldOptions();
@@ -1441,17 +1556,60 @@
     toast('Field deleted');
   }
 
+  let fieldGroupFilter = '';
+  let logShowPriorYears = null;
+  let lockShowPriorYears = null;
+
   function renderFields() {
     const host = $('#field-list');
+    const searchEl = $('#field-search');
+    const chipsHost = $('#field-group-chips');
     if (!data.fields.length) {
+      if (searchEl) searchEl.hidden = true;
+      if (chipsHost) { chipsHost.hidden = true; chipsHost.innerHTML = ''; }
       host.innerHTML = `<p class="empty-note">No fields yet. Add each block, tunnel, or site you treat so records auto-fill the location and size.</p>`;
       return;
     }
-    const rows = data.fields
-      .slice().sort((a, b) => a.name.localeCompare(b.name))
-      .map(f => `
+    if (searchEl) {
+      searchEl.hidden = !(typeof FarmScale !== 'undefined' && FarmScale.shouldShowListSearch(data.fields.length));
+      if (searchEl.hidden) searchEl.value = '';
+    }
+    if (chipsHost) {
+      const groups = typeof FarmScale !== 'undefined' ? FarmScale.distinctGroups(data.fields) : [];
+      const showChips = typeof FarmScale !== 'undefined' && FarmScale.shouldShowGroupChips(data.fields);
+      chipsHost.hidden = !showChips;
+      if (!showChips) {
+        chipsHost.innerHTML = '';
+        fieldGroupFilter = '';
+      } else {
+        const allActive = !fieldGroupFilter;
+        chipsHost.innerHTML = `<button type="button" class="group-chip${allActive ? ' active' : ''}" data-field-group="" aria-pressed="${allActive}">All</button>`
+          + groups.map((g) => {
+            const on = fieldGroupFilter === g;
+            return `<button type="button" class="group-chip${on ? ' active' : ''}" data-field-group="${esc(g)}" aria-pressed="${on}">${esc(g)}</button>`;
+          }).join('');
+        chipsHost.querySelectorAll('[data-field-group]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            fieldGroupFilter = btn.dataset.fieldGroup || '';
+            renderFields();
+          });
+        });
+      }
+    }
+    let list = data.fields.slice();
+    if (typeof FarmScale !== 'undefined') {
+      list = FarmScale.filterFieldsByGroup(list, fieldGroupFilter);
+      const q = searchEl && !searchEl.hidden ? searchEl.value : '';
+      list = FarmScale.filterByQuery(list, q, FarmScale.fieldSearchHaystack);
+    }
+    list.sort((a, b) => a.name.localeCompare(b.name));
+    if (!list.length) {
+      host.innerHTML = `<p class="empty-note">No records match your search.</p>`;
+      return;
+    }
+    const rows = list.map(f => `
         <tr>
-          <td><strong>${esc(f.name)}</strong>${f.boundary && f.boundary.length >= 3 ? ' <span class="badge-pill badge-signal-caution">Mapped</span>' : ''}${typeof SprayWindow !== 'undefined' && SprayWindow.fieldPin(f) ? ' <span class="badge-pill">Forecast pin</span>' : ''}</td>
+          <td><strong>${esc(f.name)}</strong>${f.group ? ` <span class="badge-pill">${esc(f.group)}</span>` : ''}${f.boundary && f.boundary.length >= 3 ? ' <span class="badge-pill badge-signal-caution">Mapped</span>' : ''}${typeof SprayWindow !== 'undefined' && SprayWindow.fieldPin(f) ? ' <span class="badge-pill">Forecast pin</span>' : ''}${f.siteId ? `<br><span class="card-hint">${esc(f.siteId)}</span>` : ''}</td>
           <td>${f.size != null ? `${fmtNum(f.size)} ${f.sizeUnit === 'sqft' ? 'sq ft' : 'acres'}` : '—'}</td>
           <td>${esc(f.crop || '—')}</td>
           <td>${esc(f.location || '—')}</td>
@@ -1543,6 +1701,24 @@
     $('#app-cancel-btn').addEventListener('click', resetAppForm);
     $('#log-search').addEventListener('input', renderAppList);
     if ($('#log-show-deleted')) $('#log-show-deleted').addEventListener('change', renderAppList);
+    if ($('#log-show-prior-years')) {
+      $('#log-show-prior-years').addEventListener('click', () => {
+        const showDeleted = !!( $('#log-show-deleted') && $('#log-show-deleted').checked );
+        const all = sortedApps(showDeleted);
+        const flag = { value: logShowPriorYears };
+        const open = priorYearsOpen(all, flag);
+        logShowPriorYears = !open;
+        renderAppList();
+      });
+    }
+    ['#app-field-filter', '#app-product-filter'].forEach((sel) => {
+      const el = $(sel);
+      if (!el) return;
+      el.addEventListener('input', () => {
+        if (sel === '#app-field-filter') renderFieldOptions();
+        else renderProductOptions();
+      });
+    });
     $('#app-form').addEventListener('input', updateCompliancePreview);
     $('#app-form').addEventListener('change', updateCompliancePreview);
     if ($('#app-show-recommended')) {
@@ -1577,25 +1753,96 @@
     updateCompliancePreview();
   }
 
+  function setSelectFilterVisible(filterEl, optionCount) {
+    if (!filterEl) return;
+    const show = typeof FarmScale !== 'undefined' && FarmScale.shouldShowSelectFilter(optionCount);
+    filterEl.hidden = !show;
+    if (!show) filterEl.value = '';
+  }
+
+  function fillSelect(sel, allOptions, keepValue, filterEl) {
+    if (!sel) return;
+    const q = filterEl && !filterEl.hidden ? filterEl.value : '';
+    const shown = typeof FarmScale !== 'undefined'
+      ? FarmScale.filterSelectOptions(allOptions, q, keepValue)
+      : allOptions;
+    sel.innerHTML = '';
+    shown.forEach((opt) => {
+      const o = document.createElement('option');
+      o.value = opt.value;
+      o.textContent = opt.text;
+      sel.appendChild(o);
+    });
+    if (keepValue && [...sel.options].some((o) => o.value === keepValue)) sel.value = keepValue;
+  }
+
+  function fieldPickerOptions(includeAddNew, emptyLabel) {
+    const colliding = typeof FarmScale !== 'undefined'
+      ? FarmScale.collidingNameSet(data.fields)
+      : {};
+    const opts = [{ value: '', text: emptyLabel, reserved: true }];
+    data.fields.slice().sort((a, b) => a.name.localeCompare(b.name)).forEach((f) => {
+      opts.push({
+        value: f.id,
+        text: typeof FarmScale !== 'undefined' ? FarmScale.fieldPickerLabel(f, colliding) : f.name,
+        haystack: typeof FarmScale !== 'undefined' ? FarmScale.fieldSearchHaystack(f) : f.name
+      });
+    });
+    if (includeAddNew) opts.push({ value: '__new__', text: '+ Add new field…', reserved: true });
+    return opts;
+  }
+
+  function productPickerOptions(includeAddNew, emptyLabel) {
+    const opts = [{ value: '', text: emptyLabel, reserved: true }];
+    data.products.slice().sort((a, b) => a.name.localeCompare(b.name)).forEach((p) => {
+      opts.push({
+        value: p.id,
+        text: p.name + (p.rup && includeAddNew ? ' (RUP)' : ''),
+        haystack: typeof FarmScale !== 'undefined' ? FarmScale.productSearchHaystack(p) : p.name
+      });
+    });
+    if (includeAddNew) opts.push({ value: '__new__', text: '+ Add new product…', reserved: true });
+    return opts;
+  }
+
   function productOptionsHtml() {
-    return '<option value="">— Select product —</option>' +
-      data.products.slice().sort((a, b) => a.name.localeCompare(b.name))
-        .map(p => `<option value="${p.id}">${esc(p.name)}${p.rup ? ' (RUP)' : ''}</option>`).join('') +
-      '<option value="__new__">+ Add new product…</option>';
+    const filter = $('#app-product-filter');
+    const all = productPickerOptions(true, '— Select product —');
+    const q = filter && !filter.hidden ? filter.value : '';
+    const shown = typeof FarmScale !== 'undefined'
+      ? FarmScale.filterSelectOptions(all, q, '')
+      : all;
+    return shown.map((o) => `<option value="${esc(o.value)}">${esc(o.text)}</option>`).join('');
   }
 
   function renderProductOptions() {
+    const mixOpts = productPickerOptions(true, '— Select product —');
+    setSelectFilterVisible($('#app-product-filter'), mixOpts.length);
+    const reportOpts = productPickerOptions(false, 'All products');
     const rep = $('#report-product');
-    const keep = rep.value;
-    rep.innerHTML = '<option value="">All products</option>' +
-      data.products.slice().sort((a, b) => a.name.localeCompare(b.name))
-        .map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
-    rep.value = keep;
-    $$('#app-products .apr-product').forEach(sel => {
+    if (rep) {
+      setSelectFilterVisible($('#report-product-filter'), reportOpts.length);
+      fillSelect(rep, reportOpts, rep.value, $('#report-product-filter'));
+    }
+    $$('#app-products .apr-product').forEach((sel) => {
       const v = sel.value;
-      sel.innerHTML = productOptionsHtml();
-      sel.value = getProduct(v) ? v : '';
+      fillSelect(sel, mixOpts, getProduct(v) ? v : '', $('#app-product-filter'));
     });
+  }
+
+  function renderFieldOptions() {
+    const logOpts = fieldPickerOptions(true, '— Select field —');
+    const reportOpts = fieldPickerOptions(false, 'All fields');
+    const appSel = $('#app-field');
+    const reportSel = $('#report-field');
+    if (appSel) {
+      setSelectFilterVisible($('#app-field-filter'), logOpts.length);
+      fillSelect(appSel, logOpts, appSel.value, $('#app-field-filter'));
+    }
+    if (reportSel) {
+      setSelectFilterVisible($('#report-field-filter'), reportOpts.length);
+      fillSelect(reportSel, reportOpts, reportSel.value, $('#report-field-filter'));
+    }
   }
 
   // ---- tank mix rows in the log form ----
@@ -1853,29 +2100,6 @@
     strip.innerHTML = bits.join('');
   }
 
-  function renderFieldOptions() {
-    const sels = [$('#app-field'), $('#report-field')];
-    sels.forEach((sel, i) => {
-      const keep = sel.value;
-      sel.innerHTML = i === 0
-        ? '<option value="">— Select field —</option>'
-        : '<option value="">All fields</option>';
-      data.fields.slice().sort((a, b) => a.name.localeCompare(b.name)).forEach(f => {
-        const o = document.createElement('option');
-        o.value = f.id;
-        o.textContent = f.name;
-        sel.appendChild(o);
-      });
-      if (i === 0) {
-        const o = document.createElement('option');
-        o.value = '__new__';
-        o.textContent = '+ Add new field…';
-        sel.appendChild(o);
-      }
-      sel.value = keep;
-    });
-  }
-
   // Quick-add a field without leaving the spray log (avoids the tab-switch
   // round trip: Log -> Fields -> fill form -> Log -> re-pick from dropdown).
   function openQuickAddField() {
@@ -1910,7 +2134,10 @@
     $('#app-field').value = field.id;
     $('#quick-add-field-dialog').close();
     onAppFieldChange();
-    toast(`Field "${field.name}" added and selected`);
+    const dup = typeof FarmScale !== 'undefined' && FarmScale.duplicateNameWarning
+      ? FarmScale.duplicateNameWarning(data.fields, field.name, field.id)
+      : null;
+    toast(dup || `Field "${field.name}" added and selected`);
   }
 
   function onAppFieldChange() {
@@ -2142,6 +2369,9 @@
 
   function pushHistory(existing) {
     if (!existing) return [];
+    if (typeof FarmScale !== 'undefined' && FarmScale.pushSlimHistory) {
+      return FarmScale.pushSlimHistory(existing);
+    }
     const snap = JSON.parse(JSON.stringify(existing));
     delete snap.history;
     const hist = Array.isArray(existing.history) ? existing.history.slice() : [];
@@ -2400,18 +2630,49 @@
     return out.join(' ');
   }
 
+  function priorYearsOpen(apps, flagRef) {
+    const flag = flagRef || { value: null };
+    if (typeof FarmScale === 'undefined') return true;
+    if (!FarmScale.shouldShowPriorYearsControl(apps, now())) return true;
+    if (flag.value == null) {
+      flag.value = !FarmScale.shouldDefaultSeasonWindow(apps, now());
+    }
+    if (flagRef) flagRef.value = flag.value;
+    return flag.value;
+  }
+
+  function syncPriorYearsButton(btn, apps, open) {
+    if (!btn) return;
+    const show = typeof FarmScale !== 'undefined' && FarmScale.shouldShowPriorYearsControl(apps, now());
+    btn.hidden = !show;
+    if (!show) return;
+    btn.textContent = open ? 'This season only' : 'Show prior years';
+  }
+
   function renderAppList() {
     const host = $('#app-list');
     const q = ($('#log-search').value || '').toLowerCase();
     const showDeleted = !!( $('#log-show-deleted') && $('#log-show-deleted').checked );
-    let apps = sortedApps(showDeleted);
+    const all = sortedApps(showDeleted);
+    const flag = { value: logShowPriorYears };
+    const open = priorYearsOpen(all, flag);
+    logShowPriorYears = flag.value;
+    syncPriorYearsButton($('#log-show-prior-years'), all, open);
+    let apps = typeof FarmScale !== 'undefined'
+      ? FarmScale.filterLogWindow(all, open, now())
+      : all;
     if (q) {
       apps = apps.filter(a =>
         [appProductsLabel(a), a.fieldName, a.crop, a.targetPest, a.applicatorName, a.notes, ...(a.products || []).map(p => p.lotNumber)]
           .join(' ').toLowerCase().includes(q));
     }
     if (!apps.length) {
-      host.innerHTML = `<p class="empty-note">${q ? 'No records match your search.' : 'No applications logged yet. Your history will appear here.'}</p>`;
+      let note = 'No applications logged yet. Your history will appear here.';
+      if (q) note = 'No records match your search.';
+      else if (typeof FarmScale !== 'undefined' && FarmScale.shouldShowPriorYearsControl(all, now()) && !open) {
+        note = 'No applications this season. Show prior years to review older logs — they are still on this device.';
+      }
+      host.innerHTML = `<p class="empty-note">${note}</p>`;
       return;
     }
     const rows = apps.map(a => `
@@ -2945,6 +3206,15 @@
         el.addEventListener('input', updateReportCount);
         el.addEventListener('change', updateReportCount);
       });
+    ['#report-field-filter', '#report-product-filter'].forEach((sel) => {
+      const el = $(sel);
+      if (!el) return;
+      el.addEventListener('input', () => {
+        if (sel === '#report-field-filter') renderFieldOptions();
+        else renderProductOptions();
+        updateReportCount();
+      });
+    });
     $('#report-csv').addEventListener('click', downloadCsv);
     $('#report-print').addEventListener('click', printReport);
     if ($('#report-state-pack')) $('#report-state-pack').addEventListener('click', downloadStatePack);
@@ -2979,8 +3249,8 @@
     return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
   }
 
-  function downloadCsv() {
-    const apps = reportApps();
+  function downloadCsv(apps) {
+    apps = apps || reportApps();
     if (!apps.length) { toast('No records match the filter'); return; }
     const header = [
       'Record ID', 'Compliance Status', 'Compliance Complete', 'Draft', 'Deleted',
@@ -3365,8 +3635,9 @@
           winner.history = mergeHistory(local.history, x.history);
           // Keep a snapshot of the losing side if it differs.
           if (loser && loser.updatedAt && loser.updatedAt !== winner.updatedAt) {
-            const snap = JSON.parse(JSON.stringify(loser));
-            delete snap.history;
+            const snap = (typeof FarmScale !== 'undefined' && FarmScale.slimHistorySnapshot)
+              ? FarmScale.slimHistorySnapshot(loser)
+              : (() => { const s = JSON.parse(JSON.stringify(loser)); delete s.history; return s; })();
             winner.history = mergeHistory(winner.history, [{ at: loser.updatedAt, snapshot: snap }]);
           }
           const idx = data[key].findIndex(r => r.id === x.id);
@@ -3662,10 +3933,13 @@
     if (!confirm('Last check — this cannot be undone. Erase everything?')) return;
     if (idbDb) {
       try {
-        const tx = idbDb.transaction(['kv', 'photos'], 'readwrite');
+        const names = ['kv', 'photos'];
+        if (idbDb.objectStoreNames.contains('forecast')) names.push('forecast');
+        const tx = idbDb.transaction(names, 'readwrite');
         tx.objectStore('kv').delete('data');
         tx.objectStore('kv').delete('backupHandle');
         tx.objectStore('photos').clear();
+        if (idbDb.objectStoreNames.contains('forecast')) tx.objectStore('forecast').clear();
         tx.oncomplete = () => location.reload();
         tx.onerror = () => location.reload();
       } catch (e) { location.reload(); }
@@ -3803,6 +4077,7 @@
     });
 
     $('#map-locate').addEventListener('click', locateMe);
+    if ($('#map-fit-all')) $('#map-fit-all').addEventListener('click', fitAllFields);
     $('#map-basemap').addEventListener('click', toggleBasemap);
     $('#map-undo').addEventListener('click', undoDrawPoint);
     $('#map-clear').addEventListener('click', () => clearDrawing(true));
@@ -3817,6 +4092,24 @@
 
     setTimeout(() => fieldMap.invalidateSize(), 50);
     syncWeatherPinButton();
+  }
+
+  function fitAllFields() {
+    if (!fieldMap) return;
+    const rings = data.fields.filter((f) => f.boundary && f.boundary.length >= 3);
+    if (rings.length < 2) return;
+    const bounds = L.latLngBounds([]);
+    rings.forEach((f) => f.boundary.forEach(([lat, lng]) => bounds.extend([lat, lng])));
+    fieldMap.fitBounds(bounds, { padding: [30, 30] });
+  }
+
+  function syncFitAllButton() {
+    const btn = $('#map-fit-all');
+    if (!btn) return;
+    const n = typeof FarmScale !== 'undefined'
+      ? FarmScale.mappedFieldCount(data.fields)
+      : data.fields.filter((f) => f.boundary && f.boundary.length >= 3).length;
+    btn.hidden = typeof FarmScale !== 'undefined' ? !FarmScale.shouldShowFitAll(n) : n < 2;
   }
 
   function locateMe() {
@@ -3987,6 +4280,7 @@
       poly.on('click', (e) => { L.DomEvent.stop(e); editField(f.id); });
       savedPolysLayer.addLayer(poly);
     });
+    syncFitAllButton();
   }
 
   // -------------------------------------------------------------- REI posting & reminders
@@ -4739,11 +5033,7 @@
   let forecastShowAll = false;
 
   function forecastStore() {
-    if (!data.meta.forecastByField || typeof data.meta.forecastByField !== 'object') {
-      data.meta.forecastByField = {};
-    }
-    delete data.meta.forecastCache;
-    return data.meta.forecastByField;
+    return forecastMem;
   }
 
   function selectedForecastKey() {
@@ -4817,6 +5107,7 @@
       });
     }
     if (seq !== forecastSeq) return;
+    persistForecastStore();
     save();
     renderSprayForecast();
   }
@@ -4875,19 +5166,27 @@
     const sel = $('#forecast-field');
     if (!sel) return;
     const keep = sel.value || data.meta.forecastSelectedKey || '';
-    const sorted = data.fields.slice().sort((a, b) => a.name.localeCompare(b.name));
-    let html = '<option value="">All fields</option>';
-    sorted.forEach((f) => {
+    const colliding = typeof FarmScale !== 'undefined'
+      ? FarmScale.collidingNameSet(data.fields)
+      : {};
+    const opts = [{ value: '', text: 'All fields', reserved: true }];
+    data.fields.slice().sort((a, b) => a.name.localeCompare(b.name)).forEach((f) => {
       const pin = SprayWindow.fieldPin(f);
-      html += `<option value="${esc(f.id)}">${esc(f.name)}${pin ? '' : ' — needs a map pin'}</option>`;
+      const label = typeof FarmScale !== 'undefined' ? FarmScale.fieldPickerLabel(f, colliding) : f.name;
+      opts.push({
+        value: f.id,
+        text: label + (pin ? '' : ' — needs a map pin'),
+        haystack: typeof FarmScale !== 'undefined' ? FarmScale.fieldSearchHaystack(f) : f.name
+      });
     });
-    sel.innerHTML = html;
-    if (keep && keep !== SprayWindow.DEVICE_KEY && [...sel.options].some((o) => o.value === keep)) {
-      sel.value = keep;
-    } else {
+    const filter = $('#forecast-field-filter');
+    setSelectFilterVisible(filter, opts.length);
+    if (filter) filter.hidden = filter.hidden || data.fields.length <= 3;
+    fillSelect(sel, opts, keep && keep !== SprayWindow.DEVICE_KEY ? keep : '', filter);
+    if (!(keep && keep !== SprayWindow.DEVICE_KEY && [...sel.options].some((o) => o.value === keep))) {
       sel.value = '';
     }
-    sel.hidden = sorted.length <= 3;
+    sel.hidden = data.fields.length <= 3;
   }
 
   function glanceForField(f) {
@@ -4912,6 +5211,10 @@
   }
 
   function shouldShowGlanceRow(g) {
+    if (typeof FarmScale !== 'undefined') {
+      const kind = g.word === 'Pin' ? 'pin' : g.kind;
+      return FarmScale.shouldShowGlanceRow(kind, data.fields.length, forecastShowAll);
+    }
     if (forecastShowAll || data.fields.length <= 6) return true;
     return g.kind === 'go' || g.kind === 'wait' || g.kind === 'old' || g.kind === 'empty' || g.word === 'Pin';
   }
@@ -4952,6 +5255,8 @@
       host.innerHTML = `<p class="empty-note">Add a field and use a shape or forecast pin to plan a drive.</p>`;
       const showAll = $('#forecast-show-all');
       if (showAll) showAll.hidden = true;
+      const countEl = $('#forecast-glance-count');
+      if (countEl) countEl.textContent = '';
       return;
     }
     const annotated = sorted.map((f) => ({ f, g: glanceForField(f) }));
@@ -4979,6 +5284,11 @@
     if (showAll) {
       showAll.hidden = hiddenCount === 0 && !forecastShowAll;
       showAll.textContent = forecastShowAll ? 'Show morning windows' : `Show all fields (${hiddenCount} hidden)`;
+    }
+    const countEl = $('#forecast-glance-count');
+    if (countEl && typeof FarmScale !== 'undefined') {
+      const hint = FarmScale.glanceCountHint(visible.length, annotated.length, hiddenCount, forecastShowAll);
+      countEl.textContent = hiddenCount || forecastShowAll ? ' · ' + hint : '';
     }
     host.querySelectorAll('[data-fc-field]').forEach((b) => {
       b.addEventListener('click', () => selectForecastField(b.dataset.fcField));
@@ -5129,6 +5439,9 @@
     renderSprayForecast();
     $('#forecast-refresh').addEventListener('click', fetchSprayForecast);
     $('#forecast-field').addEventListener('change', onForecastFieldChange);
+    if ($('#forecast-field-filter')) {
+      $('#forecast-field-filter').addEventListener('input', () => renderForecastFieldOptions());
+    }
     if ($('#forecast-howto')) {
       $('#forecast-howto').addEventListener('click', () => {
         const body = $('#forecast-howto-body');
@@ -5208,9 +5521,9 @@
       } else if (licenseState.mode === 'trial') {
         status.textContent = `Trial active — ${licenseState.daysLeft} day(s) left. No key needed yet.`;
       } else if (licenseState.mode === 'key_invalid') {
-        status.textContent = `Stored license key is not valid (${licenseState.keyReason}). Activate a valid key to keep using the app.`;
+        status.textContent = `Stored license key is not valid (${licenseState.keyReason}). Activate a valid key to keep logging — your spray logs are still here to review and export.`;
       } else {
-        status.textContent = 'Trial ended. Activate a license to keep using the app — your records are still here.';
+        status.textContent = 'Trial ended. Activate a license to keep logging. Your spray logs stay on this device — review any year and download a backup below.';
       }
     }
     const lockStatus = $('#lock-status');
@@ -5231,6 +5544,47 @@
     if (checking) checking.hidden = true;
     if (shell) shell.hidden = !isPro();
     if (lock) lock.hidden = isPro();
+    if (!isPro()) renderLockRecords();
+  }
+
+  function renderLockRecords() {
+    const host = $('#lock-app-list');
+    const status = $('#lock-records-status');
+    if (!host) return;
+    const all = (data.applications || []).slice()
+      .sort((a, b) => (b.date + (b.startTime || '')).localeCompare(a.date + (a.startTime || '')));
+    if (status) {
+      status.textContent = all.length
+        ? `${all.length} spray record(s) on this device. A lapsed license cannot take them. Two fields or 150 — every year you logged is still here.`
+        : 'No spray logs on this device yet. Nothing was deleted. When you log sprays they stay on this device even if a trial or subscription ends.';
+    }
+    const flag = { value: lockShowPriorYears };
+    const open = priorYearsOpen(all, flag);
+    lockShowPriorYears = flag.value;
+    syncPriorYearsButton($('#lock-show-prior-years'), all, open);
+    let apps = typeof FarmScale !== 'undefined'
+      ? FarmScale.filterLogWindow(all, open, now())
+      : all;
+    const q = ($('#lock-log-search') && $('#lock-log-search').value || '').toLowerCase();
+    if (q) {
+      apps = apps.filter((a) =>
+        [appProductsLabel(a), a.fieldName, a.crop, a.targetPest, a.applicatorName, a.notes]
+          .join(' ').toLowerCase().includes(q));
+    }
+    if (!apps.length) {
+      host.innerHTML = `<p class="empty-note">${q ? 'No records match your search.' : (open ? 'No spray logs on this device.' : 'No applications this season. Show prior years — older logs are still here.')}</p>`;
+      return;
+    }
+    const rows = apps.map((a) => `
+      <tr>
+        <td>${fmtDate(a.date)}</td>
+        <td>${esc(appProductsLabel(a))}</td>
+        <td>${esc(a.fieldName || '')}<br><span class="card-hint">${esc(a.crop || '')}</span></td>
+        <td>${esc(a.applicatorName || '')}</td>
+      </tr>`).join('');
+    host.innerHTML = `<div class="table-wrap"><table class="record-table">
+      <thead><tr><th>Date</th><th>Product</th><th>Field / crop</th><th>Applicator</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>`;
   }
 
   async function activateLicenseKeyFrom(inputSel) {
@@ -5264,6 +5618,28 @@
     }
     if ($('#lock-activate')) {
       $('#lock-activate').addEventListener('click', () => activateLicenseKeyFrom('#lock-key-input'));
+    }
+    if ($('#lock-download-backup')) {
+      $('#lock-download-backup').addEventListener('click', downloadBackup);
+    }
+    if ($('#lock-download-csv')) {
+      $('#lock-download-csv').addEventListener('click', () => {
+        const apps = (data.applications || []).slice()
+          .sort((a, b) => (a.date + (a.startTime || '')).localeCompare(b.date + (b.startTime || '')));
+        downloadCsv(apps);
+      });
+    }
+    if ($('#lock-show-prior-years')) {
+      $('#lock-show-prior-years').addEventListener('click', () => {
+        const all = (data.applications || []).slice();
+        const flag = { value: lockShowPriorYears };
+        const open = priorYearsOpen(all, flag);
+        lockShowPriorYears = !open;
+        renderLockRecords();
+      });
+    }
+    if ($('#lock-log-search')) {
+      $('#lock-log-search').addEventListener('input', renderLockRecords);
     }
     syncBuyButtons();
     const buyUrl = (BUY_URL || '').trim();

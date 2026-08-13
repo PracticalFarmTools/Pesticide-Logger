@@ -13,7 +13,7 @@
 
   const STORE_KEY = 'pesticide-logger.v2';
   const IDB_NAME = 'pesticide-logger';
-  const IDB_VERSION = 2;
+  const IDB_VERSION = 3;
   const FARM_IDB_KEY = 'farm';
   const LEGACY_IDB_KEY = 'data';
   // Stay under typical 5 MB localStorage quotas with headroom for the
@@ -100,6 +100,7 @@
     });
     d.fields.forEach(f => {
       if (f.siteId == null) f.siteId = '';
+      if (f.group == null) f.group = '';
     });
     d.applications.forEach(a => {
       if (!Array.isArray(a.history)) a.history = [];

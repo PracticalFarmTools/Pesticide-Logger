@@ -16,6 +16,7 @@ const APP_SHELL = [
   './store.js',
   './compliance.js',
   './camera-scan.js',
+  './farm-scale.js',
   './license.js',
   './label-ocr.js',
   './i18n.js',

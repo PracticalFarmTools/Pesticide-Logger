@@ -2,8 +2,9 @@
  * $0-overhead model: the owner signs license keys locally (tools/), the app
  * verifies signatures in the browser with WebCrypto. No license server,
  * no phone-home, works fully offline. Paid-only: a 30-day trial, then a
- * valid key is required to keep using the app — see app.js's
- * applyLicenseGate().
+ * valid key is required to keep logging. Spray logs already on the device
+ * stay reviewable and exportable — see app.js applyLicenseGate() /
+ * renderLockRecords().
  *
  * Key format:  PLPRO.<base64url payload JSON>.<base64url ECDSA-P256 signature>
  * Payload:     { n: name, e: email, p: "pro", iat: issuedMs, exp?: expiresMs }

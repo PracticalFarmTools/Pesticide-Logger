@@ -76,6 +76,8 @@ check('US units and EPA signal words stay English in the dictionaries', () => {
   assert.strictEqual(i18n.PT_BR['acre'], 'acre');
   assert.ok(!i18n.ES['CAUTION'] && !i18n.FR['CAUTION'] && !i18n.PT_BR['CAUTION']);
   assert.ok(!i18n.ES['WARNING'] && !i18n.FR['DANGER']);
+  assert.strictEqual(i18n.t('fr', 'Metric reference — not the legal record'), 'Référence métrique — pas le registre officiel');
+  assert.strictEqual(i18n.t('pt-BR', 'Metric reference — not the legal record'), 'Referência métrica — não é o registro legal');
 });
 
 check('curly-apostrophe toasts used by app.js are translated', () => {

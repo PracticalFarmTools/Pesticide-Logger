@@ -239,17 +239,18 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.8.2 + deadline/license wiring', () => {
+check('source files advertise v2.8.3 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.8.2'));
-  assert.ok(sw.includes('pesticide-logger-v2.8.2'));
-  assert.ok(html.includes('v2.8.2'));
+  assert.ok(app.includes('v2.8.3'));
+  assert.ok(sw.includes('pesticide-logger-v2.8.3'));
+  assert.ok(html.includes('v2.8.3'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));
   assert.ok(html.includes('farm-scale.js'));
   assert.ok(html.includes('i18n.js'));
+  assert.ok(html.includes('units.js'));
   assert.ok(html.includes('backup-merge.js'));
   assert.ok(html.includes('backup-pack.js'));
   assert.ok(html.includes('spray-window.js'));
@@ -260,6 +261,7 @@ check('source files advertise v2.8.2 + deadline/license wiring', () => {
   assert.ok(sw.includes('./license.js'));
   assert.ok(sw.includes('./farm-scale.js'));
   assert.ok(sw.includes('./i18n.js'));
+  assert.ok(sw.includes('./units.js'));
   assert.ok(sw.includes('./backup-merge.js'));
   assert.ok(sw.includes('./backup-pack.js'));
   assert.ok(sw.includes('./spray-window.js'));
@@ -575,6 +577,18 @@ check('paid-only: whole app is gated by license/trial, no per-feature Pro gate',
     'function printCertifierPacket', 'function downloadStatePack'].forEach(fn => {
     assert.ok(app.indexOf(fn) > 0, fn + ' exists');
   });
+});
+
+check('Celsius echo and tank-mix metric are display-only; records stay US', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  assert.ok(html.includes('id="app-temp-c"'), 'Celsius echo under the °F field');
+  assert.ok(html.includes('Temperature (°F)'), 'log field stays Fahrenheit');
+  assert.ok(app.includes("'Temperature (F)'"), 'CSV header stays F');
+  assert.ok(app.includes('function syncTempC'), 'live °C echo');
+  assert.ok(app.includes('mixMetricCaption'), 'tank mix metric strip');
+  assert.ok(html.includes('US label units. After Calculate'), 'calculator hint');
+  assert.ok(!html.includes('id="set-units"') && !html.includes('id="set-metric"'), 'no global unit toggle');
 });
 
 check('schema default version is 5', () => {

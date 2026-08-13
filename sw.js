@@ -1,14 +1,15 @@
-/* Pesticide Logger v2.8.2 — offline-first service worker.
+/* Pesticide Logger v2.8.3 — offline-first service worker.
  * Cache-first for the app shell; records live in IndexedDB (localStorage
  * is a boot cache) so the app is fully functional with zero connectivity
  * after first load.
  */
-const CACHE_NAME = 'pesticide-logger-v2.8.2';
+const CACHE_NAME = 'pesticide-logger-v2.8.3';
 const APP_SHELL = [
   './',
   './index.html',
   './styles.css',
   './app.js',
+  './units.js',
   './state_pesticide_laws.js',
   './deadline.js',
   './backup-merge.js',

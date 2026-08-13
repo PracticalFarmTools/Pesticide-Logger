@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.8.2 — Practical Farm Tools theme */
+/* Pesticide Logger v2.8.3 — Practical Farm Tools theme */
 
 :root {
   --primary-green: #1b4322;
@@ -813,6 +813,34 @@ label.state-required-field {
   display: block;
 }
 .calc-summary-item .small { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
+
+.unit-echo {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.calc-metric-ref {
+  margin: 0 0 1rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--bg-card);
+  border: 1px dashed var(--border-color);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+.calc-metric-ref strong {
+  display: block;
+  color: var(--text-dark);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  margin-bottom: 0.15rem;
+}
 
 .calc-warning {
   background: var(--warn-bg);

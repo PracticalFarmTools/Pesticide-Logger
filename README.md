@@ -1,4 +1,4 @@
-# Pesticide Logger v2.8.2
+# Pesticide Logger v2.8.3
 
 **Offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite. Licensed software with
@@ -40,6 +40,7 @@ application at the repository root.
 | **REI posting & reminders** | Bilingual DO NOT ENTER / NO ENTRE posting sheet from any active REI, plus opt-in browser notifications when REI clears or PHI dates arrive. |
 | **CSV import** | Bring existing Excel/Sheets records in with a column-mapping wizard — rows land as compliance-checked drafts. |
 | **Spanish, French & Brazilian Portuguese** | Header language control covering menus, buttons, toasts, and first-run setup. Printed REI posting stays English/Spanish (DO NOT ENTER / NO ENTRE). |
+| **Celsius & metric reference** | Spray records stay US customary. The log shows °C next to stored °F; tank-mix results add a conversion reference (ha, L, L/ha, mL). CSV and inspector packs still use Fahrenheit and gallons. |
 | **Smarter backup merge** | Newest `updatedAt` wins; audit histories union; trial start and license key merge conservatively (earliest trial wins, local key kept). A full backup is one JSON file with the farm file **and** attached JPEG photos, so a phone→PC move does not drop label pictures. Older record-only backups still restore; the app says so if photos are missing. |
 | **Offline-first PWA** | Installable; core logging works with no connectivity after first load. |
 
@@ -115,6 +116,7 @@ node --check store.js
 node --check compliance.js
 node --check camera-scan.js
 node --check farm-scale.js
+node --check units.js
 node --check i18n.js
 node --check sw.js
 node tests/compliance.test.js
@@ -129,6 +131,7 @@ node tests/compliance-engine.test.js
 node tests/camera-scan.test.js
 node tests/farm-scale.test.js
 node tests/i18n.test.js
+node tests/units.test.js
 ```
 
 ## Intentional non-goals

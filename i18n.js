@@ -503,7 +503,9 @@
     ["Searching the official EPA database…", "Buscando en la base oficial de EPA…", "Recherche dans la base officielle de l’EPA…", "Pesquisando na base oficial da EPA…"],
     ["Select your state in Settings to enable state-shaped recordkeeping checks.", "Elija su estado en Configuración para activar las comprobaciones de registros estatales.", "Choisissez votre État dans Réglages pour activer les contrôles de registres d’État.", "Escolha seu estado em Configurações para ativar as checagens de registro estadual."],
     ["Calm", "Calma", "Calme", "Calmo"],
-    ["Zoom in closer for corner-level accuracy", "Acerque más el zoom para precisión de esquinas", "Zoomez davantage pour une précision au coin près", "Aproxime mais o zoom para precisão dos cantos"]
+    ["Zoom in closer for corner-level accuracy", "Acerque más el zoom para precisión de esquinas", "Zoomez davantage pour une précision au coin près", "Aproxime mais o zoom para precisão dos cantos"],
+    ["US label units. After Calculate, metric equivalents appear as a reference — they are not stored on spray records.", "Unidades de etiqueta de EE. UU. Tras Calcular, aparecen equivalentes métricos de referencia — no se guardan en el registro.", "Unités d’étiquette américaines. Après Calculer, des équivalents métriques s’affichent en référence — ils ne sont pas enregistrés dans le registre.", "Unidades do rótulo dos EUA. Depois de Calcular, equivalentes métricos aparecem como referência — não entram no registro."],
+    ["Metric reference — not the legal record", "Referencia métrica — no es el registro legal", "Référence métrique — pas le registre officiel", "Referência métrica — não é o registro legal"]
   ];
 
   function toDict(col) {

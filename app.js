@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.8.2 — Practical Farm Tools
+/* Pesticide Logger v2.8.3 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -466,6 +466,29 @@
     else if (unit === 'mL' && value >= 1000) hint = ` (${fmtNum(value / 1000)} L)`;
     else if (unit === 'g' && value >= 1000) hint = ` (${fmtNum(value / 1000)} kg)`;
     return `${fmtNum(value)} ${unit}${hint}`;
+  }
+
+  function fmtAmountWithMetric(value, unit) {
+    const us = fmtAmount(value, unit);
+    const metric = (typeof Units !== 'undefined' && Units.fmtMetricAmount)
+      ? Units.fmtMetricAmount(value, unit) : '';
+    if (!metric) return us;
+    return `${us}<br><span class="card-hint">${esc(metric)}</span>`;
+  }
+
+  function fmtTempPair(f) {
+    if (f == null || f === '') return '';
+    return (typeof Units !== 'undefined' && Units.fmtTempF) ? Units.fmtTempF(f) : `${fmtNum(f)} °F`;
+  }
+
+  function syncTempC() {
+    const echo = $('#app-temp-c');
+    if (!echo) return;
+    const raw = $('#app-temp') && $('#app-temp').value;
+    const txt = (typeof Units !== 'undefined' && Units.fmtCelsiusEcho)
+      ? Units.fmtCelsiusEcho(raw) : '';
+    echo.textContent = txt;
+    echo.hidden = !txt;
   }
 
   function areaToAcres(value, unit) {
@@ -1760,6 +1783,11 @@
 
     $('#app-add-product').addEventListener('click', () => addAppProductRow());
     $('#app-weather').addEventListener('click', fetchWeather);
+    if ($('#app-temp')) {
+      $('#app-temp').addEventListener('input', syncTempC);
+      $('#app-temp').addEventListener('change', syncTempC);
+      syncTempC();
+    }
     $('#app-form').addEventListener('submit', (e) => onAppSubmit(e, false));
     $('#app-save-draft-btn').addEventListener('click', () => onAppSubmit(null, true));
     $('#app-cancel-btn').addEventListener('click', resetAppForm);
@@ -2294,6 +2322,7 @@
       $('#app-wind').value = Math.round(cur.wind_speed_10m * 10) / 10;
       $('#app-wind-dir').value = COMPASS[Math.round(cur.wind_direction_10m / 22.5) % 16];
       $('#app-temp').value = Math.round(cur.temperature_2m);
+      syncTempC();
       $('#app-sky').value = `${skyDesc(cur.weather_code)}, ${cur.relative_humidity_2m}% RH`;
       toast('Current weather filled in — adjust if conditions at the sprayer differ');
     } catch (e) {
@@ -2556,6 +2585,7 @@
     applyStateRequiredTags();
     updateCompliancePreview();
     renderDueBanner();
+    syncTempC();
   }
 
   function editApp(id) {
@@ -2586,6 +2616,7 @@
     $('#app-wind').value = a.windSpeed ?? '';
     $('#app-wind-dir').value = a.windDir;
     $('#app-temp').value = a.temperature ?? '';
+    syncTempC();
     $('#app-sky').value = a.sky;
     if ($('#app-type')) $('#app-type').value = a.applicationType || 'ground';
     $('#app-method').value = a.method;
@@ -3233,18 +3264,25 @@
         <div class="calc-summary-item"><span class="big">${fmtNum(acres, 3)} ac</span><span class="small">Area treated (${fmtNum(acres * 43560, 0)} sq ft)</span></div>
       </div>`;
 
+    const metricCaption = (typeof Units !== 'undefined' && Units.mixMetricCaption)
+      ? Units.mixMetricCaption(acres, tank, gpaAcre, totalSpray) : '';
+    const metricBox = metricCaption
+      ? `<p class="calc-metric-ref"><strong>Metric reference — not the legal record</strong>${esc(metricCaption)}</p>`
+      : '';
+
     const rows = products.map(pr => `
       <tr>
         <td><strong>${esc(pr.name)}</strong><br><span class="card-hint">${fmtNum(pr.rate)} ${esc(pr.unit)} ${RATE_PER_LABEL[pr.per]}</span></td>
-        <td>${fmtAmount(pr.total, pr.unit)}</td>
-        ${tank > 0 ? `<td>${fmtAmount(pr.perTank, pr.unit)}</td>
-        <td>${partialGal > 0.01 ? fmtAmount(pr.perPartial, pr.unit) : '—'}</td>` : ''}
+        <td>${fmtAmountWithMetric(pr.total, pr.unit)}</td>
+        ${tank > 0 ? `<td>${fmtAmountWithMetric(pr.perTank, pr.unit)}</td>
+        <td>${partialGal > 0.01 ? fmtAmountWithMetric(pr.perPartial, pr.unit) : '—'}</td>` : ''}
       </tr>`).join('');
 
     results.hidden = false;
     results.innerHTML = `
       ${warn.map(w => `<div class="calc-warning">${esc(w)}</div>`).join('')}
       ${summary}
+      ${metricBox}
       <div class="table-wrap"><table class="record-table">
         <thead><tr><th>Product</th><th>Total needed</th>${tank > 0 ? '<th>Per full tank</th><th>Per partial fill</th>' : ''}</tr></thead>
         <tbody>${rows}</tbody>
@@ -3259,22 +3297,32 @@
     if (!lastCalc) return;
     const c = lastCalc;
     const s = data.settings;
-    const rows = c.products.map(pr => `
+    const rows = c.products.map(pr => {
+      const metric = (u, v) => {
+        const m = (typeof Units !== 'undefined' && Units.fmtMetricAmount) ? Units.fmtMetricAmount(v, u) : '';
+        return m ? ` (${m})` : '';
+      };
+      return `
       <tr>
         <td>${esc(pr.name)}</td>
         <td>${fmtNum(pr.rate)} ${esc(pr.unit)} ${RATE_PER_LABEL[pr.per]}</td>
-        <td>${fmtAmount(pr.total, pr.unit)}</td>
-        <td>${c.tank > 0 ? fmtAmount(pr.perTank, pr.unit) : '—'}</td>
-        <td>${c.partialGal > 0.01 ? fmtAmount(pr.perPartial, pr.unit) : '—'}</td>
-      </tr>`).join('');
+        <td>${fmtAmount(pr.total, pr.unit)}${metric(pr.unit, pr.total)}</td>
+        <td>${c.tank > 0 ? fmtAmount(pr.perTank, pr.unit) + metric(pr.unit, pr.perTank) : '—'}</td>
+        <td>${c.partialGal > 0.01 ? fmtAmount(pr.perPartial, pr.unit) + metric(pr.unit, pr.perPartial) : '—'}</td>
+      </tr>`;
+    }).join('');
+    const metricLine = (typeof Units !== 'undefined' && Units.mixMetricCaption)
+      ? Units.mixMetricCaption(c.acres, c.tank, c.gpaUnit === 'gal_acre' ? c.gpa : c.gpa * 43.56, c.totalSpray)
+      : '';
     $('#print-area').innerHTML = `
       <h1>Tank Mix Worksheet</h1>
-      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.8.2 (Practical Farm Tools)</p>
+      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.8.3 (Practical Farm Tools)</p>
       <table>
         <tr><th>Area treated</th><td>${fmtNum(c.area)} ${c.areaUnit === 'sqft' ? 'sq ft' : c.areaUnit === '1000sqft' ? '× 1,000 sq ft' : 'acres'} (${fmtNum(c.acres, 3)} ac)</td>
             <th>Spray volume</th><td>${fmtNum(c.gpa)} ${c.gpaUnit === 'gal_acre' ? 'gal/acre' : 'gal/1,000 sq ft'}</td></tr>
         <tr><th>Total finished spray</th><td>${fmtNum(c.totalSpray)} gal</td>
             <th>Tank loads</th><td>${c.tank > 0 ? `${c.fullTanks} full @ ${fmtNum(c.tank)} gal${c.partialGal > 0.01 ? ` + 1 partial @ ${fmtNum(c.partialGal)} gal` : ''}` : 'n/a'}</td></tr>
+        ${metricLine ? `<tr><th>Metric reference — not the legal record</th><td colspan="3">${esc(metricLine)}</td></tr>` : ''}
       </table>
       <h2>Products</h2>
       <table>
@@ -3443,7 +3491,7 @@
         <td>${(a.products || []).map(pr =>
           pr.rate != null ? `${fmtNum(pr.rate)} ${esc(pr.rateUnit)}` : esc(a.dilution || '—')).join('<br>')}</td>
         <td>${(a.products || []).map(pr => `${fmtNum(pr.total)} ${esc(pr.totalUnit)}`).join('<br>')}${a.carrier != null ? `<br>Carrier ${fmtNum(a.carrier)} ${esc(a.carrierUnit || '')}` : ''}</td>
-        <td>${a.windSpeed != null ? `${fmtNum(a.windSpeed)} mph ${esc(a.windDir || '')}` : '—'}${a.temperature != null ? `<br>${fmtNum(a.temperature)} °F` : ''}${a.sky ? `<br>${esc(a.sky)}` : ''}</td>
+        <td>${a.windSpeed != null ? `${fmtNum(a.windSpeed)} mph ${esc(a.windDir || '')}` : '—'}${a.temperature != null ? `<br>${esc(fmtTempPair(a.temperature))}` : ''}${a.sky ? `<br>${esc(a.sky)}` : ''}</td>
         <td>${esc(a.method || '—')}${a.nozzleType ? `<br>${esc(a.nozzleType)}` : ''}${a.sprayerPressure ? `<br>${esc(a.sprayerPressure)}` : ''}</td>
         <td>${a.reiHours != null ? fmtNum(a.reiHours) + ' hr' : '—'} / ${a.phiDays != null ? fmtNum(a.phiDays) + ' d' : '—'}</td>
         <td>${esc(a.applicatorName)}${a.certNumber ? `<br>#${esc(a.certNumber)}` : ''}${a.supervisorName ? `<br>Supv ${esc(a.supervisorName)}` : ''}${a.customerName ? `<br>For ${esc(a.customerName)}` : ''}</td>
@@ -3471,7 +3519,7 @@
       </table>
       <div class="sig-line"><span>Certified applicator signature / date</span><span>Reviewed by / date</span></div>
       <p class="print-footer">
-        Generated by Pesticide Logger v2.8.2 — Practical Farm Tools. Retain records per your state
+        Generated by Pesticide Logger v2.8.3 — Practical Farm Tools. Retain records per your state
         (${retain} year(s) shown above). This report is a record-keeping aid, not legal advice,
         and does not replace WPS duties or electronic reporting programs.
       </p>`;
@@ -3618,7 +3666,7 @@
       format: 'pesticide-logger-state-pack',
       version: 5,
       generatedAt: new Date().toISOString(),
-      app: 'Pesticide Logger v2.8.2 — Practical Farm Tools',
+      app: 'Pesticide Logger v2.8.3 — Practical Farm Tools',
       disclaimer: 'Completion means required fields are filled for this context — not a legal determination. Does not replace WPS duties or e-filing programs.',
       farm: {
         name: s.farmName || '',
@@ -5539,7 +5587,7 @@
       const blocks = hours.map((h) => {
         const { score, reasons } = scoreSprayHour(h);
         const hr = new Date(h.time).getHours();
-        const detail = `${label} ${hr}:00 — ${reasons.join('; ')} · ${Math.round(h.temp)} °F, RH ${h.rh}%`
+        const detail = `${label} ${hr}:00 — ${reasons.join('; ')} · ${fmtTempPair(h.temp)}, RH ${h.rh}%`
           + (h.source === 'hrrr' ? ' · HRRR' : h.source ? ` · ${h.source}` : '');
         return `<button type="button" class="fc-block fc-${score}${stale ? ' fc-stale' : ''}"
           data-fc-detail="${esc(detail)}" aria-label="${esc(`${label} ${hr}:00 ${score}`)}">${hr}</button>`;

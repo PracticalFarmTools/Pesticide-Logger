@@ -27,7 +27,7 @@
       </svg>
       <div>
         <h1>Pesticide Logger</h1>
-        <span class="header-sub">Practical Farm Tools · v2.8.2</span>
+        <span class="header-sub">Practical Farm Tools · v2.8.3</span>
       </div>
     </div>
     <div class="header-right">
@@ -407,6 +407,7 @@
             </label>
             <label data-log-field="temperature">Temperature (°F) <span id="req-temperature" class="state-req-tag" hidden>state</span>
               <input type="number" id="app-temp" step="any" min="-20" max="120">
+              <span id="app-temp-c" class="unit-echo" hidden></span>
             </label>
             <label data-log-field="sky">Sky / humidity <span id="req-sky" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-sky" placeholder="e.g. Clear, 60% RH">
@@ -571,6 +572,7 @@
     <div class="card">
       <h3 class="card-title">Tank mix calculator</h3>
       <p class="card-hint">Enter your sprayer setup and the area to treat. Add one or more products and get exact amounts per tank, total product needed, and a fill-order worksheet.</p>
+      <p class="card-hint">US label units. After Calculate, metric equivalents appear as a reference — they are not stored on spray records.</p>
 
       <div class="form-grid">
         <fieldset>
@@ -1021,7 +1023,7 @@
 
     <div class="card about-card">
       <h3 class="card-title">About</h3>
-      <p>Pesticide Logger v2.8.2 — part of the <strong>Practical Farm Tools</strong> suite. A licensed, offline-first tool built for farms of every size; your farm records stay on this device.</p>
+      <p>Pesticide Logger v2.8.3 — part of the <strong>Practical Farm Tools</strong> suite. A licensed, offline-first tool built for farms of every size; your farm records stay on this device.</p>
       <p class="card-hint">This tool provides 50-state application <em>recordkeeping field coverage</em> with audit history, lot tracking, and in-cab workflows. It is not legal advice, does not replace WPS employer duties, and does not file California PUR, New York PRL, or other electronic reports for you. Always follow the product label and confirm requirements with your state pesticide agency.</p>
       <details class="legal-details">
         <summary>Terms of use, license &amp; privacy</summary>
@@ -1205,6 +1207,7 @@
 
 <input type="file" id="photo-attach-input" class="visually-hidden-file" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
 
+<script src="units.js"></script>
 <script src="state_pesticide_laws.js"></script>
 <script src="deadline.js"></script>
 <script src="backup-merge.js"></script>

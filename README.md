@@ -139,6 +139,7 @@ state_pesticide_laws.js    50-state agencies, citations, retention, required fie
 api/epa.js                 Stateless Vercel proxy to official EPA PPLS
 tools/                     Owner key-signing scripts (generate/sign licenses)
 vendor/leaflet/            Leaflet 1.9.4 (vendored)
+vendor/fonts/              Inter + Outfit latin WOFF2 (SIL OFL, app-shell precache)
 label-ocr.js               Label-photo text parsing (EPA reg #, signal word) — pure functions
 vendor/tesseract/          Tesseract.js 7.0.0 OCR engine (vendored, lazy-loaded)
 vendor/zxing/              ZXing barcode decoder for iPhone still-photo scans (vendored, lazy-loaded)

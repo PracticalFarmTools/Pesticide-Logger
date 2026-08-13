@@ -244,7 +244,7 @@ check('source files advertise v2.7.0 + deadline/license wiring', () => {
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert.ok(app.includes('v2.7.0'));
-  assert.ok(sw.includes('pesticide-logger-v2.7.5'));
+  assert.ok(sw.includes('pesticide-logger-v2.7.6'));
   assert.ok(html.includes('v2.7.0'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));
@@ -270,6 +270,31 @@ check('source files advertise v2.7.0 + deadline/license wiring', () => {
   assert.ok(fs.existsSync(path.join(root, 'deadline.js')));
   assert.ok(fs.existsSync(path.join(root, 'license.js')));
   assert.ok(!/(?<!\$)\$\('#app-products \.app-product-row'\)\.(forEach|map)/.test(app));
+});
+
+check('Outfit and Inter are vendored locally, not loaded from Google', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
+  assert.ok(!html.includes('fonts.googleapis.com'), 'no Google Fonts stylesheet');
+  assert.ok(!html.includes('fonts.gstatic.com'), 'no Google font files');
+  assert.ok(html.includes("font-src 'self'"), 'CSP pins fonts to this origin');
+  assert.ok((css.match(/@font-face/g) || []).length >= 6, 'all used weights have @font-face');
+  assert.ok(css.includes("url('vendor/fonts/inter-latin-400-normal.woff2')"));
+  assert.ok(css.includes("url('vendor/fonts/outfit-latin-700-normal.woff2')"));
+  [
+    'inter-latin-400-normal.woff2',
+    'inter-latin-600-normal.woff2',
+    'inter-latin-700-normal.woff2',
+    'outfit-latin-600-normal.woff2',
+    'outfit-latin-700-normal.woff2',
+    'outfit-latin-800-normal.woff2'
+  ].forEach((f) => {
+    assert.ok(fs.existsSync(path.join(root, 'vendor', 'fonts', f)), f);
+    assert.ok(sw.includes('./vendor/fonts/' + f), f + ' is app-shell precached');
+  });
+  assert.ok(fs.existsSync(path.join(root, 'vendor', 'fonts', 'OFL-Inter.txt')));
+  assert.ok(fs.existsSync(path.join(root, 'vendor', 'fonts', 'OFL-Outfit.txt')));
 });
 
 check('v2.7 features wired: forecast, photos, barcode, posting, import, i18n', () => {
@@ -348,6 +373,7 @@ check('OCR label scanning wired: parser, lazy loader, both entry points, hardene
   assert.ok(html.includes("worker-src 'self' blob:"), 'worker-src allows the Tesseract worker');
   assert.ok(html.includes("'wasm-unsafe-eval'"), 'wasm-unsafe-eval allows WASM compilation');
   assert.ok(html.includes('img-src') && html.includes('blob:'), 'img-src allows blob: for canvas-based capture');
+  assert.ok(html.includes("font-src 'self'"), 'fonts are same-origin, not Google');
   // Shared worker must forward progress to the *current* scan's callback.
   assert.ok(app.includes('ocrProgressHandler'), 'OCR progress logger is mutable across scans');
   assert.ok(!app.includes('function statusLabel'), 'dead statusLabel() removed');

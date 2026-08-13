@@ -2,7 +2,7 @@
  * Cache-first for the app shell; records live in localStorage so the app
  * is fully functional with zero connectivity after first load.
  */
-const CACHE_NAME = 'pesticide-logger-v2.7.5';
+const CACHE_NAME = 'pesticide-logger-v2.7.6';
 const APP_SHELL = [
   './',
   './index.html',
@@ -25,7 +25,13 @@ const APP_SHELL = [
   './vendor/leaflet/images/marker-icon-2x.png',
   './vendor/leaflet/images/marker-shadow.png',
   './vendor/leaflet/images/layers.png',
-  './vendor/leaflet/images/layers-2x.png'
+  './vendor/leaflet/images/layers-2x.png',
+  './vendor/fonts/inter-latin-400-normal.woff2',
+  './vendor/fonts/inter-latin-600-normal.woff2',
+  './vendor/fonts/inter-latin-700-normal.woff2',
+  './vendor/fonts/outfit-latin-600-normal.woff2',
+  './vendor/fonts/outfit-latin-700-normal.woff2',
+  './vendor/fonts/outfit-latin-800-normal.woff2'
 ];
 
 self.addEventListener('install', (event) => {

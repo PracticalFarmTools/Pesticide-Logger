@@ -1,5 +1,5 @@
 Vendored on-device OCR engine, used only by the "Scan label" feature
-(`label-ocr.js` + `app.js`'s `recognizeLabelImage()`). Apache-2.0 licensed;
+(`label-ocr.js` + `app.js`'s `captureAndReadLabel()`). Apache-2.0 licensed;
 see `LICENSE`.
 
 - `tesseract.min.js`, `worker.min.js` — Tesseract.js v7.0.0

@@ -244,7 +244,7 @@ check('source files advertise v2.7.0 + deadline/license wiring', () => {
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert.ok(app.includes('v2.7.0'));
-  assert.ok(sw.includes('pesticide-logger-v2.7.0'));
+  assert.ok(sw.includes('pesticide-logger-v2.7.1'));
   assert.ok(html.includes('v2.7.0'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));
@@ -310,8 +310,19 @@ check('OCR label scanning wired: parser, lazy loader, both entry points, hardene
   assert.ok(app.includes('function captureAndReadLabel'), 'capture+recognize pipeline');
   assert.ok(app.includes('function scanProductLabel'), 'product-form entry point');
   assert.ok(app.includes('function scanQuickAddProductLabel'), 'cab quick-add entry point');
+  assert.ok(app.includes('function initCameraCapture'), 'camera init wires iPhone + Android paths');
+  assert.ok(app.includes('function prefetchScanEngines'), 'OCR/ZXing engines prefetch in the background');
+  assert.ok(app.includes("dlg.addEventListener('close', stopScanStream)"), 'live barcode camera stops on any dialog close');
+  assert.ok(app.includes('function liveBarcodeSupported'), 'live vs still-photo barcode split');
   assert.ok(html.includes('id="scan-label-btn"'), 'product-form button present');
+  assert.ok(html.includes('id="scan-label-input"'), 'Scan label uses an in-page file input (iOS gesture)');
   assert.ok(html.includes('id="qp-scan-label-btn"'), 'quick-add dialog button present');
+  assert.ok(html.includes('id="qp-scan-label-input"'), 'quick-add Scan label uses an in-page file input');
+  assert.ok(html.includes('id="app-scan-jug-photo"') && html.includes('id="app-scan-jug-input"'),
+    'Scan jug has a still-photo path for iPhone');
+  assert.ok(html.includes('id="prod-scan-barcode-photo"'), 'product barcode has a still-photo path');
+  assert.ok(fs.existsSync(path.join(root, 'vendor', 'zxing', 'zxing.min.js')), 'ZXing still-photo decoder vendored');
+  assert.ok(!sw.includes('vendor/zxing'), 'ZXing stays lazy-loaded, not precached');
   // Never a silent write: the reg # always goes through a real EPA lookup
   // before it reaches a saved record.
   assert.ok(app.includes('searchEpaProducts(facts.epaRegNo)') || app.includes('fetchEpa({ reg: facts.epaRegNo })'),

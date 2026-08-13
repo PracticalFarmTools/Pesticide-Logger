@@ -44,6 +44,7 @@
     'Spray now': 'Aplicar ahora',
     'Duplicate last spray': 'Duplicar última aplicación',
     'Scan jug': 'Escanear envase',
+    '📷 Scan label': '📷 Escanear etiqueta',
     'Show recommended extras': 'Mostrar extras recomendados',
     'Where': 'Dónde',
     'When': 'Cuándo',

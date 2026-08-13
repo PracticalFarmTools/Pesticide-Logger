@@ -190,6 +190,9 @@
         <button type="button" class="btn btn-primary btn-lg" id="app-spray-now">Spray now</button>
         <button type="button" class="btn btn-secondary btn-lg" id="app-duplicate-last">Duplicate last spray</button>
         <button type="button" class="btn btn-secondary btn-lg" id="app-scan-jug" hidden>Scan jug</button>
+        <label class="btn btn-secondary btn-lg camera-file-btn" id="app-scan-jug-photo" hidden>Scan jug
+          <input type="file" id="app-scan-jug-input" accept="image/*" capture="environment" aria-label="Scan jug barcode">
+        </label>
         <label class="checkbox-label cab-toggle">
           <input type="checkbox" id="app-show-recommended">
           Show recommended extras
@@ -566,10 +569,13 @@
       <h3 class="card-title" id="product-form-title">Add a product</h3>
       <p class="card-hint">Copy REI, PHI, and rates straight from the product label. The label is the law — this tool never overrides it.</p>
       <div class="ocr-scan-row" id="scan-label-row" hidden>
-        <button type="button" class="btn btn-secondary" id="scan-label-btn">📷 Scan label</button>
+        <label class="btn btn-secondary camera-file-btn" id="scan-label-btn">📷 Scan label
+          <input type="file" id="scan-label-input" accept="image/*" capture="environment" aria-label="Scan product label">
+        </label>
         <p class="card-hint">Reads the EPA registration number and signal word from a photo, then looks
-          up the rest for you to review below. First use downloads a one-time text reader (~7 MB).
-          Scanning happens on this device — only the registration number is looked up online.</p>
+          up the rest for you to review below. Works on iPhone and Android. A one-time text reader
+          (~7 MB) downloads in the background after you open the app — after that, scanning works
+          offline. Only the registration number is looked up online.</p>
       </div>
       <form id="product-form" class="form-grid" autocomplete="off">
         <input type="hidden" id="prod-id">
@@ -650,6 +656,9 @@
             <div class="input-pair">
               <input type="text" id="prod-barcode" placeholder="Scan or type UPC" autocomplete="off">
               <button type="button" class="btn btn-secondary btn-sm" id="prod-scan-barcode" hidden>Scan</button>
+              <label class="btn btn-secondary btn-sm camera-file-btn" id="prod-scan-barcode-photo" hidden>Scan
+                <input type="file" id="prod-scan-barcode-input" accept="image/*" capture="environment" aria-label="Scan product barcode">
+              </label>
             </div>
           </label>
           <div class="photo-row">
@@ -1006,7 +1015,7 @@
 <dialog id="scan-dialog" class="app-dialog">
   <h3>Scan a barcode</h3>
   <video id="scan-video" playsinline muted></video>
-  <p class="card-hint">Point the camera at the jug's UPC. Scanning happens entirely on this device.</p>
+  <p class="card-hint">Point the camera at the jug's UPC. On iPhone, take a still photo of the barcode instead. Scanning happens entirely on this device.</p>
   <div class="form-actions">
     <button type="button" class="btn btn-secondary" id="scan-cancel">Cancel</button>
   </div>
@@ -1054,9 +1063,11 @@
   <h3>Add a new product</h3>
   <p class="card-hint">Adds it to your product library and drops it into this mix — no tab switch needed. Copy REI, PHI from the label; open the full product form later for a label photo.</p>
   <div class="ocr-scan-row" id="qp-scan-label-row" hidden>
-    <button type="button" class="btn btn-secondary btn-sm" id="qp-scan-label-btn">📷 Scan label</button>
-    <p class="card-hint">Reads the name, EPA #, and active ingredient for you. First use downloads a
-      one-time text reader (~7 MB).</p>
+    <label class="btn btn-secondary btn-sm camera-file-btn" id="qp-scan-label-btn">📷 Scan label
+      <input type="file" id="qp-scan-label-input" accept="image/*" capture="environment" aria-label="Scan product label">
+    </label>
+    <p class="card-hint">Reads the name, EPA #, and active ingredient for you. Works on iPhone and Android.
+      A one-time text reader (~7 MB) downloads in the background after you open the app.</p>
   </div>
   <p class="card-hint" id="qp-barcode-hint" hidden></p>
   <input type="hidden" id="qp-barcode">
@@ -1135,6 +1146,8 @@
     <button type="button" class="btn btn-secondary" id="onboard-skip">Skip for now</button>
   </div>
 </dialog>
+
+<input type="file" id="photo-attach-input" class="visually-hidden-file" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
 
 <script src="state_pesticide_laws.js"></script>
 <script src="deadline.js"></script>

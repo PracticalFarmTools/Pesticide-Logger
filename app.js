@@ -1407,18 +1407,6 @@
       $('#prod-add-photo').addEventListener('click', () =>
         capturePhotoInto(productFormPhotoIds, $('#prod-photo-thumbs'), 'product label'));
     }
-    if ($('#prod-scan-barcode') && barcodeSupported()) {
-      $('#prod-scan-barcode').hidden = false;
-      $('#prod-scan-barcode').addEventListener('click', () =>
-        openScanner(code => {
-          $('#prod-barcode').value = code;
-          toast('Barcode linked — you can now scan this jug in the spray log');
-        }));
-    }
-    if ($('#scan-label-row') && ocrSupported()) {
-      $('#scan-label-row').hidden = false;
-      $('#scan-label-btn').addEventListener('click', scanProductLabel);
-    }
     $('#product-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const id = $('#prod-id').value || uid();
@@ -1736,17 +1724,8 @@
       $('#app-add-photo').addEventListener('click', () =>
         capturePhotoInto(appFormPhotoIds, $('#app-photo-thumbs'), 'application'));
     }
-    if ($('#app-scan-jug') && barcodeSupported()) {
-      $('#app-scan-jug').hidden = false;
-      $('#app-scan-jug').addEventListener('click', scanJugIntoMix);
-    }
-    if ($('#scan-cancel')) $('#scan-cancel').addEventListener('click', closeScanner);
     if ($('#quick-field-save')) $('#quick-field-save').addEventListener('click', saveQuickAddField);
     if ($('#quick-product-save')) $('#quick-product-save').addEventListener('click', saveQuickAddProduct);
-    if ($('#qp-scan-label-row') && ocrSupported()) {
-      $('#qp-scan-label-row').hidden = false;
-      $('#qp-scan-label-btn').addEventListener('click', scanQuickAddProductLabel);
-    }
 
     renderProductOptions();
     renderFieldOptions();
@@ -4269,14 +4248,11 @@
     });
   }
 
+  let photoAttachHandler = null;
+
   async function capturePhotoInto(idList, thumbsHost, label) {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.capture = 'environment';
-    input.addEventListener('change', async () => {
-      const file = input.files && input.files[0];
-      if (!file) return;
+    const input = $('#photo-attach-input');
+    const saveFile = async (file) => {
       try {
         const dataUrl = await compressImage(file, 1280);
         const photo = { id: uid(), dataUrl, label: label || '', createdAt: new Date().toISOString() };
@@ -4287,8 +4263,24 @@
       } catch (e) {
         toast('Could not read that image');
       }
+    };
+    if (input) {
+      photoAttachHandler = saveFile;
+      input.click();
+      return;
+    }
+    // Fallback if the in-page input is missing (should not happen).
+    const ghost = document.createElement('input');
+    ghost.type = 'file';
+    ghost.accept = 'image/*';
+    ghost.capture = 'environment';
+    document.body.appendChild(ghost);
+    ghost.addEventListener('change', () => {
+      const file = ghost.files && ghost.files[0];
+      ghost.remove();
+      if (file) saveFile(file);
     });
-    input.click();
+    ghost.click();
   }
 
   // Photos are only ever created via canvas.toDataURL('image/jpeg'); anything
@@ -4328,27 +4320,38 @@
     dlg.showModal();
   }
 
-  // ---- barcode scanning (BarcodeDetector, Chromium) ----
+  // ---- barcode scanning ----
+  // Chromium/Android: live BarcodeDetector + getUserMedia preview.
+  // iPhone / Firefox: native camera still photo + vendored ZXing decoder.
+  // Scan jug is always offered; only the capture method changes.
 
   let scanStream = null;
+  const BARCODE_FORMATS = ['upc_a', 'upc_e', 'ean_13', 'ean_8', 'code_128', 'code_39', 'qr_code'];
 
-  function barcodeSupported() {
+  function liveBarcodeSupported() {
     return typeof window !== 'undefined' && 'BarcodeDetector' in window &&
       navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
   }
+  function barcodeSupported() { return liveBarcodeSupported(); }
 
-  function closeScanner() {
+  function stopScanStream() {
     if (scanStream) {
       scanStream.getTracks().forEach(t => t.stop());
       scanStream = null;
     }
+    const video = $('#scan-video');
+    if (video) video.srcObject = null;
+  }
+
+  function closeScanner() {
+    stopScanStream();
     const dlg = $('#scan-dialog');
     if (dlg && dlg.open) dlg.close();
   }
 
   async function openScanner(onCode) {
-    if (!barcodeSupported()) {
-      toast('Barcode scanning needs a Chromium browser with a camera');
+    if (!liveBarcodeSupported()) {
+      toast('Use Scan jug to photograph the barcode');
       return;
     }
     const dlg = $('#scan-dialog');
@@ -4365,16 +4368,12 @@
     try {
       await video.play();
     } catch (e) {
-      // Previously unhandled: a play() rejection here left the user staring
-      // at a tap that silently did nothing, with the camera light still on.
       toast('Could not start the camera preview — try again');
       closeScanner();
       return;
     }
     dlg.showModal();
-    const detector = new BarcodeDetector({
-      formats: ['upc_a', 'upc_e', 'ean_13', 'ean_8', 'code_128', 'code_39', 'qr_code']
-    });
+    const detector = new BarcodeDetector({ formats: BARCODE_FORMATS });
     const tick = async () => {
       if (!scanStream) return;
       try {
@@ -4391,24 +4390,161 @@
     requestAnimationFrame(tick);
   }
 
+  function onJugBarcode(code) {
+    const p = data.products.find(pr => pr.barcode === code);
+    const rows = $$('#app-products .app-product-row');
+    const empty = rows.find(r => !r.querySelector('.apr-product').value);
+    const row = empty || addAppProductRow();
+    if (!p) {
+      toast('New barcode — add this jug\u2019s product now');
+      openQuickAddProduct(row, code);
+      return;
+    }
+    row.querySelector('.apr-product').value = p.id;
+    onRowProductChange(row);
+    toast(`Scanned: ${p.name}`);
+  }
+
   function scanJugIntoMix() {
-    openScanner(code => {
-      const p = data.products.find(pr => pr.barcode === code);
-      const rows = $$('#app-products .app-product-row');
-      const empty = rows.find(r => !r.querySelector('.apr-product').value);
-      const row = empty || addAppProductRow();
-      if (!p) {
-        // Previously a dead end (toast + go set it up yourself later). Now
-        // opens the same quick-add-product flow used from the mix row, with
-        // the scanned code pre-linked, so setup happens on the spot.
-        toast('New barcode — add this jug\u2019s product now');
-        openQuickAddProduct(row, code);
-        return;
-      }
-      row.querySelector('.apr-product').value = p.id;
-      onRowProductChange(row);
-      toast(`Scanned: ${p.name}`);
+    if (liveBarcodeSupported()) openScanner(onJugBarcode);
+    else {
+      const input = $('#app-scan-jug-input');
+      if (input) input.click();
+      else toast('Photograph the barcode, or type the UPC on the product');
+    }
+  }
+
+  function fileFromInput(input) {
+    const file = input && input.files && input.files[0];
+    if (input) input.value = '';
+    return file || null;
+  }
+
+  function setupBarcodeButton({ liveBtn, photoLabel, photoInput, onCode }) {
+    const live = liveBarcodeSupported();
+    if (liveBtn) liveBtn.hidden = !live;
+    if (photoLabel) photoLabel.hidden = live;
+    if (live && liveBtn) {
+      liveBtn.addEventListener('click', () => openScanner(onCode));
+    }
+    if (photoInput) {
+      photoInput.addEventListener('change', async () => {
+        const file = fileFromInput(photoInput);
+        if (!file) return;
+        toast('Reading barcode…');
+        try {
+          const code = await decodeBarcodeFromFile(file);
+          if (!code) {
+            toast('Could not read a barcode — try a closer, sharper photo of the UPC');
+            return;
+          }
+          onCode(code);
+        } catch (e) {
+          toast('Could not read a barcode — try again, or type the UPC');
+        }
+      });
+    }
+  }
+
+  function loadZXingScript() {
+    if (window.ZXing) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'vendor/zxing/zxing.min.js';
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error('zxing-load-failed'));
+      document.head.appendChild(s);
     });
+  }
+
+  function imageToCanvas(img, maxDim) {
+    const canvas = document.createElement('canvas');
+    const scale = Math.min(1, (maxDim || 1600) / Math.max(img.width, img.height));
+    canvas.width = Math.max(1, Math.round(img.width * scale));
+    canvas.height = Math.max(1, Math.round(img.height * scale));
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+    return canvas;
+  }
+
+  function rotateCanvas(src, deg) {
+    const canvas = document.createElement('canvas');
+    const rad = deg * Math.PI / 180;
+    const swap = deg === 90 || deg === 270;
+    canvas.width = swap ? src.height : src.width;
+    canvas.height = swap ? src.width : src.height;
+    const ctx = canvas.getContext('2d');
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(rad);
+    ctx.drawImage(src, -src.width / 2, -src.height / 2);
+    return canvas;
+  }
+
+  function invertCanvas(src) {
+    const canvas = document.createElement('canvas');
+    canvas.width = src.width;
+    canvas.height = src.height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(src, 0, 0);
+    ctx.globalCompositeOperation = 'difference';
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    return canvas;
+  }
+
+  function tryZXingCanvas(canvas, Z) {
+    try {
+      const hints = new Map();
+      hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [
+        Z.BarcodeFormat.UPC_A, Z.BarcodeFormat.UPC_E,
+        Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.EAN_8,
+        Z.BarcodeFormat.CODE_128, Z.BarcodeFormat.CODE_39,
+        Z.BarcodeFormat.QR_CODE
+      ]);
+      hints.set(Z.DecodeHintType.TRY_HARDER, true);
+      const reader = new Z.MultiFormatReader();
+      reader.setHints(hints);
+      const source = new Z.HTMLCanvasElementLuminanceSource(canvas);
+      const bitmap = new Z.BinaryBitmap(new Z.HybridBinarizer(source));
+      const result = reader.decode(bitmap);
+      if (!result) return null;
+      return result.getText ? result.getText() : result.text;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function decodeBarcodeWithZXing(img) {
+    await loadZXingScript();
+    const Z = window.ZXing;
+    if (!Z || !Z.MultiFormatReader) return null;
+    const base = imageToCanvas(img, 1600);
+    const attempts = [base, rotateCanvas(base, 90), rotateCanvas(base, 180), rotateCanvas(base, 270)];
+    for (const canvas of attempts) {
+      const text = tryZXingCanvas(canvas, Z) || tryZXingCanvas(invertCanvas(canvas), Z);
+      if (text) return String(text).trim();
+    }
+    return null;
+  }
+
+  async function detectBarcodeInImage(img) {
+    if (liveBarcodeSupported()) {
+      try {
+        const detector = new BarcodeDetector({ formats: BARCODE_FORMATS });
+        const codes = await detector.detect(img);
+        if (codes.length) return codes[0].rawValue;
+      } catch (e) { /* fall through to ZXing */ }
+    }
+    try {
+      return await decodeBarcodeWithZXing(img);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function decodeBarcodeFromFile(file) {
+    const dataUrl = await compressImage(file, 1900, 0.92);
+    const img = await dataUrlToImage(dataUrl);
+    return detectBarcodeInImage(img);
   }
 
   // ---- OCR label scanning (Tesseract.js, vendored + lazy-loaded on first use) ----
@@ -4416,21 +4552,53 @@
   // Unlike barcode scanning (a live video loop — see openScanner() above),
   // label text needs a single well-focused photo: the phone's native camera
   // app (autofocus, flash, HDR) reads small print far more reliably than a
-  // raw getUserMedia frame grab. Nothing here ever leaves the device except
-  // the extracted EPA registration number, sent to the same /api/epa lookup
-  // the manual search box already uses — no image or raw text is sent
-  // anywhere. High-confidence facts (EPA reg #, signal word) come from
-  // label-ocr.js's parseLabelText(); the reg # additionally has to pass a
-  // real EPA lookup before anything is ever written to a record — OCR
-  // output alone never populates a saved record.
+  // raw getUserMedia frame grab. The file input lives in the page so iOS
+  // Safari treats the tap as a real user gesture. Nothing here ever leaves
+  // the device except the extracted EPA registration number, sent to the
+  // same /api/epa lookup the manual search box already uses.
 
   let tesseractWorkerPromise = null;
-  // Tesseract.js v7 only accepts logger at createWorker time. Keep a mutable
-  // pointer so each scan's onStatus reaches the shared worker's logger.
   let ocrProgressHandler = null;
+  let ocrEngineCached = false;
+
+  const OCR_ASSETS = [
+    'vendor/tesseract/tesseract.min.js',
+    'vendor/tesseract/worker.min.js',
+    'vendor/tesseract/eng.traineddata.gz',
+    'vendor/tesseract/tesseract-core-lstm.wasm.js',
+    'vendor/tesseract/tesseract-core-simd-lstm.wasm.js',
+    'vendor/tesseract/tesseract-core-relaxedsimd-lstm.wasm.js'
+  ];
 
   function ocrSupported() {
     return typeof WebAssembly !== 'undefined';
+  }
+
+  function ocrEngineReadyOffline() {
+    return !!window.Tesseract || ocrEngineCached;
+  }
+
+  async function refreshOcrCacheFlag() {
+    if (!('caches' in window)) return;
+    try {
+      const hit = await caches.match('vendor/tesseract/tesseract.min.js', { ignoreSearch: true });
+      if (hit) ocrEngineCached = true;
+    } catch (e) { /* private mode / file: */ }
+  }
+
+  function prefetchScanEngines() {
+    if (!navigator.onLine) return;
+    const conn = navigator.connection;
+    if (conn && (conn.saveData || conn.effectiveType === '2g' || conn.effectiveType === 'slow-2g')) return;
+    const urls = OCR_ASSETS.concat(['vendor/zxing/zxing.min.js']);
+    const run = () => {
+      urls.forEach(url => fetch(url).catch(() => {}));
+      fetch('vendor/tesseract/tesseract.min.js').then(r => {
+        if (r && r.ok) ocrEngineCached = true;
+      }).catch(() => {});
+    };
+    if (typeof requestIdleCallback === 'function') requestIdleCallback(run, { timeout: 5000 });
+    else setTimeout(run, 1200);
   }
 
   function loadTesseractScript() {
@@ -4444,9 +4612,6 @@
     });
   }
 
-  // One worker, reused across scans for the rest of the session. First call
-  // downloads ~7MB (core + English data); the browser's normal HTTP/service
-  // worker cache keeps it available offline after that.
   async function getTesseractWorker(onProgress) {
     ocrProgressHandler = typeof onProgress === 'function' ? onProgress : null;
     if (!tesseractWorkerPromise) {
@@ -4475,69 +4640,43 @@
     });
   }
 
-  // Opportunistic: if a barcode happens to be visible in the same label
-  // photo, link it too. Best-effort only — never blocks the OCR result.
-  async function detectBarcodeInImage(img) {
-    if (!barcodeSupported()) return null;
-    try {
-      const detector = new BarcodeDetector({
-        formats: ['upc_a', 'upc_e', 'ean_13', 'ean_8', 'code_128', 'code_39', 'qr_code']
-      });
-      const codes = await detector.detect(img);
-      return codes.length ? codes[0].rawValue : null;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  // Captures one photo via the native camera app, runs OCR (plus a bonus
-  // barcode check) on it, and returns the parsed facts. `onStatus(text)` is
-  // called with human-readable progress ("Downloading text reader…",
-  // "Reading label…") so callers can show it however fits their UI.
-  function captureAndReadLabel(onStatus) {
-    return new Promise((resolve, reject) => {
-      if (!ocrSupported()) { reject(new Error('unsupported')); return; }
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
-      input.capture = 'environment';
-      input.addEventListener('cancel', () => reject(new Error('cancelled')));
-      input.addEventListener('change', async () => {
-        const file = input.files && input.files[0];
-        if (!file) { reject(new Error('cancelled')); return; }
-        try {
-          if (onStatus) onStatus('Reading label…');
-          const dataUrl = await compressImage(file, 1900, 0.9);
-          const img = await dataUrlToImage(dataUrl);
-          const barcode = await detectBarcodeInImage(img);
-          const worker = await getTesseractWorker((m) => {
-            if (!onStatus) return;
-            if (m.status === 'loading language traineddata' || m.status === 'loading tesseract core') {
-              onStatus('Downloading a one-time text reader (~7 MB)…');
-            } else if (m.status === 'recognizing text') {
-              onStatus(`Reading label… ${Math.round((m.progress || 0) * 100)}%`);
-            }
-          });
-          const { data } = await worker.recognize(dataUrl);
-          const facts = LabelOcr.parseLabelText(data.text || '');
-          resolve(Object.assign({ barcode }, facts));
-        } catch (e) {
-          reject(e);
-        }
-      });
-      input.click();
+  async function captureAndReadLabel(file, onStatus) {
+    if (!ocrSupported()) throw new Error('unsupported');
+    if (!file) throw new Error('cancelled');
+    if (!navigator.onLine && !ocrEngineReadyOffline()) throw new Error('ocr-offline');
+    if (onStatus) onStatus('Reading label…');
+    const dataUrl = await compressImage(file, 1900, 0.9);
+    const img = await dataUrlToImage(dataUrl);
+    const barcodePromise = detectBarcodeInImage(img);
+    const worker = await getTesseractWorker((m) => {
+      if (!onStatus) return;
+      if (m.status === 'loading language traineddata' || m.status === 'loading tesseract core') {
+        onStatus('Downloading a one-time text reader (~7 MB)…');
+      } else if (m.status === 'recognizing text') {
+        onStatus(`Reading label… ${Math.round((m.progress || 0) * 100)}%`);
+      }
     });
+    const { data } = await worker.recognize(dataUrl);
+    ocrEngineCached = true;
+    const facts = LabelOcr.parseLabelText(data.text || '');
+    let barcode = null;
+    try { barcode = await barcodePromise; } catch (e) { barcode = null; }
+    return Object.assign({ barcode }, facts);
   }
 
-  // Product-form entry point: reads identity facts from a label photo, then
-  // reuses the existing EPA search UI as the confirmation step — nothing is
-  // written to the library until the user reviews a real EPA match and taps
-  // "Add to library" themselves, exactly like a manual search.
-  async function scanProductLabel() {
+  function toastOcrError(e) {
+    if (!e || e.message === 'cancelled') return;
+    if (e.message === 'unsupported') toast('Label scanning needs a browser with WebAssembly support');
+    else if (e.message === 'load-failed') toast('Could not download the text reader — check your connection and try again');
+    else if (e.message === 'ocr-offline') {
+      toast('Label scanning needs a one-time download (~7 MB). Connect once, then it works offline.');
+    } else toast('Could not read that label — try again with better light, or search manually');
+  }
+
+  async function scanProductLabelFromFile(file) {
     if (!ocrSupported()) { toast('Label scanning needs a browser with WebAssembly support'); return; }
-    toast('Opening camera…');
     try {
-      const facts = await captureAndReadLabel(status => toast(status));
+      const facts = await captureAndReadLabel(file, status => toast(status));
       if (facts.signalWord) $('#prod-signal').value = facts.signalWord;
       if (facts.epaRegNo) {
         $('#epa-search-input').value = facts.epaRegNo;
@@ -4550,22 +4689,20 @@
         toast('Couldn\u2019t read an EPA registration number — search manually below');
       }
     } catch (e) {
-      if (e.message === 'cancelled') return;
-      if (e.message === 'unsupported') toast('Label scanning needs a browser with WebAssembly support');
-      else if (e.message === 'load-failed') toast('Could not download the text reader — check your connection and try again');
-      else toast('Could not read that label — try again with better light, or search manually');
+      toastOcrError(e);
     }
   }
 
-  // Quick-add-product entry point (cab flow): same recognition pipeline,
-  // pre-fills the small dialog's own fields. The user still has to tap
-  // "Save & select" — that's the confirmation step here, same principle as
-  // scanProductLabel()'s EPA-search-results review.
-  async function scanQuickAddProductLabel() {
+  async function scanProductLabel() {
+    const input = $('#scan-label-input');
+    if (input) input.click();
+    else toast('Label scanning is not available in this view');
+  }
+
+  async function scanQuickAddProductLabelFromFile(file) {
     if (!ocrSupported()) { toast('Label scanning needs a browser with WebAssembly support'); return; }
-    toast('Opening camera…');
     try {
-      const facts = await captureAndReadLabel(status => toast(status));
+      const facts = await captureAndReadLabel(file, status => toast(status));
       if (facts.barcode) {
         $('#qp-barcode').value = facts.barcode;
         $('#qp-barcode-hint').hidden = false;
@@ -4588,16 +4725,81 @@
           $('#qp-rup').checked = !!result.rup;
           $('#qp-company').value = result.company || '';
           toast(`Found: ${result.name} — review and Save & select`);
-        } else {
+        } else if (payload.results && payload.results.length > 1) {
           toast('EPA match was not unique — verify the details before saving');
+        } else {
+          toast('No EPA record for that number — verify it on the label and fill in the rest');
         }
       } catch (e) {
         toast('Could not verify with EPA — fill in the rest and save');
       }
     } catch (e) {
-      if (e.message === 'cancelled') return;
-      toast('Could not read that label — try again, or fill in the form manually');
+      toastOcrError(e);
     }
+  }
+
+  async function scanQuickAddProductLabel() {
+    const input = $('#qp-scan-label-input');
+    if (input) input.click();
+    else toast('Label scanning is not available in this view');
+  }
+
+  function initCameraCapture() {
+    prefetchScanEngines();
+    refreshOcrCacheFlag();
+    window.addEventListener('online', () => {
+      prefetchScanEngines();
+      refreshOcrCacheFlag();
+    });
+
+    const dlg = $('#scan-dialog');
+    if (dlg) dlg.addEventListener('close', stopScanStream);
+    if ($('#scan-cancel')) $('#scan-cancel').addEventListener('click', closeScanner);
+
+    const photoAttach = $('#photo-attach-input');
+    if (photoAttach) {
+      photoAttach.addEventListener('change', () => {
+        const file = fileFromInput(photoAttach);
+        const handler = photoAttachHandler;
+        photoAttachHandler = null;
+        if (handler && file) handler(file);
+      });
+    }
+
+    if (ocrSupported()) {
+      if ($('#scan-label-row')) $('#scan-label-row').hidden = false;
+      if ($('#qp-scan-label-row')) $('#qp-scan-label-row').hidden = false;
+    }
+    const prodOcr = $('#scan-label-input');
+    if (prodOcr) {
+      prodOcr.addEventListener('change', () => {
+        const file = fileFromInput(prodOcr);
+        if (file) scanProductLabelFromFile(file);
+      });
+    }
+    const qpOcr = $('#qp-scan-label-input');
+    if (qpOcr) {
+      qpOcr.addEventListener('change', () => {
+        const file = fileFromInput(qpOcr);
+        if (file) scanQuickAddProductLabelFromFile(file);
+      });
+    }
+
+    setupBarcodeButton({
+      liveBtn: $('#app-scan-jug'),
+      photoLabel: $('#app-scan-jug-photo'),
+      photoInput: $('#app-scan-jug-input'),
+      onCode: onJugBarcode
+    });
+    setupBarcodeButton({
+      liveBtn: $('#prod-scan-barcode'),
+      photoLabel: $('#prod-scan-barcode-photo'),
+      photoInput: $('#prod-scan-barcode-input'),
+      onCode: (code) => {
+        $('#prod-barcode').value = code;
+        toast('Barcode linked — you can now scan this jug in the spray log');
+      }
+    });
   }
 
   // -------------------------------------------------------------- spray window forecast
@@ -4944,6 +5146,7 @@
   initProducts();
   initFields();
   initAppForm();
+  initCameraCapture();
   initCalculator();
   initReports();
   initOffline();

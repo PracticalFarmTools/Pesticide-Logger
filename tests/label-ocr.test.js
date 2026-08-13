@@ -91,10 +91,10 @@ check('empty / non-string input never throws', () => {
 });
 
 check('whitespace / line-break noise between digits does not break matching', () => {
-  const { epaRegNo } = parseLabelText('EPA REG.\nNO.   62719 - 621');
-  // A literal space around the hyphen is not part of the accepted token
-  // shape today — this documents current (conservative) behavior.
-  assert.strictEqual(epaRegNo, null);
+  assert.strictEqual(parseLabelText('EPA REG.\nNO.   62719-621').epaRegNo, '62719-621');
+  assert.strictEqual(parseLabelText('EPA REG. NO. 62719 - 621').epaRegNo, '62719-621');
+  assert.strictEqual(parseLabelText('EPA REG. NO. 62719- 621').epaRegNo, '62719-621');
+  assert.strictEqual(parseLabelText('EPA REG. NO. 62719 -621').epaRegNo, '62719-621');
 });
 
 if (failed) {

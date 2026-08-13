@@ -52,7 +52,11 @@
     const contextRe = /EPA\s*(?:REG(?:ISTRATION)?)\s*\.?\s*(?:NO\.?|#|NUMBER)?\s*:?\s*/g;
     let match;
     while ((match = contextRe.exec(normalizedUpperText))) {
-      const windowText = normalizedUpperText.slice(match.index + match[0].length, match.index + match[0].length + 40);
+      // OCR often inserts spaces around the hyphen ("62719 - 621"). Collapse
+      // those before matching the same token shape the EPA proxy accepts.
+      const windowText = normalizedUpperText
+        .slice(match.index + match[0].length, match.index + match[0].length + 48)
+        .replace(/\s*-\s*/g, '-');
       const tokenMatch = REG_TOKEN.exec(windowText);
       if (!tokenMatch) continue;
       const cleaned = cleanDigitLikeToken(tokenMatch[1]);

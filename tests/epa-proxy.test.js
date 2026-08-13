@@ -1,0 +1,90 @@
+#!/usr/bin/env node
+'use strict';
+
+const path = require('path');
+const assert = require('assert');
+const handler = require(path.join(__dirname, '..', 'api', 'epa.js'));
+
+let failed = 0;
+function check(name, fn) {
+  try {
+    const result = fn();
+    if (result && typeof result.then === 'function') {
+      return result.then(() => console.log('ok  -', name))
+        .catch((e) => { failed++; console.error('FAIL -', name); console.error('     ', e.message); });
+    }
+    console.log('ok  -', name);
+    return Promise.resolve();
+  } catch (e) {
+    failed++;
+    console.error('FAIL -', name);
+    console.error('     ', e.message);
+    return Promise.resolve();
+  }
+}
+
+function mockRes() {
+  const r = { statusCode: 200, body: null, headers: {} };
+  r.setHeader = (k, v) => { r.headers[k] = v; };
+  r.status = (c) => { r.statusCode = c; return r; };
+  r.json = (b) => { r.body = b; return r; };
+  return r;
+}
+
+function mockReq(query, ip) {
+  return { method: 'GET', query: query || {}, headers: { 'x-forwarded-for': ip || `test-${Math.random()}` } };
+}
+
+async function run() {
+  await check('POST is rejected', async () => {
+    const res = mockRes();
+    await handler({ method: 'POST', query: {}, headers: {} }, res);
+    assert.strictEqual(res.statusCode, 405);
+  });
+
+  await check('percent sign is allowed in product-name search', async () => {
+    const orig = global.fetch;
+    global.fetch = async () => ({ ok: true, json: async () => ({ items: [] }) });
+    try {
+      const res = mockRes();
+      await handler(mockReq({ q: 'NEEM OIL 70%' }), res);
+      assert.strictEqual(res.statusCode, 200);
+      assert.deepStrictEqual(res.body.results, []);
+    } finally {
+      global.fetch = orig;
+    }
+  });
+
+  await check('invalid search characters are rejected', async () => {
+    const res = mockRes();
+    await handler(mockReq({ q: 'bad<script>' }), res);
+    assert.strictEqual(res.statusCode, 400);
+  });
+
+  await check('invalid EPA reg format is rejected', async () => {
+    const res = mockRes();
+    await handler(mockReq({ reg: 'not-a-reg' }), res);
+    assert.strictEqual(res.statusCode, 400);
+  });
+
+  await check('upstream 404 returns empty results, not 502', async () => {
+    const orig = global.fetch;
+    global.fetch = async () => ({ ok: false, status: 404 });
+    try {
+      const res = mockRes();
+      await handler(mockReq({ reg: '99999-999' }), res);
+      assert.strictEqual(res.statusCode, 200);
+      assert.deepStrictEqual(res.body.results, []);
+    } finally {
+      global.fetch = orig;
+    }
+  });
+
+  if (failed) {
+    console.error(`\n${failed} epa-proxy check(s) failed.`);
+    process.exit(1);
+  }
+  console.log('\nAll epa-proxy checks passed.');
+}
+
+run();

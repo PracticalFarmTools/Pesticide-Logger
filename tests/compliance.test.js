@@ -244,14 +244,16 @@ check('source files advertise v2.7.0 + deadline/license wiring', () => {
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert.ok(app.includes('v2.7.0'));
-  assert.ok(sw.includes('pesticide-logger-v2.7.2'));
+  assert.ok(sw.includes('pesticide-logger-v2.7.3'));
   assert.ok(html.includes('v2.7.0'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));
   assert.ok(html.includes('i18n.js'));
+  assert.ok(html.includes('backup-merge.js'));
   assert.ok(sw.includes('./deadline.js'));
   assert.ok(sw.includes('./license.js'));
   assert.ok(sw.includes('./i18n.js'));
+  assert.ok(sw.includes('./backup-merge.js'));
   assert.ok(html.includes('auto-backup-connect'), 'auto backup UI present');
   assert.ok(app.includes('function connectAutoBackup'), 'auto backup wired');
   assert.ok(html.includes('Terms of use, license'), 'in-app legal terms present');
@@ -334,6 +336,44 @@ check('OCR label scanning wired: parser, lazy loader, both entry points, hardene
   // Shared worker must forward progress to the *current* scan's callback.
   assert.ok(app.includes('ocrProgressHandler'), 'OCR progress logger is mutable across scans');
   assert.ok(!app.includes('function statusLabel'), 'dead statusLabel() removed');
+});
+
+check('code-pile hardening: trial merge, lock refresh, hidden Buy, interval fallback', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  assert.ok(fs.existsSync(path.join(root, 'backup-merge.js')));
+  assert.ok(app.includes('BackupMerge.mergeMeta'), 'merge restore uses conservative trial/license meta');
+  assert.ok(app.includes('BackupMerge.mergeMetaReplace'), 'replace restore cannot mint a new trial');
+  assert.ok(app.includes("document.addEventListener('visibilitychange'"), 'trial lock refreshes on tab focus');
+  assert.ok(/refreshLicenseState\(\)/.test(app.split('setInterval')[1] || ''), 'trial lock refreshes on the 60s timer');
+  assert.ok(/const BUY_URL = ['"]['"]/.test(app), 'Buy URL is empty until checkout exists');
+  assert.ok(app.includes('function syncBuyButtons'), 'Buy buttons hide when URL is empty');
+  assert.ok(html.includes('id="license-buy"') && html.includes('id="lock-buy"'), 'Buy button ids stay in the DOM');
+  assert.ok(app.includes('This build cannot check license keys yet.'), 'unconfigured-key copy does not claim the trial still works on the lock screen');
+  assert.ok(app.includes('function effectiveIntervalValue'), 'dashboard REI/PHI fall back to mix max');
+  assert.ok(app.includes("effectiveIntervalValue(app, 'reiHours')"));
+  assert.ok(app.includes("effectiveIntervalValue(app, 'phiDays')"));
+  assert.ok(app.includes('/^\\d{1,6}-\\d{1,6}(?:-\\d{1,6})?$/'), 'library verify skips invalid EPA numbers');
+});
+
+check('effectiveIntervalValue falls back to the mix max when the record top-level is empty', () => {
+  // Mirrors app.js effectiveIntervalValue — keep in sync.
+  function effectiveIntervalValue(app, key) {
+    const top = app && app[key];
+    if (top != null && top !== '' && Number.isFinite(Number(top)) && Number(top) >= 0) {
+      return Number(top);
+    }
+    const nums = ((app && app.products) || [])
+      .map(p => p[key])
+      .filter(v => v != null && v !== '' && Number.isFinite(Number(v)) && Number(v) >= 0)
+      .map(Number);
+    return nums.length ? Math.max(...nums) : null;
+  }
+  assert.strictEqual(effectiveIntervalValue({ reiHours: 12 }, 'reiHours'), 12);
+  assert.strictEqual(effectiveIntervalValue({ products: [{ reiHours: 4 }, { reiHours: 24 }] }, 'reiHours'), 24);
+  assert.strictEqual(effectiveIntervalValue({ reiHours: '', products: [{ reiHours: 8 }] }, 'reiHours'), 8);
+  assert.strictEqual(effectiveIntervalValue({ phiDays: null, products: [{ phiDays: 0 }, { phiDays: 7 }] }, 'phiDays'), 7);
+  assert.strictEqual(effectiveIntervalValue({}, 'reiHours'), null);
 });
 
 check('audit hardening: EPA proxy + interval/deadline correctness', () => {

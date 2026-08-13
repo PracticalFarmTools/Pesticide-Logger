@@ -2,7 +2,7 @@
  * Cache-first for the app shell; records live in localStorage so the app
  * is fully functional with zero connectivity after first load.
  */
-const CACHE_NAME = 'pesticide-logger-v2.7.2';
+const CACHE_NAME = 'pesticide-logger-v2.7.3';
 const APP_SHELL = [
   './',
   './index.html',
@@ -10,6 +10,7 @@ const APP_SHELL = [
   './app.js',
   './state_pesticide_laws.js',
   './deadline.js',
+  './backup-merge.js',
   './license.js',
   './label-ocr.js',
   './i18n.js',

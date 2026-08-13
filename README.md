@@ -39,7 +39,7 @@ application at the repository root.
 | **REI posting & reminders** | Bilingual DO NOT ENTER / NO ENTRE posting sheet from any active REI, plus opt-in browser notifications when REI clears or PHI dates arrive. |
 | **CSV import** | Bring existing Excel/Sheets records in with a column-mapping wizard — rows land as compliance-checked drafts. |
 | **Spanish interface** | One-tap Español toggle covering interface labels (210-entry dictionary). |
-| **Smarter backup merge** | Newest `updatedAt` wins; audit histories union; no silent loss when syncing phone ↔ PC. Photos stay on-device and are not included in JSON backups — migrating to a new device needs a manual photo re-attach. |
+| **Smarter backup merge** | Newest `updatedAt` wins; audit histories union; trial start and license key merge conservatively (earliest trial wins, local key kept). Photos stay on-device and are not included in JSON backups — migrating to a new device needs a manual photo re-attach. |
 | **Offline-first PWA** | Installable; core logging works with no connectivity after first load. |
 
 ## Compliance scope (read this)
@@ -72,10 +72,13 @@ the state agency. Always follow the product label.
 - **No record backend.** Farm records live only in the browser’s local storage
   and IndexedDB mirror.
 - **One optional lookup function.** `api/epa.js` proxies official EPA PPLS
-  queries (no CORS on EPA). It stores no farm data.
+  queries (no CORS on EPA). It stores no farm data. That route only exists on
+  a host that runs the serverless function (the Vercel deployment). GitHub
+  Pages, a USB copy, and `python3 -m http.server` have no `/api/epa` — use the
+  product library, Scan jug / Scan label, or type the EPA number yourself.
 - **No build step.** No npm, no framework.
 - **Static hosting.** GitHub Pages (static core) or Vercel (`vercel.json` included).
-  Or open `index.html` from a USB stick.
+  Serve over `http://localhost` when testing so the service worker can cache.
 
 ## Pricing & licensing
 
@@ -102,10 +105,13 @@ node --check state_pesticide_laws.js
 node --check deadline.js
 node --check license.js
 node --check label-ocr.js
+node --check backup-merge.js
 node --check sw.js
 node tests/compliance.test.js
 node tests/license.test.js
 node tests/label-ocr.test.js
+node tests/backup-merge.test.js
+node tests/epa-proxy.test.js
 ```
 
 ## Intentional non-goals
@@ -124,6 +130,7 @@ index.html                 App shell
 styles.css                 Theme + print stylesheet
 app.js                     Application + compliance engine
 deadline.js                Record / customer-copy deadline math
+backup-merge.js            Conservative trial/license merge for backup restore
 license.js                 Offline license verification (WebCrypto)
 state_pesticide_laws.js    50-state agencies, citations, retention, required fields
 api/epa.js                 Stateless Vercel proxy to official EPA PPLS

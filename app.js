@@ -436,19 +436,33 @@
   // Without an application end/start time, count from end-of-day so the
   // countdown never reports "clear" before a same-day afternoon spray's REI
   // would actually expire. Prefer endTime, then startTime, then 23:59.
+  function effectiveIntervalValue(app, key) {
+    const top = app && app[key];
+    if (top != null && top !== '' && Number.isFinite(Number(top)) && Number(top) >= 0) {
+      return Number(top);
+    }
+    const nums = ((app && app.products) || [])
+      .map(p => p[key])
+      .filter(v => v != null && v !== '' && Number.isFinite(Number(v)) && Number(v) >= 0)
+      .map(Number);
+    return nums.length ? Math.max(...nums) : null;
+  }
+
   function reiExpiry(app) {
-    if (!Number.isFinite(Number(app.reiHours)) || Number(app.reiHours) < 0) return null;
+    const hours = effectiveIntervalValue(app, 'reiHours');
+    if (hours == null) return null;
     const clock = app.endTime || app.startTime || '23:59';
     const start = new Date(`${app.date}T${clock}`);
     if (isNaN(start)) return null;
-    return new Date(start.getTime() + Number(app.reiHours) * 3600 * 1000);
+    return new Date(start.getTime() + hours * 3600 * 1000);
   }
 
   function phiDate(app) {
-    if (!app.phiDays && app.phiDays !== 0) return null;
+    const days = effectiveIntervalValue(app, 'phiDays');
+    if (days == null) return null;
     const d = new Date(`${app.date}T00:00:00`);
     if (isNaN(d)) return null;
-    d.setDate(d.getDate() + Number(app.phiDays));
+    d.setDate(d.getDate() + days);
     return d;
   }
 
@@ -1355,7 +1369,7 @@
     const button = $('#epa-verify-all');
     if (!data.products.length) { toast('Add products before verifying the library'); return; }
     button.disabled = true;
-    let verified = 0, failed = 0, cancelled = 0;
+    let verified = 0, failed = 0, cancelled = 0, skipped = 0;
     // Stay under the /api/epa 30 req/min speed bump: ~2.1s between lookups.
     const GAP_MS = 2100;
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -1363,6 +1377,10 @@
       for (let i = 0; i < data.products.length; i++) {
         if (i > 0) await sleep(GAP_MS);
         const product = data.products[i];
+        if (!/^\d{1,6}-\d{1,6}(?:-\d{1,6})?$/.test(String(product.epaRegNo || '').trim())) {
+          skipped++;
+          continue;
+        }
         button.textContent = `Verifying ${i + 1}/${data.products.length}…`;
         let attempt = 0;
         while (attempt < 2) {
@@ -1392,7 +1410,7 @@
       }
       save();
       renderProducts();
-      toast(`${verified} product${verified === 1 ? '' : 's'} verified${cancelled ? `; ${cancelled} cancelled/inactive` : ''}${failed ? `; ${failed} unavailable` : ''}.`);
+      toast(`${verified} product${verified === 1 ? '' : 's'} verified${cancelled ? `; ${cancelled} cancelled/inactive` : ''}${skipped ? `; ${skipped} skipped (no EPA #)` : ''}${failed ? `; ${failed} unavailable` : ''}.`);
     } finally {
       button.disabled = false;
       button.textContent = 'Verify my library';
@@ -3555,6 +3573,9 @@
     Object.keys(incoming.settings || {}).forEach(k => {
       if (!data.settings[k] && incoming.settings[k]) data.settings[k] = incoming.settings[k];
     });
+    if (typeof BackupMerge !== 'undefined' && BackupMerge.mergeMeta) {
+      data.meta = BackupMerge.mergeMeta(data.meta, incoming.meta);
+    }
     return { added, updated };
   }
 
@@ -3576,7 +3597,13 @@
           location.reload();
         } else {
           if (!confirm(`REPLACE everything on this device with the backup (${counts})? This cannot be undone.`)) return;
+          const currentMeta = data.meta;
           data = migrate(Object.assign(defaultData(), parsed));
+          if (typeof BackupMerge !== 'undefined' && BackupMerge.mergeMetaReplace) {
+            data.meta = BackupMerge.mergeMetaReplace(currentMeta, data.meta);
+          } else if (typeof BackupMerge !== 'undefined' && BackupMerge.mergeMeta) {
+            data.meta = BackupMerge.mergeMeta(currentMeta, data.meta);
+          }
           save();
           location.reload();
         }
@@ -4941,7 +4968,9 @@
 
   // $0-overhead sales: point this at a Gumroad / Lemon Squeezy / Stripe
   // Payment Link product that emails buyers a key from tools/sign-license.js.
-  const BUY_URL = 'https://practicalfarmtools.github.io/pesticide-logger-pro';
+  // Empty until a real checkout URL exists — Buy buttons stay in the DOM
+  // (tests look for the ids) but are hidden so they don't open a placeholder.
+  const BUY_URL = '';
 
   const licenseState = { pro: false, mode: 'checking', daysLeft: 0, holder: '' };
 
@@ -5029,7 +5058,9 @@
       await refreshLicenseState();
       toast('License activated on this device — thank you!');
     } else if (res.reason === 'unconfigured') {
-      toast('Sales are not configured for this build yet — your trial still works');
+      toast(isPro()
+        ? 'This build cannot check license keys yet. The trial still works until it expires.'
+        : 'This build cannot check license keys yet.');
     } else if (res.reason === 'expired') {
       toast('That license has expired — renew from the purchase page');
     } else {
@@ -5048,13 +5079,28 @@
     if ($('#lock-activate')) {
       $('#lock-activate').addEventListener('click', () => activateLicenseKeyFrom('#lock-key-input'));
     }
-    ['#license-buy', '#lock-buy'].forEach(sel => {
-      if ($(sel)) $(sel).addEventListener('click', () => window.open(BUY_URL, '_blank', 'noopener'));
-    });
+    syncBuyButtons();
+    const buyUrl = (BUY_URL || '').trim();
+    if (buyUrl) {
+      ['#license-buy', '#lock-buy'].forEach(sel => {
+        if ($(sel)) $(sel).addEventListener('click', () => window.open(buyUrl, '_blank', 'noopener'));
+      });
+    }
     if ($('#license-key-input') && data.meta.licenseKey) {
       $('#license-key-input').value = data.meta.licenseKey;
     }
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') refreshLicenseState();
+    });
     refreshLicenseState();
+  }
+
+  function syncBuyButtons() {
+    const show = Boolean((BUY_URL || '').trim());
+    ['license-buy', 'lock-buy'].forEach((id) => {
+      const el = $(id);
+      if (el) el.hidden = !show;
+    });
   }
 
   // -------------------------------------------------------------- onboarding
@@ -5164,9 +5210,11 @@
   renderDueBanner();
   checkReminders();
 
-  // Keep REI countdowns fresh; fire due reminders while the app is open.
+  // Keep REI countdowns fresh; fire due reminders; lock the app when the
+  // trial expires without requiring a reload.
   setInterval(() => {
-    if ($('#tab-dashboard').classList.contains('active')) renderDashboard();
+    if ($('#tab-dashboard') && $('#tab-dashboard').classList.contains('active')) renderDashboard();
     checkReminders();
+    refreshLicenseState();
   }, 60000);
 })();

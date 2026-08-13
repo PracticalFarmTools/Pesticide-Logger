@@ -448,6 +448,7 @@
       nozzleType: r.nozzleType || '',
       sprayerPressure: r.sprayerPressure || '',
       equipmentId: r.equipmentId || '',
+      aircraftId: r.aircraftId || '',
       reiHours: r.reiHours,
       phiDays: r.phiDays,
       notes: r.notes || '',
@@ -706,7 +707,9 @@
         (a.sky ? '<br>' + esc(a.sky) : '');
       const equip = esc(a.method || '—') +
         (a.nozzleType ? '<br>' + esc(a.nozzleType) : '') +
-        (a.sprayerPressure ? '<br>' + esc(a.sprayerPressure) : '');
+        (a.sprayerPressure ? '<br>' + esc(a.sprayerPressure) : '') +
+        (a.equipmentId ? '<br>' + esc(a.equipmentId) : '') +
+        (a.aircraftId ? '<br>' + esc(a.aircraftId) : '');
       const intervals = (a.reiHours != null ? fmtVal(a.reiHours) + ' hr' : '—') +
         ' / ' + (a.phiDays != null ? fmtVal(a.phiDays) + ' d' : '—');
       const who = esc(a.applicatorName || '—') +
@@ -878,22 +881,37 @@
     return !result.complete || result.intervalsOk === false || result.status === 'needs_review';
   }
 
+  function productKeySet(p) {
+    return new Set(
+      [p && p.productId, p && p.id, p && p.epaRegNo, p && p.productName, p && p.name]
+        .map(nameKey)
+        .filter(Boolean)
+    );
+  }
+
   function lastOnField(apps, fieldId, products, opts) {
     opts = opts || {};
     const fid = norm(fieldId);
-    if (!fid) return null;
-    const keys = (products || []).map((p) =>
-      nameKey((p && (p.productId || p.epaRegNo || p.productName || p.name)) || '')
-    ).filter(Boolean);
-    if (!keys.length) return null;
+    const fname = nameKey(opts.fieldName);
+    if (!fid && !fname) return null;
+    const want = new Set();
+    (products || []).forEach((p) => {
+      productKeySet(p).forEach((k) => want.add(k));
+    });
+    if (!want.size) return null;
     const exclude = opts.excludeId;
     const list = (apps || []).filter((a) => {
       if (!a || a.deletedAt) return false;
       if (exclude && a.id === exclude) return false;
-      if (norm(a.fieldId) !== fid) return false;
-      return (a.products || []).some((p) =>
-        keys.indexOf(nameKey(p.productId || p.epaRegNo || p.productName || '')) !== -1
-      );
+      const sameId = fid && norm(a.fieldId) === fid;
+      const sameName = !norm(a.fieldId) && fname && nameKey(a.fieldName) === fname;
+      if (!sameId && !sameName) return false;
+      return (a.products || []).some((p) => {
+        const have = productKeySet(p);
+        let hit = false;
+        have.forEach((k) => { if (want.has(k)) hit = true; });
+        return hit;
+      });
     });
     list.sort((a, b) => {
       const d = String(b.date || '').localeCompare(String(a.date || ''));

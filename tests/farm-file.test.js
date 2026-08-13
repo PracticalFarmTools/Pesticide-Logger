@@ -340,6 +340,34 @@ await check('FSA numbers appear only when filled', async () => {
   assert.strictEqual(tractHits, 1);
 });
 
+await check('equipment id appears on the packet when filled', async () => {
+  const payload = await FarmFile.buildInspectPayload({
+    farm: farm({ settings: { farmName: 'Oak', state: 'IA' } }),
+    records: [iaApp({ equipmentId: 'Boom-4' })],
+    photos: [],
+    ...packetOpts
+  });
+  assert.strictEqual(payload.records[0].equipmentId, 'Boom-4');
+  const html = FarmFile.inspectPacketInnerHtml(payload, { showVerify: false });
+  assert.ok(html.includes('Boom-4'));
+});
+
+await check('v1 inspect payload still verifies independently', async () => {
+  const keys = await FarmFile.generateFarmSignKeys();
+  const payload = {
+    format: FarmFile.INSPECT_FORMAT_V1,
+    generatedAt: '2026-08-01T00:00:00.000Z',
+    farm: { name: 'Oak' },
+    records: [{ date: '2026-08-01', fieldName: 'North', products: [{ productName: 'Entrust' }] }]
+  };
+  const sig = await FarmFile.signPayload(payload, keys);
+  const ok = await FarmFile.verifyPayload(payload, sig, keys.publicKeySpkiB64);
+  assert.strictEqual(ok.ok, true);
+  payload.records[0].fieldName = 'South';
+  const bad = await FarmFile.verifyPayload(payload, sig, keys.publicKeySpkiB64);
+  assert.strictEqual(bad.ok, false);
+});
+
 await check('signature still verifies after inspect-v2 payload', async () => {
   const keys = await FarmFile.generateFarmSignKeys();
   const payload = await FarmFile.buildInspectPayload({

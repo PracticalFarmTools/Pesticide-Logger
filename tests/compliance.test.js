@@ -244,7 +244,7 @@ check('source files advertise v2.7.0 + deadline/license wiring', () => {
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert.ok(app.includes('v2.7.0'));
-  assert.ok(sw.includes('pesticide-logger-v2.7.6'));
+  assert.ok(sw.includes('pesticide-logger-v2.7.8'));
   assert.ok(html.includes('v2.7.0'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));
@@ -295,6 +295,30 @@ check('Outfit and Inter are vendored locally, not loaded from Google', () => {
   });
   assert.ok(fs.existsSync(path.join(root, 'vendor', 'fonts', 'OFL-Inter.txt')));
   assert.ok(fs.existsSync(path.join(root, 'vendor', 'fonts', 'OFL-Outfit.txt')));
+});
+
+check('cab chrome: Home, Spray Log, Products, Fields, and More', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const i18n = require(path.join(root, 'i18n.js'));
+  assert.ok(html.includes('id="tab-more"'), 'More button');
+  assert.ok(html.includes('id="tab-more-menu"'), 'More menu');
+  assert.ok(html.includes('tab-btn-home'), 'Dashboard is a home icon');
+  assert.ok(html.includes('aria-label="Home"'), 'home tab is labeled for assistive tech');
+  assert.ok(html.includes('class="tab-nav-wrap"'), 'sticky wrap for menu overlay');
+  assert.ok(app.includes('MORE_TABS'), 'overflow destinations stay reachable');
+  const primary = html.split('id="tab-more-menu"')[0];
+  assert.ok(primary.includes('data-tab="dashboard"') && primary.includes('data-tab="log"')
+    && primary.includes('data-tab="products"') && primary.includes('data-tab="fields"'));
+  assert.ok(!primary.includes('data-tab="reports"'), 'Reports is not a primary tab');
+  assert.ok(!primary.includes('data-tab="calculator"'), 'Tank Mix is not a primary tab');
+  ['calculator', 'reports', 'settings'].forEach((tab) => {
+    assert.ok(html.includes(`data-tab="${tab}"`), tab + ' remains in More');
+  });
+  const more = html.split('id="tab-more-menu"')[1];
+  assert.ok(!more.includes('data-tab="products"'), 'Products is a primary tab, not More');
+  assert.strictEqual(i18n.ES['More'], 'Más');
+  assert.strictEqual(i18n.ES['Home'], 'Inicio');
 });
 
 check('v2.7 features wired: forecast, photos, barcode, posting, import, i18n', () => {

@@ -488,12 +488,49 @@
 
   // -------------------------------------------------------------- tab nav
 
+  const MORE_TABS = { calculator: 1, reports: 1, settings: 1 };
+
+  function moreMenu() { return $('#tab-more-menu'); }
+
+  function closeMoreMenu() {
+    const menu = moreMenu();
+    const btn = $('#tab-more');
+    if (!menu || menu.hidden) return;
+    menu.hidden = true;
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  }
+
+  function toggleMoreMenu() {
+    const menu = moreMenu();
+    const btn = $('#tab-more');
+    if (!menu || !btn) return;
+    const open = menu.hidden;
+    menu.hidden = !open;
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) {
+      const current = menu.querySelector('.tab-more-item.active') || menu.querySelector('.tab-more-item');
+      if (current) current.focus();
+    }
+  }
+
   function showTab(name) {
-    $$('.tab-btn').forEach(b => {
+    closeMoreMenu();
+    $$('.tab-btn[data-tab]').forEach(b => {
       const on = b.dataset.tab === name;
       b.classList.toggle('active', on);
       b.setAttribute('aria-selected', on);
       b.tabIndex = on ? 0 : -1;
+    });
+    const moreBtn = $('#tab-more');
+    if (moreBtn) {
+      const onMore = !!MORE_TABS[name];
+      moreBtn.classList.toggle('active', onMore);
+      moreBtn.setAttribute('aria-current', onMore ? 'page' : 'false');
+    }
+    $$('.tab-more-item').forEach(b => {
+      const on = b.dataset.tab === name;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-current', on ? 'page' : 'false');
     });
     $$('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
     window.scrollTo({ top: 0 });
@@ -506,7 +543,18 @@
     if (name === 'fields') initFieldMap();
   }
 
-  $$('.tab-btn').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+  $$('.tab-btn[data-tab]').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+  if ($('#tab-more')) $('#tab-more').addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleMoreMenu();
+  });
+  $$('.tab-more-item').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.tab-nav-wrap')) closeMoreMenu();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeMoreMenu();
+  });
   document.body.addEventListener('click', (e) => {
     const goto = e.target.closest('[data-goto]');
     if (goto) showTab(goto.dataset.goto);
@@ -520,14 +568,19 @@
 
   // Proper ARIA tabs: controls/labelledby links, roving tabindex, arrow keys.
   (function initA11yTabs() {
-    const tabs = $$('.tab-btn');
+    const tabs = $$('.tab-btn[data-tab]');
     tabs.forEach(b => {
       b.id = 'tabbtn-' + b.dataset.tab;
       b.setAttribute('aria-controls', 'tab-' + b.dataset.tab);
       b.tabIndex = b.classList.contains('active') ? 0 : -1;
     });
+    $$('.tab-more-item').forEach(b => {
+      b.id = 'tabmore-' + b.dataset.tab;
+    });
     $$('.tab-panel').forEach(p => {
-      p.setAttribute('aria-labelledby', 'tabbtn-' + p.id.replace('tab-', ''));
+      const key = p.id.replace('tab-', '');
+      const label = document.getElementById('tabbtn-' + key) || document.getElementById('tabmore-' + key);
+      if (label) p.setAttribute('aria-labelledby', label.id);
     });
     const nav = document.querySelector('.tab-nav');
     if (!nav) return;

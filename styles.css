@@ -146,16 +146,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 
 /* ---------- Tab navigation ---------- */
+.tab-nav-wrap { position: sticky; top: 0; z-index: 50; }
 .tab-nav {
-  position: sticky;
-  top: 0;
-  z-index: 50;
   display: flex;
   gap: 0.15rem;
   background: var(--primary-green);
   padding: 0.35rem 0.5rem;
-  overflow-x: auto;
-  scrollbar-width: none;
   box-shadow: var(--shadow-sm);
 }
 .tab-nav::-webkit-scrollbar { display: none; }
@@ -165,8 +161,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   flex-direction: column;
   align-items: center;
   gap: 0.15rem;
-  flex: 1 0 auto;
-  min-width: 72px;
+  flex: 1 1 0;
+  min-width: 0;
   background: transparent;
   border: none;
   border-radius: 8px;
@@ -180,6 +176,56 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .tab-btn svg { width: 20px; height: 20px; }
 .tab-btn:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
 .tab-btn.active { background: var(--bg-page); color: var(--primary-green-dark); }
+.tab-btn-home {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 2.85rem;
+  padding-left: 0.4rem;
+  padding-right: 0.4rem;
+}
+.tab-btn-home svg { width: 22px; height: 22px; }
+.tab-home-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.tab-more-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  padding: 0.4rem 0.5rem 0.55rem;
+  display: grid;
+  gap: 0.25rem;
+}
+.tab-more-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  text-align: left;
+  min-height: 2.75rem;
+  padding: 0.55rem 0.75rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-dark);
+  font-family: var(--font-title);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tab-more-item svg { width: 20px; height: 20px; flex-shrink: 0; color: var(--primary-green); }
+.tab-more-item:hover, .tab-more-item:focus-visible { background: var(--primary-green-translucent); }
+.tab-more-item.active { background: var(--accent-sage-light); }
 
 /* ---------- Layout ---------- */
 main {
@@ -1189,7 +1235,7 @@ label.state-required-field {
 
 @media print {
   body { background: #fff; padding: 0; }
-  .app-header, .tab-nav, main, .toast { display: none !important; }
+  .app-header, .tab-nav-wrap, main, .toast { display: none !important; }
   .print-area { display: block; font-size: 11px; color: #000; }
   .print-area h1 { font-size: 18px; margin-bottom: 2px; }
   .print-area h2 { font-size: 13px; margin: 14px 0 6px; }

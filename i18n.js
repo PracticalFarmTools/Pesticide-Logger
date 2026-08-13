@@ -10,12 +10,14 @@
   const ES = {
     // Navigation
     'Dashboard': 'Panel',
+    'Home': 'Inicio',
     'Spray Log': 'Registro',
     'Tank Mix': 'Mezcla',
     'Products': 'Productos',
     'Fields': 'Campos',
     'Reports': 'Informes',
     'Settings': 'Configuración',
+    'More': 'Más',
     'Offline — records save locally': 'Sin conexión — los registros se guardan en el dispositivo',
 
     // Dashboard

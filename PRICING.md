@@ -14,7 +14,7 @@
 
 ## Product
 
-### Pesticide Logger — $29/year per farm (or $79 perpetual)
+### Pesticide Logger — paid license (annual or perpetual)
 Every feature, no tiers: state-shaped spray log (all 50 states,
 private/commercial), strict compliance checks, REI/PHI dashboard,
 record-completion due clocks, soft-delete audit trail, backups/restore/
@@ -44,7 +44,7 @@ the ability to log new sprays.
 | Climate FieldView | $99+/yr | Agronomy focus, data sharing concerns |
 | Bushel Farm (FarmLogs) | ~$300+/yr | General farm records |
 | Paper + state PDF forms | $0 | No clocks, no search, no backup |
-| **Pesticide Logger** | **$29/yr** | Recordkeeping-only, offline, private |
+| **Pesticide Logger** | Paid license | Recordkeeping-only, offline, private |
 
 ## How selling works with $0 infrastructure
 
@@ -69,6 +69,6 @@ a new key. Perpetual: omit `--expires`.
 ## Honest limits of this model
 
 - Keys can be shared. Signed payloads carry the buyer's name/email, which
-  discourages casual sharing; determined piracy is not worth fighting at $29.
+  discourages casual sharing; determined piracy is not worth a license server.
 - No remote revocation (by design — no server). Annual expiry bounds the loss.
 - Refunds are handled by the merchant of record.

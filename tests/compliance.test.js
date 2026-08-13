@@ -514,6 +514,16 @@ check('paid-only: user-facing copy does not call the product free', () => {
   assert.ok(!/\bYou get a free\b/i.test(html), 'onboarding must not say free');
 });
 
+check('user-facing copy does not display an app sale price', () => {
+  const files = ['index.html', 'app.js', 'i18n.js', 'README.md', 'PRICING.md', 'TERMS.md', 'license.js'];
+  files.forEach(name => {
+    const text = fs.readFileSync(path.join(root, name), 'utf8');
+    assert.ok(!text.includes('$29'), `${name} still names $29`);
+    assert.ok(!text.includes('$79'), `${name} still names $79`);
+    assert.ok(!/29\/year/.test(text), `${name} still names 29/year`);
+  });
+});
+
 check('paid-only: whole app is gated by license/trial, no per-feature Pro gate', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');

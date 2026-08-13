@@ -84,12 +84,12 @@ the state agency. Always follow the product label.
 
 ## Pricing & licensing
 
-Pesticide Logger is paid software: $29/year per farm, or $79 one-time
-perpetual. Every feature is included — there are no unpaid tiers or
-feature-gated upgrades. A 30-day trial unlocks the entire app with no card
+Pesticide Logger is paid software. Every feature is included — there are no unpaid
+tiers or feature-gated upgrades. A 30-day trial unlocks the entire app with no card
 required; after that, a license is required to keep using it. Licensing is
 fully offline — ECDSA-signed keys verified on-device, no license server, no
-telemetry. See `PRICING.md` for the model and `tools/` for the owner's
+telemetry. The sale price is set at checkout and is not shown in the app.
+See `PRICING.md` for the model and `tools/` for the owner's
 key-signing workflow.
 
 ## Running locally
@@ -159,7 +159,7 @@ vendor/tesseract/          Tesseract.js 7.0.0 OCR engine (vendored, lazy-loaded)
 vendor/zxing/              ZXing barcode decoder for iPhone still-photo scans (vendored, lazy-loaded)
 sw.js                      Service worker
 manifest.json              PWA manifest
-PRICING.md                 Business model: paid-only, $29/yr or $79 perpetual, 30-day trial
+PRICING.md                 Business model: paid-only, 30-day trial, annual or perpetual keys
 tests/                     Node regression checks (no npm)
 archive/vercel-2026.1.0/   Historical recovered deployment (reference only)
 ```

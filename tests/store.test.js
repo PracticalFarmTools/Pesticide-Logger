@@ -160,6 +160,19 @@ check('touchSaved bumps rev and savedAt', () => {
   assert.ok(farm.meta.savedAt.startsWith('2026-08-13T18:00:00'));
 });
 
+check('migrate fills missing field group', () => {
+  const d = FarmStore.migrate({
+    fields: [{ id: 'f1', name: 'North' }],
+    applications: [],
+    products: []
+  });
+  assert.strictEqual(d.fields[0].group, '');
+});
+
+check('IndexedDB version includes the forecast object store', () => {
+  assert.ok(FarmStore.IDB_VERSION >= 3);
+});
+
 if (failed) {
   console.error(`\n${failed} store check(s) failed.`);
   process.exit(1);

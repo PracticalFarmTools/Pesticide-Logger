@@ -1,6 +1,8 @@
 # Blueprint: stay in lane (the inspector’s book)
 
-**Status: proposed.** Depends on farm-file v2.9.0 (`farm-file.js`: gather, signed
+**Status: implemented** in v2.9.1 (`farm-file.js` inspector v2, gather hint,
+clerk search, optional FSA numbers, cab install hint). State-law research
+pass (partial/uncertain → researched) is **deferred**.
 inspector HTML, optional crew, inspector view, shop REI board).
 
 Job to be done: a grower keeps **U.S. state pesticide application records** on

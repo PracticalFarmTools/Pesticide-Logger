@@ -104,6 +104,9 @@
       if (a.usedNoncertified == null) a.usedNoncertified = !!a.noncertifiedApplicatorName;
       if (a.county == null) a.county = d.settings.county || '';
       if (a.siteId == null) a.siteId = '';
+      if (a.fsaFarm == null) a.fsaFarm = '';
+      if (a.fsaTract == null) a.fsaTract = '';
+      if (a.fsaField == null) a.fsaField = '';
       if (a.permitNumber == null) a.permitNumber = '';
       if (a.draft == null) a.draft = false;
       (a.products || []).forEach(p => {
@@ -116,6 +119,9 @@
     d.fields.forEach(f => {
       if (f.siteId == null) f.siteId = '';
       if (f.group == null) f.group = '';
+      if (f.fsaFarm == null) f.fsaFarm = '';
+      if (f.fsaTract == null) f.fsaTract = '';
+      if (f.fsaField == null) f.fsaField = '';
     });
     d.applications.forEach(a => {
       if (!Array.isArray(a.history)) a.history = [];

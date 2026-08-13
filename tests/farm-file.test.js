@@ -2,11 +2,22 @@
 'use strict';
 
 const path = require('path');
+const fs = require('fs');
+const vm = require('vm');
 const assert = require('assert');
 
 global.BackupMerge = require(path.join(__dirname, '..', 'backup-merge.js'));
 const FarmFile = require(path.join(__dirname, '..', 'farm-file.js'));
 const FarmStore = require(path.join(__dirname, '..', 'store.js'));
+const Compliance = require(path.join(__dirname, '..', 'compliance.js'));
+
+const lawsCtx = {};
+vm.runInNewContext(
+  fs.readFileSync(path.join(__dirname, '..', 'state_pesticide_laws.js'), 'utf8') +
+  '\nthis.STATE_LAWS = STATE_LAWS;',
+  lawsCtx
+);
+const STATE_LAWS = lawsCtx.STATE_LAWS;
 
 let failed = 0;
 async function check(name, fn) {
@@ -186,12 +197,231 @@ await check('migrate keeps crew and device fields without freezing records', () 
     settings: { farmName: 'Oak', state: 'IA' },
     applications: [{ id: 'a', date: '2026-08-01', products: [] }],
     products: [],
-    fields: []
+    fields: [{ id: 'f', name: 'North' }]
   });
   assert.ok(Array.isArray(d.crew));
   assert.strictEqual(d.settings.deviceLabel, '');
   assert.strictEqual(d.applications[0].loggedBy, '');
   assert.strictEqual(d.applications[0].draft, false);
+  assert.strictEqual(d.fields[0].fsaFarm, '');
+  assert.strictEqual(d.applications[0].fsaTract, '');
+});
+
+function iaApp(extra) {
+  return Object.assign({
+    id: 'ok',
+    date: '2026-08-01',
+    startTime: '06:00',
+    endTime: '07:00',
+    fieldId: 'f1',
+    fieldName: 'North',
+    crop: 'corn',
+    applicatorName: 'Jane',
+    customerName: 'Oak Farm',
+    customerAddress: '1 Road',
+    area: 10,
+    areaUnit: 'acres',
+    method: 'ground boom',
+    reiHours: 12,
+    phiDays: 7,
+    draft: false,
+    products: [{
+      productId: 'p1',
+      productName: 'Entrust',
+      epaRegNo: '62719-621',
+      activeIngredient: 'spinosad',
+      rup: false,
+      rate: 5,
+      rateUnit: 'fl oz',
+      total: 50,
+      totalUnit: 'fl oz',
+      reiHours: 12,
+      phiDays: 7
+    }]
+  }, extra || {});
+}
+
+const packetOpts = {
+  evaluateCompliance: Compliance.evaluateCompliance,
+  stateLaws: STATE_LAWS
+};
+
+await check('inspector packet v2 cover, checklist, incomplete, and print CSS', async () => {
+  const complete = iaApp({ id: 'c1' });
+  const complete2 = iaApp({ id: 'c2', date: '2026-08-02', fieldName: 'South' });
+  const draft = iaApp({
+    id: 'd1',
+    draft: true,
+    crop: '',
+    applicatorName: '',
+    startTime: '',
+    products: [{ productName: 'Entrust', epaRegNo: '62719-621', rup: false, reiHours: 12, phiDays: 7 }]
+  });
+  const incomplete = iaApp({
+    id: 'i1',
+    crop: '',
+    applicatorName: '',
+    startTime: '',
+    endTime: '',
+    customerName: '',
+    customerAddress: '',
+    products: [{ productName: 'Entrust', epaRegNo: '62719-621', rup: false }]
+  });
+  const payload = await FarmFile.buildInspectPayload({
+    farm: farm({ settings: { farmName: 'Oak', state: 'IA', county: 'Story', applicatorClass: 'private' } }),
+    records: [complete, complete2, draft, incomplete],
+    photos: [],
+    generatedAt: '2026-08-13T12:00:00.000Z',
+    period: 'All records',
+    stateName: 'Iowa',
+    ...packetOpts
+  });
+  assert.strictEqual(payload.format, 'pesticide-logger-inspect-v2');
+  assert.ok(payload.farm.agency);
+  assert.ok(payload.farm.citationReference);
+  assert.ok(payload.farm.retentionYears);
+  assert.ok(payload.checklist.length > 3);
+  assert.ok(payload.checklist.includes('Application date'));
+  assert.strictEqual(payload.counts.total, 4);
+  assert.strictEqual(payload.counts.filled, 2);
+  assert.strictEqual(payload.counts.incomplete, 2);
+  const html = FarmFile.inspectPacketHtml({
+    payload,
+    signature: 'sig',
+    publicKeySpkiB64: 'key',
+    photos: []
+  });
+  assert.ok(html.includes('snapshot'));
+  assert.ok(html.includes('not frozen') || html.includes('live spray log'));
+  assert.ok(html.includes('Check this file'));
+  assert.ok(html.includes('@media print'));
+  assert.ok(/#verify-btn\{display:none/.test(html.replace(/\s/g, '')) || html.includes('#verify-btn,#verify-out'));
+  assert.ok(html.includes('INCOMPLETE'));
+  assert.ok(html.includes('Draft'));
+  assert.ok(html.includes('Complete'));
+  assert.ok(html.includes('62719-621'));
+  assert.ok(html.includes('5 fl oz') || html.includes('5') && html.includes('fl oz'));
+  assert.ok(html.includes('12 hr'));
+  assert.ok(html.includes('The label is the law'));
+  assert.ok(html.includes('not a filing') || html.includes('not the agency'));
+  assert.ok(!html.includes('privateKey'));
+  const completeRow = html.includes('INCOMPLETE') && html.includes('Complete');
+  assert.ok(completeRow);
+});
+
+await check('no-state packet has no fake checklist', async () => {
+  const payload = await FarmFile.buildInspectPayload({
+    farm: farm({ settings: { farmName: 'Oak', state: '' } }),
+    records: [iaApp()],
+    photos: [],
+    ...packetOpts
+  });
+  assert.deepStrictEqual(payload.checklist, []);
+  const html = FarmFile.inspectPacketInnerHtml(payload, { showVerify: false });
+  assert.ok(html.includes('Select a state in Settings'));
+  assert.ok(!html.includes('This packet is organized to include these record elements'));
+});
+
+await check('FSA numbers appear only when filled', async () => {
+  const withFsa = iaApp({ fsaFarm: '1234', fsaTract: '12', fsaField: '3' });
+  const blank = iaApp({ id: 'b', fsaFarm: '', fsaTract: '', fsaField: '' });
+  const payload = await FarmFile.buildInspectPayload({
+    farm: farm({ settings: { farmName: 'Oak', state: 'IA' } }),
+    records: [withFsa, blank],
+    photos: [],
+    ...packetOpts
+  });
+  assert.strictEqual(payload.records[0].fsaTract, '12');
+  const html = FarmFile.inspectPacketInnerHtml(payload, { showVerify: false });
+  assert.ok(html.includes('Tract 12'));
+  assert.ok(html.includes('Field 3'));
+  assert.ok(!/FSA\s*—/.test(html));
+  const tractHits = html.split('Tract 12').length - 1;
+  assert.strictEqual(tractHits, 1);
+});
+
+await check('signature still verifies after inspect-v2 payload', async () => {
+  const keys = await FarmFile.generateFarmSignKeys();
+  const payload = await FarmFile.buildInspectPayload({
+    farm: farm({ settings: { farmName: 'Oak', state: 'IA' } }),
+    records: [iaApp()],
+    photos: [],
+    generatedAt: '2026-08-13T12:00:00.000Z',
+    ...packetOpts
+  });
+  const sig = await FarmFile.signPayload(payload, keys);
+  const ok = await FarmFile.verifyPayload(payload, sig, keys.publicKeySpkiB64);
+  assert.strictEqual(ok.ok, true);
+  payload.counts.filled = 99;
+  const bad = await FarmFile.verifyPayload(payload, sig, keys.publicKeySpkiB64);
+  assert.strictEqual(bad.ok, false);
+});
+
+await check('gather hint is quiet for one-device farms; send nag needs lastSendAt', () => {
+  assert.strictEqual(FarmFile.shouldShowGatherHint({ deviceLabel: '', lastGatherAt: '' }), false);
+  assert.strictEqual(FarmFile.shouldShowGatherHint({ deviceLabel: 'Cab iPhone' }), true);
+  assert.strictEqual(FarmFile.shouldShowGatherHint({ lastGatherAt: '2026-08-01T00:00:00.000Z' }), true);
+  const now = Date.parse('2026-08-20T00:00:00.000Z');
+  assert.strictEqual(FarmFile.shouldShowSendNag({
+    lastSendAt: '',
+    hasNewerSprays: true,
+    now
+  }), false);
+  assert.strictEqual(FarmFile.shouldShowSendNag({
+    lastSendAt: '2026-08-01T00:00:00.000Z',
+    hasNewerSprays: true,
+    now
+  }), true);
+  assert.strictEqual(FarmFile.shouldShowSendNag({
+    lastSendAt: '2026-08-01T00:00:00.000Z',
+    hasNewerSprays: false,
+    now
+  }), false);
+});
+
+await check('AND-token search matches EPA × field and misses the other field', () => {
+  const a = iaApp({ fieldName: 'North', products: [{ productName: 'Roundup', epaRegNo: '42750-61', lotNumber: 'L1' }] });
+  const b = iaApp({ id: 'b', fieldName: 'South', products: [{ productName: 'Roundup', epaRegNo: '42750-61' }] });
+  assert.ok(FarmFile.recordMatchesQuery(a, 'epa 42750 north'));
+  assert.ok(!FarmFile.recordMatchesQuery(b, 'epa 42750 north'));
+  assert.ok(FarmFile.recordMatchesQuery(a, 'Roundup, North'));
+});
+
+await check('incomplete filter and last-on-field hint', () => {
+  const resultIncomplete = { complete: false, intervalsOk: true, status: 'incomplete' };
+  const resultOk = { complete: true, intervalsOk: true, status: 'fields_complete' };
+  assert.ok(FarmFile.recordIsIncomplete({ draft: true }, resultOk));
+  assert.ok(FarmFile.recordIsIncomplete({ draft: false }, resultIncomplete));
+  assert.ok(!FarmFile.recordIsIncomplete({ draft: false }, resultOk));
+  const apps = [
+    iaApp({ id: 'old', date: '2026-06-12', fieldId: 'f1', deletedAt: null, products: [{ productId: 'p1', productName: 'Roundup', rate: 22, rateUnit: 'oz/ac' }] }),
+    iaApp({ id: 'gone', date: '2026-07-01', fieldId: 'f1', deletedAt: '2026-07-02', products: [{ productId: 'p1', productName: 'Roundup', rate: 99, rateUnit: 'oz/ac' }] }),
+    iaApp({ id: 'other', date: '2026-08-01', fieldId: 'f2', products: [{ productId: 'p1', productName: 'Roundup' }] })
+  ];
+  const hit = FarmFile.lastOnField(apps, 'f1', [{ productId: 'p1' }], { excludeId: 'new' });
+  assert.ok(hit);
+  assert.strictEqual(hit.id, 'old');
+  assert.ok(hit.summary.includes('Roundup'));
+  assert.ok(hit.summary.includes('22'));
+  assert.strictEqual(FarmFile.lastOnField(apps, 'f1', [{ productId: 'p1' }], { excludeId: 'old' }), null);
+});
+
+await check('AND search still works on a 40-row orchard log', () => {
+  const rows = [];
+  for (let i = 0; i < 40; i++) {
+    rows.push(iaApp({
+      id: 'r' + i,
+      fieldName: i === 12 ? 'Tunnel 12' : ('Block ' + i),
+      fieldId: 'f' + i,
+      siteId: 'S' + i,
+      products: [{ productName: i === 12 ? 'Entrust' : 'Other', epaRegNo: '62719-' + i, lotNumber: 'L' + i }]
+    }));
+  }
+  const hit = rows.filter((a) => FarmFile.recordMatchesQuery(a, 'Entrust Tunnel'));
+  assert.strictEqual(hit.length, 1);
+  assert.strictEqual(hit[0].fieldName, 'Tunnel 12');
+  const epa = rows.filter((a) => FarmFile.recordMatchesQuery(a, '62719-12'));
+  assert.strictEqual(epa.length, 1);
 });
 
 if (failed) {

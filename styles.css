@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.0 — Practical Farm Tools theme */
+/* Pesticide Logger v2.9.1 — Practical Farm Tools theme */
 
 :root {
   --primary-green: #1b4322;
@@ -348,6 +348,17 @@ main {
 .backup-banner { background: var(--accent-sage-dark); }
 .banner-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
 .backup-banner .btn-secondary { color: #e8f0e9; border-color: rgba(255, 255, 255, 0.35); }
+.gather-hint-card { margin-bottom: 1.25rem; }
+#log-filter-incomplete.active {
+  background: var(--danger-bg);
+  border-color: rgba(161, 51, 51, 0.35);
+  color: var(--danger);
+}
+#app-last-on-field {
+  display: inline-block;
+  margin-top: 0.35rem;
+  text-align: left;
+}
 
 /* ---------- Dashboard ---------- */
 .stat-grid {
@@ -1331,6 +1342,13 @@ label.state-required-field {
   .print-area .print-footer { font-size: 9px; color: #555; margin-top: 14px; border-top: 1px solid #999; padding-top: 6px; }
   .print-area .sig-line { margin-top: 28px; display: flex; gap: 40px; }
   .print-area .sig-line span { border-top: 1px solid #000; padding-top: 3px; flex: 1; font-size: 9.5px; }
+  .print-area .banner { border: 1px solid #999; padding: 8px 10px; margin-bottom: 10px; }
+  .print-area .cover { page-break-after: always; }
+  .print-area .checklist { columns: 2; padding-left: 1.1rem; }
+  .print-area .incomplete { font-weight: 700; }
+  .print-area #verify-btn, .print-area #verify-out, .print-area .no-print { display: none !important; }
+  .print-area footer { font-size: 9px; color: #555; margin-top: 14px; border-top: 1px solid #999; padding-top: 6px; }
+  .update-banner, #install-banner, #license-lock-screen, #license-checking { display: none !important; }
 
   /* REI posting sheet — big enough to read from a truck */
   .posting-sheet { text-align: center; padding-top: 20px; }

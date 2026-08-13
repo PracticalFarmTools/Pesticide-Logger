@@ -1,8 +1,9 @@
 /* Spanish interface translation for Pesticide Logger.
  * Dictionary keyed by exact English UI text; a DOM walker translates static
  * markup and a MutationObserver keeps dynamically rendered content covered
- * when the string matches. Dynamic composed messages (toasts, previews)
- * remain in English in this version — the toggle says so honestly.
+ * when the string matches. toast() looks up the same dictionary so common
+ * messages translate too. Interpolated strings without a dictionary key stay
+ * in English.
  */
 (function (root) {
   'use strict';
@@ -43,16 +44,16 @@
     'Back up your records.': 'Respalde sus registros.',
     'Download backup': 'Descargar respaldo',
     'Remind me later': 'Recordarme después',
-    'Welcome to Pesticide Logger.': 'Bienvenido a Pesticide Logger.',
-    'Set up my farm': 'Configurar mi granja',
     'Get set up to log': 'Prepárese para registrar',
     'Farm name and state': 'Nombre de la granja y estado',
     'Add a field': 'Agregar un campo',
     'Done': 'Listo',
+    'Save farm': 'Guardar granja',
     'Shapes the spray log to your state’s rules': 'Adapta el registro a las reglas de su estado',
     'A map pin is how spray windows know where to look': 'El pin del mapa es cómo las ventanas de aspersión saben dónde buscar',
     'REI, PHI, and rates come off the label': 'REI, PHI y dosis salen de la etiqueta',
-    'Three steps. Then this home screen shows spray windows, REI, and recent applications — not empty zeros. Nothing is uploaded anywhere.': 'Tres pasos. Luego esta pantalla muestra ventanas de aspersión, REI y aplicaciones recientes — no ceros vacíos. Nada se sube a ningún lado.',
+    'Three steps on this screen. Then Home shows spray windows, REI, and recent applications — not empty zeros. Nothing is uploaded anywhere. A 30-day trial is already running; no card required.':
+      'Tres pasos en esta pantalla. Luego Inicio muestra ventanas de aspersión, REI y aplicaciones recientes — no ceros vacíos. Nada se sube a ningún lado. Ya corre una prueba de 30 días; no se pide tarjeta.',
 
     // Spray log form
     'Log an application': 'Registrar una aplicación',
@@ -260,10 +261,26 @@
     'Scan a barcode': 'Escanear un código de barras',
     'Match your spreadsheet columns': 'Relacione las columnas de su hoja',
     'Import records': 'Importar registros',
-    'Welcome — set up your farm in 30 seconds': 'Bienvenido — configure su granja en 30 segundos',
     'Your state': 'Su estado',
-    'Start logging': 'Comenzar a registrar',
-    'Skip for now': 'Omitir por ahora'
+
+    // Toasts (exact lookup from toast())
+    'Settings saved': 'Configuración guardada',
+    'Product deleted': 'Producto eliminado',
+    'Field deleted': 'Campo eliminado',
+    'Photo attached': 'Foto adjunta',
+    'Photo removed': 'Foto quitada',
+    'Photo not found on this device': 'Foto no encontrada en este dispositivo',
+    'Could not read that image': 'No se pudo leer esa imagen',
+    'Farm name and state are required to shape the spray log': 'Se requieren nombre de granja y estado para adaptar el registro',
+    'Farm saved — add a field next': 'Granja guardada — agregue un campo a continuación',
+    'Backup downloaded — keep it with your farm files': 'Respaldo descargado — guárdelo con los archivos de la granja',
+    'Backup downloaded — farm file and photos. Keep it with your farm files': 'Respaldo descargado — archivo de granja y fotos. Guárdelo con los archivos de la granja',
+    'Could not build the backup file': 'No se pudo crear el archivo de respaldo',
+    'Record restored': 'Registro restaurado',
+    'Record moved to deleted (recoverable)': 'Registro pasado a eliminados (recuperable)',
+    'License activated on this device — thank you!': 'Licencia activada en este dispositivo — gracias',
+    'That key is not valid — check for missing characters': 'Esa clave no es válida — revise si faltan caracteres',
+    'Paste the license key from your purchase email': 'Pegue la clave de licencia del correo de compra'
   };
 
   function makeTranslator(dict) {
@@ -289,6 +306,11 @@
     return { walk };
   }
 
+  function t(lang, key) {
+    if (lang !== 'es' || key == null || key === '') return key;
+    return ES[key] || key;
+  }
+
   function applyLanguage(lang) {
     if (lang !== 'es') return null;
     const t = makeTranslator(ES);
@@ -301,7 +323,7 @@
     return observer;
   }
 
-  const api = { ES, applyLanguage, makeTranslator };
+  const api = { ES, applyLanguage, makeTranslator, t };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.I18n = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

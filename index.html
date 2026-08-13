@@ -27,7 +27,7 @@
       </svg>
       <div>
         <h1>Pesticide Logger</h1>
-        <span class="header-sub">Practical Farm Tools · v2.8.0</span>
+        <span class="header-sub">Practical Farm Tools · v2.8.1</span>
       </div>
     </div>
     <div class="header-right">
@@ -119,19 +119,31 @@
   <section id="tab-dashboard" class="tab-panel active" role="tabpanel">
     <div class="card" id="dash-first-run" hidden>
       <h3 class="card-title">Get set up to log</h3>
-      <p class="card-hint">Three steps. Then this home screen shows spray windows, REI, and recent applications — not empty zeros. Nothing is uploaded anywhere.</p>
+      <p class="card-hint">Three steps on this screen. Then Home shows spray windows, REI, and recent applications — not empty zeros. Nothing is uploaded anywhere. A 30-day trial is already running; no card required.</p>
+      <form id="first-run-farm" class="form-grid first-run-farm" hidden>
+        <div class="form-row form-row-3">
+          <label>Farm name <span class="req-star">*</span>
+            <input type="text" id="first-run-farm-name" placeholder="e.g. Spear Farm" autocomplete="organization">
+          </label>
+          <label>Your state <span class="req-star">*</span>
+            <select id="first-run-state"><option value="">— Select state —</option></select>
+          </label>
+          <label>Applicator class
+            <select id="first-run-class">
+              <option value="private">Private / grower</option>
+              <option value="commercial">Commercial / for-hire</option>
+              <option value="both">Both (strictest fields)</option>
+            </select>
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Save farm</button>
+        </div>
+      </form>
       <div class="interval-list" id="dash-setup-steps"></div>
     </div>
 
     <div id="dash-working">
-    <div id="setup-banner" class="setup-banner" hidden>
-      <div>
-        <strong>Welcome to Pesticide Logger.</strong>
-        <p>Set your farm name, state, and applicator credentials once — every record you create will be pre-filled and checked against your state's requirements.</p>
-      </div>
-      <button class="btn btn-primary" data-goto="settings">Set up my farm</button>
-    </div>
-
     <div id="backup-banner" class="setup-banner backup-banner" hidden>
       <div>
         <strong>Back up your records.</strong>
@@ -856,7 +868,7 @@
     <div class="card">
       <h3 class="card-title">Backup &amp; restore</h3>
       <p class="card-hint">Your records live only in this browser. Download a backup regularly and keep it with your farm files.
-        To move records between phone and PC: download (or share) a backup on one device, then restore it on the other and choose <strong>Merge</strong> — newest edits win, audit history is kept, and nothing silently duplicates.</p>
+        A full backup is one JSON file with the farm file <em>and</em> attached photos. To move phone to PC: download (or share) on one device, restore on the other, and choose <strong>Merge</strong> — newest edits win, audit history is kept, photos fill in if the other device does not already have them. Older backups from before photos were packed still restore records; you will be told if photos are missing.</p>
       <div class="auto-backup-box">
         <p class="card-hint" id="auto-backup-status"></p>
         <div class="form-actions">
@@ -946,7 +958,7 @@
           <label>Interface language
             <select id="set-language">
               <option value="">English</option>
-              <option value="es">Español (etiquetas de la interfaz)</option>
+              <option value="es">Español</option>
             </select>
           </label>
         </div>
@@ -1001,7 +1013,7 @@
 
     <div class="card about-card">
       <h3 class="card-title">About</h3>
-      <p>Pesticide Logger v2.8.0 — part of the <strong>Practical Farm Tools</strong> suite. A licensed, offline-first tool built for farms of every size; your farm records stay on this device.</p>
+      <p>Pesticide Logger v2.8.1 — part of the <strong>Practical Farm Tools</strong> suite. A licensed, offline-first tool built for farms of every size; your farm records stay on this device.</p>
       <p class="card-hint">This tool provides 50-state application <em>recordkeeping field coverage</em> with audit history, lot tracking, and in-cab workflows. It is not legal advice, does not replace WPS employer duties, and does not file California PUR, New York PRL, or other electronic reports for you. Always follow the product label and confirm requirements with your state pesticide agency.</p>
       <details class="legal-details">
         <summary>Terms of use, license &amp; privacy</summary>
@@ -1183,40 +1195,12 @@
   </div>
 </dialog>
 
-<dialog id="onboarding-dialog" class="app-dialog">
-  <h3>Welcome — set up your farm in 30 seconds</h3>
-  <p class="card-hint">The spray log reshapes itself to your state’s required record fields.
-    Everything runs on this device; nothing is uploaded.</p>
-  <div class="form-grid">
-    <label>Your state
-      <select id="onboard-state"><option value="">— Select state —</option></select>
-    </label>
-    <label>Applicator class
-      <select id="onboard-class">
-        <option value="private">Private / grower</option>
-        <option value="commercial">Commercial / for-hire</option>
-        <option value="both">Both (strictest fields)</option>
-      </select>
-    </label>
-    <label>Farm name
-      <input type="text" id="onboard-farm" placeholder="e.g. Spear Farm">
-    </label>
-  </div>
-  <p class="card-hint">You get a 30-day trial with everything unlocked, no card required. After
-    that, a paid license keeps logging working. Your spray logs stay on this
-    device either way — two fields or 150 sites, every year you wrote is still yours to review and
-    export.</p>
-  <div class="form-actions">
-    <button type="button" class="btn btn-primary" id="onboard-save">Start logging</button>
-    <button type="button" class="btn btn-secondary" id="onboard-skip">Skip for now</button>
-  </div>
-</dialog>
-
 <input type="file" id="photo-attach-input" class="visually-hidden-file" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
 
 <script src="state_pesticide_laws.js"></script>
 <script src="deadline.js"></script>
 <script src="backup-merge.js"></script>
+<script src="backup-pack.js"></script>
 <script src="spray-window.js"></script>
 <script src="store.js"></script>
 <script src="compliance.js"></script>

@@ -17,6 +17,8 @@ const path = require('path');
 const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const appjs = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+const storejs = fs.readFileSync(path.join(root, 'store.js'), 'utf8');
+const farmScale = fs.readFileSync(path.join(root, 'farm-scale.js'), 'utf8');
 const i18nSrc = fs.readFileSync(path.join(root, 'i18n.js'), 'utf8');
 
 function decodeEntities(s) {
@@ -49,7 +51,7 @@ while ((m = tagRe.exec(html))) {
 const attrRe = /(?:placeholder|aria-label)="([^"]*)"/g;
 while ((m = attrRe.exec(html))) uiTexts.add(decodeEntities(m[1]).trim());
 
-const combinedSource = html + '\n' + appjs;
+const combinedSource = html + '\n' + appjs + '\n' + storejs + '\n' + farmScale;
 
 const stale = keys.filter((k) => !uiTexts.has(k) && !combinedSource.includes(k));
 

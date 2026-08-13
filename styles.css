@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.8.0 — Practical Farm Tools theme */
+/* Pesticide Logger v2.8.1 — Practical Farm Tools theme */
 
 :root {
   --primary-green: #1b4322;
@@ -354,6 +354,7 @@ main {
   color: inherit;
 }
 .setup-step:hover, .setup-step:focus-visible { border-color: var(--primary-green); }
+.first-run-farm { margin: 0.75rem 0 1rem; }
 
 .stat-card {
   background: var(--bg-card);

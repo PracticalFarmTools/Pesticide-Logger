@@ -239,18 +239,19 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.8.0 + deadline/license wiring', () => {
+check('source files advertise v2.8.1 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.8.0'));
-  assert.ok(sw.includes('pesticide-logger-v2.8.0'));
-  assert.ok(html.includes('v2.8.0'));
+  assert.ok(app.includes('v2.8.1'));
+  assert.ok(sw.includes('pesticide-logger-v2.8.1'));
+  assert.ok(html.includes('v2.8.1'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));
   assert.ok(html.includes('farm-scale.js'));
   assert.ok(html.includes('i18n.js'));
   assert.ok(html.includes('backup-merge.js'));
+  assert.ok(html.includes('backup-pack.js'));
   assert.ok(html.includes('spray-window.js'));
   assert.ok(html.includes('store.js'));
   assert.ok(html.includes('compliance.js'));
@@ -260,6 +261,7 @@ check('source files advertise v2.8.0 + deadline/license wiring', () => {
   assert.ok(sw.includes('./farm-scale.js'));
   assert.ok(sw.includes('./i18n.js'));
   assert.ok(sw.includes('./backup-merge.js'));
+  assert.ok(sw.includes('./backup-pack.js'));
   assert.ok(sw.includes('./spray-window.js'));
   assert.ok(sw.includes('./store.js'));
   assert.ok(sw.includes('./compliance.js'));
@@ -363,11 +365,17 @@ check('empty first-run home hides zeros until a field or log exists', () => {
     products: [],
     applications: []
   });
-  assert.strictEqual(steps[0].done, true);
-  assert.strictEqual(steps[1].goto, 'fields');
-  assert.strictEqual(steps[2].goto, 'products');
+  assert.ok(html.includes('id="first-run-farm"'), 'farm form lives on Home, not a modal');
+  assert.ok(!html.includes('id="onboarding-dialog"'), 'welcome modal removed');
+  assert.ok(!html.includes('id="setup-banner"'), 'duplicate settings banner removed');
+  assert.ok(app.includes('function initFirstRun'));
+  assert.ok(!app.includes('function initOnboarding'));
+  assert.strictEqual(steps[0].goto, 'first-run');
   assert.strictEqual(i18n.ES['Get set up to log'], 'Prepárese para registrar');
   assert.strictEqual(i18n.ES['Done'], 'Listo');
+  assert.strictEqual(i18n.ES['Save farm'], 'Guardar granja');
+  assert.strictEqual(i18n.t('es', 'Settings saved'), 'Configuración guardada');
+  assert.strictEqual(i18n.t('en', 'Settings saved'), 'Settings saved');
 });
 
 check('v2.7 features wired: forecast, photos, barcode, posting, import, i18n', () => {
@@ -549,6 +557,9 @@ check('paid-only: whole app is gated by license/trial, no per-feature Pro gate',
   assert.ok(app.includes('function renderLockRecords'), 'lock screen renders existing logs');
   assert.ok(app.includes('FarmScale.adoptForecastFromMeta'), 'outlook hours leave farm JSON before the next save');
   assert.ok(app.includes('dropForecast'), 'deleted fields do not leave forecast rows behind');
+  assert.ok(app.includes('buildBackupObject'), 'backups pack farm JSON plus photos');
+  assert.ok(app.includes('FarmStore.FARM_IDB_KEY'), 'erase all deletes the durable farm key');
+  assert.ok(!app.includes('not part of JSON backups'), 'photo copy no longer claims backups omit photos');
   // Every feature works the same regardless of trial vs. paid key — no
   // separate "Pro" bucket left to gate any one of them differently.
   ['function onAppSubmit', 'function downloadCsv', 'function printReport',

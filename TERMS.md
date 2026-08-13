@@ -32,7 +32,8 @@ It is a checklist result, not a certification. State datasets marked
 ## 2. Your data & privacy
 
 - All farm records live in your browser (localStorage + IndexedDB) and any
-  backup files **you** create. There is no account and no server database.
+  backup files **you** create. A full backup includes attached label/lot
+  photos. There is no account and no server database.
 - The app sends nothing anywhere, with two optional exceptions you trigger:
   EPA product lookups (via the stateless proxy) and weather fetches
   (Open-Meteo). Both send only the query, never your records.

@@ -45,6 +45,14 @@
     'Remind me later': 'Recordarme después',
     'Welcome to Pesticide Logger.': 'Bienvenido a Pesticide Logger.',
     'Set up my farm': 'Configurar mi granja',
+    'Get set up to log': 'Prepárese para registrar',
+    'Farm name and state': 'Nombre de la granja y estado',
+    'Add a field': 'Agregar un campo',
+    'Done': 'Listo',
+    'Shapes the spray log to your state’s rules': 'Adapta el registro a las reglas de su estado',
+    'A map pin is how spray windows know where to look': 'El pin del mapa es cómo las ventanas de aspersión saben dónde buscar',
+    'REI, PHI, and rates come off the label': 'REI, PHI y dosis salen de la etiqueta',
+    'Three steps. Then this home screen shows spray windows, REI, and recent applications — not empty zeros. Nothing is uploaded anywhere.': 'Tres pasos. Luego esta pantalla muestra ventanas de aspersión, REI y aplicaciones recientes — no ceros vacíos. Nada se sube a ningún lado.',
 
     // Spray log form
     'Log an application': 'Registrar una aplicación',

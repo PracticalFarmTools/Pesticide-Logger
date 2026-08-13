@@ -239,13 +239,13 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.7.0 + deadline/license wiring', () => {
+check('source files advertise v2.7.9 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.7.0'));
-  assert.ok(sw.includes('pesticide-logger-v2.7.8'));
-  assert.ok(html.includes('v2.7.0'));
+  assert.ok(app.includes('v2.7.9'));
+  assert.ok(sw.includes('pesticide-logger-v2.7.9'));
+  assert.ok(html.includes('v2.7.9'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));
   assert.ok(html.includes('i18n.js'));
@@ -319,6 +319,30 @@ check('cab chrome: Home, Spray Log, Products, Fields, and More', () => {
   assert.ok(!more.includes('data-tab="products"'), 'Products is a primary tab, not More');
   assert.strictEqual(i18n.ES['More'], 'Más');
   assert.strictEqual(i18n.ES['Home'], 'Inicio');
+});
+
+check('empty first-run home hides zeros until a field or log exists', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const i18n = require(path.join(root, 'i18n.js'));
+  const first = html.indexOf('id="dash-first-run"');
+  const working = html.indexOf('id="dash-working"');
+  const spray = html.indexOf('id="spray-window-card"');
+  const rei = html.indexOf('id="rei-list"');
+  const closeWorking = html.indexOf('</div>\n  </section>', working);
+  assert.ok(first > 0 && working > first, 'first-run card sits above the working dashboard');
+  assert.ok(spray > working && rei > spray && rei < closeWorking, 'stats, windows, and REI live inside dash-working');
+  assert.ok(html.includes('id="dash-first-run" hidden'), 'first-run starts hidden until render');
+  assert.ok(html.includes('Get set up to log'), 'setup title');
+  assert.ok(html.includes('id="dash-setup-steps"'), 'setup steps host');
+  assert.ok(app.includes('function isEmptyHome'));
+  assert.ok(app.includes('!data.fields.length && !data.applications.length'));
+  assert.ok(app.includes('function renderFirstRun'));
+  assert.ok(app.includes("$('#dash-working').hidden = empty"));
+  assert.ok(app.includes("$('#dash-first-run').hidden = !empty"));
+  assert.ok(app.includes("goto: 'settings'") && app.includes("goto: 'fields'") && app.includes("goto: 'products'"));
+  assert.strictEqual(i18n.ES['Get set up to log'], 'Prepárese para registrar');
+  assert.strictEqual(i18n.ES['Done'], 'Listo');
 });
 
 check('v2.7 features wired: forecast, photos, barcode, posting, import, i18n', () => {

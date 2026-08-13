@@ -1,4 +1,4 @@
-# Pesticide Logger v2.8.1
+# Pesticide Logger v2.8.2
 
 **Offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite. Licensed software with
@@ -39,7 +39,7 @@ application at the repository root.
 | **OCR label scanning** | Photograph a product label to read its EPA registration number and signal word on-device (Tesseract.js). Works on iPhone and Android via the native camera. A ~7MB text reader downloads in the background after first visit, then scans work offline. The match is verified through the same live EPA lookup as manual search before anything is saved. |
 | **REI posting & reminders** | Bilingual DO NOT ENTER / NO ENTRE posting sheet from any active REI, plus opt-in browser notifications when REI clears or PHI dates arrive. |
 | **CSV import** | Bring existing Excel/Sheets records in with a column-mapping wizard — rows land as compliance-checked drafts. |
-| **Spanish interface** | One-tap Español toggle covering interface labels and matching toast messages. |
+| **Spanish, French & Brazilian Portuguese** | Header language control covering menus, buttons, toasts, and first-run setup. Printed REI posting stays English/Spanish (DO NOT ENTER / NO ENTRE). |
 | **Smarter backup merge** | Newest `updatedAt` wins; audit histories union; trial start and license key merge conservatively (earliest trial wins, local key kept). A full backup is one JSON file with the farm file **and** attached JPEG photos, so a phone→PC move does not drop label pictures. Older record-only backups still restore; the app says so if photos are missing. |
 | **Offline-first PWA** | Installable; core logging works with no connectivity after first load. |
 
@@ -115,6 +115,7 @@ node --check store.js
 node --check compliance.js
 node --check camera-scan.js
 node --check farm-scale.js
+node --check i18n.js
 node --check sw.js
 node tests/compliance.test.js
 node tests/license.test.js
@@ -127,6 +128,7 @@ node tests/store.test.js
 node tests/compliance-engine.test.js
 node tests/camera-scan.test.js
 node tests/farm-scale.test.js
+node tests/i18n.test.js
 ```
 
 ## Intentional non-goals

@@ -239,13 +239,13 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.8.1 + deadline/license wiring', () => {
+check('source files advertise v2.8.2 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.8.1'));
-  assert.ok(sw.includes('pesticide-logger-v2.8.1'));
-  assert.ok(html.includes('v2.8.1'));
+  assert.ok(app.includes('v2.8.2'));
+  assert.ok(sw.includes('pesticide-logger-v2.8.2'));
+  assert.ok(html.includes('v2.8.2'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));
   assert.ok(html.includes('farm-scale.js'));
@@ -376,6 +376,8 @@ check('empty first-run home hides zeros until a field or log exists', () => {
   assert.strictEqual(i18n.ES['Save farm'], 'Guardar granja');
   assert.strictEqual(i18n.t('es', 'Settings saved'), 'Configuración guardada');
   assert.strictEqual(i18n.t('en', 'Settings saved'), 'Settings saved');
+  assert.strictEqual(i18n.t('fr', 'Save farm'), 'Enregistrer l’exploitation');
+  assert.strictEqual(i18n.t('pt-BR', 'Save farm'), 'Salvar fazenda');
 });
 
 check('v2.7 features wired: forecast, photos, barcode, posting, import, i18n', () => {
@@ -408,7 +410,11 @@ check('v2.7 features wired: forecast, photos, barcode, posting, import, i18n', (
   assert.ok(app.includes('function runCsvImport'), 'csv import run');
   const i18n = require(path.join(root, 'i18n.js'));
   assert.ok(Object.keys(i18n.ES).length >= 180, 'spanish dictionary size');
+  assert.ok(Object.keys(i18n.FR).length >= 180, 'french dictionary size');
+  assert.ok(Object.keys(i18n.PT_BR).length >= 180, 'pt-BR dictionary size');
   assert.strictEqual(i18n.ES['Spray Log'], 'Registro');
+  assert.strictEqual(i18n.FR['Spray Log'], 'Registre');
+  assert.strictEqual(i18n.PT_BR['Spray Log'], 'Registro');
   ['function printReiPosting', 'function capturePhotoInto', 'function checkReminders', 'function runCsvImport']
     .forEach(fn => assert.ok(app.indexOf(fn) > 0, fn));
 });

@@ -27,13 +27,21 @@
       </svg>
       <div>
         <h1>Pesticide Logger</h1>
-        <span class="header-sub">Practical Farm Tools · v2.8.1</span>
+        <span class="header-sub">Practical Farm Tools · v2.8.2</span>
       </div>
     </div>
     <div class="header-right">
       <span id="offline-badge" class="offline-badge" hidden>Offline — records save locally</span>
       <span id="license-badge" class="license-badge" hidden></span>
       <span id="farm-name-display" class="farm-name-display"></span>
+      <label class="header-lang">
+        <select id="header-language" aria-label="Interface language">
+          <option value="">English</option>
+          <option value="es">Español</option>
+          <option value="fr">Français</option>
+          <option value="pt-BR">Português (Brasil)</option>
+        </select>
+      </label>
     </div>
   </div>
 </header>
@@ -121,6 +129,16 @@
       <h3 class="card-title">Get set up to log</h3>
       <p class="card-hint">Three steps on this screen. Then Home shows spray windows, REI, and recent applications — not empty zeros. Nothing is uploaded anywhere. A 30-day trial is already running; no card required.</p>
       <form id="first-run-farm" class="form-grid first-run-farm" hidden>
+        <div class="form-row">
+          <label>Interface language
+            <select id="first-run-language">
+              <option value="">English</option>
+              <option value="es">Español</option>
+              <option value="fr">Français</option>
+              <option value="pt-BR">Português (Brasil)</option>
+            </select>
+          </label>
+        </div>
         <div class="form-row form-row-3">
           <label>Farm name <span class="req-star">*</span>
             <input type="text" id="first-run-farm-name" placeholder="e.g. Spear Farm" autocomplete="organization">
@@ -614,10 +632,7 @@
         <input type="search" id="epa-search-input" placeholder="Product name or EPA Reg. No. (for example: Entrust or 62719-621)" minlength="2" maxlength="100" required>
         <button type="submit" class="btn btn-primary">Search EPA</button>
       </form>
-      <p class="card-hint epa-lookup-note">
-        EPA verifies product identity, registration status, active ingredients, RUP classification, signal word, and label documents.
-        EPA does <strong>not</strong> supply crop-specific rates, REI, or PHI through this API—copy those from the exact current label.
-      </p>
+      <p class="card-hint epa-lookup-note">EPA verifies product identity, registration status, active ingredients, RUP classification, signal word, and label documents. EPA does not supply crop-specific rates, REI, or PHI through this API—copy those from the exact current label.</p>
       <div id="epa-search-status" class="epa-search-status" role="status"></div>
       <div id="epa-search-results" class="epa-search-results"></div>
     </div>
@@ -747,9 +762,7 @@
   <section id="tab-fields" class="tab-panel" role="tabpanel">
     <div class="card map-card">
       <h3 class="card-title">Field mapper — draw your acreage</h3>
-      <p class="card-hint">Zoom to your farm (or tap <strong>My location</strong>), then tap each corner.
-        <strong>Use this shape</strong> fills acreage and places a forecast pin — drag the amber pin onto
-        the block you spray. <strong>Set forecast pin</strong> is only for sites with no drawn boundary.</p>
+      <p class="card-hint">Zoom to your farm (or tap My location), then tap each corner. Use this shape fills acreage and places a forecast pin — drag the amber pin onto the block you spray. Set forecast pin is only for sites with no drawn boundary.</p>
       <div class="map-toolbar">
         <button type="button" class="btn btn-secondary btn-sm" id="map-locate">My location</button>
         <button type="button" class="btn btn-secondary btn-sm" id="map-fit-all" hidden>Fit all fields</button>
@@ -867,8 +880,7 @@
 
     <div class="card">
       <h3 class="card-title">Backup &amp; restore</h3>
-      <p class="card-hint">Your records live only in this browser. Download a backup regularly and keep it with your farm files.
-        A full backup is one JSON file with the farm file <em>and</em> attached photos. To move phone to PC: download (or share) on one device, restore on the other, and choose <strong>Merge</strong> — newest edits win, audit history is kept, photos fill in if the other device does not already have them. Older backups from before photos were packed still restore records; you will be told if photos are missing.</p>
+      <p class="card-hint">Your records live only in this browser. Download a backup regularly and keep it with your farm files. A full backup is one JSON file with the farm file and attached photos. To move phone to PC: download (or share) on one device, restore on the other, and choose Merge — newest edits win, audit history is kept, photos fill in if the other device does not already have them. Older backups from before photos were packed still restore records; you will be told if photos are missing.</p>
       <div class="auto-backup-box">
         <p class="card-hint" id="auto-backup-status"></p>
         <div class="form-actions">
@@ -889,9 +901,7 @@
 
     <div class="card">
       <h3 class="card-title">Import from a spreadsheet</h3>
-      <p class="card-hint">Already keeping records in Excel or Google Sheets? Export them as CSV and bring
-        your history in — match your columns once, and rows import as drafts you can finish and verify.
-        Unknown products and fields are created automatically.</p>
+      <p class="card-hint">Already keeping records in Excel or Google Sheets? Export them as CSV and bring your history in — match your columns once, and rows import as drafts you can finish and verify. Unknown products and fields are created automatically.</p>
       <div class="form-actions">
         <label class="btn btn-secondary file-btn">
           Choose CSV file…
@@ -959,9 +969,12 @@
             <select id="set-language">
               <option value="">English</option>
               <option value="es">Español</option>
+              <option value="fr">Français</option>
+              <option value="pt-BR">Português (Brasil)</option>
             </select>
           </label>
         </div>
+        <p class="card-hint">Menus, buttons, and messages. The printed REI posting sheet stays English and Spanish (DO NOT ENTER / NO ENTRE).</p>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">Save settings</button>
         </div>
@@ -986,12 +999,7 @@
     <div class="card" id="license-card">
       <h3 class="card-title">License</h3>
       <p id="license-status" class="card-hint"></p>
-      <p class="card-hint">Pesticide Logger is paid software — every
-        feature included, no separate tiers. Built for the farm that has two tunnels and the one
-        that has a hundred named sites. A 30-day trial covers the whole app with no card required.
-        After that, a license keeps <em>logging</em> working. Your spray logs stay on this device
-        either way — ending a subscription does not take them, and you can still review every year
-        and download a backup.</p>
+      <p class="card-hint">Pesticide Logger is paid software — every feature included, no separate tiers. Built for the farm that has two tunnels and the one that has a hundred named sites. A 30-day trial covers the whole app with no card required. After that, a license keeps logging working. Your spray logs stay on this device either way — ending a subscription does not take them, and you can still review every year and download a backup.</p>
       <div class="form-row form-row-license">
         <label>License key
           <input type="text" id="license-key-input" placeholder="PLPRO.…" autocomplete="off" spellcheck="false">
@@ -1013,7 +1021,7 @@
 
     <div class="card about-card">
       <h3 class="card-title">About</h3>
-      <p>Pesticide Logger v2.8.1 — part of the <strong>Practical Farm Tools</strong> suite. A licensed, offline-first tool built for farms of every size; your farm records stay on this device.</p>
+      <p>Pesticide Logger v2.8.2 — part of the <strong>Practical Farm Tools</strong> suite. A licensed, offline-first tool built for farms of every size; your farm records stay on this device.</p>
       <p class="card-hint">This tool provides 50-state application <em>recordkeeping field coverage</em> with audit history, lot tracking, and in-cab workflows. It is not legal advice, does not replace WPS employer duties, and does not file California PUR, New York PRL, or other electronic reports for you. Always follow the product label and confirm requirements with your state pesticide agency.</p>
       <details class="legal-details">
         <summary>Terms of use, license &amp; privacy</summary>

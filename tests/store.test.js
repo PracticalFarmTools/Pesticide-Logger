@@ -142,7 +142,7 @@ check('first-run steps mark farm/field/product independently', () => {
   assert.strictEqual(steps[0].done, true);
   assert.strictEqual(steps[1].done, true);
   assert.strictEqual(steps[2].done, false);
-  assert.strictEqual(steps[0].goto, 'settings');
+  assert.strictEqual(steps[0].goto, 'first-run');
   assert.strictEqual(steps[1].goto, 'fields');
   assert.strictEqual(steps[2].goto, 'products');
 });

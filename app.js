@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.8.0 — Practical Farm Tools
+/* Pesticide Logger v2.8.3 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -305,10 +305,7 @@
     try {
       data.meta.lastBackupAt = new Date().toISOString();
       persistFarm({ quiet: true });
-      const exportData = (typeof SprayWindow !== 'undefined' && SprayWindow.backupClone)
-        ? SprayWindow.backupClone(data)
-        : data;
-      exportData.meta.lastBackupAt = data.meta.lastBackupAt;
+      const exportData = await buildBackupObject();
       const writable = await autoBackupHandle.createWritable();
       await writable.write(JSON.stringify(exportData, null, 2));
       await writable.close();
@@ -389,13 +386,59 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
+  function uiLang() {
+    return (data.settings && data.settings.language) || '';
+  }
+
+  function tr(msg) {
+    return (typeof I18n !== 'undefined' && I18n.t) ? I18n.t(uiLang(), msg) : msg;
+  }
+
   let toastTimer;
   function toast(msg) {
     const el = $('#toast');
-    el.textContent = msg;
+    el.textContent = tr(msg);
     el.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+  }
+
+  let i18nObserver = null;
+  function applyUiLanguage() {
+    const lang = uiLang();
+    if (i18nObserver || typeof I18n === 'undefined' || !I18n.dictFor) return;
+    if (!I18n.dictFor(lang)) return;
+    i18nObserver = I18n.applyLanguage(lang);
+  }
+
+  function syncLanguageSelects() {
+    const lang = uiLang();
+    ['#header-language', '#set-language', '#first-run-language'].forEach((sel) => {
+      const el = $(sel);
+      if (el) el.value = lang;
+    });
+  }
+
+  function setUiLanguage(lang) {
+    const next = lang || '';
+    if (uiLang() === next) return;
+    data.settings.language = next;
+    save();
+    location.reload();
+  }
+
+  function initLanguageControls() {
+    syncLanguageSelects();
+    const header = $('#header-language');
+    if (header && !header.dataset.bound) {
+      header.dataset.bound = '1';
+      header.addEventListener('change', () => setUiLanguage(header.value));
+    }
+    const first = $('#first-run-language');
+    if (first && !first.dataset.bound) {
+      first.dataset.bound = '1';
+      first.addEventListener('change', () => setUiLanguage(first.value));
+    }
   }
 
   function fmtNum(n, maxDec = 2) {
@@ -423,6 +466,29 @@
     else if (unit === 'mL' && value >= 1000) hint = ` (${fmtNum(value / 1000)} L)`;
     else if (unit === 'g' && value >= 1000) hint = ` (${fmtNum(value / 1000)} kg)`;
     return `${fmtNum(value)} ${unit}${hint}`;
+  }
+
+  function fmtAmountWithMetric(value, unit) {
+    const us = fmtAmount(value, unit);
+    const metric = (typeof Units !== 'undefined' && Units.fmtMetricAmount)
+      ? Units.fmtMetricAmount(value, unit) : '';
+    if (!metric) return us;
+    return `${us}<br><span class="card-hint">${esc(metric)}</span>`;
+  }
+
+  function fmtTempPair(f) {
+    if (f == null || f === '') return '';
+    return (typeof Units !== 'undefined' && Units.fmtTempF) ? Units.fmtTempF(f) : `${fmtNum(f)} °F`;
+  }
+
+  function syncTempC() {
+    const echo = $('#app-temp-c');
+    if (!echo) return;
+    const raw = $('#app-temp') && $('#app-temp').value;
+    const txt = (typeof Units !== 'undefined' && Units.fmtCelsiusEcho)
+      ? Units.fmtCelsiusEcho(raw) : '';
+    echo.textContent = txt;
+    echo.hidden = !txt;
   }
 
   function areaToAcres(value, unit) {
@@ -547,7 +613,14 @@
   });
   document.body.addEventListener('click', (e) => {
     const goto = e.target.closest('[data-goto]');
-    if (goto) showTab(goto.dataset.goto);
+    if (goto) {
+      if (goto.dataset.goto === 'first-run') {
+        showTab('dashboard');
+        focusFirstRunFarm();
+        return;
+      }
+      showTab(goto.dataset.goto);
+    }
     const closeDialog = e.target.closest('[data-close-dialog]');
     if (closeDialog) closeDialog.closest('dialog')?.close();
     const missingChip = e.target.closest('[data-missing-field]');
@@ -606,8 +679,17 @@
     WI: 'Wisconsin', WY: 'Wyoming'
   };
 
-  function initSettings() {
-    const sel = $('#set-state');
+  function fillStateSelect(sel, selected) {
+    if (!sel) return;
+    const keep = sel.querySelector('option[value=""]');
+    sel.innerHTML = '';
+    if (keep) sel.appendChild(keep);
+    else {
+      const blank = document.createElement('option');
+      blank.value = '';
+      blank.textContent = '— Select state —';
+      sel.appendChild(blank);
+    }
     Object.keys(STATE_NAMES).sort((a, b) => STATE_NAMES[a].localeCompare(STATE_NAMES[b]))
       .forEach(code => {
         const o = document.createElement('option');
@@ -615,6 +697,11 @@
         o.textContent = STATE_NAMES[code];
         sel.appendChild(o);
       });
+    if (selected) sel.value = selected;
+  }
+
+  function initSettings() {
+    fillStateSelect($('#set-state'), data.settings.state);
 
     const s = data.settings;
     $('#set-farm').value = s.farmName;
@@ -681,7 +768,7 @@
   function applySettings() {
     const s = data.settings;
     $('#farm-name-display').textContent = s.farmName || '';
-    $('#setup-banner').hidden = !!(s.farmName || s.state || s.applicatorName);
+    if ($('#setup-banner')) $('#setup-banner').hidden = true;
     if (!$('#app-applicator').value) $('#app-applicator').value = s.applicatorName;
     if (!$('#app-cert').value) $('#app-cert').value = s.certNumber;
     if (!$('#app-county').value) $('#app-county').value = s.county || '';
@@ -1696,6 +1783,11 @@
 
     $('#app-add-product').addEventListener('click', () => addAppProductRow());
     $('#app-weather').addEventListener('click', fetchWeather);
+    if ($('#app-temp')) {
+      $('#app-temp').addEventListener('input', syncTempC);
+      $('#app-temp').addEventListener('change', syncTempC);
+      syncTempC();
+    }
     $('#app-form').addEventListener('submit', (e) => onAppSubmit(e, false));
     $('#app-save-draft-btn').addEventListener('click', () => onAppSubmit(null, true));
     $('#app-cancel-btn').addEventListener('click', resetAppForm);
@@ -2230,6 +2322,7 @@
       $('#app-wind').value = Math.round(cur.wind_speed_10m * 10) / 10;
       $('#app-wind-dir').value = COMPASS[Math.round(cur.wind_direction_10m / 22.5) % 16];
       $('#app-temp').value = Math.round(cur.temperature_2m);
+      syncTempC();
       $('#app-sky').value = `${skyDesc(cur.weather_code)}, ${cur.relative_humidity_2m}% RH`;
       toast('Current weather filled in — adjust if conditions at the sprayer differ');
     } catch (e) {
@@ -2492,6 +2585,7 @@
     applyStateRequiredTags();
     updateCompliancePreview();
     renderDueBanner();
+    syncTempC();
   }
 
   function editApp(id) {
@@ -2522,6 +2616,7 @@
     $('#app-wind').value = a.windSpeed ?? '';
     $('#app-wind-dir').value = a.windDir;
     $('#app-temp').value = a.temperature ?? '';
+    syncTempC();
     $('#app-sky').value = a.sky;
     if ($('#app-type')) $('#app-type').value = a.applicationType || 'ground';
     $('#app-method').value = a.method;
@@ -2827,9 +2922,60 @@
     return FarmStore.isEmptyHome(data);
   }
 
+  function focusFirstRunFarm() {
+    const form = $('#first-run-farm');
+    if (form) form.hidden = false;
+    const name = $('#first-run-farm-name');
+    if (name) name.focus();
+  }
+
+  function syncFirstRunFarmForm() {
+    const form = $('#first-run-farm');
+    if (!form) return;
+    const steps = FarmStore.firstRunSteps(data);
+    const needFarm = !steps[0].done;
+    form.hidden = !needFarm;
+    if ($('#first-run-farm-name')) $('#first-run-farm-name').value = data.settings.farmName || '';
+    if ($('#first-run-state')) $('#first-run-state').value = data.settings.state || '';
+    if ($('#first-run-class')) $('#first-run-class').value = data.settings.applicatorClass || 'private';
+  }
+
+  function initFirstRun() {
+    const form = $('#first-run-farm');
+    if (!form) return;
+    fillStateSelect($('#first-run-state'), data.settings.state);
+    if ($('#first-run-class')) $('#first-run-class').value = data.settings.applicatorClass || 'private';
+    if ($('#first-run-farm-name')) $('#first-run-farm-name').value = data.settings.farmName || '';
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = ($('#first-run-farm-name') && $('#first-run-farm-name').value.trim()) || '';
+      const state = ($('#first-run-state') && $('#first-run-state').value) || '';
+      const cls = ($('#first-run-class') && $('#first-run-class').value) || 'private';
+      if (!name || !state) {
+        toast('Farm name and state are required to shape the spray log');
+        return;
+      }
+      data.settings.farmName = name;
+      data.settings.state = state;
+      data.settings.applicatorClass = cls;
+      data.meta.onboardingDone = true;
+      save();
+      if ($('#set-farm')) $('#set-farm').value = name;
+      if ($('#set-state')) $('#set-state').value = state;
+      if ($('#set-applicator-class')) $('#set-applicator-class').value = cls;
+      applySettings();
+      renderStateInfo();
+      reshapeAppFormForState();
+      updateCompliancePreview();
+      renderDashboard();
+      toast('Farm saved — add a field next');
+    });
+  }
+
   function renderFirstRun() {
     const host = $('#dash-setup-steps');
     if (!host) return;
+    syncFirstRunFarmForm();
     const steps = FarmStore.firstRunSteps(data);
     host.innerHTML = steps.map((s) => `
       <button type="button" class="interval-item setup-step ${s.done ? 'clear' : ''}" data-goto="${s.goto}">
@@ -3118,18 +3264,25 @@
         <div class="calc-summary-item"><span class="big">${fmtNum(acres, 3)} ac</span><span class="small">Area treated (${fmtNum(acres * 43560, 0)} sq ft)</span></div>
       </div>`;
 
+    const metricCaption = (typeof Units !== 'undefined' && Units.mixMetricCaption)
+      ? Units.mixMetricCaption(acres, tank, gpaAcre, totalSpray) : '';
+    const metricBox = metricCaption
+      ? `<p class="calc-metric-ref"><strong>Metric reference — not the legal record</strong>${esc(metricCaption)}</p>`
+      : '';
+
     const rows = products.map(pr => `
       <tr>
         <td><strong>${esc(pr.name)}</strong><br><span class="card-hint">${fmtNum(pr.rate)} ${esc(pr.unit)} ${RATE_PER_LABEL[pr.per]}</span></td>
-        <td>${fmtAmount(pr.total, pr.unit)}</td>
-        ${tank > 0 ? `<td>${fmtAmount(pr.perTank, pr.unit)}</td>
-        <td>${partialGal > 0.01 ? fmtAmount(pr.perPartial, pr.unit) : '—'}</td>` : ''}
+        <td>${fmtAmountWithMetric(pr.total, pr.unit)}</td>
+        ${tank > 0 ? `<td>${fmtAmountWithMetric(pr.perTank, pr.unit)}</td>
+        <td>${partialGal > 0.01 ? fmtAmountWithMetric(pr.perPartial, pr.unit) : '—'}</td>` : ''}
       </tr>`).join('');
 
     results.hidden = false;
     results.innerHTML = `
       ${warn.map(w => `<div class="calc-warning">${esc(w)}</div>`).join('')}
       ${summary}
+      ${metricBox}
       <div class="table-wrap"><table class="record-table">
         <thead><tr><th>Product</th><th>Total needed</th>${tank > 0 ? '<th>Per full tank</th><th>Per partial fill</th>' : ''}</tr></thead>
         <tbody>${rows}</tbody>
@@ -3144,22 +3297,32 @@
     if (!lastCalc) return;
     const c = lastCalc;
     const s = data.settings;
-    const rows = c.products.map(pr => `
+    const rows = c.products.map(pr => {
+      const metric = (u, v) => {
+        const m = (typeof Units !== 'undefined' && Units.fmtMetricAmount) ? Units.fmtMetricAmount(v, u) : '';
+        return m ? ` (${m})` : '';
+      };
+      return `
       <tr>
         <td>${esc(pr.name)}</td>
         <td>${fmtNum(pr.rate)} ${esc(pr.unit)} ${RATE_PER_LABEL[pr.per]}</td>
-        <td>${fmtAmount(pr.total, pr.unit)}</td>
-        <td>${c.tank > 0 ? fmtAmount(pr.perTank, pr.unit) : '—'}</td>
-        <td>${c.partialGal > 0.01 ? fmtAmount(pr.perPartial, pr.unit) : '—'}</td>
-      </tr>`).join('');
+        <td>${fmtAmount(pr.total, pr.unit)}${metric(pr.unit, pr.total)}</td>
+        <td>${c.tank > 0 ? fmtAmount(pr.perTank, pr.unit) + metric(pr.unit, pr.perTank) : '—'}</td>
+        <td>${c.partialGal > 0.01 ? fmtAmount(pr.perPartial, pr.unit) + metric(pr.unit, pr.perPartial) : '—'}</td>
+      </tr>`;
+    }).join('');
+    const metricLine = (typeof Units !== 'undefined' && Units.mixMetricCaption)
+      ? Units.mixMetricCaption(c.acres, c.tank, c.gpaUnit === 'gal_acre' ? c.gpa : c.gpa * 43.56, c.totalSpray)
+      : '';
     $('#print-area').innerHTML = `
       <h1>Tank Mix Worksheet</h1>
-      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.8.0 (Practical Farm Tools)</p>
+      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.8.3 (Practical Farm Tools)</p>
       <table>
         <tr><th>Area treated</th><td>${fmtNum(c.area)} ${c.areaUnit === 'sqft' ? 'sq ft' : c.areaUnit === '1000sqft' ? '× 1,000 sq ft' : 'acres'} (${fmtNum(c.acres, 3)} ac)</td>
             <th>Spray volume</th><td>${fmtNum(c.gpa)} ${c.gpaUnit === 'gal_acre' ? 'gal/acre' : 'gal/1,000 sq ft'}</td></tr>
         <tr><th>Total finished spray</th><td>${fmtNum(c.totalSpray)} gal</td>
             <th>Tank loads</th><td>${c.tank > 0 ? `${c.fullTanks} full @ ${fmtNum(c.tank)} gal${c.partialGal > 0.01 ? ` + 1 partial @ ${fmtNum(c.partialGal)} gal` : ''}` : 'n/a'}</td></tr>
+        ${metricLine ? `<tr><th>Metric reference — not the legal record</th><td colspan="3">${esc(metricLine)}</td></tr>` : ''}
       </table>
       <h2>Products</h2>
       <table>
@@ -3328,7 +3491,7 @@
         <td>${(a.products || []).map(pr =>
           pr.rate != null ? `${fmtNum(pr.rate)} ${esc(pr.rateUnit)}` : esc(a.dilution || '—')).join('<br>')}</td>
         <td>${(a.products || []).map(pr => `${fmtNum(pr.total)} ${esc(pr.totalUnit)}`).join('<br>')}${a.carrier != null ? `<br>Carrier ${fmtNum(a.carrier)} ${esc(a.carrierUnit || '')}` : ''}</td>
-        <td>${a.windSpeed != null ? `${fmtNum(a.windSpeed)} mph ${esc(a.windDir || '')}` : '—'}${a.temperature != null ? `<br>${fmtNum(a.temperature)} °F` : ''}${a.sky ? `<br>${esc(a.sky)}` : ''}</td>
+        <td>${a.windSpeed != null ? `${fmtNum(a.windSpeed)} mph ${esc(a.windDir || '')}` : '—'}${a.temperature != null ? `<br>${esc(fmtTempPair(a.temperature))}` : ''}${a.sky ? `<br>${esc(a.sky)}` : ''}</td>
         <td>${esc(a.method || '—')}${a.nozzleType ? `<br>${esc(a.nozzleType)}` : ''}${a.sprayerPressure ? `<br>${esc(a.sprayerPressure)}` : ''}</td>
         <td>${a.reiHours != null ? fmtNum(a.reiHours) + ' hr' : '—'} / ${a.phiDays != null ? fmtNum(a.phiDays) + ' d' : '—'}</td>
         <td>${esc(a.applicatorName)}${a.certNumber ? `<br>#${esc(a.certNumber)}` : ''}${a.supervisorName ? `<br>Supv ${esc(a.supervisorName)}` : ''}${a.customerName ? `<br>For ${esc(a.customerName)}` : ''}</td>
@@ -3356,7 +3519,7 @@
       </table>
       <div class="sig-line"><span>Certified applicator signature / date</span><span>Reviewed by / date</span></div>
       <p class="print-footer">
-        Generated by Pesticide Logger v2.8.0 — Practical Farm Tools. Retain records per your state
+        Generated by Pesticide Logger v2.8.3 — Practical Farm Tools. Retain records per your state
         (${retain} year(s) shown above). This report is a record-keeping aid, not legal advice,
         and does not replace WPS duties or electronic reporting programs.
       </p>`;
@@ -3503,7 +3666,7 @@
       format: 'pesticide-logger-state-pack',
       version: 5,
       generatedAt: new Date().toISOString(),
-      app: 'Pesticide Logger v2.8.0 — Practical Farm Tools',
+      app: 'Pesticide Logger v2.8.3 — Practical Farm Tools',
       disclaimer: 'Completion means required fields are filled for this context — not a legal determination. Does not replace WPS duties or e-filing programs.',
       farm: {
         name: s.farmName || '',
@@ -3568,26 +3731,41 @@
     renderBackupBanner();
   }
 
+  async function buildBackupObject() {
+    const farm = (typeof SprayWindow !== 'undefined' && SprayWindow.backupClone)
+      ? SprayWindow.backupClone(data)
+      : JSON.parse(JSON.stringify(data));
+    farm.meta = farm.meta || {};
+    farm.meta.lastBackupAt = data.meta.lastBackupAt;
+    const photos = await idbPhotosGetAll();
+    if (typeof BackupPack !== 'undefined' && BackupPack.pack) {
+      return BackupPack.pack({ farm, photos });
+    }
+    return farm;
+  }
+
   function downloadBackup() {
     data.meta.lastBackupAt = new Date().toISOString();
     save();
-    const payload = (typeof SprayWindow !== 'undefined' && SprayWindow.backupClone)
-      ? SprayWindow.backupClone(data)
-      : JSON.parse(JSON.stringify(data));
-    payload.meta.lastBackupAt = data.meta.lastBackupAt;
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    triggerDownload(blob, backupFilename());
-    renderBackupBanner();
-    toast('Backup downloaded — keep it with your farm files');
+    buildBackupObject().then((packed) => {
+      const blob = new Blob([JSON.stringify(packed, null, 2)], { type: 'application/json' });
+      triggerDownload(blob, backupFilename());
+      renderBackupBanner();
+      const info = (typeof BackupPack !== 'undefined' && BackupPack.inspect)
+        ? BackupPack.inspect(packed)
+        : { photoCount: 0 };
+      toast(info.photoCount
+        ? 'Backup downloaded — farm file and photos. Keep it with your farm files'
+        : 'Backup downloaded — keep it with your farm files');
+    }).catch(() => toast('Could not build the backup file'));
   }
 
   async function shareBackup() {
-    const payload = (typeof SprayWindow !== 'undefined' && SprayWindow.backupClone)
-      ? SprayWindow.backupClone(data)
-      : JSON.parse(JSON.stringify(data));
-    payload.meta.lastBackupAt = new Date().toISOString();
-    const file = new File([JSON.stringify(payload, null, 2)], backupFilename(), { type: 'application/json' });
     try {
+      const packed = await buildBackupObject();
+      packed.farm = packed.farm || packed;
+      if (packed.farm && packed.farm.meta) packed.farm.meta.lastBackupAt = new Date().toISOString();
+      const file = new File([JSON.stringify(packed, null, 2)], backupFilename(), { type: 'application/json' });
       await navigator.share({ files: [file], title: 'Pesticide Logger backup' });
       markBackedUp();
     } catch (e) { /* user cancelled the share sheet */ }
@@ -3666,31 +3844,52 @@
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       try {
         const parsed = JSON.parse(reader.result);
-        if (!parsed || !Array.isArray(parsed.applications)) throw new Error('Not a Pesticide Logger backup');
-        if (parsed.meta) {
-          delete parsed.meta.forecastByField;
-          delete parsed.meta.forecastCache;
+        const info = (typeof BackupPack !== 'undefined' && BackupPack.inspect)
+          ? BackupPack.inspect(parsed)
+          : {
+            ok: !!(parsed && Array.isArray(parsed.applications)),
+            farm: parsed,
+            photos: [],
+            isLegacy: true,
+            error: 'Not a Pesticide Logger backup'
+          };
+        if (!info.ok) throw new Error(info.error || 'Not a Pesticide Logger backup');
+        const farmIn = info.farm;
+        if (farmIn.meta) {
+          delete farmIn.meta.forecastByField;
+          delete farmIn.meta.forecastCache;
         }
-        const counts = `${(parsed.applications || []).length} records, ${(parsed.products || []).length} products, ${(parsed.fields || []).length} fields`;
+        const counts = (typeof BackupPack !== 'undefined' && BackupPack.summaryLine)
+          ? BackupPack.summaryLine(info)
+          : `${(farmIn.applications || []).length} records, ${(farmIn.products || []).length} products, ${(farmIn.fields || []).length} fields`;
+        let extra = '';
+        if (info.isLegacy && info.missingPhotoCount) {
+          extra = '\n\nThis older backup has no photos. Label photos stay on the device that took them.';
+        } else if (info.large) {
+          extra = '\n\nThis file is large because it includes photos.';
+        }
         const merge = confirm(
-          `Backup contains ${counts}.\n\nOK = MERGE into this device (keeps both sets, no duplicates — use this to sync phone and PC)\nCancel = replace everything instead`);
+          `Backup contains ${counts}.${extra}\n\nOK = MERGE into this device (keeps both sets, no duplicates — use this to sync phone and PC)\nCancel = replace everything instead`);
         if (merge) {
-          const result = mergeData(migrate(Object.assign(defaultData(), parsed)));
+          const result = mergeData(migrate(Object.assign(defaultData(), farmIn)));
+          await idbPhotosPutAll(info.photos);
           save();
           toast(`Merged: ${result.added} new, ${result.updated} updated (newest wins, history kept)`);
           location.reload();
         } else {
           if (!confirm(`REPLACE everything on this device with the backup (${counts})? This cannot be undone.`)) return;
           const currentMeta = data.meta;
-          data = migrate(Object.assign(defaultData(), parsed));
+          data = migrate(Object.assign(defaultData(), farmIn));
           if (typeof BackupMerge !== 'undefined' && BackupMerge.mergeMetaReplace) {
             data.meta = BackupMerge.mergeMetaReplace(currentMeta, data.meta);
           } else if (typeof BackupMerge !== 'undefined' && BackupMerge.mergeMeta) {
             data.meta = BackupMerge.mergeMeta(currentMeta, data.meta);
           }
+          await idbPhotosClear();
+          await idbPhotosPutAll(info.photos);
           save();
           location.reload();
         }
@@ -3929,15 +4128,17 @@
   }
 
   function clearAllData() {
-    if (!confirm('Erase ALL products, fields, records, and settings on this device? Download a backup first if you need these records — regulators expect them kept for years.')) return;
-    if (!confirm('Last check — this cannot be undone. Erase everything?')) return;
+    if (!confirm(tr('Erase ALL products, fields, records, and settings on this device? Download a backup first if you need these records — regulators expect them kept for years.'))) return;
+    if (!confirm(tr('Last check — this cannot be undone. Erase everything?'))) return;
     if (idbDb) {
       try {
         const names = ['kv', 'photos'];
         if (idbDb.objectStoreNames.contains('forecast')) names.push('forecast');
         const tx = idbDb.transaction(names, 'readwrite');
-        tx.objectStore('kv').delete('data');
-        tx.objectStore('kv').delete('backupHandle');
+        try { tx.objectStore('kv').delete(FarmStore.FARM_IDB_KEY); } catch (ignored) { /* */ }
+        try { tx.objectStore('kv').delete(FarmStore.LEGACY_IDB_KEY); } catch (ignored) { /* */ }
+        try { tx.objectStore('kv').delete('data'); } catch (ignored) { /* */ }
+        try { tx.objectStore('kv').delete('backupHandle'); } catch (ignored) { /* */ }
         tx.objectStore('photos').clear();
         if (idbDb.objectStoreNames.contains('forecast')) tx.objectStore('forecast').clear();
         tx.oncomplete = () => location.reload();
@@ -4351,7 +4552,7 @@
     reminderEvents().forEach(ev => {
       if (seen[ev.key]) return;
       try {
-        new Notification(ev.title, { body: ev.body, icon: 'icon-192.png', tag: ev.key });
+        new Notification(tr(ev.title), { body: ev.body, icon: 'icon-192.png', tag: ev.key });
         seen[ev.key] = Date.now();
         changed = true;
       } catch (e) { /* notification constructor can throw on some platforms */ }
@@ -4391,8 +4592,46 @@
 
   // -------------------------------------------------------------- photos & barcode
 
-  // Photos live in IndexedDB only (not in JSON backups — they would balloon
-  // the file). Records/products store photo ids.
+  // Photos live in IndexedDB. Full backups pack JPEG payloads next to the
+  // farm JSON so a phone→PC move keeps label/lot photos.
+
+  function idbPhotosGetAll() {
+    return new Promise((res) => {
+      if (!idbDb || !idbDb.objectStoreNames.contains('photos')) return res([]);
+      try {
+        const req = idbDb.transaction('photos', 'readonly').objectStore('photos').getAll();
+        req.onsuccess = () => res(req.result || []);
+        req.onerror = () => res([]);
+      } catch (e) { res([]); }
+    });
+  }
+
+  function idbPhotosClear() {
+    return new Promise((res) => {
+      if (!idbDb || !idbDb.objectStoreNames.contains('photos')) return res();
+      try {
+        const tx = idbDb.transaction('photos', 'readwrite');
+        tx.objectStore('photos').clear();
+        tx.oncomplete = () => res();
+        tx.onerror = () => res();
+      } catch (e) { res(); }
+    });
+  }
+
+  async function idbPhotosPutAll(photos) {
+    let n = 0;
+    for (const p of photos || []) {
+      const clean = (typeof BackupPack !== 'undefined' && BackupPack.sanitizePhoto)
+        ? BackupPack.sanitizePhoto(p)
+        : p;
+      if (!clean) continue;
+      try {
+        await idbPhotoPut(clean);
+        n++;
+      } catch (e) { /* skip one bad photo */ }
+    }
+    return n;
+  }
 
   function idbPhotoPut(photo) {
     return new Promise((res, rej) => {
@@ -4484,7 +4723,7 @@
         await idbPhotoPut(photo);
         idList.push(photo.id);
         renderPhotoThumbs(idList, thumbsHost);
-        toast('Photo attached (stays on this device — not in JSON backups)');
+        toast('Photo attached');
       } catch (e) {
         toast('Could not read that image');
       }
@@ -4521,7 +4760,7 @@
     const dlg = $('#photo-dialog');
     $('#photo-dialog-img').src = photoDataSrc(p);
     $('#photo-dialog-meta').textContent =
-      `Taken ${new Date(p.createdAt).toLocaleString()} — photos stay in this browser and are not part of JSON backups.`;
+      `Taken ${new Date(p.createdAt).toLocaleString()} — included in Download backup.`;
     $('#photo-dialog-delete').onclick = async () => {
       const idx = idList.indexOf(photoId);
       if (idx >= 0) idList.splice(idx, 1);
@@ -5348,7 +5587,7 @@
       const blocks = hours.map((h) => {
         const { score, reasons } = scoreSprayHour(h);
         const hr = new Date(h.time).getHours();
-        const detail = `${label} ${hr}:00 — ${reasons.join('; ')} · ${Math.round(h.temp)} °F, RH ${h.rh}%`
+        const detail = `${label} ${hr}:00 — ${reasons.join('; ')} · ${fmtTempPair(h.temp)}, RH ${h.rh}%`
           + (h.source === 'hrrr' ? ' · HRRR' : h.source ? ` · ${h.source}` : '');
         return `<button type="button" class="fc-block fc-${score}${stale ? ' fc-stale' : ''}"
           data-fc-detail="${esc(detail)}" aria-label="${esc(`${label} ${hr}:00 ${score}`)}">${hr}</button>`;
@@ -5665,52 +5904,6 @@
     });
   }
 
-  // -------------------------------------------------------------- onboarding
-
-  function initOnboarding() {
-    const dlg = $('#onboarding-dialog');
-    if (!dlg || !dlg.showModal) return;
-    const fresh = !data.settings.farmName && !data.settings.state &&
-      !data.applications.length && !data.meta.onboardingDone;
-    if (!fresh) return;
-
-    const sel = $('#onboard-state');
-    Object.keys(STATE_NAMES).sort((a, b) => STATE_NAMES[a].localeCompare(STATE_NAMES[b]))
-      .forEach(code => {
-        const o = document.createElement('option');
-        o.value = code;
-        o.textContent = STATE_NAMES[code];
-        sel.appendChild(o);
-      });
-
-    $('#onboard-save').addEventListener('click', () => {
-      data.settings.state = $('#onboard-state').value;
-      data.settings.applicatorClass = $('#onboard-class').value || 'private';
-      data.settings.farmName = $('#onboard-farm').value.trim();
-      data.meta.onboardingDone = true;
-      save();
-      $('#set-state').value = data.settings.state;
-      $('#set-applicator-class').value = data.settings.applicatorClass;
-      $('#set-farm').value = data.settings.farmName;
-      applySettings();
-      renderStateInfo();
-      reshapeAppFormForState();
-      updateCompliancePreview();
-      renderDashboard();
-      dlg.close();
-      toast(data.settings.state
-        ? `Spray log shaped for ${STATE_NAMES[data.settings.state]} — you're ready to log`
-        : 'Set your state anytime in Settings to unlock state-shaped logging');
-    });
-    $('#onboard-skip').addEventListener('click', () => {
-      data.meta.onboardingDone = true;
-      save();
-      dlg.close();
-      renderDashboard();
-    });
-    dlg.showModal();
-  }
-
   // -------------------------------------------------------------- offline
 
   function initOffline() {
@@ -5762,19 +5955,21 @@
     initReports();
     initOffline();
     initLicense();
-    initOnboarding();
+    initFirstRun();
     initSprayForecast();
     initReminders();
     initCsvImport();
-    if (typeof I18n !== 'undefined' && data.settings.language === 'es') {
-      I18n.applyLanguage('es');
-    }
+    initLanguageControls();
+    applyUiLanguage();
     if ($('#history-close')) $('#history-close').addEventListener('click', () => $('#history-dialog').close());
     renderDashboard();
     renderRecentProducts();
     renderDueBanner();
     checkReminders();
   }
+
+  initLanguageControls();
+  applyUiLanguage();
 
   const durability = initDurability();
   if (cacheWasStub) {

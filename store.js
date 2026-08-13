@@ -267,10 +267,10 @@
     return [
       {
         done: !!(settings.farmName && settings.state),
-        goto: 'settings',
+        goto: 'first-run',
         where: 'Farm name and state',
         what: 'Shapes the spray log to your state’s rules',
-        cta: 'Set up my farm'
+        cta: 'Save farm'
       },
       {
         done: fields.length > 0,

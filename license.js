@@ -157,6 +157,35 @@
     };
   }
 
+  /**
+   * Whole-app access decision. Key validity is already resolved by
+   * verifyLicenseKey — this only maps {trial, key} onto the gate.
+   * Re-run on visibilitychange so an expired trial locks without a reload.
+   */
+  function resolveLicenseState(opts) {
+    const trial = trialStatus(
+      opts && opts.trialStartedAt,
+      (opts && opts.now) != null ? opts.now : Date.now()
+    );
+    const keyValid = !!(opts && opts.keyValid);
+    const hasKey = !!(opts && opts.hasKey);
+    const holder = (opts && opts.holder) || '';
+    const keyReason = (opts && opts.keyReason) || '';
+    if (keyValid) {
+      return { pro: true, mode: 'licensed', daysLeft: 0, holder, keyReason: '' };
+    }
+    if (trial.active) {
+      return { pro: true, mode: 'trial', daysLeft: trial.daysLeft, holder: '', keyReason: '' };
+    }
+    return {
+      pro: false,
+      mode: hasKey ? 'key_invalid' : 'trial_expired',
+      daysLeft: 0,
+      holder: '',
+      keyReason: hasKey ? keyReason : ''
+    };
+  }
+
   const api = {
     LICENSE_PUBLIC_KEY_SPKI_B64,
     TRIAL_DAYS,
@@ -165,7 +194,8 @@
     generateSigningKeyPair,
     makeLicenseKey,
     verifyLicenseKey,
-    trialStatus
+    trialStatus,
+    resolveLicenseState
   };
 
   if (typeof module !== 'undefined' && module.exports) {

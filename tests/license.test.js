@@ -76,6 +76,31 @@ async function check(name, fn) {
     assert.strictEqual(lic.trialStatus(undefined, start).active, false);
   });
 
+  await check('resolveLicenseState: key beats trial; trial beats lock; visibility re-check', () => {
+    const start = Date.UTC(2026, 6, 1);
+    const licensed = lic.resolveLicenseState({
+      trialStartedAt: start, now: start + 40 * 86400000, keyValid: true, hasKey: true, holder: 'Jane'
+    });
+    assert.strictEqual(licensed.mode, 'licensed');
+    assert.strictEqual(licensed.pro, true);
+    assert.strictEqual(licensed.holder, 'Jane');
+    const trial = lic.resolveLicenseState({
+      trialStartedAt: start, now: start + 86400000, keyValid: false, hasKey: false
+    });
+    assert.strictEqual(trial.mode, 'trial');
+    assert.strictEqual(trial.daysLeft, 29);
+    const expired = lic.resolveLicenseState({
+      trialStartedAt: start, now: start + 40 * 86400000, keyValid: false, hasKey: false
+    });
+    assert.strictEqual(expired.mode, 'trial_expired');
+    assert.strictEqual(expired.pro, false);
+    const badKey = lic.resolveLicenseState({
+      trialStartedAt: start, now: start + 40 * 86400000, keyValid: false, hasKey: true, keyReason: 'signature'
+    });
+    assert.strictEqual(badKey.mode, 'key_invalid');
+    assert.strictEqual(badKey.keyReason, 'signature');
+  });
+
   if (failed) {
     console.error(`\n${failed} license check(s) failed`);
     process.exit(1);

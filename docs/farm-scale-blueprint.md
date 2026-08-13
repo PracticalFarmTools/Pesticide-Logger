@@ -1,8 +1,15 @@
 # Blueprint: farm scale (2 fields and 150)
 
-**Status: proposed.** Planning only — no app behavior change in this document.
+**Status: implemented** in `farm-scale.js` (find / pick / window / slim history)
+plus the Fields/Products search, native-select type-filter, Spray Log year
+window, optional field groups, mapper Fit all, forecast hours in IndexedDB,
+and lock-screen record review.
 
 Job to be done: the same PWA is the daily tool for a two-tunnel market garden, a 40-block orchard, and a custom applicator with a hundred named sites. Scale is a **findability and default-window** problem, not a new product line.
+
+**Prior years:** every farm size that has older logs gets **Show prior years**. A short log still defaults to showing every year. A long current season defaults to this season so the cab list stays usable — the older years are one tap away, including after a trial or subscription ends.
+
+**Subscription end:** spray logs stay on the device. The lock screen reviews and exports them. A license is for logging new sprays, not for keeping the file.
 
 A 4-field farm that suddenly sees ranch chrome has been scaled wrong. A 150-site farm that still dumps every row into one table has not been scaled at all.
 

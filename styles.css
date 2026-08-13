@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.7.0 — Practical Farm Tools theme */
+/* Pesticide Logger v2.8.0 — Practical Farm Tools theme */
 
 :root {
   --primary-green: #1b4322;
@@ -634,6 +634,34 @@ input:hover, select:hover, textarea:hover { border-color: var(--border-color-hov
 .file-btn { display: inline-flex; cursor: pointer; }
 
 .search-input { max-width: 260px; font-size: 0.85rem; }
+.select-filter {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+}
+.group-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 0.75rem;
+}
+.group-chip {
+  border: 1px solid var(--border-color);
+  background: var(--bg-white);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.group-chip.active, .group-chip[aria-pressed="true"] {
+  background: var(--primary-green);
+  border-color: var(--primary-green);
+  color: #fff;
+}
 
 /* ---------- Record tables / lists ---------- */
 .record-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
@@ -935,14 +963,22 @@ label.state-required-field {
 }
 .license-lock-screen {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  gap: 1.25rem;
   min-height: 70vh;
   padding: 1.25rem;
 }
 .license-lock-card { max-width: 480px; width: 100%; text-align: center; }
 .license-lock-card h2 { font-family: var(--font-title); color: var(--primary-green-dark); margin-bottom: 0.5rem; }
 .license-lock-card .form-row-license { justify-content: center; }
+.lock-records-card {
+  max-width: 960px;
+  width: 100%;
+  text-align: left;
+}
+.lock-records-card .history-controls { margin: 0.5rem 0 0.75rem; }
 
 .ocr-scan-row {
   display: flex;

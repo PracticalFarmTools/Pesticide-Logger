@@ -27,7 +27,7 @@
       </svg>
       <div>
         <h1>Pesticide Logger</h1>
-        <span class="header-sub">Practical Farm Tools · v2.7.0</span>
+        <span class="header-sub">Practical Farm Tools · v2.8.0</span>
       </div>
     </div>
     <div class="header-right">
@@ -44,8 +44,9 @@
   <div class="card license-lock-card">
     <h2>Pesticide Logger</h2>
     <p id="lock-status" class="card-hint"></p>
-    <p class="card-hint">Your records stay exactly as you left them on this device — nothing is deleted.
-      Activating a license restores full access immediately.</p>
+    <p class="card-hint">A license is for logging new sprays — not for keeping the ones you already wrote.
+      Your spray logs stay on this device. Review any year and download a backup below. Nothing is
+      deleted when a trial or subscription ends.</p>
     <div class="form-row form-row-license">
       <label>License key
         <input type="text" id="lock-key-input" placeholder="PLPRO.…" autocomplete="off" spellcheck="false">
@@ -53,9 +54,22 @@
       <button type="button" class="btn btn-primary" id="lock-activate">Activate</button>
       <button type="button" class="btn btn-secondary" id="lock-buy">Buy a license</button>
     </div>
-    <p class="card-hint">$29/year per farm, or $79 one-time perpetual. One purchase per farm, works
-      offline, no account, no telemetry — keys are verified on this device with a cryptographic
-      signature, nothing is sent anywhere.</p>
+    <p class="card-hint">$29/year per farm, or $79 one-time perpetual. Same tool for two tunnels or a
+      hundred sites. Works offline, no account, no telemetry — keys are verified on this device.</p>
+  </div>
+  <div class="card lock-records-card" id="lock-records">
+    <h3 class="card-title">Your spray logs stay with you</h3>
+    <p class="card-hint" id="lock-records-status">This is your farm file on this device. A lapsed license
+      cannot take it. Two fields or 150 — every year you logged is still here.</p>
+    <div class="history-controls">
+      <input type="search" id="lock-log-search" class="search-input" placeholder="Search product, field, crop…">
+      <button type="button" class="btn btn-secondary btn-sm" id="lock-show-prior-years" hidden>Show prior years</button>
+    </div>
+    <div id="lock-app-list"></div>
+    <div class="form-actions">
+      <button type="button" class="btn btn-primary" id="lock-download-backup">Download backup</button>
+      <button type="button" class="btn btn-secondary" id="lock-download-csv">Download CSV</button>
+    </div>
   </div>
 </section>
 
@@ -149,6 +163,7 @@
       <div class="card-title-row">
         <h3 class="card-title">Today’s spray windows</h3>
         <div class="forecast-controls">
+          <input type="search" id="forecast-field-filter" class="select-filter" placeholder="Type to find a field…" hidden autocomplete="off">
           <select id="forecast-field" hidden aria-label="Jump to field">
             <option value="">All fields</option>
           </select>
@@ -157,7 +172,8 @@
         </div>
       </div>
       <p class="card-hint">Planning only — label rules. 10 m model wind.
-        <button type="button" class="text-btn" id="forecast-howto">How to read this</button></p>
+        <button type="button" class="text-btn" id="forecast-howto">How to read this</button>
+        <span id="forecast-glance-count"></span></p>
       <p class="card-hint" id="forecast-howto-body" hidden>Each row is that field’s map pin, not your phone.
         Go / Wait / No is the next 12 hours. Tap a field for the hour chips, then Details for the 48-hour
         chart, coordinates, and model. Confirm wind at the sprayer. The label still rules.</p>
@@ -239,6 +255,7 @@
           <legend>Where</legend>
           <div class="form-row form-row-3">
             <label data-log-field="location">Field / site <span class="req-star">*</span> <span id="req-location" class="state-req-tag" hidden>state</span>
+              <input type="search" id="app-field-filter" class="select-filter" placeholder="Type to find a field…" hidden autocomplete="off">
               <select id="app-field" required>
                 <option value="">— Select field —</option>
               </select>
@@ -281,6 +298,7 @@
             <span id="req-rei_hours" class="state-req-tag" hidden>state</span>
             <span id="req-phi_days" class="state-req-tag" hidden>state</span>
           </legend>
+          <input type="search" id="app-product-filter" class="select-filter" placeholder="Type to find a product…" hidden autocomplete="off">
           <div id="app-products"></div>
           <button type="button" class="btn btn-secondary btn-sm" id="app-add-product">+ Add product to mix</button>
           <div id="app-product-info" class="product-info-strip" hidden></div>
@@ -499,6 +517,7 @@
         <h3 class="card-title">Application history</h3>
         <div class="history-controls">
           <input type="search" id="log-search" class="search-input" placeholder="Search product, field, crop…">
+          <button type="button" class="btn btn-secondary btn-sm" id="log-show-prior-years" hidden>Show prior years</button>
           <label class="checkbox-label">
             <input type="checkbox" id="log-show-deleted">
             Show deleted
@@ -696,7 +715,10 @@
       </form>
     </div>
     <div class="card">
-      <h3 class="card-title">Product library</h3>
+      <div class="card-title-row">
+        <h3 class="card-title">Product library</h3>
+        <input type="search" id="product-search" class="search-input" placeholder="Search products…" hidden autocomplete="off">
+      </div>
       <div id="product-list"></div>
     </div>
   </section>
@@ -710,6 +732,7 @@
         the block you spray. <strong>Set forecast pin</strong> is only for sites with no drawn boundary.</p>
       <div class="map-toolbar">
         <button type="button" class="btn btn-secondary btn-sm" id="map-locate">📍 My location</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="map-fit-all" hidden>Fit all fields</button>
         <button type="button" class="btn btn-secondary btn-sm" id="map-basemap">🛰 Satellite / streets</button>
         <button type="button" class="btn btn-secondary btn-sm" id="map-weather-pin">Set forecast pin</button>
         <span class="map-toolbar-spacer"></span>
@@ -742,12 +765,15 @@
             <input type="text" id="field-crop" placeholder="e.g. Mixed vegetables">
           </label>
         </div>
-        <div class="form-row form-row-2">
+        <div class="form-row form-row-3">
           <label>Location description <span class="req-star">*</span>
             <input type="text" id="field-location" placeholder="e.g. East of barn, 123 Farm Rd, Nobleboro ME — or GPS coords">
           </label>
           <label>Site ID
             <input type="text" id="field-site-id" placeholder="County / state site ID (e.g. CA)">
+          </label>
+          <label>Group / place
+            <input type="text" id="field-group" placeholder="e.g. Home place — optional">
           </label>
         </div>
         <div class="form-actions sticky-actions">
@@ -757,7 +783,11 @@
       </form>
     </div>
     <div class="card">
-      <h3 class="card-title">Fields &amp; sites</h3>
+      <div class="card-title-row">
+        <h3 class="card-title">Fields &amp; sites</h3>
+        <input type="search" id="field-search" class="search-input" placeholder="Search fields…" hidden autocomplete="off">
+      </div>
+      <div id="field-group-chips" class="group-chips" hidden></div>
       <div id="field-list"></div>
     </div>
   </section>
@@ -776,9 +806,11 @@
             <input type="date" id="report-to">
           </label>
           <label>Field
+            <input type="search" id="report-field-filter" class="select-filter" placeholder="Type to find a field…" hidden autocomplete="off">
             <select id="report-field"><option value="">All fields</option></select>
           </label>
           <label>Product
+            <input type="search" id="report-product-filter" class="select-filter" placeholder="Type to find a product…" hidden autocomplete="off">
             <select id="report-product"><option value="">All products</option></select>
           </label>
         </div>
@@ -935,8 +967,11 @@
       <h3 class="card-title">License</h3>
       <p id="license-status" class="card-hint"></p>
       <p class="card-hint">Pesticide Logger is $29/year per farm, or $79 one-time perpetual — every
-        feature included, no separate tiers. A 30-day trial covers the whole app with no card
-        required; after that, a license keeps it working. Your records stay on this device either way.</p>
+        feature included, no separate tiers. Built for the farm that has two tunnels and the one
+        that has a hundred named sites. A 30-day trial covers the whole app with no card required.
+        After that, a license keeps <em>logging</em> working. Your spray logs stay on this device
+        either way — ending a subscription does not take them, and you can still review every year
+        and download a backup.</p>
       <div class="form-row form-row-license">
         <label>License key
           <input type="text" id="license-key-input" placeholder="PLPRO.…" autocomplete="off" spellcheck="false">
@@ -958,7 +993,8 @@
 
     <div class="card about-card">
       <h3 class="card-title">About</h3>
-      <p>Pesticide Logger v2.7.0 — part of the <strong>Practical Farm Tools</strong> suite. A licensed, offline-first tool; your farm records stay on this device.</p>
+      <p>Pesticide Logger v2.8.0 — part of the <strong>Practical Farm Tools</strong> suite. Built by a
+        farmer for farms of every size. Your farm records stay on this device.</p>
       <p class="card-hint">This tool provides 50-state application <em>recordkeeping field coverage</em> with audit history, lot tracking, and in-cab workflows. It is not legal advice, does not replace WPS employer duties, and does not file California PUR, New York PRL, or other electronic reports for you. Always follow the product label and confirm requirements with your state pesticide agency.</p>
       <details class="legal-details">
         <summary>Terms of use, license &amp; privacy</summary>
@@ -971,9 +1007,11 @@
             selected context — a checklist result, not a compliance determination or certification.
             State datasets marked partial/uncertain need agency confirmation; even researched entries can
             lag rule changes. The product label is the law.</p>
-          <p><strong>License:</strong> a paid license is required after the 30-day trial. A key
-            licenses one farm operation across its devices; keys verify offline and never phone home.
-            Refunds follow the payment processor’s policy.</p>
+          <p><strong>License:</strong> a paid license is required after the 30-day trial to keep
+            logging new applications. A key licenses one farm operation across its devices; keys
+            verify offline and never phone home. Spray logs already on this device stay yours —
+            review any year and export them even if a trial or subscription has ended. Refunds
+            follow the payment processor’s policy.</p>
           <p><strong>No warranty:</strong> the software is provided “as is”, without warranty of any kind.
             To the maximum extent permitted by law, the authors are not liable for claims, fines, crop
             loss, or damages arising from its use, including reliance on compliance fields, deadlines, or
@@ -1158,8 +1196,9 @@
     </label>
   </div>
   <p class="card-hint">You get a 30-day trial with everything unlocked, no card required. After
-    that, a license ($29/year or $79 perpetual) keeps it working — your records stay safe on this
-    device either way.</p>
+    that, a license ($29/year or $79 perpetual) keeps logging working. Your spray logs stay on this
+    device either way — two fields or 150 sites, every year you wrote is still yours to review and
+    export.</p>
   <div class="form-actions">
     <button type="button" class="btn btn-primary" id="onboard-save">Start logging</button>
     <button type="button" class="btn btn-secondary" id="onboard-skip">Skip for now</button>
@@ -1172,6 +1211,7 @@
 <script src="deadline.js"></script>
 <script src="backup-merge.js"></script>
 <script src="spray-window.js"></script>
+<script src="farm-scale.js"></script>
 <script src="license.js"></script>
 <script src="label-ocr.js"></script>
 <script src="i18n.js"></script>

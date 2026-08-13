@@ -28,9 +28,11 @@ label photo), and the
 certifier/buyer packet export.
 
 **30-day trial for everyone, automatic, no card.** The whole app is
-unlocked during the trial; after it ends, a license is required to keep
-using the app. Records already on the device are never altered or deleted
-by trial expiry — activating a license restores access to them immediately.
+unlocked during the trial. After it ends, a license is required to keep
+*logging*. Records already on the device are never altered or deleted —
+you can still review every year and download a backup or CSV. A lapsed
+subscription does not take your spray logs. Activating a license restores
+the ability to log new sprays.
 
 ## Competitive position
 

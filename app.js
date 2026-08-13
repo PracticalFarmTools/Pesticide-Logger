@@ -1,246 +1,164 @@
-/* Pesticide Logger v2.7.9 — Practical Farm Tools
+/* Pesticide Logger v2.8.0 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
- * Farm records stay in localStorage/IndexedDB on this device.
+ * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
  */
 (function () {
   'use strict';
 
   // ---------------------------------------------------------------- storage
 
-  const STORE_KEY = 'pesticide-logger.v2';
+  const STORE_KEY = FarmStore.STORE_KEY;
+  const defaultData = () => FarmStore.defaultData();
+  const sanitizeId = FarmStore.sanitizeId;
+  const safeUrl = FarmStore.safeUrl;
+  const migrate = FarmStore.migrate;
+  const normalizedSignalWord = FarmStore.normalizedSignalWord;
 
-  const defaultData = () => ({
-    version: 5,
-    settings: {
-      farmName: '', state: '', county: '',
-      applicatorName: '', certNumber: '', certExpiry: '',
-      applicatorClass: 'private',
-      permitNumber: '', companyLicense: '', businessNameAddress: '',
-      strictCompliance: true
-    },
-    products: [],
-    fields: [],
-    applications: [],
-    meta: {}
-  });
+  let data = loadBootCache();
+  const cacheWasStub = FarmStore.isBootStub(data);
+  delete data._boot;
+  let pendingFarmJson = null;
+  let idbDb = null;
+  let farmUiStarted = false;
 
-  let data = load();
-  purgeExpiredSoftDeletes();
-
-  // Hard-delete soft-deleted records well past their state retention window
-  // so localStorage doesn't grow forever. Anchored to the application date
-  // (the legal retention clock — see the "Retain records ... from
-  // application date" copy elsewhere) plus a one-year safety margin;
-  // deletedAt is the fallback when the application date is missing/invalid.
-  function purgeExpiredSoftDeletes() {
-    const before = data.applications.length;
-    const now = Date.now();
-    data.applications = data.applications.filter((a) => {
-      if (!a.deletedAt) return true;
-      const retain = a.retentionYears || (stateLaw() && stateLaw().retentionYears) || 2;
-      const anchorMs = Date.parse(a.date) || Date.parse(a.deletedAt);
-      if (!anchorMs) return true;
-      const purgeAfterMs = anchorMs + (retain + 1) * 365.25 * 24 * 60 * 60 * 1000;
-      return now < purgeAfterMs;
-    });
-    if (data.applications.length !== before) {
-      try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch (e) { /* best-effort */ }
-    }
-  }
-
-  function load() {
+  function loadBootCache() {
     try {
       const raw = localStorage.getItem(STORE_KEY);
-      if (!raw) return migrate(defaultData());
-      const parsed = JSON.parse(raw);
-      const loaded = migrate(Object.assign(defaultData(), parsed));
-      // Persist schema upgrades immediately so exports/future loads stay current.
-      localStorage.setItem(STORE_KEY, JSON.stringify(loaded));
-      return loaded;
+      if (!raw) return FarmStore.migrate(FarmStore.defaultData());
+      return FarmStore.hydrateFromCacheRaw(raw);
     } catch (e) {
       console.error('Failed to load saved data', e);
-      // Let initDurability recover the last valid IndexedDB mirror.
       try { localStorage.removeItem(STORE_KEY); } catch (ignored) { /* ignore */ }
-      return defaultData();
+      return FarmStore.defaultData();
     }
   }
 
-  // Restored backups and CSV imports are untrusted input. Ids are rendered
-  // into HTML attributes and label URLs into href, so both are constrained
-  // when data enters the store (load, restore, and merge all pass through
-  // migrate()).
-  function sanitizeId(v) {
-    const s = String(v == null ? '' : v);
-    if (!s) return '';
-    if (/^[A-Za-z0-9._:-]+$/.test(s)) return s;
-    return s.replace(/[^A-Za-z0-9._:-]/g, '') ||
-      ('id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10));
+  function retentionYearsNow() {
+    const law = data.settings && data.settings.state && typeof STATE_LAWS !== 'undefined'
+      ? STATE_LAWS[data.settings.state] : null;
+    return (law && law.retentionYears) || 2;
   }
 
-  function safeUrl(u) {
-    const s = String(u == null ? '' : u).trim();
-    return /^https:\/\//i.test(s) ? s : '';
+  function purgeExpiredSoftDeletes() {
+    const changed = FarmStore.purgeExpiredSoftDeletes(data, {
+      retentionYears: retentionYearsNow()
+    });
+    if (changed) persistFarm({ quiet: true });
   }
 
-  // v2→v3 tank mix → v4 compliance → v5 audit/ops fields.
-  function migrate(d) {
-    d.settings = Object.assign({
-      farmName: '', state: '', county: '',
-      applicatorName: '', certNumber: '', certExpiry: '',
-      applicatorClass: 'private',
-      permitNumber: '', companyLicense: '', businessNameAddress: '',
-      strictCompliance: true
-    }, d.settings || {});
-    if (d.settings.strictCompliance == null) d.settings.strictCompliance = true;
-    if (d.settings.language == null) d.settings.language = '';
+  function writeBootCacheBestEffort(farm, json) {
+    json = json || JSON.stringify(farm);
+    try {
+      if (FarmStore.fitsBootCache(json) && !FarmStore.isBootStub(farm)) {
+        localStorage.setItem(STORE_KEY, json);
+        return true;
+      }
+    } catch (e) { /* fall through to stub */ }
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(FarmStore.bootStub(farm)));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 
-    d.applications.forEach(a => {
-      if (!a.products) {
-        a.products = [{
-          productId: a.productId, productName: a.productName, epaRegNo: a.epaRegNo,
-          activeIngredient: a.activeIngredient, rup: !!a.rup,
-          reiHours: a.reiHours, phiDays: a.phiDays,
-          rate: a.rate, rateUnit: a.rateUnit, total: a.total, totalUnit: a.totalUnit
-        }];
-      }
-      if (a.complianceComplete == null) a.complianceComplete = null;
-      if (a.complianceState == null) a.complianceState = d.settings.state || '';
-      if (a.complianceApplicatorClass == null) {
-        a.complianceApplicatorClass = d.settings.applicatorClass || 'private';
-      }
-      if (a.applicationType == null) a.applicationType = 'ground';
-      if (a.usedNoncertified == null) a.usedNoncertified = !!a.noncertifiedApplicatorName;
-      if (a.county == null) a.county = d.settings.county || '';
-      if (a.siteId == null) a.siteId = '';
-      if (a.permitNumber == null) a.permitNumber = '';
-      if (a.draft == null) a.draft = false;
-      (a.products || []).forEach(p => {
-        if (p.epaCompany == null) p.epaCompany = '';
-        if (p.stateRegNo == null) p.stateRegNo = '';
-        if (p.type == null) p.type = '';
-        if (p.rup == null) p.rup = false;
-      });
-    });
-    (d.fields || []).forEach(f => {
-      if (f.siteId == null) f.siteId = '';
-    });
-    d.applications.forEach(a => {
-      if (!Array.isArray(a.history)) a.history = [];
-      if (a.deletedAt == null) a.deletedAt = null;
-      if (a.updatedAt == null) a.updatedAt = a.createdAt || new Date().toISOString();
-      if (a.customerCopyProvided == null) a.customerCopyProvided = false;
-      if (a.customerCopyDate == null) a.customerCopyDate = '';
-      if (a.boomHeight == null) a.boomHeight = '';
-      if (a.groundSpeed == null) a.groundSpeed = '';
-      if (a.bufferDistance == null) a.bufferDistance = '';
-      if (a.sensitiveSites == null) a.sensitiveSites = '';
-      if (a.inversionObserved == null) a.inversionObserved = false;
-      if (a.recordDueAt == null) a.recordDueAt = null;
-      (a.products || []).forEach(p => {
-        if (p.lotNumber == null) p.lotNumber = '';
-        if (p.reiOverride == null) p.reiOverride = null;
-        if (p.phiOverride == null) p.phiOverride = null;
-        if (p.omri == null) p.omri = false;
-      });
-    });
-    (d.products || []).forEach(p => {
-      if (p.omri == null) p.omri = false;
-      if (p.lotHint == null) p.lotHint = '';
-      if (p.barcode == null) p.barcode = '';
-      if (!Array.isArray(p.photoIds)) p.photoIds = [];
-      if (p.updatedAt == null) p.updatedAt = p.createdAt || new Date().toISOString();
-      if (p.createdAt == null) p.createdAt = p.updatedAt;
-    });
-    d.applications.forEach(a => {
-      if (!Array.isArray(a.photoIds)) a.photoIds = [];
-    });
-    (d.fields || []).forEach(f => {
-      if (f.updatedAt == null) f.updatedAt = f.createdAt || new Date().toISOString();
-      if (f.createdAt == null) f.createdAt = f.updatedAt;
-    });
-    d.applications.forEach(a => {
-      a.id = sanitizeId(a.id);
-      if (a.fieldId != null && a.fieldId !== '') a.fieldId = sanitizeId(a.fieldId);
-      a.photoIds = a.photoIds.map(sanitizeId).filter(Boolean);
-      (a.products || []).forEach(p => {
-        if (p.productId != null && p.productId !== '') p.productId = sanitizeId(p.productId);
-        if (p.epaLabelUrl != null) p.epaLabelUrl = safeUrl(p.epaLabelUrl) || null;
-      });
-    });
-    (d.products || []).forEach(p => {
-      p.id = sanitizeId(p.id);
-      p.photoIds = p.photoIds.map(sanitizeId).filter(Boolean);
-      if (p.epaLabelUrl != null) p.epaLabelUrl = safeUrl(p.epaLabelUrl) || null;
-      p.signalWord = normalizedSignalWord(p.signalWord);
-    });
-    (d.fields || []).forEach(f => { f.id = sanitizeId(f.id); });
-    d.meta = d.meta || {};
-    d.version = 5;
-    return d;
+  function writeFarmToIdb(json) {
+    if (!idbDb) return false;
+    try {
+      const store = idbDb.transaction('kv', 'readwrite').objectStore('kv');
+      store.put(json, FarmStore.FARM_IDB_KEY);
+      try { store.delete(FarmStore.LEGACY_IDB_KEY); } catch (ignored) { /* older key may be absent */ }
+      return true;
+    } catch (e) {
+      console.error('[save] IndexedDB write failed', e);
+      return false;
+    }
+  }
+
+  function persistFarm(opts) {
+    opts = opts || {};
+    FarmStore.touchSaved(data);
+    delete data._boot;
+    const json = JSON.stringify(data);
+    pendingFarmJson = json;
+    const durable = writeFarmToIdb(json);
+    if (durable) pendingFarmJson = null;
+    const cached = writeBootCacheBestEffort(data, json);
+    if (!opts.quiet) scheduleAutoBackup();
+    if (!durable && !cached && !opts.quiet) {
+      toast('⚠ Browser storage is full — this change may not persist. Download a backup now (Settings → Data), then clear space.');
+    }
+    return durable || cached;
   }
 
   function save() {
-    let stored = true;
-    try {
-      localStorage.setItem(STORE_KEY, JSON.stringify(data));
-    } catch (e) {
-      // Quota exceeded / storage disabled: a compliance record must never
-      // die silently. The IndexedDB mirror and auto-backup file below still
-      // get the in-memory data, and the user is told loudly.
-      stored = false;
-      console.error('[save] localStorage write failed', e);
-    }
-    idbMirror();
-    scheduleAutoBackup();
-    if (!stored) {
-      toast('⚠ Browser storage is full — this change may not persist. Download a backup now (Settings → Data), then clear space.');
-    }
+    persistFarm();
   }
 
-  // ---- durability: IndexedDB mirror + persistent storage ----
-  // localStorage stays the primary (synchronous) store; every save is mirrored
-  // to IndexedDB so records survive if localStorage is evicted or cleared.
-
-  let idbDb = null;
-
-  function idbMirror() {
-    if (!idbDb) return;
-    try {
-      idbDb.transaction('kv', 'readwrite').objectStore('kv')
-        .put(JSON.stringify(data), 'data');
-    } catch (e) { /* mirror is best-effort */ }
+  function idbGet(key) {
+    return new Promise((resolve) => {
+      if (!idbDb) { resolve(undefined); return; }
+      try {
+        const req = idbDb.transaction('kv', 'readonly').objectStore('kv').get(key);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(undefined);
+      } catch (e) { resolve(undefined); }
+    });
   }
 
+  function applyDurableFarm(idbFarm) {
+    const picked = FarmStore.pickDurableFarm(data, idbFarm);
+    if (!picked || FarmStore.isBootStub(picked)) return false;
+    const next = FarmStore.migrate(Object.assign(FarmStore.defaultData(), picked));
+    delete next._boot;
+    if (farmUiStarted && !FarmStore.sameFarmRev(next, data)) {
+      writeBootCacheBestEffort(next);
+      location.reload();
+      return true;
+    }
+    data = next;
+    writeBootCacheBestEffort(data);
+    return false;
+  }
+
+  // IndexedDB is the durable farm. localStorage is a boot cache so a return
+  // visit can paint without waiting. Photos stay in a separate store.
   function initDurability() {
     try {
       if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
     } catch (e) { /* not supported */ }
-    if (!('indexedDB' in window)) return;
-    const req = indexedDB.open('pesticide-logger', 2);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
-      if (!db.objectStoreNames.contains('photos')) db.createObjectStore('photos', { keyPath: 'id' });
-    };
-    req.onsuccess = () => {
-      idbDb = req.result;
-      resumeAutoBackup();
-      setTimeout(sweepOrphanPhotos, 4000);
-      if (localStorage.getItem(STORE_KEY)) { idbMirror(); return; }
-      // localStorage is empty — recover from the mirror if it has real data.
-      const get = idbDb.transaction('kv', 'readonly').objectStore('kv').get('data');
-      get.onsuccess = () => {
-        if (!get.result) return;
-        try {
-          const rec = JSON.parse(get.result);
-          if ((rec.applications || []).length || (rec.products || []).length || (rec.fields || []).length) {
-            localStorage.setItem(STORE_KEY, get.result);
-            location.reload();
-          }
-        } catch (e) { /* corrupt mirror; ignore */ }
+    if (!('indexedDB' in window)) {
+      purgeExpiredSoftDeletes();
+      return Promise.resolve(null);
+    }
+    return new Promise((resolve) => {
+      const req = indexedDB.open(FarmStore.IDB_NAME, FarmStore.IDB_VERSION);
+      req.onerror = () => {
+        purgeExpiredSoftDeletes();
+        resolve(null);
       };
-    };
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
+        if (!db.objectStoreNames.contains('photos')) db.createObjectStore('photos', { keyPath: 'id' });
+      };
+      req.onsuccess = () => {
+        idbDb = req.result;
+        Promise.all([idbGet(FarmStore.FARM_IDB_KEY), idbGet(FarmStore.LEGACY_IDB_KEY)])
+          .then(([farmRaw, legacyRaw]) => {
+            const idbFarm = FarmStore.parseFarmJson(farmRaw)
+              || FarmStore.parseFarmJson(legacyRaw);
+            applyDurableFarm(idbFarm);
+            purgeExpiredSoftDeletes();
+            if (pendingFarmJson) writeFarmToIdb(pendingFarmJson);
+            else writeFarmToIdb(JSON.stringify(data));
+            resumeAutoBackup();
+            setTimeout(sweepOrphanPhotos, 4000);
+            resolve(idbFarm);
+          });
+      };
+    });
   }
 
   // ---- automatic backup file (File System Access API, Chromium) ----
@@ -295,8 +213,7 @@
     if (!autoBackupHandle) return;
     try {
       data.meta.lastBackupAt = new Date().toISOString();
-      localStorage.setItem(STORE_KEY, JSON.stringify(data));
-      idbMirror();
+      persistFarm({ quiet: true });
       const exportData = (typeof SprayWindow !== 'undefined' && SprayWindow.backupClone)
         ? SprayWindow.backupClone(data)
         : data;
@@ -441,33 +358,15 @@
   // countdown never reports "clear" before a same-day afternoon spray's REI
   // would actually expire. Prefer endTime, then startTime, then 23:59.
   function effectiveIntervalValue(app, key) {
-    const top = app && app[key];
-    if (top != null && top !== '' && Number.isFinite(Number(top)) && Number(top) >= 0) {
-      return Number(top);
-    }
-    const nums = ((app && app.products) || [])
-      .map(p => p[key])
-      .filter(v => v != null && v !== '' && Number.isFinite(Number(v)) && Number(v) >= 0)
-      .map(Number);
-    return nums.length ? Math.max(...nums) : null;
+    return Compliance.effectiveIntervalValue(app, key);
   }
 
   function reiExpiry(app) {
-    const hours = effectiveIntervalValue(app, 'reiHours');
-    if (hours == null) return null;
-    const clock = app.endTime || app.startTime || '23:59';
-    const start = new Date(`${app.date}T${clock}`);
-    if (isNaN(start)) return null;
-    return new Date(start.getTime() + hours * 3600 * 1000);
+    return Compliance.reiExpiry(app);
   }
 
   function phiDate(app) {
-    const days = effectiveIntervalValue(app, 'phiDays');
-    if (days == null) return null;
-    const d = new Date(`${app.date}T00:00:00`);
-    if (isNaN(d)) return null;
-    d.setDate(d.getDate() + days);
-    return d;
+    return Compliance.phiDate(app);
   }
 
   function hoursLeft(target) {
@@ -707,39 +606,21 @@
     updateCompliancePreview();
   }
 
-  // Core fields always present on every state's log (operational minimum).
-  const CORE_LOG_FIELDS = new Set([
-    'location', 'crop_treated', 'date', 'area_treated', 'area_unit',
-    'applicator_name', 'notes', 'application_type'
-  ]);
+  const CORE_LOG_FIELDS = new Set(Compliance.CORE_LOG_FIELDS);
+  const PRODUCT_SECTION_FIELDS = new Set(Compliance.PRODUCT_SECTION_FIELDS);
+  const COMMERCIAL_ONLY_FIELDS = new Set(Compliance.COMMERCIAL_ONLY_FIELDS);
+  const DRIFT_EXTRA_FIELDS = Compliance.DRIFT_EXTRA_FIELDS.slice();
+  const FIELD_ALIASES = Compliance.FIELD_ALIASES;
 
-  // Product-library fields are captured in the always-visible tank-mix section.
-  const PRODUCT_SECTION_FIELDS = new Set([
-    'brand_name', 'epa_reg_no', 'active_ingredient', 'amount_applied', 'rate',
-    'restricted_use_flag', 'rei_hours', 'phi_days', 'pesticide_formulation',
-    'manufacturer_name', 'state_registration_no'
-  ]);
+  const hasText = Compliance.hasText;
 
-  // Typically commercial / for-hire record fields.
-  const COMMERCIAL_ONLY_FIELDS = new Set([
-    'business_name_address', 'company_license',
-    'customer_copy_provided', 'customer_copy_date'
-  ]);
-
-  // Drift / buffer extras — shown with recommended toggle or when already filled.
-  const DRIFT_EXTRA_FIELDS = [
-    'boom_height', 'ground_speed', 'buffer_distance',
-    'inversion_observed', 'sensitive_sites'
-  ];
-
-  const FIELD_ALIASES = {
-    application_time: ['start_time'],
-    total_mix_applied: ['carrier_volume'],
-    location_note: ['location']
-  };
-
-  function hasText(v) {
-    return v != null && String(v).trim() !== '';
+  function settingsForCompliance() {
+    const preview = settingsFormPreview();
+    return {
+      state: (preview && preview.state) || data.settings.state,
+      applicatorClass: (preview && preview.applicatorClass) || data.settings.applicatorClass || 'private',
+      farmName: data.settings.farmName
+    };
   }
 
   function settingsFormPreview() {
@@ -752,49 +633,32 @@
   }
 
   function applicatorClassFor(app) {
-    if (app && app.complianceApplicatorClass) return app.complianceApplicatorClass;
-    const preview = settingsFormPreview();
-    return (preview && preview.applicatorClass) || data.settings.applicatorClass || 'private';
+    return Compliance.applicatorClassFor(app, settingsForCompliance());
   }
 
   function lawFor(app) {
-    const preview = settingsFormPreview();
-    const code = (app && app.complianceState) ||
-      (preview && preview.state) ||
-      data.settings.state;
-    return (code && typeof STATE_LAWS !== 'undefined' && STATE_LAWS[code])
-      ? { code, law: STATE_LAWS[code] }
-      : { code: null, law: null };
+    return Compliance.lawFor(app, settingsForCompliance(),
+      typeof STATE_LAWS !== 'undefined' ? STATE_LAWS : {});
   }
 
   function isAerialApp(app) {
-    if (!app) return false;
-    if (app.applicationType === 'aerial') return true;
-    return /\b(aerial|airplane|aircraft|helicopter)\b/i.test(app.method || '');
+    return Compliance.isAerialApp(app);
   }
 
   function usedTrainee(app) {
-    return !!(app && (app.usedNoncertified || hasText(app.noncertifiedApplicatorName)));
+    return Compliance.usedTrainee(app);
   }
 
   function privateDutyFor(law) {
-    return (law && law.privateDuty) || 'required';
+    return Compliance.privateDutyFor(law);
   }
 
   function fieldAppliesToApp(app, fieldName) {
-    const cls = applicatorClassFor(app);
-    if (COMMERCIAL_ONLY_FIELDS.has(fieldName) && cls === 'private') return false;
-    if (fieldName === 'aircraft_id') return isAerialApp(app);
-    if (fieldName === 'noncertified_applicator_name') return usedTrainee(app);
-    return true;
+    return Compliance.fieldAppliesToApp(app, fieldName, settingsForCompliance());
   }
 
-  // When privateDuty is none, state-required matrix does not apply to private users.
   function stateFieldsApply(app, law) {
-    if (!law) return false;
-    const cls = applicatorClassFor(app);
-    if (cls !== 'private') return true;
-    return privateDutyFor(law) !== 'none';
+    return Compliance.stateFieldsApply(app, law, settingsForCompliance());
   }
 
   function formContextApp() {
@@ -980,200 +844,32 @@
   // -------- 50-state compliance engine --------
 
   function productsOk(app, pred) {
-    const prods = app.products || [];
-    return prods.length > 0 && prods.every(pred);
+    return Compliance.productsOk(app, pred);
   }
 
   function complianceValuePresent(app, name) {
-    const prods = app.products || [];
-    switch (name) {
-      case 'brand_name': return productsOk(app, p => hasText(p.productName));
-      case 'epa_reg_no': return productsOk(app, p => hasText(p.epaRegNo));
-      case 'active_ingredient': return productsOk(app, p => hasText(p.activeIngredient));
-      case 'amount_applied': return productsOk(app, p => p.total != null && p.total !== '' && !Number.isNaN(Number(p.total)));
-      case 'rate': return productsOk(app, p => p.rate != null && p.rate !== '' && !Number.isNaN(Number(p.rate)));
-      case 'restricted_use_flag': return productsOk(app, p => typeof p.rup === 'boolean');
-      case 'rei_hours': return productsOk(app, p => intervalHoursPresent(p.reiHours));
-      case 'phi_days': return productsOk(app, p => intervalDaysPresent(p.phiDays));
-      case 'pesticide_formulation': return productsOk(app, p => hasText(p.type));
-      case 'manufacturer_name': return productsOk(app, p => hasText(p.epaCompany));
-      case 'state_registration_no': return productsOk(app, p => hasText(p.stateRegNo));
-      // Do not treat related-but-distinct legal fields as interchangeable.
-      case 'dilution_rate': return hasText(app.dilution);
-      case 'concentration': return hasText(app.concentration);
-      case 'carrier_volume':
-      case 'total_mix_applied': return app.carrier != null && app.carrier !== '' && !Number.isNaN(Number(app.carrier));
-      case 'area_treated': return app.area != null && app.area !== '' && Number(app.area) > 0;
-      case 'area_unit': return hasText(app.areaUnit);
-      case 'crop_treated': return hasText(app.crop);
-      case 'target_pest': return hasText(app.targetPest);
-      case 'application_purpose': return hasText(app.applicationPurpose);
-      case 'location': return hasText(app.fieldName) || hasText(app.fieldLocation) || hasText(app.locationNote);
-      case 'county': return hasText(app.county);
-      case 'date': return hasText(app.date);
-      case 'start_time': return hasText(app.startTime);
-      case 'end_time': return hasText(app.endTime);
-      case 'application_time': return hasText(app.startTime) || hasText(app.endTime);
-      case 'wind_speed': return app.windSpeed != null && app.windSpeed !== '';
-      case 'wind_direction': return hasText(app.windDir);
-      case 'temperature': return app.temperature != null && app.temperature !== '';
-      case 'sky': return hasText(app.sky);
-      case 'method': return hasText(app.method);
-      case 'nozzle_type': return hasText(app.nozzleType);
-      case 'sprayer_pressure': return hasText(app.sprayerPressure);
-      case 'equipment_id': return hasText(app.equipmentId);
-      case 'aircraft_id': return hasText(app.aircraftId);
-      case 'mix_load_location': return hasText(app.mixLoadLocation);
-      case 'applicator_name': return hasText(app.applicatorName);
-      case 'applicator_license': return hasText(app.certNumber);
-      case 'supervisor_name': return hasText(app.supervisorName);
-      case 'noncertified_applicator_name': return hasText(app.noncertifiedApplicatorName);
-      case 'permit_number': return hasText(app.permitNumber);
-      case 'site_id': return hasText(app.siteId);
-      case 'customer_name': return hasText(app.customerName);
-      case 'customer_address': return hasText(app.customerAddress);
-      case 'customer_phone': return hasText(app.customerPhone);
-      case 'business_name_address': return hasText(app.businessNameAddress);
-      case 'company_license': return hasText(app.companyLicense);
-      case 'owner_operator_name': return hasText(app.ownerOperatorName) || hasText(data.settings.farmName);
-      case 'pesticide_supplier': return hasText(app.pesticideSupplier);
-      case 'disposal_method': return hasText(app.disposalMethod);
-      case 'notes': return hasText(app.notes);
-      case 'boom_height': return hasText(app.boomHeight);
-      case 'ground_speed': return hasText(app.groundSpeed);
-      case 'buffer_distance': return hasText(app.bufferDistance);
-      case 'inversion_observed': return typeof app.inversionObserved === 'boolean';
-      case 'sensitive_sites': return hasText(app.sensitiveSites);
-      case 'customer_copy_provided': return !!app.customerCopyProvided;
-      case 'customer_copy_date': return hasText(app.customerCopyDate);
-      case 'lot_number': return productsOk(app, p => hasText(p.lotNumber));
-      default: return false;
-    }
+    return Compliance.complianceValuePresent(app, name, settingsForCompliance());
   }
 
-  // Non-finite / negative values (bad imports, Number('') edge cases) must
-  // not count as a filled label interval — countdowns and compliance both
-  // treat them as missing.
   function intervalHoursPresent(v) {
-    return v != null && v !== '' && Number.isFinite(Number(v)) && Number(v) >= 0;
+    return Compliance.intervalHoursPresent(v);
   }
+
   function intervalDaysPresent(v) {
-    return intervalHoursPresent(v);
+    return Compliance.intervalDaysPresent(v);
   }
 
   function intervalsStatus(app) {
-    const prods = app.products || [];
-    if (!prods.length) {
-      return { ok: false, missingRei: true, missingPhi: true, message: 'Add products with label REI and PHI' };
-    }
-    const missingRei = prods.some(p => !intervalHoursPresent(p.reiHours));
-    const missingPhi = prods.some(p => !intervalDaysPresent(p.phiDays));
-    return {
-      ok: !missingRei && !missingPhi,
-      missingRei,
-      missingPhi,
-      message: missingRei || missingPhi
-        ? `Label intervals missing: ${[missingRei ? 'REI' : null, missingPhi ? 'PHI' : null].filter(Boolean).join(' + ')}`
-        : ''
-    };
+    return Compliance.intervalsStatus(app);
   }
 
   function evaluateCompliance(app) {
-    const { code, law } = lawFor(app);
-    const warnings = [];
-    if (!law) {
-      return {
-        complete: false,
-        status: 'no_state',
-        missing: ['Select a state in Settings'],
-        missingFields: [{ name: 'state_select', label: 'Select a state in Settings' }],
-        warnings,
-        retentionYears: 2,
-        agency: null,
-        citation: null,
-        verification: null,
-        stateCode: code,
-        intervalsOk: intervalsStatus(app).ok
-      };
-    }
-
-    const cls = applicatorClassFor(app);
-    const privateDuty = privateDutyFor(law);
-    const applyStateMatrix = stateFieldsApply(app, law);
-
-    // Each entry keeps both the human label (used everywhere missing fields
-    // are displayed/exported) and a canonical field name (used only to jump
-    // the UI to that field — see focusMissingField()).
-    const missing = applyStateMatrix
-      ? law.fields
-          .filter(f => f.required && fieldAppliesToApp(app, f.name) && !complianceValuePresent(app, f.name))
-          .map(f => ({ name: f.name, label: f.label }))
-      : [];
-
-    if (!applyStateMatrix && cls === 'private' && privateDuty === 'none') {
-      warnings.push('This state’s sources indicate no private-applicator recordkeeping duty — still follow the label and keep good farm records');
-    }
-
-    if (app.rup && !hasText(app.certNumber)) {
-      missing.push({ name: 'applicator_license', label: 'Certification / license # (required when mix includes RUP)' });
-    }
-
-    // Always require operational core for any saved “complete” record.
-    [
-      ['date', 'Application date', hasText(app.date)],
-      ['crop_treated', 'Crop / commodity / site treated', hasText(app.crop)],
-      ['location', 'Field / site', hasText(app.fieldName) || hasText(app.locationNote)],
-      ['applicator_name', 'Applicator name', hasText(app.applicatorName)],
-      ['products', 'At least one product with amount applied',
-        productsOk(app, p => hasText(p.productName) && p.total != null && p.total !== '')]
-    ].forEach(([name, label, ok]) => {
-      if (!ok && !missing.some(m => m.label === label)) missing.push({ name, label });
+    return Compliance.evaluateCompliance(app, {
+      stateLaws: typeof STATE_LAWS !== 'undefined' ? STATE_LAWS : {},
+      settings: settingsForCompliance(),
+      now: now(),
+      deadlineUtils: typeof DeadlineUtils !== 'undefined' ? DeadlineUtils : null
     });
-
-    const intervals = intervalsStatus(app);
-    if (!intervals.ok) warnings.push(intervals.message);
-
-    if (law.verification === 'partial' || law.verification === 'uncertain') {
-      warnings.push(`State dataset is ${law.verification} — confirm requirements with ${law.agency}`);
-    }
-    if (cls === 'private' && privateDuty === 'uncertain') {
-      warnings.push('Private-applicator recordkeeping duty is uncertain for this state after Part 110 rescission — confirm with your agency');
-    }
-
-    const copyDue = computeCustomerCopyDueAt(app);
-    if (copyDue && !app.customerCopyProvided) {
-      const overdue = new Date(copyDue) < now();
-      warnings.push(overdue
-        ? 'Customer copy of this record appears overdue under researched state guidance'
-        : `Customer copy due by ${copyDue.slice(0, 10)} under researched state guidance`);
-    }
-    if (app.customerCopyProvided && !hasText(app.customerCopyDate)) {
-      warnings.push('Customer copy marked provided — enter the date it was given');
-    }
-
-    const fieldsOk = missing.length === 0;
-    let status = 'incomplete';
-    const datasetOk = law.verification === 'researched' &&
-      !(cls === 'private' && privateDuty === 'uncertain');
-    if (fieldsOk && intervals.ok && datasetOk) status = 'fields_complete';
-    else if (fieldsOk && (!intervals.ok || !datasetOk)) status = 'needs_review';
-
-    return {
-      // "complete" for strict save = applicable required fields filled.
-      // Interval / dataset warnings still surface as needs_review.
-      complete: fieldsOk,
-      status,
-      missing: missing.map(m => m.label),
-      missingFields: missing,
-      warnings,
-      retentionYears: law.retentionYears || 2,
-      agency: law.agency,
-      citation: law.citation,
-      verification: law.verification,
-      stateCode: code,
-      intervalsOk: intervals.ok,
-      privateDuty
-    };
   }
 
   function updateCompliancePreview() {
@@ -1327,11 +1023,6 @@
         ? ai.name
         : `${ai.name} ${ai.percent}%`
     ).filter(Boolean).join(', ');
-  }
-
-  function normalizedSignalWord(word) {
-    const value = String(word || '').trim().toUpperCase();
-    return ['CAUTION', 'WARNING', 'DANGER'].includes(value) ? value : '';
   }
 
   let epaSearchSeq = 0;
@@ -2872,36 +2563,13 @@
   // -------------------------------------------------------------- dashboard
 
   function isEmptyHome() {
-    return !data.fields.length && !data.applications.length;
+    return FarmStore.isEmptyHome(data);
   }
 
   function renderFirstRun() {
     const host = $('#dash-setup-steps');
     if (!host) return;
-    const farmDone = !!(data.settings.farmName && data.settings.state);
-    const steps = [
-      {
-        done: farmDone,
-        goto: 'settings',
-        where: 'Farm name and state',
-        what: 'Shapes the spray log to your state’s rules',
-        cta: 'Set up my farm'
-      },
-      {
-        done: data.fields.length > 0,
-        goto: 'fields',
-        where: 'Add a field',
-        what: 'A map pin is how spray windows know where to look',
-        cta: 'Add a field'
-      },
-      {
-        done: data.products.length > 0,
-        goto: 'products',
-        where: 'Add a product',
-        what: 'REI, PHI, and rates come off the label',
-        cta: 'Add a product'
-      }
-    ];
+    const steps = FarmStore.firstRunSteps(data);
     host.innerHTML = steps.map((s) => `
       <button type="button" class="interval-item setup-step ${s.done ? 'clear' : ''}" data-goto="${s.goto}">
         <div>
@@ -3225,7 +2893,7 @@
       </tr>`).join('');
     $('#print-area').innerHTML = `
       <h1>Tank Mix Worksheet</h1>
-      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.7.9 (Practical Farm Tools)</p>
+      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.8.0 (Practical Farm Tools)</p>
       <table>
         <tr><th>Area treated</th><td>${fmtNum(c.area)} ${c.areaUnit === 'sqft' ? 'sq ft' : c.areaUnit === '1000sqft' ? '× 1,000 sq ft' : 'acres'} (${fmtNum(c.acres, 3)} ac)</td>
             <th>Spray volume</th><td>${fmtNum(c.gpa)} ${c.gpaUnit === 'gal_acre' ? 'gal/acre' : 'gal/1,000 sq ft'}</td></tr>
@@ -3418,7 +3086,7 @@
       </table>
       <div class="sig-line"><span>Certified applicator signature / date</span><span>Reviewed by / date</span></div>
       <p class="print-footer">
-        Generated by Pesticide Logger v2.7.9 — Practical Farm Tools. Retain records per your state
+        Generated by Pesticide Logger v2.8.0 — Practical Farm Tools. Retain records per your state
         (${retain} year(s) shown above). This report is a record-keeping aid, not legal advice,
         and does not replace WPS duties or electronic reporting programs.
       </p>`;
@@ -3565,7 +3233,7 @@
       format: 'pesticide-logger-state-pack',
       version: 5,
       generatedAt: new Date().toISOString(),
-      app: 'Pesticide Logger v2.7.9 — Practical Farm Tools',
+      app: 'Pesticide Logger v2.8.0 — Practical Farm Tools',
       disclaimer: 'Completion means required fields are filled for this context — not a legal determination. Does not replace WPS duties or e-filing programs.',
       farm: {
         name: s.farmName || '',
@@ -4527,30 +4195,18 @@
         toast('Could not read that image');
       }
     };
-    if (input) {
+    if (input && CameraScan.inPageFileInputReady(input)) {
       photoAttachHandler = saveFile;
       input.click();
       return;
     }
-    // Fallback if the in-page input is missing (should not happen).
-    const ghost = document.createElement('input');
-    ghost.type = 'file';
-    ghost.accept = 'image/*';
-    ghost.capture = 'environment';
-    document.body.appendChild(ghost);
-    ghost.addEventListener('change', () => {
-      const file = ghost.files && ghost.files[0];
-      ghost.remove();
-      if (file) saveFile(file);
-    });
-    ghost.click();
+    toast('Photo capture is not available in this view');
   }
 
   // Photos are only ever created via canvas.toDataURL('image/jpeg'); anything
   // else in the store (tampered IDB) must not reach an img src.
   function photoDataSrc(p) {
-    const u = String((p && p.dataUrl) || '');
-    return /^data:image\/jpeg(;|,)/i.test(u) ? u : '';
+    return CameraScan.photoDataSrc(p);
   }
 
   async function renderPhotoThumbs(idList, host) {
@@ -4589,19 +4245,16 @@
   // Scan jug is always offered; only the capture method changes.
 
   let scanStream = null;
-  const BARCODE_FORMATS = ['upc_a', 'upc_e', 'ean_13', 'ean_8', 'code_128', 'code_39', 'qr_code'];
+  const BARCODE_FORMATS = CameraScan.BARCODE_FORMATS;
 
   function liveBarcodeSupported() {
-    return typeof window !== 'undefined' && 'BarcodeDetector' in window &&
-      navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+    return CameraScan.liveBarcodeSupported(window);
   }
   function barcodeSupported() { return liveBarcodeSupported(); }
 
   function stopScanStream() {
-    if (scanStream) {
-      scanStream.getTracks().forEach(t => t.stop());
-      scanStream = null;
-    }
+    CameraScan.stopMediaStream(scanStream);
+    scanStream = null;
     const video = $('#scan-video');
     if (video) video.srcObject = null;
   }
@@ -4678,9 +4331,7 @@
   }
 
   function fileFromInput(input) {
-    const file = input && input.files && input.files[0];
-    if (input) input.value = '';
-    return file || null;
+    return CameraScan.fileFromInput(input);
   }
 
   function setupBarcodeButton({ liveBtn, photoLabel, photoInput, onCode }) {
@@ -5018,6 +4669,16 @@
     const dlg = $('#scan-dialog');
     if (dlg) dlg.addEventListener('close', stopScanStream);
     if ($('#scan-cancel')) $('#scan-cancel').addEventListener('click', closeScanner);
+
+    [
+      'photo-attach-input', 'app-scan-jug-input', 'scan-label-input',
+      'qp-scan-label-input', 'prod-scan-barcode-input'
+    ].forEach((id) => {
+      const el = document.getElementById(id);
+      if (!CameraScan.inPageFileInputReady(el)) {
+        console.warn('[camera] in-page file input missing:', id);
+      }
+    });
 
     const photoAttach = $('#photo-attach-input');
     if (photoAttach) {
@@ -5505,7 +5166,6 @@
   // Paid-only: there is no per-feature Pro gate. Whole-app access is decided
   // once, here, from licenseState — see applyLicenseGate().
   async function refreshLicenseState() {
-    const trial = LicenseUtils.trialStatus(data.meta.trialStartedAt, Date.now());
     let keyValid = false;
     let holder = '';
     let keyReason = '';
@@ -5515,19 +5175,19 @@
       keyReason = res.reason;
       holder = (res.payload && res.payload.n) || '';
     }
-    if (keyValid) {
-      licenseState.pro = true;
-      licenseState.mode = 'licensed';
-      licenseState.holder = holder;
-    } else if (trial.active) {
-      licenseState.pro = true;
-      licenseState.mode = 'trial';
-      licenseState.daysLeft = trial.daysLeft;
-    } else {
-      licenseState.pro = false;
-      licenseState.mode = data.meta.licenseKey ? 'key_invalid' : 'trial_expired';
-      licenseState.keyReason = keyReason;
-    }
+    const next = LicenseUtils.resolveLicenseState({
+      trialStartedAt: data.meta.trialStartedAt,
+      now: Date.now(),
+      keyValid,
+      hasKey: !!data.meta.licenseKey,
+      holder,
+      keyReason
+    });
+    licenseState.pro = next.pro;
+    licenseState.mode = next.mode;
+    licenseState.daysLeft = next.daysLeft;
+    licenseState.holder = next.holder;
+    licenseState.keyReason = next.keyReason;
     renderLicenseUI();
     applyLicenseGate();
   }
@@ -5714,28 +5374,39 @@
 
   // -------------------------------------------------------------- boot
 
-  initDurability();
-  initSettings();
-  initProducts();
-  initFields();
-  initAppForm();
-  initCameraCapture();
-  initCalculator();
-  initReports();
-  initOffline();
-  initLicense();
-  initOnboarding();
-  initSprayForecast();
-  initReminders();
-  initCsvImport();
-  if (typeof I18n !== 'undefined' && data.settings.language === 'es') {
-    I18n.applyLanguage('es');
+  function startFarmUi() {
+    if (farmUiStarted) return;
+    farmUiStarted = true;
+    initSettings();
+    initProducts();
+    initFields();
+    initAppForm();
+    initCameraCapture();
+    initCalculator();
+    initReports();
+    initOffline();
+    initLicense();
+    initOnboarding();
+    initSprayForecast();
+    initReminders();
+    initCsvImport();
+    if (typeof I18n !== 'undefined' && data.settings.language === 'es') {
+      I18n.applyLanguage('es');
+    }
+    if ($('#history-close')) $('#history-close').addEventListener('click', () => $('#history-dialog').close());
+    renderDashboard();
+    renderRecentProducts();
+    renderDueBanner();
+    checkReminders();
   }
-  if ($('#history-close')) $('#history-close').addEventListener('click', () => $('#history-dialog').close());
-  renderDashboard();
-  renderRecentProducts();
-  renderDueBanner();
-  checkReminders();
+
+  const durability = initDurability();
+  if (cacheWasStub) {
+    durability.then(startFarmUi);
+    setTimeout(startFarmUi, 2500);
+  } else {
+    startFarmUi();
+  }
 
   // Keep REI countdowns fresh; fire due reminders; lock the app when the
   // trial expires without requiring a reload.

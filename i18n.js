@@ -179,7 +179,8 @@
     'My location': 'Mi ubicación',
     'Use this shape': 'Usar esta forma',
     'Undo point': 'Deshacer punto',
-    '✕ Clear': '✕ Borrar',
+    'Clear': 'Borrar',
+    'Satellite / streets': 'Satélite / calles',
 
     // Reports
     'Reports & export': 'Informes y exportación',

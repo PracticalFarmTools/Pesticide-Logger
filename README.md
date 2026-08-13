@@ -1,4 +1,4 @@
-# Pesticide Logger v2.7.9
+# Pesticide Logger v2.8.0
 
 **Offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite. Licensed software with
@@ -69,8 +69,9 @@ the state agency. Always follow the product label.
 
 ## $0 overhead
 
-- **No record backend.** Farm records live only in the browser’s local storage
-  and IndexedDB mirror.
+- **No record backend.** Farm records live in IndexedDB on this device.
+  localStorage is a boot cache so a return visit can paint without waiting.
+  Photos stay in a separate IndexedDB store and are not part of JSON backups.
 - **One optional lookup function.** `api/epa.js` proxies official EPA PPLS
   queries (no CORS on EPA). It stores no farm data. That route only exists on
   a host that runs the serverless function (the Vercel deployment). GitHub
@@ -107,6 +108,9 @@ node --check license.js
 node --check label-ocr.js
 node --check backup-merge.js
 node --check spray-window.js
+node --check store.js
+node --check compliance.js
+node --check camera-scan.js
 node --check sw.js
 node tests/compliance.test.js
 node tests/license.test.js
@@ -114,6 +118,9 @@ node tests/label-ocr.test.js
 node tests/backup-merge.test.js
 node tests/epa-proxy.test.js
 node tests/spray-window.test.js
+node tests/store.test.js
+node tests/compliance-engine.test.js
+node tests/camera-scan.test.js
 ```
 
 ## Intentional non-goals

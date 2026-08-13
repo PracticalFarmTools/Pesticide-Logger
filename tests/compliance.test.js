@@ -239,23 +239,31 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.7.9 + deadline/license wiring', () => {
+check('source files advertise v2.8.0 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.7.9'));
-  assert.ok(sw.includes('pesticide-logger-v2.7.9'));
-  assert.ok(html.includes('v2.7.9'));
+  assert.ok(app.includes('v2.8.0'));
+  assert.ok(sw.includes('pesticide-logger-v2.8.0'));
+  assert.ok(html.includes('v2.8.0'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));
   assert.ok(html.includes('i18n.js'));
   assert.ok(html.includes('backup-merge.js'));
   assert.ok(html.includes('spray-window.js'));
+  assert.ok(html.includes('store.js'));
+  assert.ok(html.includes('compliance.js'));
+  assert.ok(html.includes('camera-scan.js'));
   assert.ok(sw.includes('./deadline.js'));
   assert.ok(sw.includes('./license.js'));
   assert.ok(sw.includes('./i18n.js'));
   assert.ok(sw.includes('./backup-merge.js'));
   assert.ok(sw.includes('./spray-window.js'));
+  assert.ok(sw.includes('./store.js'));
+  assert.ok(sw.includes('./compliance.js'));
+  assert.ok(sw.includes('./camera-scan.js'));
+  assert.ok(app.includes('FarmStore.pickDurableFarm'), 'IndexedDB is the durable farm');
+  assert.ok(app.includes('writeFarmToIdb'), 'saves write IDB first');
   assert.ok(html.includes('auto-backup-connect'), 'auto backup UI present');
   assert.ok(app.includes('function connectAutoBackup'), 'auto backup wired');
   assert.ok(html.includes('Terms of use, license'), 'in-app legal terms present');
@@ -319,6 +327,7 @@ check('cab chrome: Home, Spray Log, Products, Fields, and More', () => {
   assert.ok(!more.includes('data-tab="products"'), 'Products is a primary tab, not More');
   assert.strictEqual(i18n.ES['More'], 'Más');
   assert.strictEqual(i18n.ES['Home'], 'Inicio');
+  assert.ok(!html.includes('📍') && !html.includes('🛰'), 'map toolbar does not use emoji');
 });
 
 check('empty first-run home hides zeros until a field or log exists', () => {
@@ -335,12 +344,26 @@ check('empty first-run home hides zeros until a field or log exists', () => {
   assert.ok(html.includes('id="dash-first-run" hidden'), 'first-run starts hidden until render');
   assert.ok(html.includes('Get set up to log'), 'setup title');
   assert.ok(html.includes('id="dash-setup-steps"'), 'setup steps host');
-  assert.ok(app.includes('function isEmptyHome'));
-  assert.ok(app.includes('!data.fields.length && !data.applications.length'));
-  assert.ok(app.includes('function renderFirstRun'));
+  const FarmStore = require(path.join(root, 'store.js'));
+  const empty = FarmStore.defaultData();
+  assert.strictEqual(FarmStore.isEmptyHome(empty), true);
+  empty.products = [{ id: 'p' }];
+  assert.strictEqual(FarmStore.isEmptyHome(empty), true, 'products alone are not a farm yet');
+  empty.fields = [{ id: 'f' }];
+  assert.strictEqual(FarmStore.isEmptyHome(empty), false);
+  assert.ok(app.includes('FarmStore.isEmptyHome'));
+  assert.ok(app.includes('FarmStore.firstRunSteps'));
   assert.ok(app.includes("$('#dash-working').hidden = empty"));
   assert.ok(app.includes("$('#dash-first-run').hidden = !empty"));
-  assert.ok(app.includes("goto: 'settings'") && app.includes("goto: 'fields'") && app.includes("goto: 'products'"));
+  const steps = FarmStore.firstRunSteps({
+    settings: { farmName: 'Oak', state: 'IA' },
+    fields: [],
+    products: [],
+    applications: []
+  });
+  assert.strictEqual(steps[0].done, true);
+  assert.strictEqual(steps[1].goto, 'fields');
+  assert.strictEqual(steps[2].goto, 'products');
   assert.strictEqual(i18n.ES['Get set up to log'], 'Prepárese para registrar');
   assert.strictEqual(i18n.ES['Done'], 'Listo');
 });
@@ -440,24 +463,17 @@ check('code-pile hardening: trial merge, lock refresh, hidden Buy, interval fall
   assert.ok(html.includes('id="license-buy"') && html.includes('id="lock-buy"'), 'Buy button ids stay in the DOM');
   assert.ok(app.includes('This build cannot check license keys yet.'), 'unconfigured-key copy does not claim the trial still works on the lock screen');
   assert.ok(app.includes('function effectiveIntervalValue'), 'dashboard REI/PHI fall back to mix max');
-  assert.ok(app.includes("effectiveIntervalValue(app, 'reiHours')"));
-  assert.ok(app.includes("effectiveIntervalValue(app, 'phiDays')"));
+  assert.ok(app.includes('Compliance.effectiveIntervalValue'));
+  const compliance = fs.readFileSync(path.join(root, 'compliance.js'), 'utf8');
+  assert.ok(compliance.includes("effectiveIntervalValue(app, 'reiHours')") || compliance.includes('function effectiveIntervalValue'));
+  assert.strictEqual(require(path.join(root, 'compliance.js')).effectiveIntervalValue(
+    { products: [{ reiHours: 4 }, { reiHours: 24 }] }, 'reiHours'
+  ), 24);
   assert.ok(app.includes('/^\\d{1,6}-\\d{1,6}(?:-\\d{1,6})?$/'), 'library verify skips invalid EPA numbers');
 });
 
 check('effectiveIntervalValue falls back to the mix max when the record top-level is empty', () => {
-  // Mirrors app.js effectiveIntervalValue — keep in sync.
-  function effectiveIntervalValue(app, key) {
-    const top = app && app[key];
-    if (top != null && top !== '' && Number.isFinite(Number(top)) && Number(top) >= 0) {
-      return Number(top);
-    }
-    const nums = ((app && app.products) || [])
-      .map(p => p[key])
-      .filter(v => v != null && v !== '' && Number.isFinite(Number(v)) && Number(v) >= 0)
-      .map(Number);
-    return nums.length ? Math.max(...nums) : null;
-  }
+  const effectiveIntervalValue = require(path.join(root, 'compliance.js')).effectiveIntervalValue;
   assert.strictEqual(effectiveIntervalValue({ reiHours: 12 }, 'reiHours'), 12);
   assert.strictEqual(effectiveIntervalValue({ products: [{ reiHours: 4 }, { reiHours: 24 }] }, 'reiHours'), 24);
   assert.strictEqual(effectiveIntervalValue({ reiHours: '', products: [{ reiHours: 8 }] }, 'reiHours'), 8);
@@ -467,6 +483,8 @@ check('effectiveIntervalValue falls back to the mix max when the record top-leve
 
 check('audit hardening: EPA proxy + interval/deadline correctness', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const compliance = fs.readFileSync(path.join(root, 'compliance.js'), 'utf8');
+  const camera = fs.readFileSync(path.join(root, 'camera-scan.js'), 'utf8');
   const epa = fs.readFileSync(path.join(root, 'api/epa.js'), 'utf8');
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   const deadline = fs.readFileSync(path.join(root, 'deadline.js'), 'utf8');
@@ -474,9 +492,9 @@ check('audit hardening: EPA proxy + interval/deadline correctness', () => {
   assert.ok(epa.includes('upstream.status === 404'), 'EPA 404 returns empty results, not 502');
   assert.ok(app.includes('GAP_MS') || app.includes('2100'), 'library verify throttles under rate limit');
   assert.ok(app.includes('intervalHoursPresent'), 'REI/PHI require finite non-negative values');
-  assert.ok(app.includes("|| '23:59'"), 'REI countdown defaults to end-of-day, not noon');
+  assert.ok(compliance.includes("'23:59'"), 'REI countdown defaults to end-of-day, not noon');
   assert.ok(deadline.includes('normalizeClockTime'), 'HH:MM:SS times normalize before parsing');
-  assert.ok(app.includes('data:image\\/jpeg'), 'photo allowlist is JPEG-only');
+  assert.ok(camera.includes('data:image\\/jpeg'), 'photo allowlist is JPEG-only');
   assert.ok(app.includes('epaSearchSeq'), 'EPA search results ignore stale responses');
   assert.ok(!css.includes('.log-shape-controls'), 'unused .log-shape-controls CSS removed');
 });
@@ -521,9 +539,9 @@ check('paid-only: whole app is gated by license/trial, no per-feature Pro gate',
 });
 
 check('schema default version is 5', () => {
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
-  assert.ok(/version:\s*5/.test(app));
-  assert.ok(app.includes('d.version = 5'));
+  const store = fs.readFileSync(path.join(root, 'store.js'), 'utf8');
+  assert.ok(/version:\s*5/.test(store));
+  assert.ok(store.includes('d.version = 5'));
 });
 
 if (failed) {

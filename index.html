@@ -27,7 +27,7 @@
       </svg>
       <div>
         <h1>Pesticide Logger</h1>
-        <span class="header-sub">Practical Farm Tools · v2.8.3</span>
+        <span class="header-sub">Practical Farm Tools · v2.9.0</span>
       </div>
     </div>
     <div class="header-right">
@@ -82,6 +82,13 @@
 </section>
 
 <div id="app-shell" hidden>
+<div id="inspector-bar" class="inspector-bar" hidden>
+  <div>
+    <strong>Inspector view</strong>
+    <p>Editing is hidden so you can hand this tablet over. The live spray log is not locked — Exit anytime.</p>
+  </div>
+  <button type="button" class="btn btn-secondary" id="inspector-exit">Exit inspector view</button>
+</div>
 <div class="tab-nav-wrap">
 <nav class="tab-nav" role="tablist" aria-label="Main navigation">
   <button class="tab-btn tab-btn-home active" data-tab="dashboard" role="tab" aria-selected="true" aria-label="Home">
@@ -227,6 +234,9 @@
         </h3>
         <p class="card-hint">Based on entered label REI values. Missing REI means status is unknown — follow the label.</p>
         <div id="rei-list" class="interval-list"></div>
+        <p class="forecast-show-all-wrap">
+          <button type="button" class="text-btn" id="dash-rei-board">Print today’s REI board</button>
+        </p>
       </div>
       <div class="card">
         <h3 class="card-title">
@@ -470,7 +480,7 @@
           <legend>Who</legend>
           <div class="form-row form-row-3">
             <label data-log-field="applicator_name">Applicator name <span class="req-star">*</span> <span id="req-applicator_name" class="state-req-tag" hidden>state</span>
-              <input type="text" id="app-applicator" required>
+              <input type="text" id="app-applicator" required list="crew-applicator-list">
             </label>
             <label data-log-field="applicator_license">Certification / license # <span id="req-applicator_license" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-cert">
@@ -860,8 +870,10 @@
         <p class="report-action-group-label">For inspectors</p>
         <div class="form-actions report-actions">
           <button class="btn btn-primary btn-lg" id="report-print">Print / PDF inspection report</button>
+          <button class="btn btn-secondary btn-lg" id="report-inspect-html">Save inspector packet (.html)</button>
           <button class="btn btn-secondary btn-lg" id="report-state-pack">Download state compliance pack</button>
         </div>
+        <p class="card-hint">The HTML packet opens on any phone or laptop — no app install. It is a snapshot. You can keep editing the live log afterward. Signing shows the file was not changed after you saved it.</p>
       </div>
       <div class="report-action-group">
         <p class="report-action-group-label">For your records</p>
@@ -881,8 +893,8 @@
     </div>
 
     <div class="card">
-      <h3 class="card-title">Backup &amp; restore</h3>
-      <p class="card-hint">Your records live only in this browser. Download a backup regularly and keep it with your farm files. A full backup is one JSON file with the farm file and attached photos. To move phone to PC: download (or share) on one device, restore on the other, and choose Merge — newest edits win, audit history is kept, photos fill in if the other device does not already have them. Older backups from before photos were packed still restore records; you will be told if photos are missing.</p>
+      <h3 class="card-title">Backup, gather &amp; restore</h3>
+      <p class="card-hint">Your records live only in this browser. If more than one phone logs sprays, send a backup from each cab phone and tap Bring in logs on the shop tablet. Newest edits win; the other version stays in that spray’s History so you can still change it. A full backup is one JSON file with the farm file and attached photos. Older backups from before photos were packed still restore records; you will be told if photos are missing.</p>
       <div class="auto-backup-box">
         <p class="card-hint" id="auto-backup-status"></p>
         <div class="form-actions">
@@ -893,9 +905,9 @@
       </div>
       <div class="form-actions">
         <button class="btn btn-primary" id="backup-download">Download full backup (.json)</button>
-        <button class="btn btn-secondary" id="backup-share" hidden>Share to another device</button>
+        <button class="btn btn-secondary" id="backup-share" hidden>Send logs to another device</button>
         <label class="btn btn-secondary file-btn">
-          Restore / merge from backup
+          Bring in logs from another device
           <input type="file" id="backup-restore" accept=".json,application/json" hidden>
         </label>
       </div>
@@ -977,10 +989,51 @@
           </label>
         </div>
         <p class="card-hint">Menus, buttons, and messages. The printed REI posting sheet stays English and Spanish (DO NOT ENTER / NO ENTRE).</p>
+        <div class="form-row form-row-2">
+          <label>This device’s nickname
+            <input type="text" id="set-device-label" placeholder="e.g. Cab iPhone" autocomplete="off">
+          </label>
+          <label>Who usually logs from here
+            <input type="text" id="set-device-user" placeholder="Optional — defaults to applicator name" list="crew-applicator-list" autocomplete="off">
+          </label>
+        </div>
+        <p class="card-hint">Stamped on sprays you save from this device. You can still edit those sprays anytime.</p>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">Save settings</button>
         </div>
       </form>
+    </div>
+
+    <div class="card" id="crew-card">
+      <h3 class="card-title">Crew</h3>
+      <p class="card-hint">Optional. If more than one person sprays, add them here so the log can suggest names. You can still type any name on a spray.</p>
+      <div id="crew-list"></div>
+      <div class="form-row form-row-2">
+        <label>Name
+          <input type="text" id="crew-name" placeholder="e.g. Jake" autocomplete="off">
+        </label>
+        <label>Certification / license #
+          <input type="text" id="crew-cert" placeholder="Optional" autocomplete="off">
+        </label>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" id="crew-add">Add crew member</button>
+      </div>
+    </div>
+
+    <div class="card" id="inspector-view-card">
+      <h3 class="card-title">Inspector view</h3>
+      <p class="card-hint">Hides editing on this device so an inspector can look at Reports. Optional PIN. Forgot the PIN? Type your farm name to exit. This does not freeze or lock any spray records.</p>
+      <div class="form-row form-row-2">
+        <label>Optional shop PIN
+          <input type="password" id="set-inspector-pin" inputmode="numeric" maxlength="8" placeholder="Leave blank to keep current" autocomplete="off">
+        </label>
+      </div>
+      <p class="card-hint" id="inspector-pin-hint" hidden>A shop PIN is set on this device. Leave the box blank to keep it, or type a new one to change it.</p>
+      <div class="form-actions">
+        <button type="button" class="btn btn-primary" id="inspector-enter">Turn on inspector view</button>
+        <button type="button" class="btn btn-secondary" id="inspector-clear-pin">Remove PIN</button>
+      </div>
     </div>
 
     <div class="card" id="state-info-card" hidden>
@@ -1023,7 +1076,7 @@
 
     <div class="card about-card">
       <h3 class="card-title">About</h3>
-      <p>Pesticide Logger v2.8.3 — part of the <strong>Practical Farm Tools</strong> suite. A licensed, offline-first tool built for farms of every size; your farm records stay on this device.</p>
+      <p>Pesticide Logger v2.9.0 — part of the <strong>Practical Farm Tools</strong> suite. A licensed, offline-first tool built for farms of every size; your farm records stay on this device.</p>
       <p class="card-hint">This tool provides 50-state application <em>recordkeeping field coverage</em> with audit history, lot tracking, and in-cab workflows. It is not legal advice, does not replace WPS employer duties, and does not file California PUR, New York PRL, or other electronic reports for you. Always follow the product label and confirm requirements with your state pesticide agency.</p>
       <details class="legal-details">
         <summary>Terms of use, license &amp; privacy</summary>
@@ -1206,6 +1259,42 @@
 </dialog>
 
 <input type="file" id="photo-attach-input" class="visually-hidden-file" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
+<datalist id="crew-applicator-list"></datalist>
+
+<dialog id="gather-dialog" class="app-dialog gather-dialog-box">
+  <h3 id="gather-dialog-title">Logs brought in</h3>
+  <p class="card-hint" id="gather-summary"></p>
+  <div id="gather-conflicts" hidden>
+    <h4>Saved on two devices</h4>
+    <p class="card-hint">We kept the newer save. The other version is in that spray’s History. Open the record if you want to change anything — nothing is frozen.</p>
+    <div id="gather-conflict-list"></div>
+  </div>
+  <div id="gather-dup-fields" hidden>
+    <h4>Same field name twice</h4>
+    <p class="card-hint">Combine only if they really are the same place. Keep both if they are different (rented ground is often “North” twice).</p>
+    <div id="gather-dup-fields-list"></div>
+  </div>
+  <div id="gather-dup-products" hidden>
+    <h4>Same product twice</h4>
+    <p class="card-hint">Combine only if they are the same jug in the library. Keep both if they are different.</p>
+    <div id="gather-dup-products-list"></div>
+  </div>
+  <div class="form-actions">
+    <button type="button" class="btn btn-primary" id="gather-done">Done</button>
+  </div>
+</dialog>
+
+<dialog id="inspector-exit-dialog" class="app-dialog">
+  <h3>Exit inspector view</h3>
+  <p class="card-hint" id="inspector-exit-hint">Enter the shop PIN, or your farm name if you forgot it.</p>
+  <label>PIN or farm name
+    <input type="text" id="inspector-exit-input" autocomplete="off">
+  </label>
+  <div class="form-actions">
+    <button type="button" class="btn btn-primary" id="inspector-exit-confirm">Exit</button>
+    <button type="button" class="btn btn-secondary" data-close-dialog id="inspector-exit-cancel">Stay</button>
+  </div>
+</dialog>
 
 <script src="units.js"></script>
 <script src="state_pesticide_laws.js"></script>
@@ -1217,6 +1306,7 @@
 <script src="compliance.js"></script>
 <script src="camera-scan.js"></script>
 <script src="farm-scale.js"></script>
+<script src="farm-file.js"></script>
 <script src="license.js"></script>
 <script src="label-ocr.js"></script>
 <script src="i18n.js"></script>

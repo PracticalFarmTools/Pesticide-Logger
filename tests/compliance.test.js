@@ -239,16 +239,17 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.8.3 + deadline/license wiring', () => {
+check('source files advertise v2.9.0 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.8.3'));
-  assert.ok(sw.includes('pesticide-logger-v2.8.3'));
-  assert.ok(html.includes('v2.8.3'));
+  assert.ok(app.includes('v2.9.0'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.0'));
+  assert.ok(html.includes('v2.9.0'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));
   assert.ok(html.includes('farm-scale.js'));
+  assert.ok(html.includes('farm-file.js'));
   assert.ok(html.includes('i18n.js'));
   assert.ok(html.includes('units.js'));
   assert.ok(html.includes('backup-merge.js'));
@@ -260,6 +261,7 @@ check('source files advertise v2.8.3 + deadline/license wiring', () => {
   assert.ok(sw.includes('./deadline.js'));
   assert.ok(sw.includes('./license.js'));
   assert.ok(sw.includes('./farm-scale.js'));
+  assert.ok(sw.includes('./farm-file.js'));
   assert.ok(sw.includes('./i18n.js'));
   assert.ok(sw.includes('./units.js'));
   assert.ok(sw.includes('./backup-merge.js'));
@@ -574,9 +576,30 @@ check('paid-only: whole app is gated by license/trial, no per-feature Pro gate',
     'function downloadBackup', 'function restoreBackup', 'function deleteApp',
     'function restoreApp', 'function runCalc', 'function fetchWeather',
     'function scanJugIntoMix', 'function fetchSprayForecast',
-    'function printCertifierPacket', 'function downloadStatePack'].forEach(fn => {
+    'function printCertifierPacket', 'function downloadStatePack',
+    'function downloadInspectPacket', 'function printReiBoard'].forEach(fn => {
     assert.ok(app.indexOf(fn) > 0, fn + ' exists');
   });
+});
+
+check('gather, inspector packet, crew, and kiosk stay optional and editable', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const farmFile = fs.readFileSync(path.join(root, 'farm-file.js'), 'utf8');
+  assert.ok(html.includes('id="gather-dialog"'), 'gather receipt dialog');
+  assert.ok(html.includes('id="inspector-bar"'), 'inspector view bar');
+  assert.ok(html.includes('id="report-inspect-html"'), 'inspector HTML export');
+  assert.ok(html.includes('id="dash-rei-board"'), 'REI board on Home');
+  assert.ok(html.includes('id="crew-card"'), 'optional crew');
+  assert.ok(html.includes('list="crew-applicator-list"'), 'applicator stays a text field with suggestions');
+  assert.ok(html.includes('You can still type any name'), 'crew is not a locked picker');
+  assert.ok(html.includes('does not freeze or lock any spray records'), 'kiosk copy');
+  assert.ok(html.includes('snapshot'), 'inspector packet is a snapshot');
+  assert.ok(app.includes('FarmFile.mergeInto'), 'gather uses farm-file merge');
+  assert.ok(app.includes('FarmFile.stampOnSave'), 'device stamp on save');
+  assert.ok(app.includes('Keep both'), 'join defaults to keep both');
+  assert.ok(farmFile.includes('the live log stays editable') || farmFile.includes('live log can still be edited') || farmFile.includes('still be edited'));
+  assert.ok(!app.includes('Object.freeze'), 'records are not frozen');
 });
 
 check('Celsius echo and tank-mix metric are display-only; records stay US', () => {

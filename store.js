@@ -28,11 +28,15 @@
         applicatorName: '', certNumber: '', certExpiry: '',
         applicatorClass: 'private',
         permitNumber: '', companyLicense: '', businessNameAddress: '',
-        strictCompliance: true
+        strictCompliance: true,
+        deviceLabel: '',
+        deviceUser: '',
+        inspectorPin: ''
       },
       products: [],
       fields: [],
       applications: [],
+      crew: [],
       meta: {}
     };
   }
@@ -70,6 +74,17 @@
     }, d.settings || {});
     if (d.settings.strictCompliance == null) d.settings.strictCompliance = true;
     if (d.settings.language == null) d.settings.language = '';
+    if (d.settings.deviceLabel == null) d.settings.deviceLabel = '';
+    if (d.settings.deviceUser == null) d.settings.deviceUser = '';
+    if (d.settings.inspectorPin == null) d.settings.inspectorPin = '';
+    d.crew = Array.isArray(d.crew) ? d.crew : [];
+    d.crew.forEach((c) => {
+      if (!c || typeof c !== 'object') return;
+      c.id = sanitizeId(c.id) || ('crew-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8));
+      if (c.name == null) c.name = '';
+      if (c.certNumber == null) c.certNumber = '';
+    });
+    d.crew = d.crew.filter((c) => c && c.id && String(c.name || '').trim());
 
     d.applications.forEach(a => {
       if (!a.products) {
@@ -114,6 +129,8 @@
       if (a.sensitiveSites == null) a.sensitiveSites = '';
       if (a.inversionObserved == null) a.inversionObserved = false;
       if (a.recordDueAt == null) a.recordDueAt = null;
+      if (a.loggedBy == null) a.loggedBy = '';
+      if (a.deviceLabel == null) a.deviceLabel = '';
       (a.products || []).forEach(p => {
         if (p.lotNumber == null) p.lotNumber = '';
         if (p.reiOverride == null) p.reiOverride = null;
@@ -176,6 +193,7 @@
       products: [],
       fields: [],
       applications: [],
+      crew: Array.isArray(src.crew) ? src.crew : [],
       _boot: true
     };
   }

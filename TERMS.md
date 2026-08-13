@@ -50,7 +50,9 @@ It is a checklist result, not a certification. State datasets marked
   required to keep logging new applications.
 - A license key covers **one farm operation** across its own devices. Annual
   keys expire; perpetual keys do not. Keys are non-transferable but
-  survive offline and do not phone home.
+  survive offline and do not phone home. Several phones can log; gather
+  those files on one shop device when you want one book of record. An
+  inspector packet is a snapshot you export — it does not freeze the live log.
 - Your saved records are not deleted or modified when a trial ends or a key
   lapses — they remain in the browser's storage on your device. You can
   still review prior years and download a backup or CSV. Activating a

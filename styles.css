@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.8.3 — Practical Farm Tools theme */
+/* Pesticide Logger v2.9.0 — Practical Farm Tools theme */
 
 :root {
   --primary-green: #1b4322;
@@ -1344,5 +1344,52 @@ label.state-required-field {
   .posting-sheet .posting-sub { font-size: 22px; margin-bottom: 24px; }
   .posting-sheet table { margin: 0 auto 20px; max-width: 640px; }
   .posting-sheet th, .posting-sheet td { font-size: 16px !important; padding: 10px 12px !important; text-align: left; }
-  .posting-sheet .posting-when { font-size: 22px !important; font-weight: 700; }
+.app-dialog.gather-dialog-box { max-width: 640px; max-height: 90vh; overflow: auto; }
+.app-dialog h4 { margin: 1rem 0 0.35rem; color: var(--primary-green-dark); font-size: 0.95rem; }
+.gather-item, .crew-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.9rem;
+}
+.crew-row .crew-meta { color: var(--text-muted); font-size: 0.8rem; }
+.gather-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+.inspector-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  margin: 0.75rem 1rem 0;
+  box-shadow: var(--shadow-sm);
+}
+.inspector-bar[hidden] { display: none; }
+.inspector-bar p { margin: 0.2rem 0 0; color: var(--text-muted); font-size: 0.85rem; }
+
+body.inspector-view .tab-nav-wrap,
+body.inspector-view #data-clear,
+body.inspector-view #auto-backup-connect,
+body.inspector-view #auto-backup-resume,
+body.inspector-view #auto-backup-disconnect,
+body.inspector-view #tab-reports label.file-btn {
+  display: none !important;
+}
+body.inspector-view #inspector-bar { display: flex !important; }
+body.inspector-view .tab-panel { display: none !important; }
+body.inspector-view #tab-reports { display: block !important; }
+
+.board-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #ccc;
 }

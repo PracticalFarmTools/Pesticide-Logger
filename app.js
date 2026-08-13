@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.8.3 — Practical Farm Tools
+/* Pesticide Logger v2.9.0 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -570,6 +570,9 @@
   }
 
   function showTab(name) {
+    if (document.body.classList.contains('inspector-view') && name !== 'reports') {
+      name = 'reports';
+    }
     closeMoreMenu();
     $$('.tab-btn[data-tab]').forEach(b => {
       const on = b.dataset.tab === name;
@@ -716,6 +719,11 @@
     $('#set-business').value = s.businessNameAddress || '';
     $('#set-strict-compliance').checked = s.strictCompliance !== false;
     if ($('#set-language')) $('#set-language').value = s.language || '';
+    if ($('#set-device-label')) $('#set-device-label').value = s.deviceLabel || '';
+    if ($('#set-device-user')) $('#set-device-user').value = s.deviceUser || '';
+    if ($('#inspector-pin-hint')) {
+      $('#inspector-pin-hint').hidden = !s.inspectorPin;
+    }
 
     $('#settings-form').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -732,10 +740,17 @@
         companyLicense: $('#set-company-license').value.trim(),
         businessNameAddress: $('#set-business').value.trim(),
         strictCompliance: $('#set-strict-compliance').checked,
-        language: ($('#set-language') && $('#set-language').value) || ''
+        language: ($('#set-language') && $('#set-language').value) || '',
+        deviceLabel: ($('#set-device-label') && $('#set-device-label').value.trim()) || '',
+        deviceUser: ($('#set-device-user') && $('#set-device-user').value.trim()) || '',
+        inspectorPin: ($('#set-inspector-pin') && $('#set-inspector-pin').value.trim())
+          ? $('#set-inspector-pin').value.trim()
+          : (data.settings.inspectorPin || '')
       };
+      if ($('#set-inspector-pin')) $('#set-inspector-pin').value = '';
       save();
       applySettings();
+      if ($('#inspector-pin-hint')) $('#inspector-pin-hint').hidden = !data.settings.inspectorPin;
       if ((data.settings.language || '') !== langBefore) {
         // Reload so the translator applies (or reverts) to a clean DOM.
         location.reload();
@@ -777,6 +792,7 @@
     if (!$('#app-company-license').value) $('#app-company-license').value = s.companyLicense || '';
     if (!$('#app-owner').value) $('#app-owner').value = s.farmName || '';
     if (!$('#app-customer').value) $('#app-customer').value = s.farmName || '';
+    fillCrewDatalist();
     renderStateInfo();
     applyStateRequiredTags();
     renderDashboard();
@@ -2442,9 +2458,15 @@
       draft: !!allowIncomplete,
       deletedAt: null,
       history: [],
+      loggedBy: '',
+      deviceLabel: '',
       updatedAt: new Date().toISOString(),
       createdAt: new Date().toISOString()
     };
+    if (typeof FarmFile !== 'undefined' && FarmFile.stampOnSave) {
+      FarmFile.stampOnSave(app, s);
+    }
+    return app;
   }
 
   function computeRecordDueAt(app) {
@@ -2780,7 +2802,7 @@
         <td>${esc(a.fieldName)}<br><span class="card-hint">${esc(a.crop)}</span></td>
         <td>${fmtNum(a.area)} ${a.areaUnit === 'sqft' ? 'sq ft' : a.areaUnit === '1000sqft' ? '× 1,000 sq ft' : 'ac'}</td>
         <td>${(a.products || []).map(p => fmtAmount(p.total, p.totalUnit)).join('<br>')}</td>
-        <td>${esc(a.applicatorName)}${a.certNumber ? `<br><span class="card-hint">#${esc(a.certNumber)}</span>` : ''}</td>
+        <td>${esc(a.applicatorName)}${a.certNumber ? `<br><span class="card-hint">#${esc(a.certNumber)}</span>` : ''}${a.deviceLabel || a.loggedBy ? `<br><span class="card-hint">${esc([a.loggedBy && a.loggedBy !== a.applicatorName ? a.loggedBy : '', a.deviceLabel].filter(Boolean).join(' · '))}</span>` : ''}</td>
         <td class="row-actions">
           ${a.deletedAt
             ? `<button class="icon-btn" data-restore-app="${a.id}">Restore</button>`
@@ -3316,7 +3338,7 @@
       : '';
     $('#print-area').innerHTML = `
       <h1>Tank Mix Worksheet</h1>
-      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.8.3 (Practical Farm Tools)</p>
+      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.9.0 (Practical Farm Tools)</p>
       <table>
         <tr><th>Area treated</th><td>${fmtNum(c.area)} ${c.areaUnit === 'sqft' ? 'sq ft' : c.areaUnit === '1000sqft' ? '× 1,000 sq ft' : 'acres'} (${fmtNum(c.acres, 3)} ac)</td>
             <th>Spray volume</th><td>${fmtNum(c.gpa)} ${c.gpaUnit === 'gal_acre' ? 'gal/acre' : 'gal/1,000 sq ft'}</td></tr>
@@ -3382,6 +3404,7 @@
     $('#report-print').addEventListener('click', printReport);
     if ($('#report-state-pack')) $('#report-state-pack').addEventListener('click', downloadStatePack);
     if ($('#report-certifier')) $('#report-certifier').addEventListener('click', printCertifierPacket);
+    if ($('#report-inspect-html')) $('#report-inspect-html').addEventListener('click', downloadInspectPacket);
     $('#backup-download').addEventListener('click', downloadBackup);
     $('#backup-restore').addEventListener('change', restoreBackup);
     $('#data-clear').addEventListener('click', clearAllData);
@@ -3519,7 +3542,7 @@
       </table>
       <div class="sig-line"><span>Certified applicator signature / date</span><span>Reviewed by / date</span></div>
       <p class="print-footer">
-        Generated by Pesticide Logger v2.8.3 — Practical Farm Tools. Retain records per your state
+        Generated by Pesticide Logger v2.9.0 — Practical Farm Tools. Retain records per your state
         (${retain} year(s) shown above). This report is a record-keeping aid, not legal advice,
         and does not replace WPS duties or electronic reporting programs.
       </p>`;
@@ -3666,7 +3689,7 @@
       format: 'pesticide-logger-state-pack',
       version: 5,
       generatedAt: new Date().toISOString(),
-      app: 'Pesticide Logger v2.8.3 — Practical Farm Tools',
+      app: 'Pesticide Logger v2.9.0 — Practical Farm Tools',
       disclaimer: 'Completion means required fields are filled for this context — not a legal determination. Does not replace WPS duties or e-filing programs.',
       farm: {
         name: s.farmName || '',
@@ -3794,50 +3817,63 @@
 
   // Merge by id: keep newest updatedAt, union audit history, fill empty settings.
   function mergeData(incoming) {
-    let added = 0;
-    let updated = 0;
-    ['products', 'fields', 'applications'].forEach(key => {
-      const byId = new Map(data[key].map(x => [x.id, x]));
-      (incoming[key] || []).forEach(x => {
-        if (!x || !x.id) return;
-        const local = byId.get(x.id);
-        if (!local) {
-          data[key].push(x);
-          byId.set(x.id, x);
-          added++;
-          return;
-        }
-        if (key === 'applications') {
-          const winner = newerRecord(local, x);
-          const loser = winner === local ? x : local;
-          winner.history = mergeHistory(local.history, x.history);
-          // Keep a snapshot of the losing side if it differs.
-          if (loser && loser.updatedAt && loser.updatedAt !== winner.updatedAt) {
-            const snap = (typeof FarmScale !== 'undefined' && FarmScale.slimHistorySnapshot)
-              ? FarmScale.slimHistorySnapshot(loser)
-              : (() => { const s = JSON.parse(JSON.stringify(loser)); delete s.history; return s; })();
-            winner.history = mergeHistory(winner.history, [{ at: loser.updatedAt, snapshot: snap }]);
-          }
-          const idx = data[key].findIndex(r => r.id === x.id);
-          if (idx >= 0) data[key][idx] = winner;
-          byId.set(x.id, winner);
-          if (winner !== local) updated++;
-        } else {
-          const winner = newerRecord(local, x);
-          const idx = data[key].findIndex(r => r.id === x.id);
-          if (idx >= 0) data[key][idx] = winner;
-          byId.set(x.id, winner);
-          if (winner !== local) updated++;
-        }
-      });
-    });
-    Object.keys(incoming.settings || {}).forEach(k => {
-      if (!data.settings[k] && incoming.settings[k]) data.settings[k] = incoming.settings[k];
-    });
-    if (typeof BackupMerge !== 'undefined' && BackupMerge.mergeMeta) {
-      data.meta = BackupMerge.mergeMeta(data.meta, incoming.meta);
+    if (typeof FarmFile !== 'undefined' && FarmFile.mergeInto) {
+      return FarmFile.mergeInto(data, incoming);
     }
-    return { added, updated };
+    return { added: { applications: 0 }, updated: { applications: 0 }, conflicts: [] };
+  }
+
+  function refreshAfterGather() {
+    renderProductOptions();
+    renderFieldOptions();
+    renderProducts();
+    renderFields();
+    renderAppList();
+    renderDashboard();
+    renderCrew();
+    fillCrewDatalist();
+    applySettings();
+    updateReportCount();
+  }
+
+  function showGatherReceipt(receipt) {
+    const dlg = $('#gather-dialog');
+    if (!dlg) {
+      toast(typeof FarmFile !== 'undefined' && FarmFile.receiptSummary
+        ? FarmFile.receiptSummary(receipt)
+        : 'Logs brought in');
+      return;
+    }
+    const summary = (typeof FarmFile !== 'undefined' && FarmFile.receiptSummary)
+      ? FarmFile.receiptSummary(receipt)
+      : 'Logs brought in. You can still edit any spray.';
+    if ($('#gather-summary')) $('#gather-summary').textContent = summary;
+    const conflicts = (receipt && receipt.conflicts) || [];
+    const cBox = $('#gather-conflicts');
+    const cList = $('#gather-conflict-list');
+    if (cBox && cList) {
+      cBox.hidden = !conflicts.length;
+      cList.innerHTML = conflicts.map((c) =>
+        `<div class="gather-item"><div>${esc(c.date)} · ${esc(c.fieldName)}<br><span class="card-hint">Newer save kept. Open History on that spray to see the other version.</span></div></div>`
+      ).join('');
+    }
+    function renderDup(kind, groups, hostBox, hostList) {
+      if (!hostBox || !hostList) return;
+      hostBox.hidden = !groups.length;
+      hostList.innerHTML = groups.map((g, gi) => {
+        const opts = g.ids.map((id, i) =>
+          `<label class="checkbox-label"><input type="radio" name="gather-${kind}-${gi}" value="${esc(id)}"> Keep ${esc(g.names[i] || id)}</label>`
+        ).join('');
+        return `<div class="gather-item" data-kind="${esc(kind)}" data-ids="${esc(g.ids.join(','))}">
+          <div>${esc(g.label)}<div class="gather-actions">${opts}
+            <label class="checkbox-label"><input type="radio" name="gather-${kind}-${gi}" value="" checked> Keep both</label>
+            <button type="button" class="btn btn-secondary btn-sm" data-gather-join="${esc(kind)}">Combine</button>
+          </div></div></div>`;
+      }).join('');
+    }
+    renderDup('fields', (receipt && receipt.duplicateFields) || [], $('#gather-dup-fields'), $('#gather-dup-fields-list'));
+    renderDup('products', (receipt && receipt.duplicateProducts) || [], $('#gather-dup-products'), $('#gather-dup-products-list'));
+    if (!dlg.open) dlg.showModal();
   }
 
   function restoreBackup(e) {
@@ -3872,13 +3908,14 @@
           extra = '\n\nThis file is large because it includes photos.';
         }
         const merge = confirm(
-          `Backup contains ${counts}.${extra}\n\nOK = MERGE into this device (keeps both sets, no duplicates — use this to sync phone and PC)\nCancel = replace everything instead`);
+          `This file has ${counts}.${extra}\n\nOK = bring these logs into this device (keeps both sets — use this after a cab phone shares a file)\nCancel = replace everything on this device instead`);
         if (merge) {
-          const result = mergeData(migrate(Object.assign(defaultData(), farmIn)));
+          const receipt = mergeData(migrate(Object.assign(defaultData(), farmIn)));
           await idbPhotosPutAll(info.photos);
           save();
-          toast(`Merged: ${result.added} new, ${result.updated} updated (newest wins, history kept)`);
-          location.reload();
+          refreshAfterGather();
+          toast('Logs brought in — you can still edit any spray');
+          showGatherReceipt(receipt);
         } else {
           if (!confirm(`REPLACE everything on this device with the backup (${counts})? This cannot be undone.`)) return;
           const currentMeta = data.meta;
@@ -3899,6 +3936,259 @@
     };
     reader.readAsText(file);
     e.target.value = '';
+  }
+
+  function fillCrewDatalist() {
+    const list = $('#crew-applicator-list');
+    if (!list) return;
+    const names = [];
+    const seen = new Set();
+    const crew = (typeof FarmFile !== 'undefined' && FarmFile.crewList)
+      ? FarmFile.crewList(data)
+      : (data.crew || []);
+    crew.forEach((c) => {
+      const n = (c.name || '').trim();
+      if (!n || seen.has(n.toLowerCase())) return;
+      seen.add(n.toLowerCase());
+      names.push(n);
+    });
+    const def = (data.settings && data.settings.applicatorName || '').trim();
+    if (def && !seen.has(def.toLowerCase())) names.unshift(def);
+    list.innerHTML = names.map((n) => `<option value="${esc(n)}"></option>`).join('');
+  }
+
+  function renderCrew() {
+    const host = $('#crew-list');
+    if (!host) return;
+    const crew = (typeof FarmFile !== 'undefined' && FarmFile.crewList)
+      ? FarmFile.crewList(data)
+      : (data.crew || []);
+    if (!crew.length) {
+      host.innerHTML = '<p class="empty-note">No crew list yet — the log still accepts any name you type.</p>';
+      fillCrewDatalist();
+      return;
+    }
+    host.innerHTML = crew.map((c) => `
+      <div class="crew-row">
+        <div><strong>${esc(c.name)}</strong>${c.certNumber ? `<div class="crew-meta">#${esc(c.certNumber)}</div>` : ''}</div>
+        <button type="button" class="icon-btn danger" data-crew-del="${esc(c.id)}">Remove</button>
+      </div>`).join('');
+    host.querySelectorAll('[data-crew-del]').forEach((b) => {
+      b.addEventListener('click', () => {
+        data.crew = (data.crew || []).filter((c) => c.id !== b.dataset.crewDel);
+        save();
+        renderCrew();
+        toast('Removed from crew list — past sprays keep the name that was saved');
+      });
+    });
+    fillCrewDatalist();
+  }
+
+  function initCrew() {
+    renderCrew();
+    if ($('#crew-add')) {
+      $('#crew-add').addEventListener('click', () => {
+        const name = ($('#crew-name') && $('#crew-name').value.trim()) || '';
+        if (!name) { toast('Add a name — certification # is optional'); return; }
+        if (!Array.isArray(data.crew)) data.crew = [];
+        data.crew.push({
+          id: uid(),
+          name,
+          certNumber: ($('#crew-cert') && $('#crew-cert').value.trim()) || ''
+        });
+        if ($('#crew-name')) $('#crew-name').value = '';
+        if ($('#crew-cert')) $('#crew-cert').value = '';
+        save();
+        renderCrew();
+        toast('Crew member saved — you can still type other names on a spray');
+      });
+    }
+    if ($('#app-applicator') && !$('#app-applicator').dataset.crewBound) {
+      $('#app-applicator').dataset.crewBound = '1';
+      $('#app-applicator').addEventListener('change', () => {
+        const hit = (typeof FarmFile !== 'undefined' && FarmFile.matchCrew)
+          ? FarmFile.matchCrew(data, $('#app-applicator').value)
+          : null;
+        if (hit && hit.certNumber && $('#app-cert') && !$('#app-cert').value.trim()) {
+          $('#app-cert').value = hit.certNumber;
+        }
+      });
+    }
+  }
+
+  function setInspectorView(on) {
+    document.body.classList.toggle('inspector-view', !!on);
+    if ($('#inspector-bar')) $('#inspector-bar').hidden = !on;
+    try {
+      if (on) sessionStorage.setItem('pesticide-logger.inspector', '1');
+      else sessionStorage.removeItem('pesticide-logger.inspector');
+    } catch (e) { /* private mode */ }
+    if (on) showTab('reports');
+  }
+
+  function initInspectorView() {
+    try {
+      if (sessionStorage.getItem('pesticide-logger.inspector') === '1') setInspectorView(true);
+    } catch (e) { /* ignore */ }
+    if ($('#inspector-enter')) {
+      $('#inspector-enter').addEventListener('click', () => {
+        const typed = ($('#set-inspector-pin') && $('#set-inspector-pin').value.trim()) || '';
+        if (typed) {
+          data.settings.inspectorPin = typed;
+          $('#set-inspector-pin').value = '';
+          save();
+        }
+        setInspectorView(true);
+        toast('Inspector view on — Exit anytime. Sprays are not locked.');
+      });
+    }
+    if ($('#inspector-clear-pin')) {
+      $('#inspector-clear-pin').addEventListener('click', () => {
+        data.settings.inspectorPin = '';
+        save();
+        if ($('#inspector-pin-hint')) $('#inspector-pin-hint').hidden = true;
+        toast('Shop PIN removed');
+      });
+    }
+    function requestExit() {
+      const pin = data.settings && data.settings.inspectorPin;
+      if (!pin) { setInspectorView(false); toast('Back to editing'); return; }
+      const dlg = $('#inspector-exit-dialog');
+      if ($('#inspector-exit-input')) $('#inspector-exit-input').value = '';
+      if (dlg && dlg.showModal) dlg.showModal();
+    }
+    if ($('#inspector-exit')) $('#inspector-exit').addEventListener('click', requestExit);
+    if ($('#inspector-exit-confirm')) {
+      $('#inspector-exit-confirm').addEventListener('click', () => {
+        const typed = ($('#inspector-exit-input') && $('#inspector-exit-input').value) || '';
+        const pin = data.settings && data.settings.inspectorPin;
+        const pinOk = typeof FarmFile !== 'undefined' && FarmFile.inspectorPinOk
+          ? FarmFile.inspectorPinOk(pin, typed)
+          : (pin && pin === typed.trim());
+        const nameOk = typeof FarmFile !== 'undefined' && FarmFile.inspectorNameUnlockOk
+          ? FarmFile.inspectorNameUnlockOk(data.settings.farmName, typed)
+          : false;
+        if (pinOk || nameOk) {
+          if ($('#inspector-exit-dialog')) $('#inspector-exit-dialog').close();
+          setInspectorView(false);
+          toast('Back to editing');
+        } else {
+          toast('That did not match. Try the PIN, or type your farm name.');
+        }
+      });
+    }
+    if ($('#inspector-exit-cancel')) {
+      $('#inspector-exit-cancel').addEventListener('click', () => {
+        if ($('#inspector-exit-dialog')) $('#inspector-exit-dialog').close();
+      });
+    }
+  }
+
+  function initGatherUi() {
+    if ($('#gather-done')) {
+      $('#gather-done').addEventListener('click', () => {
+        if ($('#gather-dialog')) $('#gather-dialog').close();
+      });
+    }
+    const dlg = $('#gather-dialog');
+    if (dlg && !dlg.dataset.bound) {
+      dlg.dataset.bound = '1';
+      dlg.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-gather-join]');
+        if (!btn) return;
+        const wrap = btn.closest('.gather-item');
+        if (!wrap) return;
+        const kind = wrap.dataset.kind;
+        const ids = (wrap.dataset.ids || '').split(',').filter(Boolean);
+        const picked = wrap.querySelector('input[type="radio"]:checked');
+        const keepId = picked && picked.value;
+        if (!keepId) { toast('Keep both — nothing combined'); return; }
+        const drop = ids.filter((id) => id !== keepId);
+        if (kind === 'fields' && typeof FarmFile !== 'undefined') {
+          FarmFile.joinFields(data, keepId, drop);
+        } else if (kind === 'products' && typeof FarmFile !== 'undefined') {
+          FarmFile.joinProducts(data, keepId, drop);
+        }
+        save();
+        refreshAfterGather();
+        wrap.remove();
+        toast('Combined — sprays still editable');
+        if ($('#gather-dup-fields-list') && !$('#gather-dup-fields-list').children.length) {
+          $('#gather-dup-fields').hidden = true;
+        }
+        if ($('#gather-dup-products-list') && !$('#gather-dup-products-list').children.length) {
+          $('#gather-dup-products').hidden = true;
+        }
+      });
+    }
+  }
+
+  async function downloadInspectPacket() {
+    const apps = reportApps();
+    if (!apps.length) { toast('No records match the filter'); return; }
+    if (typeof FarmFile === 'undefined') { toast('Inspector packet is unavailable in this build'); return; }
+    try {
+      data.meta = data.meta || {};
+      await FarmFile.ensureFarmSignKeys(data.meta);
+      save();
+      const photos = await idbPhotosGetAll();
+      const payload = await FarmFile.buildInspectPayload({
+        farm: data,
+        records: apps,
+        photos: photos,
+        generatedAt: new Date().toISOString()
+      });
+      const signature = await FarmFile.signPayload(payload, data.meta.farmSign);
+      const usedIds = new Set();
+      apps.forEach((a) => (a.photoIds || []).forEach((id) => usedIds.add(String(id))));
+      const usedPhotos = (photos || []).filter((p) => usedIds.has(String(p.id)));
+      const html = FarmFile.inspectPacketHtml({
+        payload,
+        signature,
+        publicKeySpkiB64: data.meta.farmSign.publicKeySpkiB64,
+        photos: usedPhotos
+      });
+      const stamp = new Date().toISOString().slice(0, 10);
+      const farm = (data.settings.farmName || 'farm').replace(/[^\w]+/g, '-').slice(0, 40);
+      triggerDownload(new Blob([html], { type: 'text/html;charset=utf-8' }),
+        `inspector-packet-${farm}-${stamp}.html`);
+      const drafts = apps.filter((a) => a.draft || !evaluateCompliance(a).complete).length;
+      toast(drafts
+        ? `Inspector packet saved — snapshot only. ${drafts} incomplete record(s) are marked; you can still finish them here.`
+        : 'Inspector packet saved — snapshot only. You can keep editing the live log.');
+    } catch (err) {
+      toast('Could not build the inspector packet');
+    }
+  }
+
+  function printReiBoard() {
+    if (typeof FarmFile === 'undefined' || !FarmFile.reiBoardHtml) return;
+    const apps = sortedApps();
+    const reiRows = apps
+      .map((a) => ({ a, exp: reiExpiry(a) }))
+      .filter((x) => x.exp && hoursLeft(x.exp) > 0)
+      .sort((x, y) => x.exp - y.exp)
+      .map(({ a, exp }) => ({
+        where: a.fieldName || '',
+        what: appProductsLabel(a) + ' · sprayed ' + fmtDate(a.date),
+        when: exp.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+      }));
+    const phiRows = apps
+      .map((a) => ({ a, d: phiDate(a) }))
+      .filter((x) => x.d && x.d > now())
+      .sort((x, y) => x.d - y.d)
+      .map(({ a, d }) => ({
+        where: (a.crop || a.fieldName || '') + (a.fieldName ? ' — ' + a.fieldName : ''),
+        what: appProductsLabel(a) + ' · sprayed ' + fmtDate(a.date),
+        when: 'harvest ' + d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+      }));
+    $('#print-area').innerHTML = FarmFile.reiBoardHtml({
+      farmName: data.settings.farmName || 'Farm',
+      generatedAt: now().toLocaleString(),
+      reiRows,
+      phiRows
+    });
+    window.print();
   }
 
   // -------------------------------------------------------------- CSV import
@@ -5959,6 +6249,10 @@
     initSprayForecast();
     initReminders();
     initCsvImport();
+    initCrew();
+    initInspectorView();
+    initGatherUi();
+    if ($('#dash-rei-board')) $('#dash-rei-board').addEventListener('click', printReiBoard);
     initLanguageControls();
     applyUiLanguage();
     if ($('#history-close')) $('#history-close').addEventListener('click', () => $('#history-dialog').close());

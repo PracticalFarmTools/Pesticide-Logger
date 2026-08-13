@@ -24,7 +24,8 @@ auto-fill, in-cab speed tools (Spray now, Duplicate last spray,
 recent-product chips), one-click state compliance pack export, bulk EPA
 library verification, spray window outlook, barcode jug scanning, OCR
 label scanning (reads the EPA registration number and signal word from a
-label photo), and the
+label photo), crew nicknames and gather-from-phone, a signed inspector
+HTML packet, and the
 certifier/buyer packet export.
 
 **30-day trial for everyone, automatic, no card.** The whole app is

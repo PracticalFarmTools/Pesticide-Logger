@@ -244,7 +244,7 @@ check('source files advertise v2.7.0 + deadline/license wiring', () => {
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert.ok(app.includes('v2.7.0'));
-  assert.ok(sw.includes('pesticide-logger-v2.7.1'));
+  assert.ok(sw.includes('pesticide-logger-v2.7.2'));
   assert.ok(html.includes('v2.7.0'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));
@@ -350,6 +350,19 @@ check('audit hardening: EPA proxy + interval/deadline correctness', () => {
   assert.ok(app.includes('data:image\\/jpeg'), 'photo allowlist is JPEG-only');
   assert.ok(app.includes('epaSearchSeq'), 'EPA search results ignore stale responses');
   assert.ok(!css.includes('.log-shape-controls'), 'unused .log-shape-controls CSS removed');
+});
+
+check('paid-only: user-facing copy does not call the product free', () => {
+  const files = ['index.html', 'app.js', 'manifest.json', 'README.md', 'PRICING.md', 'TERMS.md'];
+  files.forEach(name => {
+    const text = fs.readFileSync(path.join(root, name), 'utf8');
+    assert.ok(!/\bfree trial\b/i.test(text), `${name} still says "free trial"`);
+    assert.ok(!/\bfree tier\b/i.test(text), `${name} still says "free tier"`);
+  });
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'));
+  assert.ok(!/^Free\b/i.test(manifest.description || ''), 'PWA description must not start with Free');
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  assert.ok(!/\bYou get a free\b/i.test(html), 'onboarding must not say free');
 });
 
 check('paid-only: whole app is gated by license/trial, no per-feature Pro gate', () => {

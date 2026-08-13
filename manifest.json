@@ -1,7 +1,7 @@
 {
   "name": "Pesticide Logger — Practical Farm Tools",
   "short_name": "Pesticide Log",
-  "description": "Free, offline-first pesticide application records, tank mix calculator, and REI/PHI tracking for farms.",
+  "description": "Offline-first pesticide application records, tank mix calculator, and REI/PHI tracking for farms.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

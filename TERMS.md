@@ -5,7 +5,7 @@ _Last updated: 2026-07-31. Plain-English summary first; farmers are busy._
 ## The short version
 
 - Your farm records belong to you and stay on your device. We never see them.
-- This is paid software: a 30-day free trial, then a license is required to
+- This is paid software: a 30-day trial, then a license is required to
   keep using it. Records already saved are never altered or deleted when a
   trial ends — activating a license restores full access to them.
 - This is a recordkeeping aid, **not legal advice** and **not a compliance guarantee**.
@@ -42,7 +42,7 @@ It is a checklist result, not a certification. State datasets marked
 
 ## 3. License and trial
 
-- Pesticide Logger is paid software. A 30-day free trial unlocks the entire
+- Pesticide Logger is paid software. A 30-day trial unlocks the entire
   app with no card required; after the trial ends, a valid license key is
   required to keep using it.
 - A license key covers **one farm operation** across its own devices. Annual
@@ -67,4 +67,4 @@ agency and always follow the product label.
 
 The application source code is MIT-licensed. The paid license applies to
 the *service of issued keys* that unlock use of the hosted app, not the
-code itself — you're free to read, audit, or self-host the source.
+code itself — you may read, audit, or self-host the source.

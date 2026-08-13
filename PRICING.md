@@ -2,10 +2,10 @@
 
 ## Principles
 
-1. **$0 fixed overhead.** Static hosting (GitHub Pages / Vercel free tier), no
+1. **$0 fixed overhead.** Static hosting (GitHub Pages / Vercel), no
    license server, no database, no telemetry. The only per-sale cost is the
    payment processor's cut.
-2. **Paid-only, one product.** There is no free tier and no feature-gated
+2. **Paid-only, one product.** There are no unpaid tiers and no feature-gated
    upsell — a license unlocks the entire app. A farmer who won't pay for
    record-keeping software isn't the customer; a farmer who will gets
    everything, not a crippled trial of it.
@@ -27,7 +27,7 @@ label scanning (reads the EPA registration number and signal word from a
 label photo), and the
 certifier/buyer packet export.
 
-**30-day free trial for everyone, automatic, no card.** The whole app is
+**30-day trial for everyone, automatic, no card.** The whole app is
 unlocked during the trial; after it ends, a license is required to keep
 using the app. Records already on the device are never altered or deleted
 by trial expiry — activating a license restores access to them immediately.

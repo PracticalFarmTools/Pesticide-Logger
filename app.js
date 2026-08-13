@@ -194,7 +194,7 @@
     idbMirror();
     scheduleAutoBackup();
     if (!stored) {
-      toast('⚠ Browser storage is full — this change may not persist. Download a backup now (Settings → Data), then free up space.');
+      toast('⚠ Browser storage is full — this change may not persist. Download a backup now (Settings → Data), then clear space.');
     }
   }
 
@@ -2158,7 +2158,7 @@
     box.innerHTML = parts.join(' &nbsp;·&nbsp; ');
   }
 
-  // ---- weather auto-fill (Open-Meteo: free, keyless) ----
+  // ---- weather auto-fill (Open-Meteo: keyless, no API key) ----
 
   const COMPASS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
 
@@ -4991,7 +4991,7 @@
       if (licenseState.mode === 'licensed') {
         status.textContent = `License active${licenseState.holder ? ' — ' + licenseState.holder : ''}. Thank you for your purchase.`;
       } else if (licenseState.mode === 'trial') {
-        status.textContent = `Free trial active — ${licenseState.daysLeft} day(s) left. No key needed yet.`;
+        status.textContent = `Trial active — ${licenseState.daysLeft} day(s) left. No key needed yet.`;
       } else if (licenseState.mode === 'key_invalid') {
         status.textContent = `Stored license key is not valid (${licenseState.keyReason}). Activate a valid key to keep using the app.`;
       } else {
@@ -5002,7 +5002,7 @@
     if (lockStatus) {
       lockStatus.textContent = licenseState.mode === 'key_invalid'
         ? `Your stored license key is not valid (${licenseState.keyReason}).`
-        : 'Your 30-day free trial has ended.';
+        : 'Your 30-day trial has ended.';
     }
   }
 

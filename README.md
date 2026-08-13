@@ -2,7 +2,7 @@
 
 **Offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite. Licensed software with
-a 30-day free trial — see `PRICING.md`.
+a 30-day trial — see `PRICING.md`.
 
 ## Canonical source
 
@@ -33,7 +33,7 @@ application at the repository root.
 | **Field mapper** | Satellite corner tapping with geodesic acreage; boundaries stay local. |
 | **Weather auto-fill** | Open-Meteo fill for wind, temperature, sky/humidity at field centroid or GPS. |
 | **Inspection output** | Print/PDF, CSV, **state compliance pack** (JSON with citation, field matrix, due/copy status, audit history), and a **certifier/buyer packet** for organic & GAP audits. |
-| **Spray window outlook** | Next 48 hours scored good/marginal/poor per mapped field from free Open-Meteo wind/gust/rain data. |
+| **Spray window outlook** | Next 48 hours scored good/marginal/poor per mapped field from Open-Meteo wind/gust/rain data (no API key). |
 | **Photos & barcode** | Attach label/lot/condition photos to records (device-local). Scan a jug's UPC in the cab: live camera on Android Chrome, still photo on iPhone (ZXing). |
 | **OCR label scanning** | Photograph a product label to read its EPA registration number and signal word on-device (Tesseract.js). Works on iPhone and Android via the native camera. A ~7MB text reader downloads in the background after first visit, then scans work offline. The match is verified through the same live EPA lookup as manual search before anything is saved. |
 | **REI posting & reminders** | Bilingual DO NOT ENTER / NO ENTRE posting sheet from any active REI, plus opt-in browser notifications when REI clears or PHI dates arrive. |
@@ -74,14 +74,14 @@ the state agency. Always follow the product label.
 - **One optional lookup function.** `api/epa.js` proxies official EPA PPLS
   queries (no CORS on EPA). It stores no farm data.
 - **No build step.** No npm, no framework.
-- **Free hosting.** GitHub Pages (static core) or Vercel (`vercel.json` included).
+- **Static hosting.** GitHub Pages (static core) or Vercel (`vercel.json` included).
   Or open `index.html` from a USB stick.
 
 ## Pricing & licensing
 
 Pesticide Logger is paid software: $29/year per farm, or $79 one-time
-perpetual. Every feature is included — there is no separate free tier or
-feature-gated upgrade. A 30-day trial unlocks the entire app with no card
+perpetual. Every feature is included — there are no unpaid tiers or
+feature-gated upgrades. A 30-day trial unlocks the entire app with no card
 required; after that, a license is required to keep using it. Licensing is
 fully offline — ECDSA-signed keys verified on-device, no license server, no
 telemetry. See `PRICING.md` for the model and `tools/` for the owner's
@@ -141,4 +141,5 @@ archive/vercel-2026.1.0/   Historical recovered deployment (reference only)
 
 ## License
 
-MIT — free for any farm, educator, or extension office to use and adapt.
+The application source is MIT-licensed (see `TERMS.md` §5). Use of the hosted
+app after the 30-day trial requires a paid license key.

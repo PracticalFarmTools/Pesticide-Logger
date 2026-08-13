@@ -404,6 +404,8 @@ await check('incomplete filter and last-on-field hint', () => {
   assert.ok(hit.summary.includes('Roundup'));
   assert.ok(hit.summary.includes('22'));
   assert.strictEqual(FarmFile.lastOnField(apps, 'f1', [{ productId: 'p1' }], { excludeId: 'old' }), null);
+  const fromMix = FarmFile.lastOnField(apps, 'f1', [{ id: 'p1', name: 'Roundup', epaRegNo: 'x' }]);
+  assert.ok(fromMix && fromMix.id === 'old');
 });
 
 await check('AND search still works on a 40-row orchard log', () => {

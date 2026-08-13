@@ -2239,7 +2239,8 @@
     const fieldId = $('#app-field') && $('#app-field').value;
     const prods = selectedMixProducts();
     const hit = FarmFile.lastOnField(data.applications, fieldId, prods, {
-      excludeId: ($('#app-id') && $('#app-id').value) || ''
+      excludeId: ($('#app-id') && $('#app-id').value) || '',
+      fieldName: (getField(fieldId) && getField(fieldId).name) || ''
     });
     if (!hit) {
       el.hidden = true;

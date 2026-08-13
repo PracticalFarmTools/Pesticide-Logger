@@ -354,7 +354,8 @@ main {
   border-color: rgba(161, 51, 51, 0.35);
   color: var(--danger);
 }
-#app-last-on-field {
+#app-last-on-field[hidden] { display: none !important; }
+#app-last-on-field:not([hidden]) {
   display: inline-block;
   margin-top: 0.35rem;
   text-align: left;

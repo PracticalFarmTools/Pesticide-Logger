@@ -488,7 +488,7 @@
 
   // -------------------------------------------------------------- tab nav
 
-  const MORE_TABS = { calculator: 1, products: 1, reports: 1, settings: 1 };
+  const MORE_TABS = { calculator: 1, reports: 1, settings: 1 };
 
   function moreMenu() { return $('#tab-more-menu'); }
 

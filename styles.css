@@ -126,6 +126,25 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .tab-btn svg { width: 20px; height: 20px; }
 .tab-btn:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
 .tab-btn.active { background: var(--bg-page); color: var(--primary-green-dark); }
+.tab-btn-home {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 2.85rem;
+  padding-left: 0.4rem;
+  padding-right: 0.4rem;
+}
+.tab-btn-home svg { width: 22px; height: 22px; }
+.tab-home-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .tab-more-menu {
   position: absolute;
   left: 0;

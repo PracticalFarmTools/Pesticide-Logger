@@ -10,6 +10,7 @@
   const ES = {
     // Navigation
     'Dashboard': 'Panel',
+    'Home': 'Inicio',
     'Spray Log': 'Registro',
     'Tank Mix': 'Mezcla',
     'Products': 'Productos',

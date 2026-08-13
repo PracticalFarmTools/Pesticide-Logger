@@ -16,6 +16,7 @@
     'Fields': 'Campos',
     'Reports': 'Informes',
     'Settings': 'Configuración',
+    'More': 'Más',
     'Offline — records save locally': 'Sin conexión — los registros se guardan en el dispositivo',
 
     // Dashboard

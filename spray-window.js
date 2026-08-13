@@ -258,6 +258,72 @@
     return t.toLocaleString(undefined, { weekday: 'short', hour: 'numeric' });
   }
 
+  const GLANCE_MS = 12 * 3600000;
+
+  function hoursInHorizon(hours, nowMs, horizonMs) {
+    const now = new Date(nowMs);
+    const end = new Date(now.getTime() + (horizonMs || GLANCE_MS));
+    return (hours || []).filter((h) => {
+      const t = new Date(h.time);
+      return t >= now && t <= end;
+    });
+  }
+
+  function ageLabel(fetchedAt, nowMs) {
+    if (fetchedAt == null || nowMs == null) return '';
+    const age = Number(nowMs) - Number(fetchedAt);
+    if (!Number.isFinite(age) || age < 0) return '';
+    if (age < 60000) return 'now';
+    if (age < 3600000) return `${Math.max(1, Math.round(age / 60000))}m`;
+    return `${Math.max(1, Math.round(age / 3600000))}h`;
+  }
+
+  function goodRunClause(hours, nowMs, horizonMs) {
+    const upcoming = hoursInHorizon(hours, nowMs, horizonMs);
+    let runStart = null;
+    let runEnd = null;
+    for (let i = 0; i < upcoming.length; i++) {
+      const scored = scoreSprayHour(upcoming[i]);
+      if (scored.score === 'good') {
+        if (!runStart) runStart = upcoming[i];
+        runEnd = upcoming[i];
+      } else if (runStart) {
+        break;
+      }
+    }
+    if (!runStart) return null;
+    const fmt = (iso) => new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric' });
+    if (runStart.time === runEnd.time) return fmt(runStart.time);
+    const endPlus = new Date(new Date(runEnd.time).getTime() + 3600000);
+    return `${fmt(runStart.time)}–${endPlus.toLocaleTimeString(undefined, { hour: 'numeric' })}`;
+  }
+
+  // One-second dashboard read: Go / Wait / No. Stale data is never Go.
+  function glanceStatus(hours, fetchedAt, nowMs, online) {
+    const age = ageLabel(fetchedAt, nowMs);
+    const tier = freshnessTier(fetchedAt, nowMs);
+    if (online === false || tier === 'stale') {
+      return { word: 'Old', clause: 'refresh to drive', ageLabel: age, kind: 'old' };
+    }
+    const upcoming = hoursInHorizon(hours, nowMs, GLANCE_MS);
+    if (!upcoming.length) {
+      return { word: '—', clause: 'no hours yet', ageLabel: age, kind: 'empty' };
+    }
+    const scored = upcoming.map((h) => scoreSprayHour(h));
+    if (scored.every((s) => s.score === 'bad')) {
+      const rain = scored.some((s) => s.reasons.some((r) => /rain/i.test(r)));
+      return {
+        word: 'No',
+        clause: rain ? 'rain in the model' : 'wind/rain/heat',
+        ageLabel: age,
+        kind: 'no'
+      };
+    }
+    const run = goodRunClause(hours, nowMs, GLANCE_MS);
+    if (run) return { word: 'Go', clause: run, ageLabel: age, kind: 'go' };
+    return { word: 'Wait', clause: 'marginal this morning', ageLabel: age, kind: 'wait' };
+  }
+
   function nextWindowSummary(hours, nowMs) {
     const now = new Date(nowMs);
     const horizon = new Date(now.getTime() + 24 * 3600000);
@@ -360,6 +426,11 @@
     chunk,
     modelLabel,
     hrrrEndLabel,
+    GLANCE_MS,
+    hoursInHorizon,
+    ageLabel,
+    goodRunClause,
+    glanceStatus,
     nextWindowSummary,
     stripForecastMeta,
     backupClone,

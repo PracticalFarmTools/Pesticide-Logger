@@ -41,14 +41,16 @@ GPS mode is useful **on arrival** (what is happening here). It is the wrong defa
 
 ### Two complementary views
 
-**A. All-fields strip (planning, default)**  
-One row per field that has coordinates. Each row shows the next 12–24 hours as the same good/marginal/poor blocks, plus one line of text: e.g. “North 40 — next decent window 6–9 a.m.” or “South 80 — rain likely all morning.”  
-This is the “should I drive?” view. It must load without standing in that field.
+**A. All-fields glance (planning, default)**  
+One row per field, same shape as REI/PHI: field name, a short clause (“6–9 a.m.” or “rain in the model”), and **Go / Wait / No**. Age is compact (`20m`). No hour numbers and no 48-hour chart until the grower asks. Farms with more than six fields default to morning windows (hide pure **No**); **Show all fields** reveals the rest.
 
-**B. One-field detail (tap a row)**  
-The existing 48-hour day strips, hour tap for wind/gust/rain/temp/RH, plus the evidence line (coords, model, age).
+**B. Next 12 hours (tap a field)**  
+Quiet color chips, no numbers. **Details** opens the 48-hour chart.
 
-GPS is a third row: “This device (not a field)” — optional, never the only chart, never mixed into a field cache.
+**C. One-field detail**  
+48-hour day strips, hour tap for wind/gust/rain/temp/RH, plus the evidence line (pin coords, model, HRRR seam, age).
+
+GPS is **not** on the planning list. “Weather here” stays on the spray log (**Fetch current weather**) for on-arrival logging. Device caches must never mix into a field cache.
 
 ### Coordinates without arriving
 
@@ -67,9 +69,9 @@ Centroid: use the existing geodesic ring (already in `ringAreaSqm`) rather than 
 ### When data loads
 
 - Dashboard open + online → refresh every field that is stale (see freshness). One Open-Meteo **batch** request (`latitude=a,b,c&longitude=d,e,f`), chunked (e.g. 10 fields) so a 30-field farm is a few calls, not 30.
-- Grower switches to a field → if that field’s cache is missing or stale, fetch immediately; if fresh, render instantly from cache.
-- “Update outlook” remains for an explicit refresh.
-- Offline → show last good per-field cache with a hard banner: “Saved outlook from {time}. Not current. Do not leave for a distant field on this.”
+- Grower taps a field → if that field’s cache is missing or stale, fetch immediately; if fresh, render instantly from cache.
+- **Refresh** remains for an explicit refresh of visible fields.
+- Offline → show last good per-field cache; glance status is **Old**, never **Go**.
 
 No background fetch when the tab is hidden (battery). Refresh on `visibilitychange` when returning, same as the trial lock timer.
 
@@ -158,8 +160,8 @@ JSON backups: this is weather, not a legal record. Either omit `forecastByField`
 
 ## UI copy (examples)
 
-- Card title: “Spray windows by field”
-- Subtitle: “Forecast at each field’s map pin — check before you drive. Wind is 10 m model wind, not boom height. The label still rules.”
+- Card title: “Today’s spray windows”
+- One-line disclaimer: “Planning only — label rules. 10 m model wind.” Longer copy behind **How to read this**.
 - Empty unmapped: “Drop a pin on this field to see its outlook. Your phone’s location is not this field.”
 - Wrong-cache impossible state: never shown; if it happens in a bug, show nothing and log.
 

@@ -137,19 +137,24 @@
 
     <div class="card" id="spray-window-card">
       <div class="card-title-row">
-        <h3 class="card-title">Spray windows by field</h3>
+        <h3 class="card-title">Today’s spray windows</h3>
         <div class="forecast-controls">
-          <select id="forecast-field" aria-label="Field to show in detail">
-            <option value="">All fields (planning)</option>
+          <select id="forecast-field" hidden aria-label="Jump to field">
+            <option value="">All fields</option>
           </select>
-          <button class="btn btn-secondary btn-sm" id="forecast-refresh">Update outlook</button>
+          <span id="forecast-age" class="forecast-age" hidden></span>
+          <button class="btn btn-secondary btn-sm" id="forecast-refresh">Refresh</button>
         </div>
       </div>
-      <p class="card-hint">Forecast at each field’s map pin — check before you drive. Wind is 10 m model
-        wind, not boom height. Planning guidance only — the label’s wind and rainfast rules control.
-        Confirm conditions at the sprayer.</p>
+      <p class="card-hint">Planning only — label rules. 10 m model wind.
+        <button type="button" class="text-btn" id="forecast-howto">How to read this</button></p>
+      <p class="card-hint" id="forecast-howto-body" hidden>Each row is that field’s map pin, not your phone.
+        Go / Wait / No is the next 12 hours. Tap a field for the hour chips, then Details for the 48-hour
+        chart, coordinates, and model. Confirm wind at the sprayer. The label still rules.</p>
       <div id="forecast-strip"></div>
-      <div id="forecast-body"></div>
+      <p class="forecast-show-all-wrap"><button type="button" class="text-btn" id="forecast-show-all" hidden>Show all fields</button></p>
+      <div id="forecast-hours" hidden></div>
+      <div id="forecast-body" hidden></div>
     </div>
 
     <div class="dash-columns">
@@ -690,10 +695,9 @@
   <section id="tab-fields" class="tab-panel" role="tabpanel">
     <div class="card map-card">
       <h3 class="card-title">Field mapper — draw your acreage</h3>
-      <p class="card-hint">Zoom to your farm (or tap <strong>My location</strong>), then tap each corner of the field.
-        Acreage is calculated live and fills the form below when you tap <strong>Use this shape</strong>.
-        Drag any corner to fine-tune it. The amber <strong>forecast pin</strong> is where the spray-window
-        weather is looked up — drag it onto the block you actually spray, not a neighbor’s woods.</p>
+      <p class="card-hint">Zoom to your farm (or tap <strong>My location</strong>), then tap each corner.
+        <strong>Use this shape</strong> fills acreage and places a forecast pin — drag the amber pin onto
+        the block you spray. <strong>Set forecast pin</strong> is only for sites with no drawn boundary.</p>
       <div class="map-toolbar">
         <button type="button" class="btn btn-secondary btn-sm" id="map-locate">📍 My location</button>
         <button type="button" class="btn btn-secondary btn-sm" id="map-basemap">🛰 Satellite / streets</button>

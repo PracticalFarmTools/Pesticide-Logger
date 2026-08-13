@@ -244,7 +244,7 @@ check('source files advertise v2.7.0 + deadline/license wiring', () => {
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert.ok(app.includes('v2.7.0'));
-  assert.ok(sw.includes('pesticide-logger-v2.7.4'));
+  assert.ok(sw.includes('pesticide-logger-v2.7.5'));
   assert.ok(html.includes('v2.7.0'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));
@@ -279,11 +279,18 @@ check('v2.7 features wired: forecast, photos, barcode, posting, import, i18n', (
   assert.ok(app.includes('function fetchSprayForecast'), 'forecast fetch');
   assert.ok(html.includes('spray-window-card'), 'forecast card');
   assert.ok(html.includes('id="forecast-strip"'), 'all-fields planning strip');
+  assert.ok(html.includes('id="forecast-hours"'), '12-hour chips after a field tap');
+  assert.ok(html.includes('id="forecast-howto"'), 'how-to-read disclosure');
+  assert.ok(html.includes('Today’s spray windows'), 'glance title');
   assert.ok(app.includes('SprayWindow.getCached'), 'per-field cache isolation');
   assert.ok(app.includes('forecastByField'), 'per-field forecast store');
-  assert.ok(app.includes('This device (not a field)'), 'GPS is not a destination field');
+  assert.ok(app.includes('SprayWindow.DEVICE_KEY'), 'GPS is not a destination field');
+  assert.ok(!app.includes('This device (not a field)'), 'GPS is not on the planning list');
   assert.ok(!html.includes('My location (GPS)'), 'planning default is not GPS');
   assert.ok(fs.existsSync(path.join(root, 'spray-window.js')));
+  const sprayWindow = fs.readFileSync(path.join(root, 'spray-window.js'), 'utf8');
+  assert.ok(sprayWindow.includes('function glanceStatus'), 'Go / Wait / No glance');
+  assert.ok(app.includes('function syncWeatherPinButton'), 'pin button hidden when a shape exists');
   assert.ok(app.includes('function capturePhotoInto'), 'photo capture');
   assert.ok(app.includes('function sweepOrphanPhotos'), 'photo sweep');
   assert.ok(app.includes('function scanJugIntoMix'), 'barcode jug scan');

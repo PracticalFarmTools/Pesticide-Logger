@@ -208,6 +208,32 @@ check('nextWindowSummary finds a good run', () => {
   assert.ok(/next decent window/.test(summary), summary);
 });
 
+check('glanceStatus is Go / Wait / No; stale is never Go', () => {
+  const now = Date.parse('2026-08-13T12:00:00');
+  const good = [
+    { time: '2026-08-13T13:00', wind: 6, gusts: 8, precip: 0, precipProb: 0, temp: 70 },
+    { time: '2026-08-13T14:00', wind: 6, gusts: 8, precip: 0, precipProb: 0, temp: 70 }
+  ];
+  const go = SW.glanceStatus(good, now, now, true);
+  assert.strictEqual(go.word, 'Go');
+  assert.strictEqual(go.kind, 'go');
+  const rain = [{ time: '2026-08-13T13:00', wind: 6, gusts: 8, precip: 0.1, precipProb: 80, temp: 70, weatherCode: 61 }];
+  assert.strictEqual(SW.glanceStatus(rain, now, now, true).word, 'No');
+  const calm = [{ time: '2026-08-13T13:00', wind: 1, gusts: 1, precip: 0, precipProb: 0, temp: 70 }];
+  assert.strictEqual(SW.glanceStatus(calm, now, now, true).word, 'Wait');
+  const stale = SW.glanceStatus(good, now, now + 3 * 3600000, true);
+  assert.strictEqual(stale.word, 'Old');
+  assert.notStrictEqual(stale.word, 'Go');
+  const offline = SW.glanceStatus(good, now, now + 1000, false);
+  assert.strictEqual(offline.word, 'Old');
+});
+
+check('ageLabel is compact', () => {
+  const t0 = Date.UTC(2026, 7, 13, 12, 0, 0);
+  assert.strictEqual(SW.ageLabel(t0, t0 + 20 * 60 * 1000), '20m');
+  assert.strictEqual(SW.ageLabel(t0, t0 + 3 * 3600000), '3h');
+});
+
 if (failed) {
   console.error(`\n${failed} spray-window check(s) failed.`);
   process.exit(1);

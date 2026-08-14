@@ -1,0 +1,112 @@
+{
+  "code": "FL",
+  "reviewedAt": "2026-07-31",
+  "agency": "Florida Department of Agriculture and Consumer Services",
+  "citation": {
+    "reference": "Fla. Admin. Code r. 5E-9.032",
+    "url": "http://flrules.elaws.us/fac/5e-9.032"
+  },
+  "retentionYears": 2,
+  "appliesTo": "Licensed pesticide applicators; all restricted-use pesticide applications. Some special property-owner/leaseholder records are indefinite under §487.081(6)(b).",
+  "verification": "researched",
+  "notes": "Records must be made within two working days. Commercial/licensed applicator making or supervising for another person must provide copy within 30 days. Florida does not require weather in this agricultural RUP rule, but it is recommended.",
+  "fields": [
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_license",
+      "label": "Applicator certification / license #",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "supervisor_name",
+      "label": "Supervising applicator",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "end_time",
+      "label": "End time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_unit",
+      "label": "Area unit",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "method",
+      "label": "Method / equipment",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 48,
+  "customerCopyDays": 30,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 2,
+    "unit": "businessDays"
+  }
+}

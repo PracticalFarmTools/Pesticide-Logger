@@ -1,0 +1,88 @@
+{
+  "code": "MA",
+  "reviewedAt": "2026-07-31",
+  "agency": "Massachusetts Department of Agricultural Resources",
+  "citation": {
+    "reference": "333 CMR 10.14; 333 CMR 10.07(9)",
+    "url": "https://www.law.cornell.edu/regulations/massachusetts/333-CMR-10-14"
+  },
+  "retentionYears": 3,
+  "appliesTo": "All certified commercial applicators, certified private applicators, and licensed applicators or their employers; each pesticide application.",
+  "verification": "researched",
+  "notes": "Operational records must also include pollution incidents, liability insurance amount/insurer, and pesticide-related illnesses/injuries reported to applicator. RUP/state-limited applications require specific site description and supervising applicator signature/license review within 72 hours where applicable.",
+  "fields": [
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "application_purpose",
+      "label": "Purpose of application",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "method",
+      "label": "Method / equipment",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "supervisor_name",
+      "label": "Supervising applicator",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "applicator_license",
+      "label": "Applicator certification / license #",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "notes",
+      "label": "Notes / unexpected occurrences",
+      "type": "string",
+      "required": false
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

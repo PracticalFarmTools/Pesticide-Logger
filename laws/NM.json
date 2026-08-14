@@ -1,0 +1,130 @@
+{
+  "code": "NM",
+  "reviewedAt": "2026-07-31",
+  "agency": "New Mexico Department of Agriculture",
+  "citation": {
+    "reference": "21.17.50.10 NMAC; 21.17.56.15 NMAC",
+    "url": "https://www.srca.nm.gov/parts/title21/21.017.0050.html"
+  },
+  "retentionYears": 2,
+  "appliesTo": "Commercial, non-commercial, and public applicators for all pesticide applications; licensed/certified applicators have related records under 21.17.56.15. Private coverage partially verified through 21.17.56 after USDA rescission.",
+  "verification": "researched",
+  "notes": "Records completed and available within 24 hours. Outdoor weather required except baits in bait stations or applications in/immediately adjacent to structures. Customer copy upon written request.",
+  "fields": [
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "application_time",
+      "label": "Application time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "wind_direction",
+      "label": "Wind direction",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "wind_speed",
+      "label": "Wind speed",
+      "type": "number",
+      "required": false
+    },
+    {
+      "name": "temperature",
+      "label": "Temperature",
+      "type": "number",
+      "required": false
+    },
+    {
+      "name": "concentration",
+      "label": "Application concentration",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "carrier_volume",
+      "label": "Carrier / finished spray volume",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "aircraft_id",
+      "label": "Aircraft ID",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "business_name_address",
+      "label": "Business / operator name & address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_license",
+      "label": "Applicator certification / license #",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": 30,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

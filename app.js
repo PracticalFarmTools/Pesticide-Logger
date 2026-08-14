@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.3 — Practical Farm Tools
+/* Pesticide Logger v2.9.4 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -769,6 +769,9 @@
       applyStateRequiredTags();
       updateCompliancePreview();
     });
+    if ($('#state-laws-update-btn')) {
+      $('#state-laws-update-btn').addEventListener('click', checkForAppUpdate);
+    }
     if ($('#set-applicator-class')) {
       $('#set-applicator-class').addEventListener('change', () => {
         // Preview only — do not mutate saved settings until Save.
@@ -1032,6 +1035,11 @@
             : (law.recordWithinHours != null ? esc(String(law.recordWithinHours)) + ' hours' : '—')} ·
           Customer-copy window: ${law.customerCopyDays != null ? esc(String(law.customerCopyDays)) + ' day(s)' : 'not encoded (no invented duty)'}</p>
         <p class="card-hint">Source status: ${esc(verLabel)}</p>
+        <p class="card-hint"><span>This state's rules last checked:</span> <strong>${esc(law.reviewedAt || '—')}</strong>
+          · <span>Matrix edition:</span> <strong>${esc(typeof STATE_LAWS_RESEARCH_DATE !== 'undefined' ? STATE_LAWS_RESEARCH_DATE : '—')}</strong></p>
+        ${typeof stateLawIsStale === 'function' && stateLawIsStale(law, now())
+          ? '<p class="state-law-stale" id="state-law-stale">This state\'s rules were last checked more than 12 months ago. Open the citation and compare. Reload the app if a newer edition has shipped. Source status does not change because a calendar moved.</p>'
+          : ''}
         <p>Applicable required fields for ${esc(STATE_NAMES[code])} as a <strong>${esc(applicatorClassFor(ctx))}</strong> applicator (${req.length}):</p>
         <ul>${req.map(r => `<li>${esc(r.label)}</li>`).join('')}</ul>
         ${law.notes ? `<p class="card-hint">${esc(law.notes)}</p>` : ''}
@@ -3412,7 +3420,7 @@
       : '';
     $('#print-area').innerHTML = `
       <h1>Tank Mix Worksheet</h1>
-      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.9.3 (Practical Farm Tools)</p>
+      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.9.4 (Practical Farm Tools)</p>
       <table>
         <tr><th>Area treated</th><td>${fmtNum(c.area)} ${c.areaUnit === 'sqft' ? 'sq ft' : c.areaUnit === '1000sqft' ? '× 1,000 sq ft' : 'acres'} (${fmtNum(c.acres, 3)} ac)</td>
             <th>Spray volume</th><td>${fmtNum(c.gpa)} ${c.gpaUnit === 'gal_acre' ? 'gal/acre' : 'gal/1,000 sq ft'}</td></tr>
@@ -3589,7 +3597,8 @@
       period: reportPeriodLabel(),
       stateName: STATE_NAMES[data.settings.state] || '',
       evaluateCompliance: evaluateCompliance,
-      stateLaws: typeof STATE_LAWS !== 'undefined' ? STATE_LAWS : {}
+      stateLaws: typeof STATE_LAWS !== 'undefined' ? STATE_LAWS : {},
+      matrixEdition: typeof STATE_LAWS_RESEARCH_DATE !== 'undefined' ? STATE_LAWS_RESEARCH_DATE : ''
     });
   }
 
@@ -3759,7 +3768,7 @@
       format: 'pesticide-logger-state-pack',
       version: 5,
       generatedAt: new Date().toISOString(),
-      app: 'Pesticide Logger v2.9.3 — Practical Farm Tools',
+      app: 'Pesticide Logger v2.9.4 — Practical Farm Tools',
       disclaimer: 'Completion means required fields are filled for this context — not a legal determination. Does not replace WPS duties or e-filing programs.',
       farm: {
         name: s.farmName || '',
@@ -6393,6 +6402,25 @@
     if (!el || el.dataset.shown) return;
     el.dataset.shown = '1';
     el.hidden = false;
+  }
+
+  function checkForAppUpdate() {
+    const out = $('#state-laws-update-out');
+    const set = (msg) => { if (out) out.textContent = msg; };
+    if (!('serviceWorker' in navigator) || location.protocol === 'file:') {
+      set('Open this app over http:// to check for updates.');
+      return;
+    }
+    set('Checking for a newer edition…');
+    navigator.serviceWorker.getRegistration().then((reg) => {
+      if (!reg) {
+        set('No service worker on this visit.');
+        return;
+      }
+      return reg.update().then(() => {
+        set('If a newer edition is waiting, the Reload banner will appear. Source status does not change because a calendar moved.');
+      });
+    }).catch(() => set('Could not check for an update.'));
   }
 
   // -------------------------------------------------------------- boot

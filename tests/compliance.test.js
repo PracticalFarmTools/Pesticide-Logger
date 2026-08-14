@@ -23,7 +23,7 @@ function check(name, fn) {
 
 const lawsCode = fs.readFileSync(path.join(root, 'state_pesticide_laws.js'), 'utf8');
 const ctx = { console };
-vm.runInNewContext(lawsCode + '\nthis.STATE_LAWS = STATE_LAWS; this.BASE_RECORD_FIELDS = BASE_RECORD_FIELDS;', ctx);
+vm.runInNewContext(lawsCode + '\nthis.STATE_LAWS = STATE_LAWS; this.BASE_RECORD_FIELDS = BASE_RECORD_FIELDS; this.STATE_LAWS_RESEARCH_DATE = STATE_LAWS_RESEARCH_DATE; this.stateLawIsStale = stateLawIsStale;', ctx);
 const { STATE_LAWS, BASE_RECORD_FIELDS } = ctx;
 
 const US_STATES = [
@@ -37,7 +37,7 @@ check('all 50 states present', () => {
   US_STATES.forEach(code => assert.ok(STATE_LAWS[code], `missing ${code}`));
 });
 
-check('each state has agency, citation, retention, verification, fields, privateDuty', () => {
+check('each state has agency, citation, retention, verification, fields, privateDuty, reviewedAt', () => {
   Object.entries(STATE_LAWS).forEach(([code, law]) => {
     assert.ok(law.agency, `${code} agency`);
     assert.ok(law.citation && law.citation.reference && law.citation.url, `${code} citation`);
@@ -45,11 +45,13 @@ check('each state has agency, citation, retention, verification, fields, private
     assert.ok(['researched', 'partial', 'uncertain'].includes(law.verification), `${code} verification`);
     assert.ok(['required', 'none', 'uncertain'].includes(law.privateDuty), `${code} privateDuty`);
     assert.ok(Array.isArray(law.fields) && law.fields.length >= 5, `${code} fields`);
+    assert.ok(/^\d{4}-\d{2}-\d{2}$/.test(law.reviewedAt), `${code} reviewedAt`);
     law.fields.forEach(f => {
       assert.ok(f.name && f.label, `${code} field shape`);
       assert.strictEqual(typeof f.required, 'boolean', `${code}.${f.name} required`);
     });
   });
+  assert.strictEqual(ctx.STATE_LAWS_RESEARCH_DATE, '2026-07-31');
 });
 
 check('customerCopyDays only set when researched (not invented for all states)', () => {
@@ -239,13 +241,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.3 + deadline/license wiring', () => {
+check('source files advertise v2.9.4 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.3'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.3'));
-  assert.ok(html.includes('v2.9.3'));
+  assert.ok(app.includes('v2.9.4'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.4'));
+  assert.ok(sw.includes("const LAWS_EDITION = '2026-07-31'"));
+  assert.ok(html.includes('v2.9.4'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));
   assert.ok(html.includes('farm-scale.js'));

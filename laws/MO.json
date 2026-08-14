@@ -1,0 +1,154 @@
+{
+  "code": "MO",
+  "reviewedAt": "2026-07-31",
+  "agency": "Missouri Department of Agriculture",
+  "citation": {
+    "reference": "2 CSR 70-25.120 (effective Jan. 1, 2025)",
+    "url": "https://www.law.cornell.edu/regulations/missouri/2-CSR-70-25.120"
+  },
+  "retentionYears": 3,
+  "appliesTo": "Certified commercial applicators/employers: all pesticides; certified noncommercial applicators and public operators/employers: RUPs.",
+  "verification": "researched",
+  "notes": "Records completed within three business days. Outdoor weather required except specified structural/termite applications within 10 feet of buildings. Notes should capture agricultural producer request for less-than-label concentration if applicable.",
+  "fields": [
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_license",
+      "label": "Applicator certification / license #",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "noncertified_applicator_name",
+      "label": "Noncertified / trainee applicator",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "end_time",
+      "label": "End time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_address",
+      "label": "Customer address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "dilution_rate",
+      "label": "Dilution rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "total_mix_applied",
+      "label": "Total diluted mix applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "rate",
+      "label": "Application rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "temperature",
+      "label": "Temperature",
+      "type": "number",
+      "required": false
+    },
+    {
+      "name": "wind_speed",
+      "label": "Wind speed",
+      "type": "number",
+      "required": false
+    },
+    {
+      "name": "wind_direction",
+      "label": "Wind direction",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "notes",
+      "label": "Notes / unexpected occurrences",
+      "type": "string",
+      "required": false
+    }
+  ],
+  "recordWithinHours": 72,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 3,
+    "unit": "businessDays"
+  }
+}

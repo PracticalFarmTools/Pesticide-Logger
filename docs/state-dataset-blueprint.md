@@ -1,9 +1,9 @@
 # Blueprint: 50-state pesticide recordkeeping research
 
-**Status: specified, not implemented.** Dataset header date is still **2026-07-31**.
-Two jobs, same file: (1) close remaining `partial` / `uncertain` holes with
-citations, or keep them honest; (2) **keep each state’s row current inside
-the app** without a legal API, scraper, or grower-edited matrices.
+**Status: Batch H implemented** in v2.9.4 (per-state `laws/XX.json`,
+`reviewedAt`, Settings last-checked + 12-month stale warning). Dataset
+header / matrix edition date is still **2026-07-31**. Batches A–G
+(remaining `partial` / `uncertain` promotions) are specified, not done.
 
 Job to be done: a grower in **any of the 50 states** can pick that state in
 Settings and get a spray log, completeness badge, and inspector packet that
@@ -38,7 +38,8 @@ green check we cannot defend.
 
 ## What it does today
 
-Source of truth: `state_pesticide_laws.js` (`STATE_LAWS`). Completeness:
+Source of truth: `laws/XX.json` (one state per file). Runtime cache:
+`state_pesticide_laws.js` via `node tools/bundle-state-laws.js`. Completeness:
 `compliance.js` `evaluateCompliance`. Log reshape: `reshapeAppFormForState`.
 Packet checklist: `FarmFile.statuteChecklist` (required `law.fields` labels).
 Gate: `tests/compliance.test.js` (50 states present; agency / citation /
@@ -268,8 +269,10 @@ FSA strings already on the field). “Kansas registration number” →
 
 ## How to research one state (repeatable)
 
-Work in `state_pesticide_laws.js` only (plus tests). Do not reshape the log
-UI per state beyond the field names the engine already understands.
+Work in `laws/XX.json` only (plus `node tools/bundle-state-laws.js`).
+Do not reshape the log UI per state beyond the field names the engine
+already understands. Do not edit `app.js` or `compliance.js` for a
+citation, field-list, or `reviewedAt` change.
 
 1. Open the current `citation.reference` and `citation.url`.
 2. Find the **official** HTML/PDF (agency, SOS, legislature, administrative
@@ -402,9 +405,9 @@ It does not need `data-log-field`. It does not affect
 `privateDuty` + filled boxes. `reviewedAt` only drives Settings copy,
 optional packet cover line, and the quarterly queue.
 
-Until Batch H lands, the file header comment remains the only edition
-date. Do not invent per-state dates in JSON before the UI can show them
-— land schema + seed + Settings copy in the same change.
+Until Batch H landed, the file header comment was the only edition date.
+`reviewedAt` now lives on every state JSON. Seed remaining un-opened
+citations to the file date — do not stamp “today” without reading the rule.
 
 ## Implementation order
 
@@ -452,15 +455,14 @@ Stay-in-lane packet and Settings copy already consume `verification` and
 requires a `data-log-field` control — except **Batch H** (dates on the
 Settings card), which is metadata display, not a new log field.
 
-### Batch H — keep-current in Settings (schema + copy)
+### Batch H — keep-current in Settings (schema + copy) — **done in v2.9.4**
 
-Export `STATE_LAWS_RESEARCH_DATE`. Add `reviewedAt` on all 50 (seed to
-the file date). Show last-checked + edition on `#state-info-card`. Stale
-warning after 12 months; do not auto-demote `verification`. Optional:
-packet cover repeats last-checked; “Check for app update” = SW
-`registration.update()`. Tests: every state has `reviewedAt`; Settings
-renders both dates; stale copy does not change badges. Land this even if
-Batches A–G are unfinished — freshness is useful on `partial` rows too.
+`STATE_LAWS_RESEARCH_DATE` is exported. Every state JSON has `reviewedAt`
+(seeded to 2026-07-31). Settings `#state-info-card` shows last-checked +
+edition. Stale warning after 365 days; `verification` is not auto-demoted.
+Packet cover freezes last-checked at export. “Check for app update” calls
+SW `registration.update()`. Legal edits: `laws/XX.json` +
+`node tools/bundle-state-laws.js` (updates runtime + `LAWS_EDITION` only).
 
 ## Tests (must exist before calling a batch done)
 

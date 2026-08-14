@@ -1,0 +1,124 @@
+{
+  "code": "OK",
+  "reviewedAt": "2026-07-31",
+  "agency": "Oklahoma Department of Agriculture, Food, and Forestry",
+  "citation": {
+    "reference": "2 O.S. §3-83; OAC 35:30-17-21",
+    "url": "https://okrules.elaws.us/oac/35:30-17-21"
+  },
+  "retentionYears": 2,
+  "appliesTo": "Commercial and noncommercial applicators; pesticide activities, applications, contracts, and wood infestation reports.",
+  "verification": "researched",
+  "notes": "Notes should capture required adjuvants or drift agents when label requires them, copy of product label/labeling, contracts, WDI reports, and other Board-required information. Records kept at principal business location and accessible for inspection.",
+  "fields": [
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "end_time",
+      "label": "End time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "business_name_address",
+      "label": "Business / operator name & address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_address",
+      "label": "Customer address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "rate",
+      "label": "Application rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "dilution_rate",
+      "label": "Dilution rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "total_mix_applied",
+      "label": "Total diluted mix applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "notes",
+      "label": "Notes / unexpected occurrences",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "rei_hours",
+      "label": "Restricted-entry interval (REI)",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

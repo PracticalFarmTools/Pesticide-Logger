@@ -1,0 +1,172 @@
+{
+  "code": "ME",
+  "reviewedAt": "2026-07-31",
+  "agency": "Maine Board of Pesticides Control, Department of Agriculture, Conservation and Forestry",
+  "citation": {
+    "reference": "01-026 C.M.R. ch. 50, §1(A)",
+    "url": "https://www.maine.gov/dacf/php/pesticides/documents2/rulemaking_2024/BPC-Ch50-amended_rule_legislative_Final.pdf"
+  },
+  "retentionYears": 2,
+  "appliesTo": "Commercial agricultural producers and commercial applicators; pesticide application records for applications they make.",
+  "verification": "partial",
+  "notes": "Records must be kept current by recording all required information on the same day. Maine requires commercial applicator annual summary reports; a proposed/electronic reporting document indicates Jan. 31 reporting through Board-approved software. Outdoor weather details are partially verified from Chapter 50 context and should be captured.",
+  "fields": [
+    {
+      "name": "county",
+      "label": "County of application",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "customer_address",
+      "label": "Customer address",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "application_time",
+      "label": "Application time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "active_ingredient",
+      "label": "Active ingredient",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "rei_hours",
+      "label": "Restricted-entry interval (REI)",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "method",
+      "label": "Method / equipment",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "dilution_rate",
+      "label": "Dilution rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_license",
+      "label": "Applicator certification / license #",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "noncertified_applicator_name",
+      "label": "Noncertified / trainee applicator",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "business_name_address",
+      "label": "Business / operator name & address",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "rate",
+      "label": "Application rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "wind_speed",
+      "label": "Wind speed",
+      "type": "number",
+      "required": false
+    },
+    {
+      "name": "wind_direction",
+      "label": "Wind direction",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "temperature",
+      "label": "Temperature",
+      "type": "number",
+      "required": false
+    },
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 0,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 0,
+    "unit": "sameDay"
+  }
+}

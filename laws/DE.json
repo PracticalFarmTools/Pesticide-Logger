@@ -1,0 +1,124 @@
+{
+  "code": "DE",
+  "reviewedAt": "2026-07-31",
+  "agency": "Delaware Department of Agriculture",
+  "citation": {
+    "reference": "3 Del. Admin. Code §601-14.0",
+    "url": "https://regulations.delaware.gov/AdminCode/title3/601"
+  },
+  "retentionYears": 2,
+  "appliesTo": "Commercial applicators; each application of any pesticide.",
+  "verification": "researched",
+  "notes": "EPA registration number is required for RUP or WPS-covered products. Weather (wind velocity/direction, temperature, relative humidity) is required when label directions advise drift precautions. Records logged immediately or within 24 hours unless good cause.",
+  "fields": [
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "dilution_rate",
+      "label": "Dilution rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "rate",
+      "label": "Application rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_address",
+      "label": "Customer address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "supervisor_name",
+      "label": "Supervising applicator",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "wind_speed",
+      "label": "Wind speed",
+      "type": "number",
+      "required": false
+    },
+    {
+      "name": "wind_direction",
+      "label": "Wind direction",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "temperature",
+      "label": "Temperature",
+      "type": "number",
+      "required": false
+    },
+    {
+      "name": "sky",
+      "label": "Humidity / sky conditions",
+      "type": "string",
+      "required": false
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

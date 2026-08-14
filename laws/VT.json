@@ -1,0 +1,124 @@
+{
+  "code": "VT",
+  "reviewedAt": "2026-07-31",
+  "agency": "Vermont Agency of Agriculture, Food & Markets",
+  "citation": {
+    "reference": "Vermont Rule for Control of Pesticides §§8.01, 8.02, 8.04",
+    "url": "https://agriculture.vermont.gov/sites/agriculture/files/Vermont%20Rule%20for%20Control%20of%20Pesticides%20in%20Accordance%20with%206%20V.S.A.%20Chapter%2087%20(3.8.23).pdf"
+  },
+  "retentionYears": 3,
+  "appliesTo": "Certified private applicators: Class A/RUP applications; certified commercial and non-commercial applicators: any pesticide used; licensed companies retain operational records.",
+  "verification": "researched",
+  "notes": "Private applicator summary includes REI and active ingredients for 8.01; commercial/noncommercial routine records include customer and ten core items. Annual usage/reporting obligations continue for certain licensees/companies.",
+  "fields": [
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "customer_address",
+      "label": "Customer address",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "application_time",
+      "label": "Application time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_license",
+      "label": "Applicator certification / license #",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "noncertified_applicator_name",
+      "label": "Noncertified / trainee applicator",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "rei_hours",
+      "label": "Restricted-entry interval (REI)",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "active_ingredient",
+      "label": "Active ingredient",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

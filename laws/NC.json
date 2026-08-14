@@ -1,0 +1,106 @@
+{
+  "code": "NC",
+  "reviewedAt": "2026-07-31",
+  "agency": "North Carolina Department of Agriculture and Consumer Services",
+  "citation": {
+    "reference": "02 NCAC 09L .1402",
+    "url": "http://ncrules.state.nc.us/ncac/title%2002%20-%20agriculture%20and%20consumer%20services/chapter%2009%20-%20food%20and%20drug%20protection/subchapter%20l/02%20ncac%2009l%20.1402.html"
+  },
+  "retentionYears": 3,
+  "appliesTo": "All pesticide applicators using ground equipment; RUP applications. Records created within 72 hours.",
+  "verification": "researched",
+  "notes": "Amount may be formulation or active ingredient per unit of measure. Each day of application is a separate record. Weather is not required by this rule.",
+  "fields": [
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_license",
+      "label": "Applicator certification / license #",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_address",
+      "label": "Customer address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "application_time",
+      "label": "Application time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "active_ingredient",
+      "label": "Active ingredient",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 72,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 72,
+    "unit": "hours"
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "code": "TX",
+  "reviewedAt": "2026-07-31",
+  "agency": "Texas Department of Agriculture",
+  "citation": {
+    "reference": "TDA pesticide applicator record requirements; 4 TAC §7.144 for structural pest-control records",
+    "url": "https://texasagriculture.gov/portals/0/forms/pest/applicator/pesticide_applicator_record_requirements.pdf"
+  },
+  "retentionYears": 2,
+  "appliesTo": "Agricultural/private/commercial pesticide applicators have TDA record requirements; 4 TAC §7.144 separately governs structural pest-control use records. Exact agricultural TAC citation partially verified.",
+  "verification": "researched",
+  "notes": "TDA record-requirements PDF lists wind direction/velocity and air temperature, equipment IDs/FAA N-number, and spray permit number for regulated herbicides in regulated counties. Structural §7.144 requires customer/service address, pesticide/device, amounts, mixing rate, target pest/purpose, date, and applicator/license/TPCL numbers.",
+  "fields": [
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "application_time",
+      "label": "Application time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "rate",
+      "label": "Application rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "carrier_volume",
+      "label": "Carrier / finished spray volume",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "wind_direction",
+      "label": "Wind direction",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "wind_speed",
+      "label": "Wind speed",
+      "type": "number",
+      "required": true
+    },
+    {
+      "name": "temperature",
+      "label": "Temperature",
+      "type": "number",
+      "required": true
+    },
+    {
+      "name": "aircraft_id",
+      "label": "Aircraft ID",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "equipment_id",
+      "label": "Equipment ID",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_license",
+      "label": "Applicator certification / license #",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "permit_number",
+      "label": "Permit / operator ID",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

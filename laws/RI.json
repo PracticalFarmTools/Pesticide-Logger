@@ -1,0 +1,112 @@
+{
+  "code": "RI",
+  "reviewedAt": "2026-07-31",
+  "agency": "Rhode Island Department of Environmental Management",
+  "citation": {
+    "reference": "250-RICR-40-15-2.6(B)",
+    "url": "https://rules.sos.ri.gov/regulations/part/250-40-15-2"
+  },
+  "retentionYears": 2,
+  "appliesTo": "Commercial applicators; applications of general-use, restricted-use, and state-limited-use pesticides. Private applicator application-record state requirements not verified.",
+  "verification": "researched",
+  "notes": "Upon completion, applicator must leave a detailed invoice at the property containing product/EPA/amount, persons certified/licensed and supervised participants, certification/license number, and post-application safety/environment/health label instructions. RUP applications must be recorded no later than 14 days.",
+  "fields": [
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "pesticide_formulation",
+      "label": "Pesticide formulation",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "active_ingredient",
+      "label": "Active ingredient",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "total_mix_applied",
+      "label": "Total diluted mix applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "application_purpose",
+      "label": "Purpose of application",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_address",
+      "label": "Customer address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_license",
+      "label": "Applicator certification / license #",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "notes",
+      "label": "Notes / unexpected occurrences",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "uncertain",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

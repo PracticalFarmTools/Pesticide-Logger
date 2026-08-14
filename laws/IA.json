@@ -1,0 +1,112 @@
+{
+  "code": "IA",
+  "reviewedAt": "2026-07-31",
+  "agency": "Iowa Department of Agriculture and Land Stewardship",
+  "citation": {
+    "reference": "Iowa Admin. Code r. 21-45.26(206)",
+    "url": "https://www.legis.iowa.gov/docs/iac/rule/02-05-2025.21.45.26.pdf"
+  },
+  "retentionYears": 3,
+  "appliesTo": "Commercial applicators and retail dealers; commercial applicator office records of all application activities on each pesticide applied.",
+  "verification": "researched",
+  "notes": "Current 2025 text requires temperature/wind direction/velocity if applicable for outdoor areas. Rule effective 1/1/2026 adds EPA registration number, treatment area size, crop/commodity/site for RUP, and certified/noncertified applicator details; include those in the logger as recommended.",
+  "fields": [
+    {
+      "name": "business_name_address",
+      "label": "Business / operator name & address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "company_license",
+      "label": "Company / business license #",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_address",
+      "label": "Customer address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "rate",
+      "label": "Application rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "temperature",
+      "label": "Temperature",
+      "type": "number",
+      "required": false
+    },
+    {
+      "name": "wind_direction",
+      "label": "Wind direction",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "wind_speed",
+      "label": "Wind speed",
+      "type": "number",
+      "required": false
+    },
+    {
+      "name": "restricted_use_flag",
+      "label": "Restricted-use (RUP) status",
+      "type": "boolean",
+      "required": true
+    },
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "end_time",
+      "label": "End time",
+      "type": "time",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

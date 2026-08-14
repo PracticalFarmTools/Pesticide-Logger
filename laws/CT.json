@@ -1,0 +1,82 @@
+{
+  "code": "CT",
+  "reviewedAt": "2026-07-31",
+  "agency": "Connecticut Department of Energy and Environmental Protection",
+  "citation": {
+    "reference": "Conn. Gen. Stat. §22a-58(d); §22a-66b guidance",
+    "url": "https://portal.ct.gov/deep/pesticides/pesticide-control-statutes-clarification"
+  },
+  "retentionYears": 5,
+  "appliesTo": "Commercial applicators and pesticide application businesses; private restricted-pesticide access/record language exists but exact private field list was not fully verified.",
+  "verification": "partial",
+  "notes": "Commercial records must include supervisor/operator names and certification numbers, kind and amount of pesticide, acreage if applicable, date/place, pest, crop/site. Annual summary reporting is due Jan. 31 for commercial use. Partially verified for private applicators.",
+  "fields": [
+    {
+      "name": "supervisor_name",
+      "label": "Supervising applicator",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_license",
+      "label": "Applicator certification / license #",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

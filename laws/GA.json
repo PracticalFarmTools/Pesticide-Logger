@@ -1,0 +1,112 @@
+{
+  "code": "GA",
+  "reviewedAt": "2026-07-31",
+  "agency": "Georgia Department of Agriculture",
+  "citation": {
+    "reference": "Ga. Comp. R. & Regs. 40-21-5",
+    "url": "https://rules.sos.ga.gov/gac/40-21-5"
+  },
+  "retentionYears": 2,
+  "appliesTo": "Licensed pesticide contractors: all business applications; licensed commercial applicators not acting for a contractor: RUP and state-restricted-use applications. Licensed private applicators are not required by this rule to maintain records.",
+  "verification": "researched",
+  "notes": "Record content includes unexpected occurrences such as spillage, exposure, drift, and corrective/emergency action, plus pesticide disposal details. Weather is not a standard required field except as part of incident notes/label duties.",
+  "fields": [
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "application_time",
+      "label": "Application time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "rate",
+      "label": "Application rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "method",
+      "label": "Method / equipment",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "notes",
+      "label": "Notes / unexpected occurrences",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "disposal_method",
+      "label": "Disposal of unused pesticide",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

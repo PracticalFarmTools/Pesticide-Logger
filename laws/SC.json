@@ -1,0 +1,70 @@
+{
+  "code": "SC",
+  "reviewedAt": "2026-07-31",
+  "agency": "Clemson University Department of Pesticide Regulation",
+  "citation": {
+    "reference": "S.C. Code Regs. 27-1083(C)",
+    "url": "https://www.law.cornell.edu/regulations/south-carolina/R-27-1083"
+  },
+  "retentionYears": 2,
+  "appliesTo": "Companies/firms employing licensed commercial or noncommercial applicators; self-employed commercial applicators; employers of noncommercial applicators. Private applicator record duty not verified.",
+  "verification": "researched",
+  "notes": "Records include quantity of each pesticide used, received, or purchased. Pests need not be listed for general household or general commercial/industrial insect control. Weather is not required by this section.",
+  "fields": [
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "active_ingredient",
+      "label": "Active ingredient",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "application_purpose",
+      "label": "Purpose of application",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "uncertain",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

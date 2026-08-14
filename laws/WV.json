@@ -1,0 +1,124 @@
+{
+  "code": "WV",
+  "reviewedAt": "2026-07-31",
+  "agency": "West Virginia Department of Agriculture",
+  "citation": {
+    "reference": "W. Va. C.S.R. §§61-12A-9 and 61-12B-7",
+    "url": "https://www.law.cornell.edu/regulations/west-virginia/W-Va-C-S-R-SS-61-12A-9"
+  },
+  "retentionYears": 2,
+  "appliesTo": "Commercial and certified public applicators: all pesticides; private applicators: RUP applications; pesticide businesses: all pesticide applications as licensing condition.",
+  "verification": "researched",
+  "notes": "Private RUP records include certified and noncertified applicator names/certification numbers and records required for noncertified applicator supervision. Weather is not required by cited sections.",
+  "fields": [
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "pesticide_formulation",
+      "label": "Pesticide formulation",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "dilution_rate",
+      "label": "Dilution rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "application_time",
+      "label": "Application time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_address",
+      "label": "Customer address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_license",
+      "label": "Applicator certification / license #",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "noncertified_applicator_name",
+      "label": "Noncertified / trainee applicator",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

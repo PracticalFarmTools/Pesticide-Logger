@@ -1,0 +1,112 @@
+{
+  "code": "WI",
+  "reviewedAt": "2026-07-31",
+  "agency": "Wisconsin Department of Agriculture, Trade and Consumer Protection",
+  "citation": {
+    "reference": "Wis. Admin. Code ATCP 29.21, 29.33; ATCP 30 atrazine records",
+    "url": "https://docs.legis.wisconsin.gov/document/administrativecode/ATCP%2029.21(1)"
+  },
+  "retentionYears": 3,
+  "appliesTo": "Commercial application businesses: each pesticide application; private agricultural producers applying RUPs; certified applicators where required.",
+  "verification": "researched",
+  "notes": "Records completed on day of application. Amount may be concentration+total quantity or rate+total area. Mix/load location is required if other than licensed business location, with small equipment/prepackaged exceptions. Products with atrazine or isoxaflutole should be retained three years per extension guidance.",
+  "fields": [
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_address",
+      "label": "Customer address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "end_time",
+      "label": "End time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "concentration",
+      "label": "Application concentration",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "rate",
+      "label": "Application rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "mix_load_location",
+      "label": "Mix / load location",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "code": "AL",
+  "reviewedAt": "2026-07-31",
+  "agency": "Alabama Department of Agriculture and Industries",
+  "citation": {
+    "reference": "Ala. Admin. Code r. 80-1-13-.14; aerial applications r. 80-1-14-.08",
+    "url": "https://www.law.cornell.edu/regulations/alabama/Ala-Admin-Code-r-80-1-13-.14"
+  },
+  "retentionYears": 3,
+  "appliesTo": "Commercial pesticide permit holders: each application of restricted-use and other pesticides. Private applicators: no Alabama record duty unless pesticide labeling requires it.",
+  "verification": "partial",
+  "notes": "Rule text does not require weather for ordinary ground applications. Separate Alabama aerial rule requires licensee/customer/farm/crop/acres/brand/formulation/rate/tank-mix/person/signature records and three-year retention. Partially verified for non-ag professional-services rules, which have a one-year baseline.",
+  "fields": [
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "rate",
+      "label": "Application rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "application_time",
+      "label": "Application time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "none",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

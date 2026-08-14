@@ -1,0 +1,148 @@
+{
+  "code": "ND",
+  "reviewedAt": "2026-07-31",
+  "agency": "North Dakota Department of Agriculture",
+  "citation": {
+    "reference": "N.D.C.C. §4.1-33-14; N.D. Admin. Code 60-03-01-07",
+    "url": "https://ndlegis.gov/information/acdata/pdf/60-03-01.pdf"
+  },
+  "retentionYears": 3,
+  "appliesTo": "Commercial and public applicators: all pesticide applications and rinsate use/disposal; private applicators: all RUP applications.",
+  "verification": "researched",
+  "notes": "Records made within 24 hours. Commercial/public customer copy within 30 days unless waived. Weather required for outdoor applications except seed treatment, bait, or indoor applications. Right-of-way records require weather and geographic location in two-hour increments.",
+  "fields": [
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "customer_address",
+      "label": "Customer address",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "end_time",
+      "label": "End time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "pesticide_supplier",
+      "label": "Pesticide supplier",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "wind_direction",
+      "label": "Wind direction",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "wind_speed",
+      "label": "Wind speed",
+      "type": "number",
+      "required": false
+    },
+    {
+      "name": "temperature",
+      "label": "Temperature",
+      "type": "number",
+      "required": false
+    },
+    {
+      "name": "rate",
+      "label": "Application rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "carrier_volume",
+      "label": "Carrier / finished spray volume",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "method",
+      "label": "Method / equipment",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_license",
+      "label": "Applicator certification / license #",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "notes",
+      "label": "Notes / unexpected occurrences",
+      "type": "string",
+      "required": false
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": 30,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

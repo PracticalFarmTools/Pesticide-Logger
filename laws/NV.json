@@ -1,0 +1,130 @@
+{
+  "code": "NV",
+  "reviewedAt": "2026-07-31",
+  "agency": "Nevada Department of Agriculture",
+  "citation": {
+    "reference": "NAC 555.410",
+    "url": "https://www.law.cornell.edu/regulations/nevada/NAC-555-410"
+  },
+  "retentionYears": 2,
+  "appliesTo": "Persons subject to NAC 555.400/custom application license categories; aerial/agricultural ground and urban/structural fields have different records. Aerial/agricultural monthly pest-control operation reports are required.",
+  "verification": "researched",
+  "notes": "For aerial/agricultural ground: date, person/county, pilot/applicator, crop/site, units, field number/name/site ID, brand/generic + EPA + dosage, purpose, start/finish time, start/finish temperature and wind. Urban/structural records are narrower, with extra weather/area fields for ornamental/turf/right-of-way/aquatic/fumigation.",
+  "fields": [
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "county",
+      "label": "County of application",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "site_id",
+      "label": "Site ID",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "rate",
+      "label": "Application rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "end_time",
+      "label": "End time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "temperature",
+      "label": "Temperature",
+      "type": "number",
+      "required": false
+    },
+    {
+      "name": "wind_speed",
+      "label": "Wind speed",
+      "type": "number",
+      "required": false
+    },
+    {
+      "name": "wind_direction",
+      "label": "Wind direction",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "total_mix_applied",
+      "label": "Total diluted mix applied",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "concentration",
+      "label": "Application concentration",
+      "type": "string",
+      "required": false
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

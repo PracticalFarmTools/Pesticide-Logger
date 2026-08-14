@@ -1,0 +1,52 @@
+{
+  "code": "AR",
+  "reviewedAt": "2026-07-31",
+  "agency": "Arkansas Department of Agriculture, State Plant Board",
+  "citation": {
+    "reference": "Ark. Code Ann. §20-20-215 / Arkansas Pesticide Use and Application Act rules",
+    "url": "https://media.ark.org/agri/Pesticide-Use-and-Application-Law-and-Rules.pdf"
+  },
+  "retentionYears": 2,
+  "appliesTo": "Commercial and noncommercial applicator licensees; routine operational records of pesticide applications. Private applicator state application-record fields not verified after federal rescission.",
+  "verification": "partial",
+  "notes": "Authoritative law text requires records containing kinds, amounts, uses, dates, and places of application. More detailed structural/pest-control rules include customer, location, area, crop/site, date/time, brand, EPA number, total amount, certified and noncertified applicators; agricultural exact field list partially verified.",
+  "fields": [
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "uncertain",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

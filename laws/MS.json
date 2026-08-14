@@ -1,0 +1,106 @@
+{
+  "code": "MS",
+  "reviewedAt": "2026-07-31",
+  "agency": "Mississippi Department of Agriculture and Commerce, Bureau of Plant Industry",
+  "citation": {
+    "reference": "Title 2, Part 1, Subpart 3, Chapter 11 §111.01 (professional services)",
+    "url": "https://agnet.mdac.ms.gov/agManage/uploads/1641.pdf"
+  },
+  "retentionYears": 2,
+  "appliesTo": "Persons licensed or permitted under Mississippi professional-services rules; all work performed. Broader agricultural private/commercial pesticide-use record rule not fully verified.",
+  "verification": "uncertain",
+  "notes": "WDI records are retained while contract is current plus two years. Termiticide pretreatments require start/end time, vehicle ID, application volume/minute, tank size, nozzle type/size, PSI, and total diluted volume. Agricultural coverage is uncertain/partially verified.",
+  "fields": [
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "application_purpose",
+      "label": "Purpose of application",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "dilution_rate",
+      "label": "Dilution rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "total_mix_applied",
+      "label": "Total diluted mix applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "nozzle_type",
+      "label": "Nozzle type",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "sprayer_pressure",
+      "label": "Sprayer pressure",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": false
+    },
+    {
+      "name": "end_time",
+      "label": "End time",
+      "type": "time",
+      "required": false
+    },
+    {
+      "name": "equipment_id",
+      "label": "Equipment ID",
+      "type": "string",
+      "required": false
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

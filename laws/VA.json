@@ -1,0 +1,112 @@
+{
+  "code": "VA",
+  "reviewedAt": "2026-07-31",
+  "agency": "Virginia Department of Agriculture and Consumer Services",
+  "citation": {
+    "reference": "2VAC5-680-50, 2VAC5-680-70; 2VAC5-685-200, -210",
+    "url": "https://law.lis.virginia.gov/admincode/title2/agency5/chapter680/section70/"
+  },
+  "retentionYears": 2,
+  "appliesTo": "Pesticide businesses: each general-use and RUP application; commercial applicators not for hire and registered technicians not for hire: each pesticide application. Private applicator requirements not verified in these sections.",
+  "verification": "researched",
+  "notes": "Records not readily available must be submitted to VDACS within 72 hours of written request. No wind/weather field in cited rule.",
+  "fields": [
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_address",
+      "label": "Customer address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_phone",
+      "label": "Customer phone",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_license",
+      "label": "Applicator certification / license #",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "carrier_volume",
+      "label": "Carrier / finished spray volume",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "method",
+      "label": "Method / equipment",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "uncertain",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

@@ -1,0 +1,148 @@
+{
+  "code": "WA",
+  "reviewedAt": "2026-07-31",
+  "agency": "Washington State Department of Agriculture",
+  "citation": {
+    "reference": "RCW 17.21.100; WAC 16-228-1320",
+    "url": "https://apps.leg.wa.gov/wac/default.aspx?cite=16-228-1320"
+  },
+  "retentionYears": 7,
+  "appliesTo": "Certified applicators; persons applying pesticides to more than one acre of agricultural land in a calendar year; public roadside spray entities; specified landscape applicators.",
+  "verification": "researched",
+  "notes": "Records completed the same day. Agricultural land >=1 acre must be locatable on adopted/map form using section-township-range, GPS, or irrigation block/farm unit. Commercial applicators applying to ag crop/land must provide copy to owner/lessee; employers with employees must also keep records for seven years.",
+  "fields": [
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_address",
+      "label": "Customer address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "end_time",
+      "label": "End time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "rate",
+      "label": "Application rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "carrier_volume",
+      "label": "Carrier / finished spray volume",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "wind_direction",
+      "label": "Wind direction",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "wind_speed",
+      "label": "Wind speed",
+      "type": "number",
+      "required": true
+    },
+    {
+      "name": "temperature",
+      "label": "Temperature",
+      "type": "number",
+      "required": true
+    },
+    {
+      "name": "concentration",
+      "label": "Application concentration",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "method",
+      "label": "Method / equipment",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_license",
+      "label": "Applicator certification / license #",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "permit_number",
+      "label": "Permit / operator ID",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 0,
+  "customerCopyDays": 30,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 0,
+    "unit": "sameDay"
+  }
+}

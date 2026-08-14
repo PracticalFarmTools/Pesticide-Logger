@@ -1,0 +1,100 @@
+{
+  "code": "KS",
+  "reviewedAt": "2026-07-31",
+  "agency": "Kansas Department of Agriculture",
+  "citation": {
+    "reference": "K.S.A. 2-2455; K.A.R. 4-13-4a",
+    "url": "https://www.ksrevisor.gov/statutes/chapters/ch02/002_024_0055.html"
+  },
+  "retentionYears": 3,
+  "appliesTo": "Pesticide businesses must retain statements of services/contracts; government agencies and certain certified commercial applicators maintain application records. Private applicator app-record field list not verified.",
+  "verification": "partial",
+  "notes": "K.S.A. 2-2455 governs customer statements/contracts and record availability. K.A.R. 4-13-4a requires complete product name and EPA/Kansas registration number. Field list is partially verified for agricultural application records because statute delegates some details to rules.",
+  "fields": [
+    {
+      "name": "business_name_address",
+      "label": "Business / operator name & address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_address",
+      "label": "Customer address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "rate",
+      "label": "Application rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "supervisor_name",
+      "label": "Supervising applicator",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "uncertain",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

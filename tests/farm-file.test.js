@@ -14,7 +14,7 @@ const Compliance = require(path.join(__dirname, '..', 'compliance.js'));
 const lawsCtx = {};
 vm.runInNewContext(
   fs.readFileSync(path.join(__dirname, '..', 'state_pesticide_laws.js'), 'utf8') +
-  '\nthis.STATE_LAWS = STATE_LAWS;',
+  '\nthis.STATE_LAWS = STATE_LAWS; this.STATE_LAWS_RESEARCH_DATE = STATE_LAWS_RESEARCH_DATE;',
   lawsCtx
 );
 const STATE_LAWS = lawsCtx.STATE_LAWS;
@@ -264,7 +264,8 @@ function iaApp(extra) {
 
 const packetOpts = {
   evaluateCompliance: Compliance.evaluateCompliance,
-  stateLaws: STATE_LAWS
+  stateLaws: STATE_LAWS,
+  matrixEdition: lawsCtx.STATE_LAWS_RESEARCH_DATE
 };
 
 await check('inspector packet v2 cover, checklist, incomplete, and print CSS', async () => {
@@ -325,6 +326,9 @@ await check('inspector packet v2 cover, checklist, incomplete, and print CSS', a
   assert.ok(html.includes('12 hr'));
   assert.ok(html.includes('The label is the law'));
   assert.ok(html.includes('not a filing') || html.includes('not the agency'));
+  assert.ok(html.includes('Rules last checked 2026-07-31'));
+  assert.ok(html.includes('matrix edition 2026-07-31'));
+  assert.strictEqual(payload.farm.reviewedAt, '2026-07-31');
   assert.ok(!html.includes('privateKey'));
   const completeRow = html.includes('INCOMPLETE') && html.includes('Complete');
   assert.ok(completeRow);

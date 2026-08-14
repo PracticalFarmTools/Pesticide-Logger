@@ -220,6 +220,21 @@ check('watch-list prints 50 local citation URLs and does not fetch', () => {
   assert.strictEqual(rows.filter((row) => row.cornell).length, 18);
 });
 
+check('maintainer playbook is event-driven and refuses in-app scrape', () => {
+  const play = fs.readFileSync(path.join(root, 'docs', 'state-maintainer-playbook.md'), 'utf8');
+  assert.ok(play.includes('Track 1 — citation hygiene'));
+  assert.ok(play.includes('Track 2 — turn on the hasher'));
+  assert.ok(play.includes('hash-stable'));
+  assert.ok(play.includes('No `app.js`'));
+  assert.ok(play.includes('--watch-list'));
+  assert.ok(!play.includes('in-app scrape') || play.includes('No in-app scrape'));
+  const oldest = spawnSync(process.execPath, [path.join(root, 'tools', 'bundle-state-laws.js'), '--oldest', '13'], {
+    encoding: 'utf8', cwd: root
+  });
+  assert.strictEqual(oldest.status, 0, oldest.stderr);
+  assert.ok(oldest.stdout.includes('list only; not a reread duty'));
+});
+
 if (failed) {
   console.error('\n' + failed + ' state-laws check(s) failed');
   process.exit(1);

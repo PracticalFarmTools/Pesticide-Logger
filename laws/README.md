@@ -35,13 +35,17 @@ node tools/bundle-state-laws.js --stamp KS
 Queue and inspect (does not change files):
 
 ```bash
-node tools/bundle-state-laws.js --holes      # partial / uncertain / privateDuty holes
-node tools/bundle-state-laws.js --oldest 13  # quarterly re-read queue
+node tools/bundle-state-laws.js --holes      # optional research queue (not a calendar)
+node tools/bundle-state-laws.js --oldest 13  # list only; not a quarterly duty
 node tools/bundle-state-laws.js --stale
 node tools/bundle-state-laws.js --show MS    # citation URL + field names
 node tools/bundle-state-laws.js --status
 node tools/bundle-state-laws.js --watch-list # citation URLs for an external monitor (no fetch)
 ```
+
+What to do next, in order: `docs/state-maintainer-playbook.md`
+(citation hygiene, one hasher, holes when you want them, hash-stable
+stamps). Do not reread 13 statutes every quarter by default.
 
 6. Run `node tests/compliance.test.js` and `node tests/state-laws.test.js`.
 7. Commit **that state’s JSON**, `_meta.json` if the edition moved, the

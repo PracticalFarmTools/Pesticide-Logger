@@ -4,9 +4,12 @@
 freshness in **v2.9.5** (`laws/XX.json`, `reviewedAt`, Settings + Home
 last-checked and check-again-by, 12-month stale warning, `--holes` /
 `--oldest`). Off-app citation monitoring is documented; `--watch-list`
-exports the 50 URLs (no fetch). Dataset header / matrix edition date is
-still **2026-07-31**. Batches A–G (remaining `partial` / `uncertain`
-promotions) are specified, not done.
+exports the 50 URLs (no fetch). **From this point, follow
+`docs/state-maintainer-playbook.md`:** citation hygiene first, one
+external hasher, holes only when you want completeness, event-driven
+stamps (no quarterly 13-state reread). Dataset header / matrix edition
+date is still **2026-07-31**. Batches A–G (remaining `partial` /
+`uncertain` promotions) are specified, not done.
 
 Job to be done: a grower in **any of the 50 states** can pick that state in
 Settings and get a spray log, completeness badge, and inspector packet that
@@ -315,9 +318,11 @@ they receive any other fix: new version, `#update-banner`, Reload. CSP
 and adding one would be unsigned legal text over the network — out of
 lane, and it would break offline cab.
 
-**Easy** means: dates on the Settings card, a quarterly click-through of
-`citation.url`, bump `reviewedAt`, ship. It does not mean 50 scrapers,
-crowdsourced inspector edits, or a second laws JSON.
+**Easy** means: dates on the Settings card, an off-app hash of
+`citation.url`, bump `reviewedAt` when the page moved or once a year if
+the hash was stable, ship. It does not mean 50 scrapers,
+crowdsourced inspector edits, or a second laws JSON. Cadence:
+`docs/state-maintainer-playbook.md`.
 
 ### What growers already have
 
@@ -362,11 +367,15 @@ Do this as **Batch H** after (or beside) the research batches. No new tab.
    inspector sees the edition. Do not re-run `evaluateCompliance` on old
    packet HTML when the dataset changes.
 
-### What maintainers do (quarterly, in the same file)
+### What maintainers do (event-driven; see the playbook)
 
-Sort states by `reviewedAt`, oldest first. Each quarter, open the oldest
-~12–13 `citation.url` values (official HTML/PDF, not Cornell if a primary
-exists). For each:
+**Superseded:** a quarterly click-through of the oldest ~12–13 URLs.
+That reread is the time sink. Current cadence:
+`docs/state-maintainer-playbook.md` — hash change, dead link, or annual
+hash-stable `--stamp` on `researched` official URLs. `--oldest 13` is a
+list, not a duty.
+
+When you *do* open a citation (alert or Track 3 research):
 
 - Fields still match → bump **only** `reviewedAt` (and file date + cache).
   That commit is a confirmation, not a no-op.
@@ -374,7 +383,8 @@ exists). For each:
   `reviewedAt`.
 - Link dead → find the current official URL; do not promote on a 404.
 - Rule gone / private duty still silent → keep `uncertain`; bump
-  `reviewedAt` so we record “we looked, still nothing.”
+  `reviewedAt` so we record “we looked, still nothing.” Then **stop**
+  putting that code on a calendar until the hash moves.
 
 One state per field-list or confirmation commit. Do not wait for all 50.
 
@@ -406,7 +416,8 @@ growers Reload. The in-app work is **making staleness visible** and
 It does not need `data-log-field`. It does not affect
 `complianceValuePresent`. Completeness still uses `verification` +
 `privateDuty` + filled boxes. `reviewedAt` only drives Settings copy,
-optional packet cover line, and the quarterly queue.
+optional packet cover line, and the maintainer queue (`--oldest` /
+`--stale`). It is not a reread duty.
 
 Until Batch H landed, the file header comment was the only edition date.
 `reviewedAt` now lives on every state JSON. Seed remaining un-opened
@@ -483,7 +494,7 @@ find the current official file, not a promotion.
 
 **5. Scheduled AI agent as a *diff assistant*, never as the author.**
 
-After a hash change (or on the `--oldest 13` quarterly queue), an agent
+After a hash change, an agent
 may fetch the new page and the previous snapshot and answer: did the
 recordkeeping section change, who it applies to, and which of our
 `fields[].name` values might be affected? The agent drafts notes. A
@@ -547,12 +558,16 @@ A scheduled workflow that reads `--watch-list`, GETs each URL, writes
 `code\tsha256\tstatus` to an artifacts file, and opens an issue on
 hash or status change. Out of this repo’s runtime. Do not add the Action
 until someone is ready to **triage** those issues; an unread firehose is
-worse than `--oldest 13`.
+worse than no hasher. Playbook Track 2 is a hosted page monitor first;
+this Action is Track “later.”
 
 ## Implementation order
 
-Each batch is shippable. A half-finished MS must not look more complete
-than today’s `uncertain`.
+**From this point:** `docs/state-maintainer-playbook.md` (hygiene →
+hasher → optional holes → event-driven stamps). The batches below are
+the research detail for Track 3 (and leftover URL swaps in Track 1).
+Each batch is still shippable. A half-finished MS must not look more
+complete than today’s `uncertain`.
 
 ### Batch A — Alabama (smallest honest promotion)
 

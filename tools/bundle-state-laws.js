@@ -8,7 +8,7 @@
  *   node tools/bundle-state-laws.js              write runtime file + SW edition
  *   node tools/bundle-state-laws.js --check      exit 1 if generated file is stale
  *   node tools/bundle-state-laws.js --status     table: verification, dates, Cornell
- *   node tools/bundle-state-laws.js --oldest 13  quarterly queue (oldest reviewedAt)
+ *   node tools/bundle-state-laws.js --oldest 13  oldest reviewedAt (list, not a duty)
  *   node tools/bundle-state-laws.js --stale      states past the 12-month check
  *   node tools/bundle-state-laws.js --show KS    one state's citation + fields
  *   node tools/bundle-state-laws.js --watch-list citation URLs for an external change monitor
@@ -321,7 +321,7 @@ function printOldest(n, nowIso) {
     if (a.reviewedAt !== b.reviewedAt) return a.reviewedAt < b.reviewedAt ? -1 : 1;
     return a.code < b.code ? -1 : 1;
   }).slice(0, count);
-  console.log('Oldest ' + rows.length + ' by reviewedAt (quarterly pass). Edit laws/XX.json, then --stamp XX.');
+  console.log('Oldest ' + rows.length + ' by reviewedAt (list only; not a reread duty). Edit laws/XX.json, then --stamp XX.');
   rows.forEach((r) => {
     console.log(r.code + '\t' + r.reviewedAt + '\t' + r.verification + '\t' + r.privateDuty + '\t' +
       (r.citation.url || ''));

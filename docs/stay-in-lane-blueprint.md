@@ -4,7 +4,8 @@
 clerk search, optional FSA numbers, cab install hint). State-law research
 pass (partial/uncertain → researched) is specified in
 `docs/state-dataset-blueprint.md`. Keep-current dates in Settings shipped
-in v2.9.4; remaining promotions are **not implemented here**.
+in v2.9.4; from here follow `docs/state-maintainer-playbook.md`. Remaining
+promotions are **not implemented here**.
 inspector HTML, optional crew, inspector view, shop REI board).
 
 Job to be done: a grower keeps **U.S. state pesticide application records** on

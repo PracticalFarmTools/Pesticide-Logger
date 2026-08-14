@@ -57,8 +57,9 @@ change completeness badges. Home also names dataset holes (partial,
 uncertain, unverified private duty).
 
 To update one state's rule after a legal change, edit only `laws/XX.json`
-and run `node tools/bundle-state-laws.js`. See `laws/README.md`. Do not
-change `app.js` or `compliance.js` for a citation or field-list edit.
+and run `node tools/bundle-state-laws.js`. See `laws/README.md`. What to
+work on next (citation hygiene, hasher, holes): `docs/state-maintainer-playbook.md`.
+Do not change `app.js` or `compliance.js` for a citation or field-list edit.
 
 **It does:**
 

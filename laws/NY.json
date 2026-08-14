@@ -1,0 +1,76 @@
+{
+  "code": "NY",
+  "reviewedAt": "2026-08-14",
+  "agency": "New York State Department of Environmental Conservation",
+  "citation": {
+    "reference": "ECL §33-1205; 6 NYCRR 325.25; PRL electronic reporting",
+    "url": "https://dec.ny.gov/regulatory/regulations/pesticide-statutes-regulations-and-policies"
+  },
+  "retentionYears": 3,
+  "appliesTo": "Commercial applicators, technicians, commercial permittees: all pesticide applications; private applicators: restricted pesticides purchased/crop/method/date records.",
+  "verification": "researched",
+  "notes": "Commercial annual PRL reports are due electronically by Feb. 1 for prior calendar year; paper is no longer accepted. Commercial records also need address including five-digit ZIP and sufficiently precise place. Private applicator minimum records are restricted pesticides purchased, crops treated, application method, and dates; less complete than commercial records.",
+  "fields": [
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "rate",
+      "label": "Application rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "method",
+      "label": "Method / equipment",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": false
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

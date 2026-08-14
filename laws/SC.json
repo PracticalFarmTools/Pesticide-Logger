@@ -1,0 +1,70 @@
+{
+  "code": "SC",
+  "reviewedAt": "2026-08-14",
+  "agency": "Clemson University Department of Pesticide Regulation",
+  "citation": {
+    "reference": "S.C. Code Regs. 27-1083(C)",
+    "url": "https://www.scstatehouse.gov/coderegs/Chapter%2027.pdf"
+  },
+  "retentionYears": 2,
+  "appliesTo": "Companies/firms employing licensed commercial or noncommercial applicators; self-employed commercial applicators; employers of noncommercial applicators. Private applicator record duty not verified.",
+  "verification": "researched",
+  "notes": "S.C. Code Regs. 27-1083(C) (read 2026-08-14): records by companies/firms employing licensed commercial or noncommercial applicators, self-employed commercial applicators, and employers of licensed noncommercial applicators. Quantity, active ingredient if available, brand, EPA number, pest or purpose, date, and place. Two years except termiticides (five years or warranty). This section does not name private applicators; private duty stays uncertain. Weather is not required. Official compiler PDF: scstatehouse.gov Chapter 27.",
+  "fields": [
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "active_ingredient",
+      "label": "Active ingredient",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "application_purpose",
+      "label": "Purpose of application",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "uncertain",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

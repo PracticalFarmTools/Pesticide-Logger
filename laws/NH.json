@@ -1,0 +1,76 @@
+{
+  "code": "NH",
+  "reviewedAt": "2026-07-31",
+  "agency": "New Hampshire Department of Agriculture, Markets & Food, Division of Pesticide Control",
+  "citation": {
+    "reference": "N.H. Admin. Code Pes 901.02; Pes 901.04 annual reporting",
+    "url": "https://gencourt.state.nh.us/rules/state_agencies/pes900.html"
+  },
+  "retentionYears": 2,
+  "appliesTo": "Registrants and permittees; all pesticide applications by personnel working from registered firms/branches/subsidiaries; records maintained by both commercial and private applicators.",
+  "verification": "researched",
+  "notes": "Pes 901.02 has seven daily-use record elements. Annual reporting under Pes 901.04 requires additional product/EPA/active/acreage/amount information; include EPA and amount in the logger although not in the seven daily record elements.",
+  "fields": [
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "pesticide_formulation",
+      "label": "Pesticide formulation",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "rate",
+      "label": "Application rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "method",
+      "label": "Method / equipment",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

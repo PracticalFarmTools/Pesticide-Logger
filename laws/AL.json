@@ -1,0 +1,76 @@
+{
+  "code": "AL",
+  "reviewedAt": "2026-08-14",
+  "agency": "Alabama Department of Agriculture and Industries",
+  "citation": {
+    "reference": "Ala. Admin. Code r. 80-1-13-.14; aerial applications r. 80-1-14-.08",
+    "url": "https://admincode.legislature.state.al.us/api/chapter/80-1-13"
+  },
+  "retentionYears": 3,
+  "appliesTo": "Commercial pesticide permit holders: each application of restricted-use and other pesticides. Private applicators: no Alabama record duty unless pesticide labeling requires it. Aerial custom licensees have a separate list in r. 80-1-14-.08.",
+  "verification": "researched",
+  "notes": "Official SOS chapter 80-1-13 (read 2026-08-14): private applicators shall not be required to keep books and records unless required by the labeling. Commercial permit holders keep EPA registration number, amount used, crop or site, pest, rate, location, and date and time, for three years. Ground rule .14 does not require weather and does not set a completion clock (24-hour fallback is operational, not in .14). Aerial r. 80-1-14-.08 (https://admincode.legislature.state.al.us/api/chapter/80-1-14) adds licensee/customer/farm/crop/acres/brand/manufacturer/formulation/rate/tank-mix/applicator/signature and a 72-hour completion clock — those aerial extras are not required boxes on a ground spray. Professional-services work is not this agricultural matrix.",
+  "fields": [
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "rate",
+      "label": "Application rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "application_time",
+      "label": "Application time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "none",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

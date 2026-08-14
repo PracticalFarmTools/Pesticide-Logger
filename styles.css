@@ -1326,6 +1326,15 @@ label.state-required-field {
 .state-info-block { font-size: 0.9rem; }
 .state-info-block ul { margin: 0.5rem 0 0 1.2rem; font-size: 0.85rem; color: var(--text-muted); }
 .state-info-block a { color: var(--primary-green); font-weight: 600; }
+.state-law-stale {
+  background: var(--warn-bg);
+  color: var(--warn);
+  border: 1px solid var(--warn);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
 
 /* ---------- Print ---------- */
 .print-area { display: none; }

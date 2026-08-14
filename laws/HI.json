@@ -1,0 +1,124 @@
+{
+  "code": "HI",
+  "reviewedAt": "2026-08-14",
+  "agency": "Hawaii Department of Agriculture and Biosecurity, Pesticides Branch",
+  "citation": {
+    "reference": "HAR §4-66-62; HRS 149A-26 annual RUP reports",
+    "url": "https://dab.hawaii.gov/wp-content/uploads/2018/10/HAR-Title-4-Chap-66-RAMSEYER-revised-10-1-2018.pdf"
+  },
+  "retentionYears": 2,
+  "appliesTo": "Certified pesticide applicators; restricted-use pesticide applications kept at the principal place of business. Commercial applicators applying any pesticide in agricultural operations must also furnish a written record to the agricultural employer before the application (HAR §4-66-62(d)/(e)).",
+  "verification": "researched",
+  "notes": "HAR §4-66-62(c) (read 2026-08-14 from the department HAR chapter 66 PDF): brand or common name; EPA registration number; type of formulation; percent active ingredient; target pest; dilution rate; total amount used; total area covered; time and date; address or location; certified applicator name and certification number; crop/commodity/stored product/site; REI and whether posting/oral notification are required; TMK (mapped to site ID). County is on the annual RUP declaration (HRS 149A-26 / Form P-45), due January 30 — that report is e-file, out of this app. The employer copy is before application, not a 30-day customer-copy clock. Do not use the RUP-report explainer page as the watch URL.",
+  "fields": [
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "pesticide_formulation",
+      "label": "Pesticide formulation",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "active_ingredient",
+      "label": "Active ingredient",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "dilution_rate",
+      "label": "Dilution rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "application_time",
+      "label": "Application time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "site_id",
+      "label": "Tax map key / site ID",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_license",
+      "label": "Applicator certification / license #",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "rei_hours",
+      "label": "Restricted-entry interval (REI)",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

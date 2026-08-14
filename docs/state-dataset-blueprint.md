@@ -1,9 +1,13 @@
 # Blueprint: 50-state pesticide recordkeeping research
 
-**Status: specified, not implemented.** Dataset header date is still **2026-07-31**.
-Two jobs, same file: (1) close remaining `partial` / `uncertain` holes with
-citations, or keep them honest; (2) **keep each state’s row current inside
-the app** without a legal API, scraper, or grower-edited matrices.
+**Status: Batch H implemented** in v2.9.4; Home / log / maintainer queue
+freshness in **v2.9.5**. Playbook Tracks 1 and 3 for this pass landed
+**2026-08-14** (`docs/state-maintainer-playbook.md`): official citation
+URLs where a primary host answered; hole states researched or frozen
+from that state's source only. Dataset header / matrix edition is
+**2026-08-14**. Remaining work is leftover Cornell URLs that 403/404,
+private-duty holes, and the external hasher (Track 2) — not a new
+engine.
 
 Job to be done: a grower in **any of the 50 states** can pick that state in
 Settings and get a spray log, completeness badge, and inspector packet that
@@ -38,24 +42,25 @@ green check we cannot defend.
 
 ## What it does today
 
-Source of truth: `state_pesticide_laws.js` (`STATE_LAWS`). Completeness:
+Source of truth: `laws/XX.json` (one state per file). Runtime cache:
+`state_pesticide_laws.js` via `node tools/bundle-state-laws.js`. Completeness:
 `compliance.js` `evaluateCompliance`. Log reshape: `reshapeAppFormForState`.
 Packet checklist: `FarmFile.statuteChecklist` (required `law.fields` labels).
 Gate: `tests/compliance.test.js` (50 states present; agency / citation /
 retention / verification / fields / `privateDuty`).
 
-Research date in the file header: **2026-07-31**.
+Research date in the file header: **2026-08-14**.
 
 | Bucket | Count | Codes |
 |---|---|---|
-| `verification: researched` | 43 | All except the 7 below |
-| `verification: partial` | 6 | AL, AR, CT, HI, KS, ME |
+| `verification: researched` | 49 | All except MS |
+| `verification: partial` | 0 | — |
 | `verification: uncertain` | 1 | MS |
-| `privateDuty: required` | 41 | Default |
+| `privateDuty: required` | 41 | Default (RI private RUP/SLU is named in 250-RICR-40-15-2.6(C)) |
 | `privateDuty: none` | 1 | AL |
-| `privateDuty: uncertain` | 8 | AR, KS, MI, MN, RI, SC, SD, VA |
-| Customer-copy days encoded | 7 | FL, HI, IN, ND, NM, PA, WA (all 30; commercial) |
-| Citation host = Cornell LII | 18 | AL, AZ, CA, ID, IL, MA, MD, MI, MO, NE, NJ, NV, SC, SD, TN, UT, WV, WY |
+| `privateDuty: uncertain` | 8 | AR, KS, MI, MN, MS, SC, SD, VA |
+| Customer-copy days encoded | 6 | FL, KS, ND, NM, PA, WA (commercial; KS is the 30-day statute; HI employer copy is before application; IN 30-day copy was in voided 355 IAC 4-4) |
+| Citation host = Cornell LII | 9 | AZ, CA, IL, MA, MI, NE, TN, UT, WY (official host 403/404/redirect on 2026-08-14) |
 
 `evaluateCompliance` already treats dataset quality as a **warning**, not a
 pass:
@@ -77,9 +82,9 @@ without ever flipping a state to Complete by inventing fields.
 | Settings state | Private grower | Commercial grower |
 |---|---|---|
 | Iowa (`researched` / `required`) | State required tags; Complete is possible | Same |
-| Alabama (`partial` / `none`) | No Alabama matrix; core still required; Needs review because verification is `partial` | Commercial matrix; Needs review until AL is promoted |
+| Alabama (`researched` / `none`) | No Alabama matrix; operational core still required; **Fields complete** is possible | Commercial r. 80-1-13-.14 matrix; Complete is possible |
 | Virginia (`researched` / `uncertain`) | Commercial field list shown; Needs review because private duty is unverified | Complete is possible |
-| Mississippi (`uncertain` / `required`) | Professional-services field list (WDI/termiticide extras); Needs review; ag rule not verified | Same warning |
+| Mississippi (`uncertain` / `uncertain`) | Short generic farm row only (no WDI PSI/nozzles); Needs review; ag rule not verified | Same warning |
 
 A grower in a `partial` state can still save drafts, save complete-looking
 rows (strict mode uses the same engine), print, and export. They cannot get
@@ -268,8 +273,10 @@ FSA strings already on the field). “Kansas registration number” →
 
 ## How to research one state (repeatable)
 
-Work in `state_pesticide_laws.js` only (plus tests). Do not reshape the log
-UI per state beyond the field names the engine already understands.
+Work in `laws/XX.json` only (plus `node tools/bundle-state-laws.js`).
+Do not reshape the log UI per state beyond the field names the engine
+already understands. Do not edit `app.js` or `compliance.js` for a
+citation, field-list, or `reviewedAt` change.
 
 1. Open the current `citation.reference` and `citation.url`.
 2. Find the **official** HTML/PDF (agency, SOS, legislature, administrative
@@ -309,9 +316,11 @@ they receive any other fix: new version, `#update-banner`, Reload. CSP
 and adding one would be unsigned legal text over the network — out of
 lane, and it would break offline cab.
 
-**Easy** means: dates on the Settings card, a quarterly click-through of
-`citation.url`, bump `reviewedAt`, ship. It does not mean 50 scrapers,
-crowdsourced inspector edits, or a second laws JSON.
+**Easy** means: dates on the Settings card, an off-app hash of
+`citation.url`, bump `reviewedAt` when the page moved or once a year if
+the hash was stable, ship. It does not mean 50 scrapers,
+crowdsourced inspector edits, or a second laws JSON. Cadence:
+`docs/state-maintainer-playbook.md`.
 
 ### What growers already have
 
@@ -356,11 +365,15 @@ Do this as **Batch H** after (or beside) the research batches. No new tab.
    inspector sees the edition. Do not re-run `evaluateCompliance` on old
    packet HTML when the dataset changes.
 
-### What maintainers do (quarterly, in the same file)
+### What maintainers do (event-driven; see the playbook)
 
-Sort states by `reviewedAt`, oldest first. Each quarter, open the oldest
-~12–13 `citation.url` values (official HTML/PDF, not Cornell if a primary
-exists). For each:
+**Superseded:** a quarterly click-through of the oldest ~12–13 URLs.
+That reread is the time sink. Current cadence:
+`docs/state-maintainer-playbook.md` — hash change, dead link, or annual
+hash-stable `--stamp` on `researched` official URLs. `--oldest 13` is a
+list, not a duty.
+
+When you *do* open a citation (alert or Track 3 research):
 
 - Fields still match → bump **only** `reviewedAt` (and file date + cache).
   That commit is a confirmation, not a no-op.
@@ -368,7 +381,8 @@ exists). For each:
   `reviewedAt`.
 - Link dead → find the current official URL; do not promote on a 404.
 - Rule gone / private duty still silent → keep `uncertain`; bump
-  `reviewedAt` so we record “we looked, still nothing.”
+  `reviewedAt` so we record “we looked, still nothing.” Then **stop**
+  putting that code on a calendar until the hash moves.
 
 One state per field-list or confirmation commit. Do not wait for all 50.
 
@@ -382,7 +396,7 @@ fail tests.
 
 | Temptation | Why it is not the easy path |
 |---|---|
-| Scrape 50 agency sites / “watch this PDF” | Unsigned, brittle, CSP, offline cab, still needs a human to map fields |
+| Scrape 50 agency sites **in the app** / auto-fill `fields[]` | Unsigned, brittle, CSP, offline cab. Off-app hash alerts are the monitor; a human still maps fields (see Monitoring legal changes) |
 | Live `fetch` of statutes into the log | Legal text over the network; cache-first SW would serve yesterday’s law without saying so |
 | Separate signed `laws.json` without a shell bump | Extra signing, hosting, and CSP; SW Reload already ships the file |
 | Grower-editable matrices / “inspector said add wind” | Forks the dataset per device; next update overwrites or diverges; not our job |
@@ -400,16 +414,158 @@ growers Reload. The in-app work is **making staleness visible** and
 It does not need `data-log-field`. It does not affect
 `complianceValuePresent`. Completeness still uses `verification` +
 `privateDuty` + filled boxes. `reviewedAt` only drives Settings copy,
-optional packet cover line, and the quarterly queue.
+optional packet cover line, and the maintainer queue (`--oldest` /
+`--stale`). It is not a reread duty.
 
-Until Batch H lands, the file header comment remains the only edition
-date. Do not invent per-state dates in JSON before the UI can show them
-— land schema + seed + Settings copy in the same change.
+Until Batch H landed, the file header comment was the only edition date.
+`reviewedAt` now lives on every state JSON. Seed remaining un-opened
+citations to the file date — do not stamp “today” without reading the rule.
+
+## Monitoring legal changes (outside the app)
+
+The in-app path is already: a human reads `citation.url` → edits
+`laws/XX.json` → `node tools/bundle-state-laws.js --stamp XX` → growers
+Reload. The remaining problem is **knowing the page moved**. That work
+belongs in a maintainer pipeline, not in the cab. The PWA must not fetch
+statutes (`connect-src` is `'self'` + Open-Meteo), must not parse PDFs into
+`fields[]`, and must not auto-promote `verification`. Snapshots of official
+text do not belong in the service-worker shell.
+
+`node tools/bundle-state-laws.js --watch-list` prints the feed (TSV: code,
+kind, host, hole, cornell, url). It reads local JSON only. It does **not**
+GET the URLs.
+
+### What the 50 citations actually are
+
+Counts from the current matrix (edition **2026-08-14**):
+
+| Slice | Count | Notes |
+|---|---|---|
+| Distinct hosts | 50 citation URLs, unique per state | Isolation test: no shared URL, no identical field list |
+| Cornell LII | 9 | AZ, CA, IL, MA, MI, NE, TN, UT, WY — official host 403/404/redirect |
+| Direct PDFs | many | Including AL SOS chapter, OK ODAFF manual, LA DOA LAC, HI HAR, ME ch. 50, MS MDAC |
+| `http://` (not TLS) | 1 | NC (`ncrules.state.nc.us`); official host has no working https |
+| Unofficial / CDN mirrors | 0 | FL, OK, CO, LA, IN, NY, HI, CT swapped off junk hosts |
+
+Watching `citation.url` is necessary and not sufficient. A rule can change
+on the official SOS site while our URL still points at last year’s PDF, a
+Cornell mirror, or a guidance page (HI RUP explainer, NY PRL page). Hash
+alerts tell you the **bytes moved**. A human still maps that to `fields[]`,
+`privateDuty`, and `recordDeadline`.
+
+### Ranked options
+
+**1. Page-change monitor on `citation.url` (do this first).**
+
+Hash or ETag the 50 URLs on a weekly cron (Changedetection.io, a GitHub
+Action that stores SHA-256 of the response body, Visualping, Distill).
+PDF bytes hash cleanly. HTML often false-positives (session cookies,
+“last updated” widgets, CDN cache-busters). Normalize before hashing:
+strip cookies, follow redirects, ignore volatile query params. Alert →
+open an issue named `KS citation changed` → human reads the official
+text → edit `laws/KS.json` → `--stamp KS`. Never auto-commit the JSON.
+
+**2. Official registers, RSS, and agency mailing lists.**
+
+Many secretaries of state publish a register of proposed / adopted
+rules. Ag departments mail “what’s new.” These catch **new rulemaking**
+that has not yet replaced the PDF at `citation.url`. Coverage is uneven;
+there is no 50-state RSS. Subscribe where it exists (PA Code & Bulletin,
+GA SOS, RI SOS, DE regulations, VT / ME rulemaking dockets). Treat
+register hits as “re-read this state this quarter,” not as a field list.
+
+**3. Legislative trackers (LegiScan, Open States) as a complement.**
+
+Keyword alerts for pesticide / applicator / recordkeeping bills. Useful
+for **statute** changes (KS, MN, OR in this dataset). Most of our matrix
+is **administrative code**. A tracker will miss a department amending
+R. 80-1-13-.14. Do not treat a quiet bill session as “the rule is
+unchanged.”
+
+**4. PDF byte-hash for the 11 direct files.**
+
+AK, AR, IN, IA, LA, ME, MS, MT, ND, TX, VT. Hash the body after
+redirects. Watch for URL rot: LA’s Contentful path will 404 when the
+asset is re-uploaded even if the rule is the same; IN’s Purdue PDF is
+an extension summary, not the statute. A hash change is a prompt to
+find the current official file, not a promotion.
+
+**5. Scheduled AI agent as a *diff assistant*, never as the author.**
+
+After a hash change, an agent
+may fetch the new page and the previous snapshot and answer: did the
+recordkeeping section change, who it applies to, and which of our
+`fields[].name` values might be affected? The agent drafts notes. A
+human sets `verification`, `privateDuty`, and required boxes. Do **not**:
+
+- let the agent write `laws/XX.json` unattended
+- promote `partial` → `researched` from a model extract
+- crawl all 50 pages nightly asking “extract required fields” (that is
+  how invented boxes get into the cab)
+- run the agent inside the grower’s browser or against the SW cache
+
+Browser-use agents will hit PDF viewers, JS-only SOS apps, and
+CAPTCHAs. Prefer raw HTTP + stored snapshots over clicking around
+`pacodeandbulletin.gov`.
+
+**6. Wayback / Internet Archive compare.**
+
+Useful when a URL 404s and you need last year’s text. Not a live
+monitor. Do not cite archive.org as `citation.url` once a current
+official URL exists.
+
+### Recommended pipeline
+
+```
+--watch-list
+    → external hasher (weekly)
+        → alert only when bytes change
+            → snapshot old vs new
+                → optional AI summary of the recordkeeping section
+                    → human edits laws/XX.json
+                        → --stamp XX
+                            → growers Reload
+```
+
+Keep snapshots and hashes in a **maintainer repo or Changedetection
+volume**, not in this PWA. `--oldest 13` remains the backstop for pages
+that never change bytes (same HTML, new meaning elsewhere) and for
+Cornell mirrors that lag the state.
+
+### What not to scrape, and why
+
+| Approach | Why it fails for this product |
+|---|---|
+| In-app `fetch` of statutes | CSP, offline cab, unsigned legal text, cache-first SW serving yesterday’s law |
+| Auto-parse PDF/HTML into `fields[]` | Hallucinated required boxes; completeness becomes fiction |
+| Auto-promote `researched` when the hash is stable | Silence is not a primary-source read |
+| Watch Cornell only | 18/50 URLs are a mirror; LII can move independently of the state |
+| Treat `elaws.us` / `public.law` as official | Convenient HTML; promote only from the agency / SOS / legislature |
+| Store page snapshots in `sw.js` | Inflates the shell; not our job; goes stale offline |
+| Aggressive crawl ignoring robots / rate limits | Brittle, rude, and unnecessary when 50 URLs hashed weekly is enough |
+| Crowdsourced “inspector said the rule changed” | No citation, no freeze story, forks the matrix per device |
+
+Government public-records pages are usually fine to hash politely
+(identify the crawler, one request per URL per week, honor robots.txt).
+That is still **not** a license to republish full statute text inside the
+app. We ship a field list and a URL, not a copy of the code.
+
+### Later, if a GitHub Action is worth it
+
+A scheduled workflow that reads `--watch-list`, GETs each URL, writes
+`code\tsha256\tstatus` to an artifacts file, and opens an issue on
+hash or status change. Out of this repo’s runtime. Do not add the Action
+until someone is ready to **triage** those issues; an unread firehose is
+worse than no hasher. Playbook Track 2 is a hosted page monitor first;
+this Action is Track “later.”
 
 ## Implementation order
 
-Each batch is shippable. A half-finished MS must not look more complete
-than today’s `uncertain`.
+**From this point:** `docs/state-maintainer-playbook.md` (hygiene →
+hasher → optional holes → event-driven stamps). The batches below are
+the research detail for Track 3 (and leftover URL swaps in Track 1).
+Each batch is still shippable. A half-finished MS must not look more
+complete than today’s `uncertain`.
 
 ### Batch A — Alabama (smallest honest promotion)
 
@@ -452,15 +608,14 @@ Stay-in-lane packet and Settings copy already consume `verification` and
 requires a `data-log-field` control — except **Batch H** (dates on the
 Settings card), which is metadata display, not a new log field.
 
-### Batch H — keep-current in Settings (schema + copy)
+### Batch H — keep-current in Settings (schema + copy) — **done in v2.9.4**
 
-Export `STATE_LAWS_RESEARCH_DATE`. Add `reviewedAt` on all 50 (seed to
-the file date). Show last-checked + edition on `#state-info-card`. Stale
-warning after 12 months; do not auto-demote `verification`. Optional:
-packet cover repeats last-checked; “Check for app update” = SW
-`registration.update()`. Tests: every state has `reviewedAt`; Settings
-renders both dates; stale copy does not change badges. Land this even if
-Batches A–G are unfinished — freshness is useful on `partial` rows too.
+`STATE_LAWS_RESEARCH_DATE` is exported. Every state JSON has `reviewedAt`
+(seeded to 2026-07-31). Settings `#state-info-card` shows last-checked +
+edition. Stale warning after 365 days; `verification` is not auto-demoted.
+Packet cover freezes last-checked at export. “Check for app update” calls
+SW `registration.update()`. Legal edits: `laws/XX.json` +
+`node tools/bundle-state-laws.js` (updates runtime + `LAWS_EDITION` only).
 
 ## Tests (must exist before calling a batch done)
 
@@ -532,6 +687,9 @@ Same extract-and-run pattern as `tests/compliance.test.js`. Do not grep
 - **Live fetch dressed as freshness.** A button that pulls statutes or
   a remote JSON into the log is not “keeping states current.” It is a
   new backend and a new trust problem. SW Reload is the update path.
+- **AI or scraper as author.** A page-hash alert is useful. An unattended
+  model that writes `fields[]` or flips `researched` is how invented
+  boxes reach the cab. Diff assistant, then a human `--stamp`.
 - **Re-evaluating frozen packets** when `reviewedAt` or fields change.
 
 ## Success

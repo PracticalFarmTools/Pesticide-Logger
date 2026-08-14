@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.3 — Practical Farm Tools
+/* Pesticide Logger v2.9.5 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -769,6 +769,9 @@
       applyStateRequiredTags();
       updateCompliancePreview();
     });
+    if ($('#state-laws-update-btn')) {
+      $('#state-laws-update-btn').addEventListener('click', checkForAppUpdate);
+    }
     if ($('#set-applicator-class')) {
       $('#set-applicator-class').addEventListener('change', () => {
         // Preview only — do not mutate saved settings until Save.
@@ -984,25 +987,54 @@
 
     const hint = $('#app-form-hint');
     const summary = $('#app-form-shape-summary');
+    const fresh = law ? lawFreshness(law) : { stale: false, reviewBy: '' };
+    const honesty = law ? datasetHonestyLine(law, cls) : '';
     if (hint) {
       const verNote = ver === 'researched' ? ''
         : ver === 'partial' ? ' Dataset for this state is only partially verified.'
         : ver === 'uncertain' ? ' Dataset confidence for this state is limited — confirm with your agency.'
         : '';
+      const staleNote = fresh.stale
+        ? ' Rules last checked more than 12 months ago — confirm with the citation. Source status does not change because a calendar moved.'
+        : '';
       hint.innerHTML = stateName
-        ? `Showing the <strong>${esc(stateName)}</strong> / <strong>${esc(cls)}</strong> spray log: core fields + ${required.size} applicable required field(s)${$('#app-show-recommended') && $('#app-show-recommended').checked ? ' + recommended extras' : ''}.${verNote}`
+        ? `Showing the <strong>${esc(stateName)}</strong> / <strong>${esc(cls)}</strong> spray log: core fields + ${required.size} applicable required field(s)${$('#app-show-recommended') && $('#app-show-recommended').checked ? ' + recommended extras' : ''}.${verNote}${staleNote}`
         : 'Select your state in Settings — the spray log will reshape to that state’s required record fields instead of using one national form.';
     }
     if (summary) {
       const shown = $$('#app-form label[data-log-field]:not([hidden])').length;
+      const extra = [
+        ver && ver !== 'researched' ? ver : '',
+        fresh.reviewBy ? 'check by ' + fresh.reviewBy : '',
+        honesty && ver === 'researched' ? 'duty unverified' : ''
+      ].filter(Boolean).join(' · ');
       summary.textContent = stateName
-        ? `${stateName} · ${cls} · ${shown} fields · retain ${(law && law.retentionYears) || '—'} yr${ver && ver !== 'researched' ? ' · ' + ver : ''}`
+        ? `${stateName} · ${cls} · ${shown} fields · retain ${(law && law.retentionYears) || '—'} yr${extra ? ' · ' + extra : ''}`
         : 'No state selected · core fields only';
     }
     const title = $('#app-form-title');
     if (title && !title.textContent.startsWith('Edit record')) {
       title.textContent = stateName ? `Log an application — ${stateName}` : 'Log an application';
     }
+  }
+
+  function lawFreshness(law) {
+    if (typeof stateLawFreshness === 'function') return stateLawFreshness(law, now());
+    return { reviewedAt: (law && law.reviewedAt) || '', reviewBy: '', stale: false };
+  }
+
+  function datasetHonestyLine(law, cls) {
+    if (!law) return '';
+    const bits = [];
+    if (law.verification === 'partial') bits.push('Field list is only partially verified.');
+    if (law.verification === 'uncertain') bits.push('Field list is uncertain — confirm with the agency.');
+    if (cls === 'private' && (law.privateDuty || 'required') === 'uncertain') {
+      bits.push('Private-applicator duty is unverified.');
+    }
+    if (cls === 'private' && law.privateDuty === 'none') {
+      bits.push('No private-applicator record duty in this state’s sources; keep the operational core.');
+    }
+    return bits.join(' ');
   }
 
   function renderStateInfo() {
@@ -1014,7 +1046,10 @@
     }
     const law = STATE_LAWS[code];
     const ctx = formContextApp();
-    const req = law.fields.filter(f => f.required && fieldAppliesToApp(ctx, f.name));
+    const applyMatrix = stateFieldsApply(ctx, law);
+    const req = applyMatrix
+      ? law.fields.filter(f => f.required && fieldAppliesToApp(ctx, f.name))
+      : [];
     const verLabel = law.verification === 'researched' ? 'Researched from state sources'
       : law.verification === 'partial' ? 'Partially verified — confirm private/commercial nuances'
       : 'Limited verification — confirm with your agency';
@@ -1032,8 +1067,16 @@
             : (law.recordWithinHours != null ? esc(String(law.recordWithinHours)) + ' hours' : '—')} ·
           Customer-copy window: ${law.customerCopyDays != null ? esc(String(law.customerCopyDays)) + ' day(s)' : 'not encoded (no invented duty)'}</p>
         <p class="card-hint">Source status: ${esc(verLabel)}</p>
-        <p>Applicable required fields for ${esc(STATE_NAMES[code])} as a <strong>${esc(applicatorClassFor(ctx))}</strong> applicator (${req.length}):</p>
-        <ul>${req.map(r => `<li>${esc(r.label)}</li>`).join('')}</ul>
+        <p class="card-hint"><span>This state's rules last checked:</span> <strong>${esc(law.reviewedAt || '—')}</strong>
+          · <span>Check again by:</span> <strong>${esc(lawFreshness(law).reviewBy || '—')}</strong>
+          · <span>Matrix edition:</span> <strong>${esc(typeof STATE_LAWS_RESEARCH_DATE !== 'undefined' ? STATE_LAWS_RESEARCH_DATE : '—')}</strong></p>
+        ${typeof stateLawIsStale === 'function' && stateLawIsStale(law, now())
+          ? '<p class="state-law-stale" id="state-law-stale">This state\'s rules were last checked more than 12 months ago. Open the citation and compare. Reload the app if a newer edition has shipped. Source status does not change because a calendar moved.</p>'
+          : ''}
+        ${applyMatrix
+          ? `<p>Applicable required fields for ${esc(STATE_NAMES[code])} as a <strong>${esc(applicatorClassFor(ctx))}</strong> applicator (${req.length}):</p>
+        <ul>${req.map(r => `<li>${esc(r.label)}</li>`).join('')}</ul>`
+          : '<p class="card-hint">This state\'s sources indicate no private-applicator recordkeeping duty — still follow the label and keep the operational core (date, crop, field, applicator, amount).</p>'}
         ${law.notes ? `<p class="card-hint">${esc(law.notes)}</p>` : ''}
         <p class="card-hint">Completion means required fields are filled for this context — not a legal determination.
         This app does not file electronic reports (CA PUR, NY PRL, etc.) and does not replace WPS employer duties.</p>
@@ -3185,8 +3228,23 @@
       const incompleteCount = apps.filter(a => a.draft || !evaluateCompliance(a).complete).length;
       const needsReview = apps.filter(a => evaluateCompliance(a).status === 'needs_review').length;
       const filled = apps.filter(a => evaluateCompliance(a).complete && evaluateCompliance(a).intervalsOk).length;
+      const cls = data.settings.applicatorClass || 'private';
+      const fresh = lawFreshness(law);
+      const honesty = datasetHonestyLine(law, cls);
       $('#compliance-summary').textContent =
         `${STATE_NAMES[data.settings.state]} recordkeeping via ${law.agency}. Retain ${law.retentionYears} year(s). ${filled} record(s) have required fields + intervals filled; ${incompleteCount} incomplete; ${needsReview} need review. Not a legal determination.`;
+      const freshEl = $('#compliance-fresh');
+      if (freshEl) {
+        freshEl.textContent = fresh.stale
+          ? `Rules last checked ${fresh.reviewedAt || '—'}. Check again by ${fresh.reviewBy || '—'}. This check is older than 12 months — open the citation in Settings. Source status does not change because a calendar moved.`
+          : `Rules last checked ${fresh.reviewedAt || '—'}. Check again by ${fresh.reviewBy || '—'}.`;
+        freshEl.classList.toggle('state-law-stale', !!fresh.stale);
+      }
+      const honestyEl = $('#compliance-honesty');
+      if (honestyEl) {
+        honestyEl.textContent = honesty;
+        honestyEl.hidden = !honesty;
+      }
       $('#compliance-citation').textContent =
         `Citation: ${law.citation.reference}. USDA 7 CFR Part 110 was rescinded July 11, 2025 — state rules, labels, and WPS control. This app covers record fields; it does not file electronic reports or replace WPS duties.`;
     } else {
@@ -3412,7 +3470,7 @@
       : '';
     $('#print-area').innerHTML = `
       <h1>Tank Mix Worksheet</h1>
-      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.9.3 (Practical Farm Tools)</p>
+      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.9.5 (Practical Farm Tools)</p>
       <table>
         <tr><th>Area treated</th><td>${fmtNum(c.area)} ${c.areaUnit === 'sqft' ? 'sq ft' : c.areaUnit === '1000sqft' ? '× 1,000 sq ft' : 'acres'} (${fmtNum(c.acres, 3)} ac)</td>
             <th>Spray volume</th><td>${fmtNum(c.gpa)} ${c.gpaUnit === 'gal_acre' ? 'gal/acre' : 'gal/1,000 sq ft'}</td></tr>
@@ -3589,7 +3647,8 @@
       period: reportPeriodLabel(),
       stateName: STATE_NAMES[data.settings.state] || '',
       evaluateCompliance: evaluateCompliance,
-      stateLaws: typeof STATE_LAWS !== 'undefined' ? STATE_LAWS : {}
+      stateLaws: typeof STATE_LAWS !== 'undefined' ? STATE_LAWS : {},
+      matrixEdition: typeof STATE_LAWS_RESEARCH_DATE !== 'undefined' ? STATE_LAWS_RESEARCH_DATE : ''
     });
   }
 
@@ -3759,7 +3818,7 @@
       format: 'pesticide-logger-state-pack',
       version: 5,
       generatedAt: new Date().toISOString(),
-      app: 'Pesticide Logger v2.9.3 — Practical Farm Tools',
+      app: 'Pesticide Logger v2.9.5 — Practical Farm Tools',
       disclaimer: 'Completion means required fields are filled for this context — not a legal determination. Does not replace WPS duties or e-filing programs.',
       farm: {
         name: s.farmName || '',
@@ -6393,6 +6452,25 @@
     if (!el || el.dataset.shown) return;
     el.dataset.shown = '1';
     el.hidden = false;
+  }
+
+  function checkForAppUpdate() {
+    const out = $('#state-laws-update-out');
+    const set = (msg) => { if (out) out.textContent = msg; };
+    if (!('serviceWorker' in navigator) || location.protocol === 'file:') {
+      set('Open this app over http:// to check for updates.');
+      return;
+    }
+    set('Checking for a newer edition…');
+    navigator.serviceWorker.getRegistration().then((reg) => {
+      if (!reg) {
+        set('No service worker on this visit.');
+        return;
+      }
+      return reg.update().then(() => {
+        set('If a newer edition is waiting, the Reload banner will appear. Source status does not change because a calendar moved.');
+      });
+    }).catch(() => set('Could not check for an update.'));
   }
 
   // -------------------------------------------------------------- boot

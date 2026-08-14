@@ -1,0 +1,88 @@
+{
+  "code": "MI",
+  "reviewedAt": "2026-08-14",
+  "agency": "Michigan Department of Agriculture and Rural Development",
+  "citation": {
+    "reference": "Mich. Admin. Code R 285.636.15; MCL 324.8311",
+    "url": "https://www.law.cornell.edu/regulations/michigan/Mich-Admin-Code-R-285-636-15"
+  },
+  "retentionYears": 3,
+  "appliesTo": "Commercial applicators; RUP and general-use application records. Private-applicator state record fields not verified.",
+  "verification": "researched",
+  "notes": "MCL 324.8311 (https://www.legislature.mi.gov/Laws/MCL?objectName=mcl-324-8311) names certified commercial applicator RUP records (3 years) and a commercial county summary due before March 1 — that summary is a report, not this log. R 285.636.15 is the commercial application-record list on this row. No private-applicator application-record list is in those sections; MSU E2342 still points at the old federal RUP chart. Private duty stays uncertain. Weather is not required in the cited commercial rule. LARA ARS download for R 285.636 did not return the rule PDF on 2026-08-14; Cornell LII remains the citation watch until a primary host is found.",
+  "fields": [
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "concentration",
+      "label": "Application concentration",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "total_mix_applied",
+      "label": "Total diluted mix applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "application_purpose",
+      "label": "Purpose of application",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "method",
+      "label": "Method / equipment",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "rate",
+      "label": "Application rate",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "uncertain",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

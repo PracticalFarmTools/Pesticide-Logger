@@ -1,0 +1,112 @@
+{
+  "code": "MN",
+  "reviewedAt": "2026-08-14",
+  "agency": "Minnesota Department of Agriculture",
+  "citation": {
+    "reference": "Minn. Stat. §18B.37, subd. 2",
+    "url": "https://www.revisor.mn.gov/statutes/cite/18B.37"
+  },
+  "retentionYears": 5,
+  "appliesTo": "Commercial applicators record pesticides used on each site; noncommercial applicators record restricted-use pesticides. Private agricultural applicator state record fields not verified in this section.",
+  "verification": "researched",
+  "notes": "Minn. Stat. §18B.37 (read 2026-08-14 on revisor.mn.gov): subd. 2 is commercial and noncommercial only (noncommercial = RUP). Record within five days; retain five years; commercial applicators must give a copy to the customer (no day count). Subd. 3 is structural pest control — not this ag log. There is no private-applicator subdivision in §18B.37; private duty stays uncertain.",
+  "fields": [
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "end_time",
+      "label": "End time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "rate",
+      "label": "Application rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "temperature",
+      "label": "Temperature",
+      "type": "number",
+      "required": true
+    },
+    {
+      "name": "wind_speed",
+      "label": "Wind speed",
+      "type": "number",
+      "required": true
+    },
+    {
+      "name": "wind_direction",
+      "label": "Wind direction",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_address",
+      "label": "Customer address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "business_name_address",
+      "label": "Business / operator name & address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_license",
+      "label": "Applicator certification / license #",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 120,
+  "customerCopyDays": null,
+  "privateDuty": "uncertain",
+  "recordDeadline": {
+    "count": 120,
+    "unit": "hours"
+  }
+}

@@ -1,0 +1,130 @@
+{
+  "code": "OK",
+  "reviewedAt": "2026-08-14",
+  "agency": "Oklahoma Department of Agriculture, Food, and Forestry",
+  "citation": {
+    "reference": "2 O.S. §3-83; OAC 35:30-17-21",
+    "url": "https://ag.ok.gov/wp-content/uploads/2025/09/2025-Combined-Pesticide-Manual-Final.pdf"
+  },
+  "retentionYears": 2,
+  "appliesTo": "Commercial and noncommercial applicators under 35:30-17-21(a); private applicators of restricted-use pesticides under 35:30-17-21(b).",
+  "verification": "researched",
+  "notes": "ODAFF Combined Pesticide Manual (2025 reprint of OAC 35:30-17-21, read 2026-08-14): commercial/noncommercial (a) is this row's field list (start/stop, amount, company, applicator/cert, customer, legal description, date, rate, dilution, tank mix, trade name, EPA number, pest, site, area, REI). Adjuvants and drift agents when the label requires them, a copy of the label, contracts, and wood-infestation reports stay in notes — WDI is not a required farm box. Private RUP (b) is shorter (applicator name/address instead of customer; no contracts/WDI). The matrix uses (a) so commercial is not under-asked. No hours completion clock in 35:30-17-21 (24-hour fallback is operational). Do not watch okrules.elaws.us.",
+  "fields": [
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "end_time",
+      "label": "End time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "business_name_address",
+      "label": "Business / operator name & address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_address",
+      "label": "Customer address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "rate",
+      "label": "Application rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "dilution_rate",
+      "label": "Dilution rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "total_mix_applied",
+      "label": "Total diluted mix applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "notes",
+      "label": "Notes / unexpected occurrences",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "rei_hours",
+      "label": "Restricted-entry interval (REI)",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

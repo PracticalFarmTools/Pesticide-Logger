@@ -23,7 +23,7 @@ function check(name, fn) {
 
 const lawsCode = fs.readFileSync(path.join(root, 'state_pesticide_laws.js'), 'utf8');
 const ctx = { console };
-vm.runInNewContext(lawsCode + '\nthis.STATE_LAWS = STATE_LAWS; this.BASE_RECORD_FIELDS = BASE_RECORD_FIELDS;', ctx);
+vm.runInNewContext(lawsCode + '\nthis.STATE_LAWS = STATE_LAWS; this.BASE_RECORD_FIELDS = BASE_RECORD_FIELDS; this.STATE_LAWS_RESEARCH_DATE = STATE_LAWS_RESEARCH_DATE; this.stateLawIsStale = stateLawIsStale;', ctx);
 const { STATE_LAWS, BASE_RECORD_FIELDS } = ctx;
 
 const US_STATES = [
@@ -37,7 +37,7 @@ check('all 50 states present', () => {
   US_STATES.forEach(code => assert.ok(STATE_LAWS[code], `missing ${code}`));
 });
 
-check('each state has agency, citation, retention, verification, fields, privateDuty', () => {
+check('each state has agency, citation, retention, verification, fields, privateDuty, reviewedAt', () => {
   Object.entries(STATE_LAWS).forEach(([code, law]) => {
     assert.ok(law.agency, `${code} agency`);
     assert.ok(law.citation && law.citation.reference && law.citation.url, `${code} citation`);
@@ -45,11 +45,13 @@ check('each state has agency, citation, retention, verification, fields, private
     assert.ok(['researched', 'partial', 'uncertain'].includes(law.verification), `${code} verification`);
     assert.ok(['required', 'none', 'uncertain'].includes(law.privateDuty), `${code} privateDuty`);
     assert.ok(Array.isArray(law.fields) && law.fields.length >= 5, `${code} fields`);
+    assert.ok(/^\d{4}-\d{2}-\d{2}$/.test(law.reviewedAt), `${code} reviewedAt`);
     law.fields.forEach(f => {
       assert.ok(f.name && f.label, `${code} field shape`);
       assert.strictEqual(typeof f.required, 'boolean', `${code}.${f.name} required`);
     });
   });
+  assert.strictEqual(ctx.STATE_LAWS_RESEARCH_DATE, '2026-08-14');
 });
 
 check('customerCopyDays only set when researched (not invented for all states)', () => {
@@ -64,9 +66,10 @@ check('customerCopyDays only set when researched (not invented for all states)',
 
 check('AL privateDuty is none; several private-uncertain states encoded', () => {
   assert.strictEqual(STATE_LAWS.AL.privateDuty, 'none');
-  ['AR', 'KS', 'MI'].forEach(code => {
+  ['AR', 'KS', 'MI', 'MN', 'SC', 'SD', 'VA'].forEach(code => {
     assert.strictEqual(STATE_LAWS[code].privateDuty, 'uncertain', code);
   });
+  assert.strictEqual(STATE_LAWS.RI.privateDuty, 'required');
 });
 
 check('BASE_RECORD_FIELDS includes drift + customer copy extras', () => {
@@ -239,13 +242,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.3 + deadline/license wiring', () => {
+check('source files advertise v2.9.5 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.3'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.3'));
-  assert.ok(html.includes('v2.9.3'));
+  assert.ok(app.includes('v2.9.5'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.5'));
+  assert.ok(sw.includes("const LAWS_EDITION = '2026-08-14'"));
+  assert.ok(html.includes('v2.9.5'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));
   assert.ok(html.includes('farm-scale.js'));
@@ -628,6 +632,9 @@ check('state-dataset blueprint specifies in-app keep-current without a live lega
   assert.ok(bp.includes('Batch H'), 'Settings dates are a named batch');
   assert.ok(bp.includes('Stale copy, not auto-demote'), 'calendar must not flip verification');
   assert.ok(bp.includes('12 months'), 'stale window');
+  assert.ok(bp.includes('Monitoring legal changes (outside the app)'), 'off-app monitor, not in-cab scrape');
+  assert.ok(bp.includes('--watch-list'), 'maintainer URL export');
+  assert.ok(bp.includes('docs/state-maintainer-playbook.md'), 'from-here playbook');
   assert.ok(!/live statute feed/i.test(bp) || bp.includes('There is no live statute feed'), 'no live statute feed');
   ['scraper', 'grower-editable', 'Crowdsource', 'Auto-parse PDFs'].forEach((refuse) => {
     assert.ok(bp.includes(refuse), 'refuses ' + refuse);

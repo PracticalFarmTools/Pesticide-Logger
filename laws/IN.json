@@ -1,0 +1,118 @@
+{
+  "code": "IN",
+  "reviewedAt": "2026-08-14",
+  "agency": "Office of Indiana State Chemist",
+  "citation": {
+    "reference": "OISC Pesticide Recordkeeping guidance (3/12/2024); 355 IAC 4-4 voided July 1, 2024",
+    "url": "https://oisc.purdue.edu/pesticide/pdf/pesticide_recordkeeping_031224.pdf"
+  },
+  "retentionYears": 2,
+  "appliesTo": "Commercial and private applicators for RUP applications; certain commercial applicator categories must also record unrestricted general-use products.",
+  "verification": "researched",
+  "notes": "355 IAC 4-4 (commercial applicator use records) was voided by P.L. 29-2024 effective July 1, 2024. OISC’s March 12, 2024 guidance is the current agency list for restricted-use pesticide application records (2-year retention; no required form). Do not treat the voided IAC field list as still in force. Customer-copy-on-request language was in the voided rule; this matrix does not invent a replacement day count.",
+  "fields": [
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_address",
+      "label": "Customer address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "supervisor_name",
+      "label": "Supervising applicator",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_license",
+      "label": "Applicator certification / license #",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "end_time",
+      "label": "End time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "concentration",
+      "label": "Application concentration",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 72,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 72,
+    "unit": "hours"
+  }
+}

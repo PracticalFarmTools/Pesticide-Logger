@@ -1,0 +1,112 @@
+{
+  "code": "RI",
+  "reviewedAt": "2026-08-14",
+  "agency": "Rhode Island Department of Environmental Management",
+  "citation": {
+    "reference": "250-RICR-40-15-2.6(B) commercial; 2.6(C) private RUP / state-limited-use",
+    "url": "https://rules.sos.ri.gov/regulations/part/250-40-15-2"
+  },
+  "retentionYears": 2,
+  "appliesTo": "Commercial applicators: general-use, restricted-use, and state-limited-use applications (§2.6(B)). Certified private applicators: yearly use of each restricted-use and state-limited-use pesticide (§2.6(C)).",
+  "verification": "researched",
+  "notes": "Official RICR (read 2026-08-14). Commercial §2.6(B) is the field list on this row (formulation, % AI, invoice at the property, persons who participated). Private §2.6(C) names a shorter RUP/state-limited-use list (brand, EPA number, amount, purpose/target, farm name/address and field, date, applicator name and certification number) recorded within 14 days, kept two calendar years. Do not treat the commercial invoice extras as the private statute. RUP applications recorded no later than 14 days.",
+  "fields": [
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "pesticide_formulation",
+      "label": "Pesticide formulation",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "active_ingredient",
+      "label": "Active ingredient",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "total_mix_applied",
+      "label": "Total diluted mix applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "application_purpose",
+      "label": "Purpose of application",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_address",
+      "label": "Customer address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_license",
+      "label": "Applicator certification / license #",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "notes",
+      "label": "Notes / unexpected occurrences",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

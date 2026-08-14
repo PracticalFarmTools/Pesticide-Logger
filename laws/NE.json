@@ -1,0 +1,118 @@
+{
+  "code": "NE",
+  "reviewedAt": "2026-07-31",
+  "agency": "Nebraska Department of Agriculture",
+  "citation": {
+    "reference": "25 Neb. Admin. Code ch. 2 §006",
+    "url": "https://www.law.cornell.edu/regulations/nebraska/25-Neb-Admin-Code-ch-2-SS-006"
+  },
+  "retentionYears": 3,
+  "appliesTo": "Commercial and noncommercial applicators for RUP applications and structural general-use applications; private RUP records are addressed separately but retention after rescission needs direct state confirmation.",
+  "verification": "researched",
+  "notes": "Commercial/noncommercial records must be created within 48 hours and kept at the principal place of business. Department guidance recommends wind direction/velocity, temperature, and REI for outdoor applications but does not require them in the cited section. nebraska.gov Title-25 Chapter-02 PDF was not hash-stable on 2026-08-14; Cornell LII remains the citation watch until a primary host is found.",
+  "fields": [
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_address",
+      "label": "Customer address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_license",
+      "label": "Applicator certification / license #",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "supervisor_name",
+      "label": "Supervising applicator",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "target_pest",
+      "label": "Target pest",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "rate",
+      "label": "Application rate",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "disposal_method",
+      "label": "Disposal of unused pesticide",
+      "type": "string",
+      "required": false
+    }
+  ],
+  "recordWithinHours": 48,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 48,
+    "unit": "hours"
+  }
+}

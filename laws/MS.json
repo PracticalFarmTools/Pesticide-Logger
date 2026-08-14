@@ -1,0 +1,58 @@
+{
+  "code": "MS",
+  "reviewedAt": "2026-08-14",
+  "agency": "Mississippi Department of Agriculture and Commerce, Bureau of Plant Industry",
+  "citation": {
+    "reference": "Title 2, Part 1, Subpart 3, Chapter 11 §111.01 (professional services) — not an agricultural use-record rule",
+    "url": "https://agnet.mdac.ms.gov/agManage/uploads/1641.pdf"
+  },
+  "retentionYears": 2,
+  "appliesTo": "The linked rule is professional-services (for-hire pest control / WDI / termiticide), not a farm use-record matrix. MDAC certifies private and commercial agricultural applicators and inspects restricted-use records, but no agricultural field list was found as of 2026-08-14.",
+  "verification": "uncertain",
+  "notes": "Read 2026-08-14: MDAC pesticide program pages describe private vs commercial certification and professional-services licensing, and say the Bureau inspects restricted-use application records, but they do not name agricultural record elements. §111.01 termiticide extras (PSI, nozzle, vehicle ID, volume/minute) must not appear as required farm boxes. This row stays uncertain until an ag use-record rule is cited. Private duty is also unverified (not copied from professional services). Operational core still applies.",
+  "fields": [
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "uncertain",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

@@ -538,7 +538,11 @@
         citationReference: law && law.citation ? (law.citation.reference || '') : '',
         citationUrl: law && law.citation ? (law.citation.url || '') : '',
         retentionYears: law ? (law.retentionYears || '') : '',
-        verification: law ? (law.verification || '') : ''
+        verification: law ? (law.verification || '') : '',
+        reviewedAt: law ? (law.reviewedAt || '') : '',
+        reviewBy: (law && typeof stateLawReviewBy === 'function') ? (stateLawReviewBy(law) || '') : '',
+        matrixEdition: opts.matrixEdition
+          || (typeof STATE_LAWS_RESEARCH_DATE !== 'undefined' ? STATE_LAWS_RESEARCH_DATE : '')
       },
       checklist: statuteChecklist(law),
       counts: {
@@ -766,6 +770,11 @@
       (cite ? '<p class="meta">Prepared for ' + esc(cite) + (retain ? ' ' + esc(retain) : '') + '</p>' : '') +
       (farm.citationUrl ? '<p class="meta">' + esc(farm.citationUrl) + '</p>' : '') +
       (verify ? '<p class="meta">' + esc(verify) + '</p>' : '') +
+      (farm.reviewedAt
+        ? '<p class="meta">Rules last checked ' + esc(farm.reviewedAt) +
+          (farm.reviewBy ? ' · check again by ' + esc(farm.reviewBy) : '') +
+          (farm.matrixEdition ? ' · matrix edition ' + esc(farm.matrixEdition) : '') + '.</p>'
+        : '') +
       '<p class="counts">' + esc(countLine) + '</p>' +
       '<p>Rates, REI, and PHI were copied from the product label. The label is the law.</p>' +
       '<p>' + esc(payload.disclaimer || '') + '</p>' +

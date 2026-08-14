@@ -1,0 +1,130 @@
+{
+  "code": "CA",
+  "reviewedAt": "2026-07-31",
+  "agency": "California Department of Pesticide Regulation and county agricultural commissioners",
+  "citation": {
+    "reference": "3 CCR §§6624, 6626, 6623",
+    "url": "https://www.law.cornell.edu/regulations/california/3-CCR-6624"
+  },
+  "retentionYears": 2,
+  "appliesTo": "Any person using pesticides for agricultural use; operators of property producing agricultural commodities; agricultural pest control businesses; broader California PUR/use-reporting duties apply.",
+  "verification": "researched",
+  "notes": "CA requires production-ag PUR/use reporting: property operators report to the county by the 10th of the following month unless an agricultural pest control business reports; ag pest control businesses report within 7 days and send the operator a copy within 30 days. Operator identification numbers and site IDs are central; site IDs are issued by county and retained with permits/forms for two years. REI/rate/dilution fields may be optional on PUR forms but are recommended for the logger. CDPR calcode deep links redirected to a general laws page on 2026-08-14; Cornell LII remains the citation watch until a stable 3 CCR 6624 host is found.",
+  "fields": [
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "application_time",
+      "label": "Application time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "end_time",
+      "label": "End time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "county",
+      "label": "County of application",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_unit",
+      "label": "Area unit",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "permit_number",
+      "label": "Permit / operator ID",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "site_id",
+      "label": "Site ID",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "method",
+      "label": "Method / equipment",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "supervisor_name",
+      "label": "Supervising applicator",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

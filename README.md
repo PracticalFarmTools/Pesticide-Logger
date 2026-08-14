@@ -1,4 +1,4 @@
-# Pesticide Logger v2.9.3
+# Pesticide Logger v2.9.5
 
 **Offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite. Licensed software with
@@ -50,12 +50,21 @@ application at the repository root.
 
 This app aims for **complete application recordkeeping field coverage** across
 all 50 states based on researched state statutes, rules, and agency guidance
-(dataset research date: 2026-07-31).
+(matrix edition: 2026-08-14; each state also has a `reviewedAt` date in
+`laws/XX.json`). Settings and Home show last-checked and **check-again-by**
+dates, and warn if a state is older than 12 months — that warning does not
+change completeness badges. Home also names dataset holes (partial,
+uncertain, unverified private duty).
+
+To update one state's rule after a legal change, edit only `laws/XX.json`
+and run `node tools/bundle-state-laws.js`. See `laws/README.md`. What to
+work on next (citation hygiene, hasher, holes): `docs/state-maintainer-playbook.md`.
+Do not change `app.js` or `compliance.js` for a citation or field-list edit.
 
 **It does:**
 
 - Capture and validate the record fields each state requires (when known)
-- Show agency, citation, retention years, and source verification status
+- Show agency, citation, retention years, last-checked / check-again-by dates, and source verification status
 - Mark incomplete records and block complete-save under strict mode
 - Export complete field sets for inspections and backups
 - Surface completion / customer-copy clocks as guidance from state rules
@@ -123,6 +132,7 @@ node --check units.js
 node --check i18n.js
 node --check sw.js
 node tests/compliance.test.js
+node tests/state-laws.test.js
 node tests/license.test.js
 node tests/label-ocr.test.js
 node tests/backup-merge.test.js
@@ -163,9 +173,10 @@ spray-window.js            Per-field spray-window scoring, cache isolation, Open
 farm-scale.js              Find/pick/window helpers so the same UI fits 2 fields and 150 sites
 farm-file.js               Crew, gather/merge receipt, signed inspector HTML, REI board
 license.js                 Offline license verification (WebCrypto)
-state_pesticide_laws.js    50-state agencies, citations, retention, required fields
+state_pesticide_laws.js    Generated 50-state runtime matrix (do not edit by hand)
+laws/                      One JSON file per state — edit here for legal changes
 api/epa.js                 Stateless Vercel proxy to official EPA PPLS
-tools/                     Owner key-signing scripts (generate/sign licenses)
+tools/                     License signing + `bundle-state-laws.js`
 vendor/leaflet/            Leaflet 1.9.4 (vendored)
 vendor/fonts/              Inter + Outfit latin WOFF2 (SIL OFL, app-shell precache)
 label-ocr.js               Label-photo text parsing (EPA reg #, signal word) — pure functions

@@ -1,0 +1,76 @@
+{
+  "code": "CO",
+  "reviewedAt": "2026-08-14",
+  "agency": "Colorado Department of Agriculture",
+  "citation": {
+    "reference": "C.R.S. §35-10-111; 8 CCR 1203-2 Part 6.05",
+    "url": "https://leg.colorado.gov/sites/default/files/images/olls/crs2024-title-35.pdf"
+  },
+  "retentionYears": 3,
+  "appliesTo": "Commercial, limited commercial, private, and public applicators maintain application records; private applicator rule incorporates the old 7 CFR Part 110 elements for RUP records.",
+  "verification": "researched",
+  "notes": "Colorado statute requires records in the form/manner designated by the commissioner. CSU guidance lists the classic RUP elements and recommends start/end time, REI, active ingredient, rate, GPA, nozzle, wind, and temperature for WPS/drift defense.",
+  "fields": [
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_license",
+      "label": "Applicator certification / license #",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

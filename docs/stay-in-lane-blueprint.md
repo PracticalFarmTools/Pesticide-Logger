@@ -3,8 +3,9 @@
 **Status: implemented** in v2.9.3 (`farm-file.js` inspector v2, gather hint,
 clerk search, optional FSA numbers, cab install hint). State-law research
 pass (partial/uncertain → researched) is specified in
-`docs/state-dataset-blueprint.md` (remaining promotions **and** keep-current
-dates in Settings) and is **not implemented here**.
+`docs/state-dataset-blueprint.md`. Keep-current dates in Settings shipped
+in v2.9.4; from here follow `docs/state-maintainer-playbook.md`. Remaining
+promotions are **not implemented here**.
 inspector HTML, optional crew, inspector view, shop REI board).
 
 Job to be done: a grower keeps **U.S. state pesticide application records** on
@@ -46,7 +47,7 @@ lane, not a second product.
 | **Spray log search** | One substring on joined product names, field, crop, pest, applicator, notes, lot. Season window + Show prior years. Home incomplete count jumps to the log but does not filter it. | Cannot AND “product × field.” EPA # and site id are not in the haystack. No incomplete chip. That is the daily reason to leave the PDF. |
 | **Field identity** | Name, location, `siteId` (“County / state site ID”), optional group, mapped ring, weather pin. | No FSA farm / tract / field numbers. Inspectors who ask for those still get a free-text site id. |
 | **Label** | EPA PPLS identity/status import. Copy says rates, REI, PHI come off the label. Strict mode fails loud. | Packet does not repeat “label is the law.” Easy to “help” by auto-filling later — do not. |
-| **Dataset** | 43 `researched`, 6 `partial` (AL, AR, CT, HI, KS, ME), 1 `uncertain` (MS). `privateDuty` uncertain: AR, KS, MI, MN, RI, SC, SD, VA. Research date 2026-07-31. | Ship-quality, not a category change. Confirm with sources; do not invent fields to look complete. |
+| **Dataset** | 49 `researched`, 0 `partial`, 1 `uncertain` (MS). `privateDuty` uncertain: AR, KS, MI, MN, MS, SC, SD, VA. Research date 2026-08-14. | Ship-quality, not a category change. Confirm with sources; do not invent fields to look complete. Do not mix one state's list into another. |
 | **Cab / license** | PWA manifest `standalone`, service worker app shell, fat save targets, Spray now / Duplicate last. `BUY_URL` empty; lock screen still reviews and exports. | No in-app Add to Home Screen hint. Manifest `orientation: portrait-primary` fights a landscape tablet handoff. Checkout is a business gate, not an app feature in this work. |
 
 The print report is already closer to paper than the signed packet. This program
@@ -262,9 +263,11 @@ AL, AR, CT, HI, KS, ME off `partial` and MS off `uncertain` only with
 citations. Same for `privateDuty` uncertain (AR, KS, MI, MN, RI, SC, SD,
 VA). If the agency still does not say, keep `uncertain` — do not fill boxes
 to look researched. Keep each state current in-app with per-state
-`reviewedAt` and a Settings stale warning — not a live legal feed.
-Research date in the file header moves when a batch or confirmation
-lands. Existing `tests/compliance.test.js` 50-state walk stays the gate.
+`reviewedAt` and a Settings stale warning — not a live legal feed. Edit
+`laws/XX.json` and run `node tools/bundle-state-laws.js`; do not touch the
+completeness engine. Research date in `_meta.json` moves when a batch or
+confirmation lands. `tests/compliance.test.js` and `tests/state-laws.test.js`
+stay the gate.
 
 **Cab pass.** In-app install hint when not `display-mode: standalone`
 (iOS: Add to Home Screen copy; Android: `beforeinstallprompt` when it

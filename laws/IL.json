@@ -1,0 +1,52 @@
+{
+  "code": "IL",
+  "reviewedAt": "2026-07-31",
+  "agency": "Illinois Department of Agriculture",
+  "citation": {
+    "reference": "8 Ill. Admin. Code §250.150(b)",
+    "url": "https://www.law.cornell.edu/regulations/illinois/Ill-Admin-Code-tit-8-SS-250.150"
+  },
+  "retentionYears": 2,
+  "appliesTo": "Certified commercial applicators and operators; all restricted pesticide/RUP usage. State private-applicator RUP duty not verified after 7 CFR Part 110 rescission.",
+  "verification": "researched",
+  "notes": "Rule text lists chemical name, USEPA registration number, amount of chemical concentration per unit treated, date, and use site. Illinois Extension says wind speed/direction is not required in Illinois but recommended for drift defense. WPS records can still apply to agricultural employers. JCAR 8 Ill. Adm. Code 250.150 returned 404 on 2026-08-14; Cornell LII remains the citation watch until a primary host is found.",
+  "fields": [
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "rate",
+      "label": "Application rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 24,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 24,
+    "unit": "hours"
+  }
+}

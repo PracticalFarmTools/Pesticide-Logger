@@ -1,0 +1,124 @@
+{
+  "code": "LA",
+  "reviewedAt": "2026-08-14",
+  "agency": "Louisiana Department of Agriculture and Forestry",
+  "citation": {
+    "reference": "LAC Title 7, Part XXIII, §2101 and LDAF Certified Pesticide Applicator Record Keeping form AES-41-06",
+    "url": "https://wwwcfprd.doa.louisiana.gov/boardsandcommissions/RulesAndRegulations/404_TITLE%207%20PESTICIDE%20RULES.pdf"
+  },
+  "retentionYears": 2,
+  "appliesTo": "Any person applying pesticides for a fee, private applicators described in §709, and commercial applicators described in §711 except Category 7; records within three days at the employer or owner/operator-license address.",
+  "verification": "researched",
+  "notes": "Official LAC Title 7 Part XXIII (April 2024 compilation on doa.louisiana.gov, read 2026-08-14): §2101 names who must keep records, two-year retention, and a three-day clock on a director-approved form. It does not enumerate columns. The field list on this row is LDAF form AES-41-06 (owner/operator, card number, customer, applicator, product, EPA number, RUP flag, date, crop/type, location, size, rate, concentrate), not copied from another state. Dealer §2103 and consultant §2105 are not this agricultural spray matrix. Some LDEQ permit language uses three-year retention; LDAF §2101 is two years.",
+  "fields": [
+    {
+      "name": "owner_operator_name",
+      "label": "Owner / operator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "company_license",
+      "label": "Company / business license #",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_name",
+      "label": "Customer / person for whom applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "customer_address",
+      "label": "Customer address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_license",
+      "label": "Applicator certification / license #",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "brand_name",
+      "label": "Brand / product name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "restricted_use_flag",
+      "label": "Restricted-use (RUP) status",
+      "type": "boolean",
+      "required": true
+    },
+    {
+      "name": "date",
+      "label": "Application date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "application_time",
+      "label": "Application time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "rate",
+      "label": "Application rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "amount_applied",
+      "label": "Total amount applied",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    }
+  ],
+  "recordWithinHours": 72,
+  "customerCopyDays": null,
+  "privateDuty": "required",
+  "recordDeadline": {
+    "count": 72,
+    "unit": "hours"
+  }
+}

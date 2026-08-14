@@ -27,7 +27,7 @@
       </svg>
       <div>
         <h1>Pesticide Logger</h1>
-        <span class="header-sub">Practical Farm Tools · v2.9.6</span>
+        <span class="header-sub">Practical Farm Tools · v2.9.7</span>
       </div>
     </div>
     <div class="header-right">
@@ -62,6 +62,7 @@
       <button type="button" class="btn btn-primary" id="lock-activate">Activate</button>
       <button type="button" class="btn btn-secondary" id="lock-buy">Buy a license</button>
     </div>
+    <p class="card-hint" id="lock-checkout-note">This build has no in-app store. Paste a license key from your purchase email when you have one. Spray logs stay on this device either way.</p>
     <p class="card-hint">A paid license — annual or perpetual. Same tool for two tunnels or a
       hundred sites. Works offline, no account, no telemetry — keys are verified on this device.</p>
   </div>
@@ -281,6 +282,7 @@
       <div class="card-title-row">
         <h3 class="card-title">Recent applications</h3>
         <button class="btn btn-primary btn-sm" data-goto="log" id="dash-new-app">+ Log application</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-goto="reports" data-scroll-to="report-inspect-html" id="dash-inspect-packet">Inspector packet</button>
       </div>
       <div id="recent-apps"></div>
     </div>
@@ -304,6 +306,7 @@
       <div class="cab-toolbar">
         <button type="button" class="btn btn-primary btn-lg" id="app-spray-now">Spray now</button>
         <button type="button" class="btn btn-secondary btn-lg" id="app-duplicate-last">Duplicate last spray</button>
+        <button type="button" class="btn btn-secondary btn-lg" data-goto="calculator" id="app-open-tank-mix">Tank Mix</button>
         <button type="button" class="btn btn-secondary btn-lg" id="app-scan-jug" hidden>Scan jug</button>
         <label class="btn btn-secondary btn-lg camera-file-btn" id="app-scan-jug-photo" hidden>Scan jug
           <input type="file" id="app-scan-jug-input" accept="image/*" capture="environment" aria-label="Scan jug barcode">
@@ -671,7 +674,7 @@
       <div class="card-title-row">
         <div>
           <h3 class="card-title">Official EPA product lookup</h3>
-          <p class="card-hint">Search the live EPA Pesticide Product Label System by product name or registration number.</p>
+          <p class="card-hint">Search the official EPA Pesticide Product Label System when this host provides it. USB, GitHub Pages, and local servers have no lookup — type the EPA number from the jug or Scan label. EPA does not supply crop-specific rates, REI, or PHI.</p>
         </div>
         <button type="button" class="btn btn-secondary btn-sm" id="epa-verify-all">Verify my library</button>
       </div>
@@ -679,7 +682,7 @@
         <input type="search" id="epa-search-input" placeholder="Product name or EPA Reg. No. (for example: Entrust or 62719-621)" minlength="2" maxlength="100" required>
         <button type="submit" class="btn btn-primary">Search EPA</button>
       </form>
-      <p class="card-hint epa-lookup-note">EPA verifies product identity, registration status, active ingredients, RUP classification, signal word, and label documents. EPA does not supply crop-specific rates, REI, or PHI through this API—copy those from the exact current label.</p>
+      <p class="card-hint epa-lookup-note">When lookup works, EPA verifies identity, registration status, active ingredients, RUP, signal word, and label documents. Copy rates, REI, and PHI from the current label. The label is the law.</p>
       <div id="epa-search-status" class="epa-search-status" role="status"></div>
       <div id="epa-search-results" class="epa-search-results"></div>
     </div>
@@ -1112,6 +1115,7 @@
         <button type="button" class="btn btn-primary" id="license-activate">Activate</button>
         <button type="button" class="btn btn-secondary" id="license-buy">Buy a license</button>
       </div>
+      <p class="card-hint" id="license-checkout-note">This build has no in-app store. Paste a license key from your purchase email when you have one. Spray logs stay on this device either way.</p>
       <p class="card-hint">One purchase per farm, works offline, no account, no telemetry.
         Keys are verified on this device with a cryptographic signature — nothing is sent anywhere.</p>
     </div>
@@ -1126,7 +1130,7 @@
 
     <div class="card about-card">
       <h3 class="card-title">About</h3>
-      <p>Pesticide Logger v2.9.6 — part of the <strong>Practical Farm Tools</strong> suite. A licensed, offline-first tool built for farms of every size; your farm records stay on this device.</p>
+      <p>Pesticide Logger v2.9.7 — part of the <strong>Practical Farm Tools</strong> suite. A licensed, offline-first tool built for farms of every size; your farm records stay on this device.</p>
       <p class="card-hint">This tool provides 50-state application <em>recordkeeping field coverage</em> with audit history, lot tracking, and in-cab workflows. It is not legal advice, does not replace WPS employer duties, and does not file California PUR, New York PRL, or other electronic reports for you. Always follow the product label and confirm requirements with your state pesticide agency.</p>
       <details class="legal-details">
         <summary>Terms of use, license &amp; privacy</summary>
@@ -1137,7 +1141,7 @@
             we cannot recover it — use the backup tools.</p>
           <p><strong>Not legal advice:</strong> “Fields complete” means required fields are filled for your
             selected context — a checklist result, not a compliance determination or certification.
-            State datasets marked partial/uncertain need agency confirmation; even researched entries can
+            State datasets marked uncertain, or private-applicator duty marked unverified, need agency confirmation; even researched entries can
             lag rule changes. The product label is the law.</p>
           <p><strong>License:</strong> a paid license is required after the 30-day trial to keep
             logging new applications. A key licenses one farm operation across its devices; keys

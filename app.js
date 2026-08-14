@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.6 — Practical Farm Tools
+/* Pesticide Logger v2.9.7 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -1058,7 +1058,7 @@
       <div class="state-info-block">
         <p><strong>${esc(law.agency)}</strong></p>
         <p class="card-hint">Citation: ${esc(law.citation.reference)} ·
-          <a href="${esc(law.citation.url)}" target="_blank" rel="noopener">Open citation</a></p>
+          <a href="${esc(law.citation.url)}" target="_blank" rel="noopener">${esc(tr('Open citation'))}</a></p>
         <p><strong>Retain records ${esc(String(law.retentionYears))} year(s)</strong> from application date.</p>
         <p class="card-hint">Applies to: ${esc(law.appliesTo || 'See state agency guidance')}</p>
         <p class="card-hint">Private-applicator duty: ${esc(law.privateDuty || 'required')} ·
@@ -1247,12 +1247,27 @@
   }
 
   async function fetchEpa(params) {
-    const response = await fetch(`/api/epa?${new URLSearchParams(params)}`, {
-      headers: { Accept: 'application/json' }
-    });
-    const body = await response.json().catch(() => ({}));
+    let response;
+    try {
+      response = await fetch(`/api/epa?${new URLSearchParams(params)}`, {
+        headers: { Accept: 'application/json' }
+      });
+    } catch (e) {
+      const err = new Error(tr('EPA lookup is unavailable. Type the EPA number from the jug or Scan label. The label is the law.'));
+      err.status = 0;
+      throw err;
+    }
+    const text = await response.text();
+    let body = {};
+    try {
+      body = text ? JSON.parse(text) : {};
+    } catch (e) {
+      const err = new Error(tr('Live EPA lookup is not on this host (USB, GitHub Pages, and local servers have no /api/epa). Type the EPA number from the jug or Scan label. The label is the law.'));
+      err.status = response.status;
+      throw err;
+    }
     if (!response.ok) {
-      const err = new Error(body.error || 'EPA lookup failed.');
+      const err = new Error(body.error || tr('EPA lookup failed. You can still enter the product manually.'));
       err.status = response.status;
       throw err;
     }
@@ -1286,7 +1301,7 @@
     } catch (error) {
       if (seq !== epaSearchSeq) return;
       status.textContent = error.message ||
-        'EPA lookup is unavailable. You can still enter the product manually.';
+        tr('EPA lookup is unavailable. You can still enter the product manually.');
     }
   }
 
@@ -3130,6 +3145,7 @@
     const empty = isEmptyHome();
     if ($('#dash-first-run')) $('#dash-first-run').hidden = !empty;
     if ($('#dash-working')) $('#dash-working').hidden = empty;
+    if ($('#dash-inspect-packet')) $('#dash-inspect-packet').hidden = !(data.applications && data.applications.length);
     renderInstallBanner();
     if (empty) {
       renderFirstRun();
@@ -3470,7 +3486,7 @@
       : '';
     $('#print-area').innerHTML = `
       <h1>Tank Mix Worksheet</h1>
-      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.9.6 (Practical Farm Tools)</p>
+      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.9.7 (Practical Farm Tools)</p>
       <table>
         <tr><th>Area treated</th><td>${fmtNum(c.area)} ${c.areaUnit === 'sqft' ? 'sq ft' : c.areaUnit === '1000sqft' ? '× 1,000 sq ft' : 'acres'} (${fmtNum(c.acres, 3)} ac)</td>
             <th>Spray volume</th><td>${fmtNum(c.gpa)} ${c.gpaUnit === 'gal_acre' ? 'gal/acre' : 'gal/1,000 sq ft'}</td></tr>
@@ -3818,7 +3834,7 @@
       format: 'pesticide-logger-state-pack',
       version: 5,
       generatedAt: new Date().toISOString(),
-      app: 'Pesticide Logger v2.9.6 — Practical Farm Tools',
+      app: 'Pesticide Logger v2.9.7 — Practical Farm Tools',
       disclaimer: 'Completion means required fields are filled for this context — not a legal determination. Does not replace WPS duties or e-filing programs.',
       farm: {
         name: s.farmName || '',
@@ -4598,6 +4614,7 @@
     const el = $('#install-banner');
     if (!el) return;
     if (isStandaloneDisplay()) { el.hidden = true; return; }
+    if (typeof isEmptyHome === 'function' ? isEmptyHome() : false) { el.hidden = true; return; }
     try {
       if (localStorage.getItem('pesticide-logger.installHintDismissed')) {
         el.hidden = true;
@@ -6380,10 +6397,14 @@
 
   function syncBuyButtons() {
     const show = Boolean((BUY_URL || '').trim());
-  ['license-buy', 'lock-buy'].forEach((id) => {
-    const el = $('#' + id);
-    if (el) el.hidden = !show;
-  });
+    ['license-buy', 'lock-buy'].forEach((id) => {
+      const el = $('#' + id);
+      if (el) el.hidden = !show;
+    });
+    ['license-checkout-note', 'lock-checkout-note'].forEach((id) => {
+      const el = $('#' + id);
+      if (el) el.hidden = show;
+    });
   }
 
   // -------------------------------------------------------------- offline

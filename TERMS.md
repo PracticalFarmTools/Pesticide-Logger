@@ -26,8 +26,9 @@ require, with citations and honest confidence levels. It:
 
 "Fields complete" means required fields are filled for your selected context.
 It is a checklist result, not a certification. State datasets marked
-`partial` or `uncertain` require confirmation with your agency, and even
-`researched` entries can lag rule changes.
+`uncertain`, or private-applicator duty marked unverified, require
+confirmation with your agency, and even `researched` entries can lag rule
+changes.
 
 ## 2. Your data & privacy
 

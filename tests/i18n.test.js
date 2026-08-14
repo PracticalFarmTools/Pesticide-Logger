@@ -56,6 +56,9 @@ check('farm terms: French vous + parcelle; Brazilian você + talhão/calda', () 
   assert.strictEqual(i18n.PT_BR['Fields'], 'Talhões');
   assert.strictEqual(i18n.FR['Tank Mix'], 'Mélange');
   assert.strictEqual(i18n.PT_BR['Tank Mix'], 'Calda');
+  assert.strictEqual(i18n.FR['Inspector packet'], 'Dossier inspecteur');
+  assert.strictEqual(i18n.PT_BR['Inspector packet'], 'Pacote do fiscal');
+  assert.strictEqual(i18n.ES['Open citation'], 'Abrir cita');
   assert.strictEqual(i18n.FR['Applicator'], 'Applicateur');
   assert.strictEqual(i18n.PT_BR['Applicator'], 'Aplicador');
   const frBlob = Object.values(i18n.FR).join('\n');

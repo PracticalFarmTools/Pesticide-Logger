@@ -3,7 +3,8 @@
 **Status: implemented** in v2.9.3 (`farm-file.js` inspector v2, gather hint,
 clerk search, optional FSA numbers, cab install hint). State-law research
 pass (partial/uncertain → researched) is specified in
-`docs/state-dataset-blueprint.md` and is **not implemented here**.
+`docs/state-dataset-blueprint.md` (remaining promotions **and** keep-current
+dates in Settings) and is **not implemented here**.
 inspector HTML, optional crew, inspector view, shop REI board).
 
 Job to be done: a grower keeps **U.S. state pesticide application records** on
@@ -260,7 +261,9 @@ we should add maps.”
 AL, AR, CT, HI, KS, ME off `partial` and MS off `uncertain` only with
 citations. Same for `privateDuty` uncertain (AR, KS, MI, MN, RI, SC, SD,
 VA). If the agency still does not say, keep `uncertain` — do not fill boxes
-to look researched. Research date in the file header moves when the pass
+to look researched. Keep each state current in-app with per-state
+`reviewedAt` and a Settings stale warning — not a live legal feed.
+Research date in the file header moves when a batch or confirmation
 lands. Existing `tests/compliance.test.js` 50-state walk stays the gate.
 
 **Cab pass.** In-app install hint when not `display-mode: standalone`

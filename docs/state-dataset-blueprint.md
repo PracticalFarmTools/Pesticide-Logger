@@ -1,13 +1,16 @@
 # Blueprint: 50-state pesticide recordkeeping research
 
 **Status: specified, not implemented.** Dataset header date is still **2026-07-31**.
-This is the stay-in-lane Phase 5 research pass that was deferred: close
-`partial` / `uncertain` holes with citations, or keep them honest.
+Two jobs, same file: (1) close remaining `partial` / `uncertain` holes with
+citations, or keep them honest; (2) **keep each state’s row current inside
+the app** without a legal API, scraper, or grower-edited matrices.
 
 Job to be done: a grower in **any of the 50 states** can pick that state in
 Settings and get a spray log, completeness badge, and inspector packet that
 match **that state’s agricultural application recordkeeping rule** — not a
-national form, not a guess, not an e-file.
+national form, not a guess, not an e-file. They can also see **when this
+state was last checked**, open the citation, and get a new matrix the same
+way they get any other app update (Reload).
 
 The app already **runs** in all 50 states. Every code has an agency, a
 citation URL, a retention period, a field list, `privateDuty`, and a
@@ -26,6 +29,7 @@ RUP e-file, and not WPS employer software.
 | Know when the record is due | `recordDeadline` units already in `deadline.js` | Holiday calendars, invented hours |
 | Hand the inspector a packet | Packet checklist = required `law.fields` labels | A second statute engine inside the HTML |
 | Confirm the source | `citation.reference` + URL, verification sentence | Fake seals, Cornell-only “researched” promotions |
+| Know this state’s row is still current | `reviewedAt` + file edition on Settings; stale warning after 12 months; Reload for a new matrix | Live statute API, scrapers, grower-edited laws |
 
 **Thesis:** finish the dataset we already ship. Promote a state only when a
 primary rule or statute names the fields. If the agency still does not say,
@@ -259,6 +263,8 @@ FSA strings already on the field). “Kansas registration number” →
 - Not a second completeness engine, ranch mode, or paid-only state packs.
 - Not lock-after-save or “certify this record.”
 - Not weather-on-the-record autofill from the spray-window forecast.
+- Not a live legal API, agency scraper, signed laws-only JSON, or
+  grower-editable matrices. Keep-current is dates + Reload, not fetch.
 
 ## How to research one state (repeatable)
 
@@ -281,13 +287,124 @@ UI per state beyond the field names the engine already understands.
    `notes` as remaining gaps, e-file reminders, and exceptions (indoor,
    bait stations, seed treatment).
 8. If the source is insufficient: **do not promote**. Tighten `notes`.
-9. Run `node tests/compliance.test.js` and `node tests/compliance-engine.test.js`.
-10. Move the file-header research date **only when this program’s last
-    batch lands** (one date for the file, not per state).
+9. Set `reviewedAt` to the ISO date you actually opened the citation
+   (even if every field stayed the same — that *is* the keep-current
+   commit).
+10. Run `node tests/compliance.test.js` and `node tests/compliance-engine.test.js`.
+11. Bump the file-level `STATE_LAWS_RESEARCH_DATE` (and cache) on that
+    commit. The file date is “this edition of the matrix.” `reviewedAt`
+    is “this state was checked.”
 
-One state per commit when the field list changes. Citation-only URL swaps
-may batch. Do not mix MS professional-services cleanup with WA retention
-edits.
+One state per commit when the field list **or** `reviewedAt` changes.
+Citation-only URL swaps may batch. Do not mix MS professional-services
+cleanup with WA retention edits.
+
+## Keeping states current (in the app)
+
+The hard part is **knowing a rule changed**, not shipping JSON. The matrix
+already lives in the app shell (`state_pesticide_laws.js` → `index.html` →
+cache-first `sw.js`). Growers already receive a new edition the same way
+they receive any other fix: new version, `#update-banner`, Reload. CSP
+`connect-src` is `'self'` plus Open-Meteo. There is no live statute feed,
+and adding one would be unsigned legal text over the network — out of
+lane, and it would break offline cab.
+
+**Easy** means: dates on the Settings card, a quarterly click-through of
+`citation.url`, bump `reviewedAt`, ship. It does not mean 50 scrapers,
+crowdsourced inspector edits, or a second laws JSON.
+
+### What growers already have
+
+Settings `#state-info-card` already shows agency, citation (tappable URL),
+retention, who it applies to, private-applicator duty, deadline, copy
+window, verification label, required-field list, and notes. Completeness
+re-reads the **current** `STATE_LAWS` on edit; old sprays keep frozen
+`complianceState` / `complianceApplicatorClass`. Inspector packets freeze
+the checklist at export (`inspect-v2`) and must not be re-evaluated
+against a newer matrix.
+
+What they cannot see today: the file header date **2026-07-31**, or any
+per-state last-checked date. A `researched` row from last year looks as
+fresh as one you confirmed this morning.
+
+### What to add in the app (small, same Settings card)
+
+Do this as **Batch H** after (or beside) the research batches. No new tab.
+
+1. **Export a file date** from `state_pesticide_laws.js`, e.g.
+   `STATE_LAWS_RESEARCH_DATE = '2026-07-31'`, so UI and tests share it
+   instead of scraping a comment.
+2. **Add `reviewedAt: 'YYYY-MM-DD'` on every state.** Until a human
+   re-opens that citation, seed it to the file date (honest: “last
+   checked when this edition was written,” not “verified today”).
+3. **Show both dates on `#state-info-card`:** “This state’s rules last
+   checked: \<reviewedAt\>.” “Matrix edition: \<file date\>.” Keep
+   verification (`researched` / `partial` / `uncertain`) as the
+   completeness gate; dates are freshness, not a third badge engine.
+4. **Stale copy, not auto-demote.** If `reviewedAt` is older than **12
+   months**, show a warning on that card: last checked on \<date\>; open
+   the citation and compare; update the app if we shipped a newer
+   edition. Do **not** flip `verification` to `partial` because a
+   calendar moved. Stale researched is still researched until a human
+   reads the rule. Auto-demote would punish every grower on 1 January
+   for our review cadence.
+5. **Citation stays the refresh button.** The existing link is the
+   grower’s check. Do not fetch or parse the agency page. Optional later:
+   a “Check for app update” control that calls `registration.update()` —
+   same-origin SW, not a laws API.
+6. **Packet cover** may repeat “rules last checked \<reviewedAt\>” so an
+   inspector sees the edition. Do not re-run `evaluateCompliance` on old
+   packet HTML when the dataset changes.
+
+### What maintainers do (quarterly, in the same file)
+
+Sort states by `reviewedAt`, oldest first. Each quarter, open the oldest
+~12–13 `citation.url` values (official HTML/PDF, not Cornell if a primary
+exists). For each:
+
+- Fields still match → bump **only** `reviewedAt` (and file date + cache).
+  That commit is a confirmation, not a no-op.
+- Fields changed → same as “How to research one state,” then bump
+  `reviewedAt`.
+- Link dead → find the current official URL; do not promote on a 404.
+- Rule gone / private duty still silent → keep `uncertain`; bump
+  `reviewedAt` so we record “we looked, still nothing.”
+
+One state per field-list or confirmation commit. Do not wait for all 50.
+
+**CI (once `reviewedAt` exists):** every state has an ISO date; no future
+dates. A scheduled or documented check **lists** states older than **18
+months**. Do not fail ordinary `compliance.test.js` on staleness — that
+blocks unrelated cab fixes. Missing `reviewedAt` after Batch H *should*
+fail tests.
+
+### What not to build (looks automated, is not easier)
+
+| Temptation | Why it is not the easy path |
+|---|---|
+| Scrape 50 agency sites / “watch this PDF” | Unsigned, brittle, CSP, offline cab, still needs a human to map fields |
+| Live `fetch` of statutes into the log | Legal text over the network; cache-first SW would serve yesterday’s law without saying so |
+| Separate signed `laws.json` without a shell bump | Extra signing, hosting, and CSP; SW Reload already ships the file |
+| Grower-editable matrices / “inspector said add wind” | Forks the dataset per device; next update overwrites or diverges; not our job |
+| Crowdsource corrections | No identity, no citation, no freeze story |
+| Auto-parse PDFs into `fields[]` | Hallucinated required boxes; completeness becomes fiction |
+| Re-evaluate frozen packets when laws change | Inspector handed a different checklist than the file they have |
+| Per-state paid packs or a second engine | Same log, one `evaluateCompliance` |
+
+Distribution is already easy: commit the laws file, bump `CACHE_NAME`,
+growers Reload. The in-app work is **making staleness visible** and
+**making confirmation a first-class commit** (`reviewedAt`).
+
+### Schema: `reviewedAt` is metadata, not a log field
+
+It does not need `data-log-field`. It does not affect
+`complianceValuePresent`. Completeness still uses `verification` +
+`privateDuty` + filled boxes. `reviewedAt` only drives Settings copy,
+optional packet cover line, and the quarterly queue.
+
+Until Batch H lands, the file header comment remains the only edition
+date. Do not invent per-state dates in JSON before the UI can show them
+— land schema + seed + Settings copy in the same change.
 
 ## Implementation order
 
@@ -332,7 +449,18 @@ No field-list edits in the same commit.
 
 Stay-in-lane packet and Settings copy already consume `verification` and
 `privateDuty`. No UI program in this file unless a **new field name**
-requires a `data-log-field` control.
+requires a `data-log-field` control — except **Batch H** (dates on the
+Settings card), which is metadata display, not a new log field.
+
+### Batch H — keep-current in Settings (schema + copy)
+
+Export `STATE_LAWS_RESEARCH_DATE`. Add `reviewedAt` on all 50 (seed to
+the file date). Show last-checked + edition on `#state-info-card`. Stale
+warning after 12 months; do not auto-demote `verification`. Optional:
+packet cover repeats last-checked; “Check for app update” = SW
+`registration.update()`. Tests: every state has `reviewedAt`; Settings
+renders both dates; stale copy does not change badges. Land this even if
+Batches A–G are unfinished — freshness is useful on `partial` rows too.
 
 ## Tests (must exist before calling a batch done)
 
@@ -353,6 +481,10 @@ Same extract-and-run pattern as `tests/compliance.test.js`. Do not grep
 - Every `fields[].name` has a `complianceValuePresent` case (add this
   assertion if missing).
 - Related fields still not aliases (dilution ≠ rate, etc.).
+- After Batch H: every state has `reviewedAt` (ISO date, not future);
+  `STATE_LAWS_RESEARCH_DATE` is exported and shown on Settings; stale
+  copy (12 months) does not flip `verification`. Ordinary compliance
+  tests must not fail solely because a date is old.
 
 **Per promotion**
 
@@ -389,8 +521,18 @@ Same extract-and-run pattern as `tests/compliance.test.js`. Do not grep
 - **Rewriting live badges on old sprays.** Frozen `complianceState` stays.
   New evaluation uses new data. Packet export freezes again. Do not migrate
   historical `complianceComplete` flags.
-- **Research date theater.** Do not bump 2026-07-31 until a batch actually
-  lands. Do not stamp a date per state in the JSON (one header date).
+- **Research date theater.** Do not bump the file edition date until a
+  batch or a confirmation actually lands. After Batch H, per-state
+  `reviewedAt` is required — that is freshness, not theater. Seeding
+  all 50 to “today” without opening citations is theater; seed to the
+  existing file date instead.
+- **Auto-demote on calendar.** A 12-month Settings warning is enough.
+  Flipping `researched` → `partial` on 1 January makes every Complete
+  spray Needs review overnight.
+- **Live fetch dressed as freshness.** A button that pulls statutes or
+  a remote JSON into the log is not “keeping states current.” It is a
+  new backend and a new trust problem. SW Reload is the update path.
+- **Re-evaluating frozen packets** when `reviewedAt` or fields change.
 
 ## Success
 
@@ -410,5 +552,12 @@ An inspector opening the HTML packet sees the same required labels as
 Settings, the verification sentence (`researched` / `partial` /
 `uncertain`), and “not a filing.”
 
-If any of this requires a server, a 50-PDF generator, or auto-filled labels,
-it has veered out of lane.
+A grower in a `researched` state can open Settings and see **when that
+state was last checked** and the matrix edition date. If the check is
+older than 12 months, they see a warning and the citation — not a
+silently demoted badge. After we confirm or correct a rule, they get
+the new row the same way they get any app fix: update banner, Reload.
+
+If any of this requires a server, a 50-PDF generator, auto-filled labels,
+a live statute API, or grower-edited law matrices, it has veered out of
+lane.

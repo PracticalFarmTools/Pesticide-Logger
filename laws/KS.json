@@ -1,19 +1,25 @@
 {
   "code": "KS",
-  "reviewedAt": "2026-07-31",
+  "reviewedAt": "2026-08-14",
   "agency": "Kansas Department of Agriculture",
   "citation": {
     "reference": "K.S.A. 2-2455; K.A.R. 4-13-4a",
     "url": "https://www.ksrevisor.gov/statutes/chapters/ch02/002_024_0055.html"
   },
   "retentionYears": 3,
-  "appliesTo": "Pesticide businesses must retain statements of services/contracts; government agencies and certain certified commercial applicators maintain application records. Private applicator app-record field list not verified.",
-  "verification": "partial",
-  "notes": "K.S.A. 2-2455 governs customer statements/contracts and record availability. K.A.R. 4-13-4a requires complete product name and EPA/Kansas registration number. Field list is partially verified for agricultural application records because statute delegates some details to rules.",
+  "appliesTo": "Pesticide businesses: statement of services or contract for each customer pest-control service involving pesticide application. Government agencies keep parallel application records. Certified commercial applicators not acting for a business keep records under K.A.R. 4-13-5. Private applicator application-record fields are not named in K.S.A. 2-2455.",
+  "verification": "researched",
+  "notes": "K.S.A. 2-2455 (read 2026-08-14 on ksrevisor.gov): business name/address/license number; customer name and address; pest; pesticide including quantity and total area; concentration or rate when applicable; date, location, start and end time; applicator signature and certification number; supervisor signature and number when applicable; wind direction and velocity when applicable; less-than-label-rate when applicable. K.A.R. 4-13-4a adds complete product name and EPA or Kansas registration number. Present the statement to the customer within 30 days (unless prepaid). Wood-destroying-pest diagrams and retreatments are structural extras — not required boxes on an ag spray. Private RUP records are not in this statute (KSU still points at the old federal Farm Bill list). No hours completion clock (24-hour fallback is operational).",
   "fields": [
     {
       "name": "business_name_address",
       "label": "Business / operator name & address",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "company_license",
+      "label": "Pesticide business license #",
       "type": "string",
       "required": true
     },
@@ -78,8 +84,26 @@
       "required": true
     },
     {
+      "name": "start_time",
+      "label": "Start time",
+      "type": "time",
+      "required": true
+    },
+    {
+      "name": "end_time",
+      "label": "End time",
+      "type": "time",
+      "required": true
+    },
+    {
       "name": "applicator_name",
       "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_license",
+      "label": "Applicator certification / license #",
       "type": "string",
       "required": true
     },
@@ -87,11 +111,23 @@
       "name": "supervisor_name",
       "label": "Supervising applicator",
       "type": "string",
-      "required": true
+      "required": false
+    },
+    {
+      "name": "wind_speed",
+      "label": "Wind speed",
+      "type": "number",
+      "required": false
+    },
+    {
+      "name": "wind_direction",
+      "label": "Wind direction",
+      "type": "string",
+      "required": false
     }
   ],
   "recordWithinHours": 24,
-  "customerCopyDays": null,
+  "customerCopyDays": 30,
   "privateDuty": "uncertain",
   "recordDeadline": {
     "count": 24,

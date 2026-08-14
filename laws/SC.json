@@ -1,15 +1,15 @@
 {
   "code": "SC",
-  "reviewedAt": "2026-07-31",
+  "reviewedAt": "2026-08-14",
   "agency": "Clemson University Department of Pesticide Regulation",
   "citation": {
     "reference": "S.C. Code Regs. 27-1083(C)",
-    "url": "https://www.law.cornell.edu/regulations/south-carolina/R-27-1083"
+    "url": "https://www.scstatehouse.gov/coderegs/Chapter%2027.pdf"
   },
   "retentionYears": 2,
   "appliesTo": "Companies/firms employing licensed commercial or noncommercial applicators; self-employed commercial applicators; employers of noncommercial applicators. Private applicator record duty not verified.",
   "verification": "researched",
-  "notes": "Records include quantity of each pesticide used, received, or purchased. Pests need not be listed for general household or general commercial/industrial insect control. Weather is not required by this section.",
+  "notes": "S.C. Code Regs. 27-1083(C) (read 2026-08-14): records by companies/firms employing licensed commercial or noncommercial applicators, self-employed commercial applicators, and employers of licensed noncommercial applicators. Quantity, active ingredient if available, brand, EPA number, pest or purpose, date, and place. Two years except termiticides (five years or warranty). This section does not name private applicators; private duty stays uncertain. Weather is not required. Official compiler PDF: scstatehouse.gov Chapter 27.",
   "fields": [
     {
       "name": "amount_applied",

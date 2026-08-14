@@ -1,6 +1,6 @@
 {
   "code": "VA",
-  "reviewedAt": "2026-07-31",
+  "reviewedAt": "2026-08-14",
   "agency": "Virginia Department of Agriculture and Consumer Services",
   "citation": {
     "reference": "2VAC5-680-50, 2VAC5-680-70; 2VAC5-685-200, -210",
@@ -9,7 +9,7 @@
   "retentionYears": 2,
   "appliesTo": "Pesticide businesses: each general-use and RUP application; commercial applicators not for hire and registered technicians not for hire: each pesticide application. Private applicator requirements not verified in these sections.",
   "verification": "researched",
-  "notes": "Records not readily available must be submitted to VDACS within 72 hours of written request. No wind/weather field in cited rule.",
+  "notes": "2VAC5-680 (businesses) and 2VAC5-685-200/-210 (commercial applicators not for hire and registered technicians not for hire) were read 2026-08-14 on law.lis.virginia.gov. Those sections do not name certified private applicators. Private duty stays uncertain. Records not readily available must be submitted within 72 hours of written request. No wind/weather field in the cited rules.",
   "fields": [
     {
       "name": "customer_name",

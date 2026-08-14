@@ -1,15 +1,15 @@
 {
   "code": "AL",
-  "reviewedAt": "2026-07-31",
+  "reviewedAt": "2026-08-14",
   "agency": "Alabama Department of Agriculture and Industries",
   "citation": {
     "reference": "Ala. Admin. Code r. 80-1-13-.14; aerial applications r. 80-1-14-.08",
-    "url": "https://www.law.cornell.edu/regulations/alabama/Ala-Admin-Code-r-80-1-13-.14"
+    "url": "https://admincode.legislature.state.al.us/api/chapter/80-1-13"
   },
   "retentionYears": 3,
-  "appliesTo": "Commercial pesticide permit holders: each application of restricted-use and other pesticides. Private applicators: no Alabama record duty unless pesticide labeling requires it.",
-  "verification": "partial",
-  "notes": "Rule text does not require weather for ordinary ground applications. Separate Alabama aerial rule requires licensee/customer/farm/crop/acres/brand/formulation/rate/tank-mix/person/signature records and three-year retention. Partially verified for non-ag professional-services rules, which have a one-year baseline.",
+  "appliesTo": "Commercial pesticide permit holders: each application of restricted-use and other pesticides. Private applicators: no Alabama record duty unless pesticide labeling requires it. Aerial custom licensees have a separate list in r. 80-1-14-.08.",
+  "verification": "researched",
+  "notes": "Official SOS chapter 80-1-13 (read 2026-08-14): private applicators shall not be required to keep books and records unless required by the labeling. Commercial permit holders keep EPA registration number, amount used, crop or site, pest, rate, location, and date and time, for three years. Ground rule .14 does not require weather and does not set a completion clock (24-hour fallback is operational, not in .14). Aerial r. 80-1-14-.08 (https://admincode.legislature.state.al.us/api/chapter/80-1-14) adds licensee/customer/farm/crop/acres/brand/manufacturer/formulation/rate/tank-mix/applicator/signature and a 72-hour completion clock — those aerial extras are not required boxes on a ground spray. Professional-services work is not this agricultural matrix.",
   "fields": [
     {
       "name": "epa_reg_no",

@@ -1,6 +1,6 @@
 {
   "code": "MI",
-  "reviewedAt": "2026-07-31",
+  "reviewedAt": "2026-08-14",
   "agency": "Michigan Department of Agriculture and Rural Development",
   "citation": {
     "reference": "Mich. Admin. Code R 285.636.15; MCL 324.8311",
@@ -9,7 +9,7 @@
   "retentionYears": 3,
   "appliesTo": "Commercial applicators; RUP and general-use application records. Private-applicator state record fields not verified.",
   "verification": "researched",
-  "notes": "MCL also requires annual RUP summary to the director before March 1 for commercial RUP use. Weather is not a required field in the cited commercial record rule.",
+  "notes": "MCL 324.8311 (https://www.legislature.mi.gov/Laws/MCL?objectName=mcl-324-8311) names certified commercial applicator RUP records (3 years) and a commercial county summary due before March 1 — that summary is a report, not this log. R 285.636.15 is the commercial application-record list on this row. No private-applicator application-record list is in those sections; MSU E2342 still points at the old federal RUP chart. Private duty stays uncertain. Weather is not required in the cited commercial rule. LARA ARS download for R 285.636 did not return the rule PDF on 2026-08-14; Cornell LII remains the citation watch until a primary host is found.",
   "fields": [
     {
       "name": "brand_name",

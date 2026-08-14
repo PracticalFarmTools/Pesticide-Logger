@@ -1,15 +1,15 @@
 {
   "code": "RI",
-  "reviewedAt": "2026-07-31",
+  "reviewedAt": "2026-08-14",
   "agency": "Rhode Island Department of Environmental Management",
   "citation": {
-    "reference": "250-RICR-40-15-2.6(B)",
+    "reference": "250-RICR-40-15-2.6(B) commercial; 2.6(C) private RUP / state-limited-use",
     "url": "https://rules.sos.ri.gov/regulations/part/250-40-15-2"
   },
   "retentionYears": 2,
-  "appliesTo": "Commercial applicators; applications of general-use, restricted-use, and state-limited-use pesticides. Private applicator application-record state requirements not verified.",
+  "appliesTo": "Commercial applicators: general-use, restricted-use, and state-limited-use applications (§2.6(B)). Certified private applicators: yearly use of each restricted-use and state-limited-use pesticide (§2.6(C)).",
   "verification": "researched",
-  "notes": "Upon completion, applicator must leave a detailed invoice at the property containing product/EPA/amount, persons certified/licensed and supervised participants, certification/license number, and post-application safety/environment/health label instructions. RUP applications must be recorded no later than 14 days.",
+  "notes": "Official RICR (read 2026-08-14). Commercial §2.6(B) is the field list on this row (formulation, % AI, invoice at the property, persons who participated). Private §2.6(C) names a shorter RUP/state-limited-use list (brand, EPA number, amount, purpose/target, farm name/address and field, date, applicator name and certification number) recorded within 14 days, kept two calendar years. Do not treat the commercial invoice extras as the private statute. RUP applications recorded no later than 14 days.",
   "fields": [
     {
       "name": "brand_name",
@@ -104,7 +104,7 @@
   ],
   "recordWithinHours": 24,
   "customerCopyDays": null,
-  "privateDuty": "uncertain",
+  "privateDuty": "required",
   "recordDeadline": {
     "count": 24,
     "unit": "hours"

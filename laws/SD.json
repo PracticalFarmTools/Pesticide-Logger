@@ -1,15 +1,15 @@
 {
   "code": "SD",
-  "reviewedAt": "2026-07-31",
+  "reviewedAt": "2026-08-14",
   "agency": "South Dakota Department of Agriculture and Natural Resources",
   "citation": {
     "reference": "ARSD 12:56:07:01 and 12:56:07:03",
-    "url": "https://www.law.cornell.edu/regulations/south-dakota/ARSD-12-56-07-01"
+    "url": "https://sdlegislature.gov/Rules/Administrative/12:56:07:01"
   },
   "retentionYears": 3,
   "appliesTo": "Commercial applicators; records for each pesticide application. Private applicator exact state duty not verified.",
   "verification": "researched",
-  "notes": "Records completed by close of business day per DANR sample form/extension. Weather requirement excludes bait stations and pesticide applications in or immediately adjacent to structures.",
+  "notes": "ARSD 12:56:07:01–:03 (official rule URL on sdlegislature.gov, read 2026-08-14) lists commercial-style application records due by close of business, kept three years. Weather excludes bait stations and applications in or next to structures. SDSU Extension still describes private RUP records as the old federal Farm Bill list, not this chapter. Until DANR writes that 12:56:07 includes certified private applicators, private duty stays uncertain.",
   "fields": [
     {
       "name": "customer_name",

@@ -1,6 +1,6 @@
 {
   "code": "MN",
-  "reviewedAt": "2026-07-31",
+  "reviewedAt": "2026-08-14",
   "agency": "Minnesota Department of Agriculture",
   "citation": {
     "reference": "Minn. Stat. §18B.37, subd. 2",
@@ -9,7 +9,7 @@
   "retentionYears": 5,
   "appliesTo": "Commercial applicators record pesticides used on each site; noncommercial applicators record restricted-use pesticides. Private agricultural applicator state record fields not verified in this section.",
   "verification": "researched",
-  "notes": "Record must be completed within five days. Commercial applicators must give a copy to the customer. Portions not relevant may be omitted with commissioner approval.",
+  "notes": "Minn. Stat. §18B.37 (read 2026-08-14 on revisor.mn.gov): subd. 2 is commercial and noncommercial only (noncommercial = RUP). Record within five days; retain five years; commercial applicators must give a copy to the customer (no day count). Subd. 3 is structural pest control — not this ag log. There is no private-applicator subdivision in §18B.37; private duty stays uncertain.",
   "fields": [
     {
       "name": "date",

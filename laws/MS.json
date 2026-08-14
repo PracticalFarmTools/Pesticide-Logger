@@ -1,28 +1,16 @@
 {
   "code": "MS",
-  "reviewedAt": "2026-07-31",
+  "reviewedAt": "2026-08-14",
   "agency": "Mississippi Department of Agriculture and Commerce, Bureau of Plant Industry",
   "citation": {
-    "reference": "Title 2, Part 1, Subpart 3, Chapter 11 §111.01 (professional services)",
+    "reference": "Title 2, Part 1, Subpart 3, Chapter 11 §111.01 (professional services) — not an agricultural use-record rule",
     "url": "https://agnet.mdac.ms.gov/agManage/uploads/1641.pdf"
   },
   "retentionYears": 2,
-  "appliesTo": "Persons licensed or permitted under Mississippi professional-services rules; all work performed. Broader agricultural private/commercial pesticide-use record rule not fully verified.",
+  "appliesTo": "The linked rule is professional-services (for-hire pest control / WDI / termiticide), not a farm use-record matrix. MDAC certifies private and commercial agricultural applicators and inspects restricted-use records, but no agricultural field list was found as of 2026-08-14.",
   "verification": "uncertain",
-  "notes": "WDI records are retained while contract is current plus two years. Termiticide pretreatments require start/end time, vehicle ID, application volume/minute, tank size, nozzle type/size, PSI, and total diluted volume. Agricultural coverage is uncertain/partially verified.",
+  "notes": "Read 2026-08-14: MDAC pesticide program pages describe private vs commercial certification and professional-services licensing, and say the Bureau inspects restricted-use application records, but they do not name agricultural record elements. §111.01 termiticide extras (PSI, nozzle, vehicle ID, volume/minute) must not appear as required farm boxes. This row stays uncertain until an ag use-record rule is cited. Private duty is also unverified (not copied from professional services). Operational core still applies.",
   "fields": [
-    {
-      "name": "location",
-      "label": "Location / field / site description",
-      "type": "string",
-      "required": true
-    },
-    {
-      "name": "application_purpose",
-      "label": "Purpose of application",
-      "type": "string",
-      "required": true
-    },
     {
       "name": "date",
       "label": "Application date",
@@ -30,8 +18,14 @@
       "required": true
     },
     {
-      "name": "target_pest",
-      "label": "Target pest",
+      "name": "location",
+      "label": "Location / field / site description",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
       "type": "string",
       "required": true
     },
@@ -52,53 +46,11 @@
       "label": "Total amount applied",
       "type": "string",
       "required": true
-    },
-    {
-      "name": "dilution_rate",
-      "label": "Dilution rate",
-      "type": "string",
-      "required": true
-    },
-    {
-      "name": "total_mix_applied",
-      "label": "Total diluted mix applied",
-      "type": "string",
-      "required": true
-    },
-    {
-      "name": "nozzle_type",
-      "label": "Nozzle type",
-      "type": "string",
-      "required": false
-    },
-    {
-      "name": "sprayer_pressure",
-      "label": "Sprayer pressure",
-      "type": "string",
-      "required": false
-    },
-    {
-      "name": "start_time",
-      "label": "Start time",
-      "type": "time",
-      "required": false
-    },
-    {
-      "name": "end_time",
-      "label": "End time",
-      "type": "time",
-      "required": false
-    },
-    {
-      "name": "equipment_id",
-      "label": "Equipment ID",
-      "type": "string",
-      "required": false
     }
   ],
   "recordWithinHours": 24,
   "customerCopyDays": null,
-  "privateDuty": "required",
+  "privateDuty": "uncertain",
   "recordDeadline": {
     "count": 24,
     "unit": "hours"

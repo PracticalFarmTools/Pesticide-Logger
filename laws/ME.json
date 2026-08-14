@@ -1,15 +1,15 @@
 {
   "code": "ME",
-  "reviewedAt": "2026-07-31",
+  "reviewedAt": "2026-08-14",
   "agency": "Maine Board of Pesticides Control, Department of Agriculture, Conservation and Forestry",
   "citation": {
     "reference": "01-026 C.M.R. ch. 50, §1(A)",
     "url": "https://www.maine.gov/dacf/php/pesticides/documents2/rulemaking_2024/BPC-Ch50-amended_rule_legislative_Final.pdf"
   },
   "retentionYears": 2,
-  "appliesTo": "Commercial agricultural producers and commercial applicators; pesticide application records for applications they make.",
-  "verification": "partial",
-  "notes": "Records must be kept current by recording all required information on the same day. Maine requires commercial applicator annual summary reports; a proposed/electronic reporting document indicates Jan. 31 reporting through Board-approved software. Outdoor weather details are partially verified from Chapter 50 context and should be captured.",
+  "appliesTo": "Commercial agricultural producers and commercial applicators (01-026 C.M.R. ch. 50 §1(A)). Not a structural-only list. Indoor/bait/ear-tag/tree-injection outdoor exceptions are in the weather clause, not a different field matrix.",
+  "verification": "researched",
+  "notes": "Chapter 50 PDF (read 2026-08-14): record the same day; keep two years. Site: town and location, crop or site, target organism, customer and address where applicable, treated area/volume/scope. Application: date and time, brand, EPA number, active ingredient, REI and/or ventilation where applicable, method/equipment, dilution agents other than water, licensed applicator name and certification number, noncertified applicator name where applicable, spray contracting firm where applicable. Rate: RUP total undiluted amount; GUP may use mix ratio plus total mix or mix per unit area. Outdoor weather (wind speed and direction, air temperature, sky) is required except bait stations, animal tags, and tree/pole injections — those weather boxes stay optional on this log so indoor applications are not forced. Annual commercial summary is electronic by January 31 (e-file, out of app).",
   "fields": [
     {
       "name": "county",

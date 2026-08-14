@@ -188,6 +188,38 @@ check('Home and Settings surface check-again dates; maintainer queue lists holes
   assert.ok(show.stdout.includes('https://agnet.mdac.ms.gov'));
 });
 
+check('watch-list prints 50 local citation URLs and does not fetch', () => {
+  const r = spawnSync(process.execPath, [path.join(root, 'tools', 'bundle-state-laws.js'), '--watch-list'], {
+    encoding: 'utf8', cwd: root
+  });
+  assert.strictEqual(r.status, 0, r.stderr);
+  const lines = r.stdout.trim().split('\n');
+  assert.strictEqual(lines[0], 'code\tkind\thost\thole\tcornell\turl');
+  const data = lines.slice(1).filter((line) => line.charAt(0) !== '#');
+  assert.strictEqual(data.length, 50);
+  const codes = data.map((line) => line.split('\t')[0]);
+  assert.deepStrictEqual(codes, bundle.US_STATES);
+  data.forEach((line) => {
+    const cols = line.split('\t');
+    assert.strictEqual(cols.length, 6, line);
+    assert.ok(cols[1] === 'pdf' || cols[1] === 'html', cols[1]);
+    assert.ok(/^https?:\/\//.test(cols[5]), cols[5]);
+  });
+  const pdf = data.filter((line) => line.split('\t')[1] === 'pdf').length;
+  const cornell = data.filter((line) => line.split('\t')[4] === 'yes').length;
+  assert.strictEqual(pdf, 11);
+  assert.strictEqual(cornell, 18);
+  assert.ok(r.stdout.includes('50 citation URL(s); 11 PDF; 18 Cornell; 33 host(s)'));
+  assert.ok(r.stdout.includes('This command does not fetch'));
+  const ia = data.find((line) => line.indexOf('IA\t') === 0);
+  assert.ok(ia.indexOf('\tno\tno\thttps://') >= 0, ia);
+  const ms = data.find((line) => line.indexOf('MS\t') === 0);
+  assert.ok(ms.indexOf('pdf\tagnet.mdac.ms.gov\tyes\tno\thttps://') >= 0, ms);
+  const rows = bundle.watchRows();
+  assert.strictEqual(rows.length, 50);
+  assert.strictEqual(rows.filter((row) => row.cornell).length, 18);
+});
+
 if (failed) {
   console.error('\n' + failed + ' state-laws check(s) failed');
   process.exit(1);

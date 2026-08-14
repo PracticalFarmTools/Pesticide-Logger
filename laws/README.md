@@ -40,6 +40,7 @@ node tools/bundle-state-laws.js --oldest 13  # quarterly re-read queue
 node tools/bundle-state-laws.js --stale
 node tools/bundle-state-laws.js --show MS    # citation URL + field names
 node tools/bundle-state-laws.js --status
+node tools/bundle-state-laws.js --watch-list # citation URLs for an external monitor (no fetch)
 ```
 
 6. Run `node tests/compliance.test.js` and `node tests/state-laws.test.js`.
@@ -57,6 +58,9 @@ Do not mix a Kansas field-list change with an Iowa confirmation.
   Settings; completeness still uses `verification` + filled boxes.
 - Do not invent `customerCopyDays` or a private field list.
 - Do not fetch statutes at runtime. The citation URL is for humans.
+  Page-change monitors and AI diffs belong **outside** the PWA. See
+  `docs/state-dataset-blueprint.md` (Monitoring legal changes). `--watch-list`
+  prints the 50 URLs; it does not scrape them.
 
 ## File shape
 

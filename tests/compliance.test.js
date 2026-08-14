@@ -631,6 +631,8 @@ check('state-dataset blueprint specifies in-app keep-current without a live lega
   assert.ok(bp.includes('Batch H'), 'Settings dates are a named batch');
   assert.ok(bp.includes('Stale copy, not auto-demote'), 'calendar must not flip verification');
   assert.ok(bp.includes('12 months'), 'stale window');
+  assert.ok(bp.includes('Monitoring legal changes (outside the app)'), 'off-app monitor, not in-cab scrape');
+  assert.ok(bp.includes('--watch-list'), 'maintainer URL export');
   assert.ok(!/live statute feed/i.test(bp) || bp.includes('There is no live statute feed'), 'no live statute feed');
   ['scraper', 'grower-editable', 'Crowdsource', 'Auto-parse PDFs'].forEach((refuse) => {
     assert.ok(bp.includes(refuse), 'refuses ' + refuse);

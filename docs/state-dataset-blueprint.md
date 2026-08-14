@@ -3,9 +3,10 @@
 **Status: Batch H implemented** in v2.9.4; Home / log / maintainer queue
 freshness in **v2.9.5** (`laws/XX.json`, `reviewedAt`, Settings + Home
 last-checked and check-again-by, 12-month stale warning, `--holes` /
-`--oldest`). Dataset header / matrix edition date is still **2026-07-31**.
-Batches A–G (remaining `partial` / `uncertain` promotions) are specified,
-not done.
+`--oldest`). Off-app citation monitoring is documented; `--watch-list`
+exports the 50 URLs (no fetch). Dataset header / matrix edition date is
+still **2026-07-31**. Batches A–G (remaining `partial` / `uncertain`
+promotions) are specified, not done.
 
 Job to be done: a grower in **any of the 50 states** can pick that state in
 Settings and get a spray log, completeness badge, and inspector packet that
@@ -387,7 +388,7 @@ fail tests.
 
 | Temptation | Why it is not the easy path |
 |---|---|
-| Scrape 50 agency sites / “watch this PDF” | Unsigned, brittle, CSP, offline cab, still needs a human to map fields |
+| Scrape 50 agency sites **in the app** / auto-fill `fields[]` | Unsigned, brittle, CSP, offline cab. Off-app hash alerts are the monitor; a human still maps fields (see Monitoring legal changes) |
 | Live `fetch` of statutes into the log | Legal text over the network; cache-first SW would serve yesterday’s law without saying so |
 | Separate signed `laws.json` without a shell bump | Extra signing, hosting, and CSP; SW Reload already ships the file |
 | Grower-editable matrices / “inspector said add wind” | Forks the dataset per device; next update overwrites or diverges; not our job |
@@ -410,6 +411,143 @@ optional packet cover line, and the quarterly queue.
 Until Batch H landed, the file header comment was the only edition date.
 `reviewedAt` now lives on every state JSON. Seed remaining un-opened
 citations to the file date — do not stamp “today” without reading the rule.
+
+## Monitoring legal changes (outside the app)
+
+The in-app path is already: a human reads `citation.url` → edits
+`laws/XX.json` → `node tools/bundle-state-laws.js --stamp XX` → growers
+Reload. The remaining problem is **knowing the page moved**. That work
+belongs in a maintainer pipeline, not in the cab. The PWA must not fetch
+statutes (`connect-src` is `'self'` + Open-Meteo), must not parse PDFs into
+`fields[]`, and must not auto-promote `verification`. Snapshots of official
+text do not belong in the service-worker shell.
+
+`node tools/bundle-state-laws.js --watch-list` prints the feed (TSV: code,
+kind, host, hole, cornell, url). It reads local JSON only. It does **not**
+GET the URLs.
+
+### What the 50 citations actually are
+
+Counts from the current matrix (edition **2026-07-31**):
+
+| Slice | Count | Notes |
+|---|---|---|
+| Distinct hosts | 33 | One Cornell host covers 18 states; every other host is unique |
+| Cornell LII | 18 | AL, AZ, CA, ID, IL, MA, MD, MI, MO, NE, NJ, NV, SC, SD, TN, UT, WV, WY |
+| Direct PDFs | 11 | AK, AR, IN, IA, LA, ME, MS, MT, ND, TX, VT |
+| `http://` (not TLS) | 2 | FL (`flrules.elaws.us`), NC (`ncrules.state.nc.us`) |
+| Unofficial / CDN mirrors | several | `elaws.us` (FL, OK), `colorado.public.law`, LA on Contentful (`assets.ctfassets.net`), IN extension PDF on Purdue |
+
+Watching `citation.url` is necessary and not sufficient. A rule can change
+on the official SOS site while our URL still points at last year’s PDF, a
+Cornell mirror, or a guidance page (HI RUP explainer, NY PRL page). Hash
+alerts tell you the **bytes moved**. A human still maps that to `fields[]`,
+`privateDuty`, and `recordDeadline`.
+
+### Ranked options
+
+**1. Page-change monitor on `citation.url` (do this first).**
+
+Hash or ETag the 50 URLs on a weekly cron (Changedetection.io, a GitHub
+Action that stores SHA-256 of the response body, Visualping, Distill).
+PDF bytes hash cleanly. HTML often false-positives (session cookies,
+“last updated” widgets, CDN cache-busters). Normalize before hashing:
+strip cookies, follow redirects, ignore volatile query params. Alert →
+open an issue named `KS citation changed` → human reads the official
+text → edit `laws/KS.json` → `--stamp KS`. Never auto-commit the JSON.
+
+**2. Official registers, RSS, and agency mailing lists.**
+
+Many secretaries of state publish a register of proposed / adopted
+rules. Ag departments mail “what’s new.” These catch **new rulemaking**
+that has not yet replaced the PDF at `citation.url`. Coverage is uneven;
+there is no 50-state RSS. Subscribe where it exists (PA Code & Bulletin,
+GA SOS, RI SOS, DE regulations, VT / ME rulemaking dockets). Treat
+register hits as “re-read this state this quarter,” not as a field list.
+
+**3. Legislative trackers (LegiScan, Open States) as a complement.**
+
+Keyword alerts for pesticide / applicator / recordkeeping bills. Useful
+for **statute** changes (KS, MN, OR in this dataset). Most of our matrix
+is **administrative code**. A tracker will miss a department amending
+R. 80-1-13-.14. Do not treat a quiet bill session as “the rule is
+unchanged.”
+
+**4. PDF byte-hash for the 11 direct files.**
+
+AK, AR, IN, IA, LA, ME, MS, MT, ND, TX, VT. Hash the body after
+redirects. Watch for URL rot: LA’s Contentful path will 404 when the
+asset is re-uploaded even if the rule is the same; IN’s Purdue PDF is
+an extension summary, not the statute. A hash change is a prompt to
+find the current official file, not a promotion.
+
+**5. Scheduled AI agent as a *diff assistant*, never as the author.**
+
+After a hash change (or on the `--oldest 13` quarterly queue), an agent
+may fetch the new page and the previous snapshot and answer: did the
+recordkeeping section change, who it applies to, and which of our
+`fields[].name` values might be affected? The agent drafts notes. A
+human sets `verification`, `privateDuty`, and required boxes. Do **not**:
+
+- let the agent write `laws/XX.json` unattended
+- promote `partial` → `researched` from a model extract
+- crawl all 50 pages nightly asking “extract required fields” (that is
+  how invented boxes get into the cab)
+- run the agent inside the grower’s browser or against the SW cache
+
+Browser-use agents will hit PDF viewers, JS-only SOS apps, and
+CAPTCHAs. Prefer raw HTTP + stored snapshots over clicking around
+`pacodeandbulletin.gov`.
+
+**6. Wayback / Internet Archive compare.**
+
+Useful when a URL 404s and you need last year’s text. Not a live
+monitor. Do not cite archive.org as `citation.url` once a current
+official URL exists.
+
+### Recommended pipeline
+
+```
+--watch-list
+    → external hasher (weekly)
+        → alert only when bytes change
+            → snapshot old vs new
+                → optional AI summary of the recordkeeping section
+                    → human edits laws/XX.json
+                        → --stamp XX
+                            → growers Reload
+```
+
+Keep snapshots and hashes in a **maintainer repo or Changedetection
+volume**, not in this PWA. `--oldest 13` remains the backstop for pages
+that never change bytes (same HTML, new meaning elsewhere) and for
+Cornell mirrors that lag the state.
+
+### What not to scrape, and why
+
+| Approach | Why it fails for this product |
+|---|---|
+| In-app `fetch` of statutes | CSP, offline cab, unsigned legal text, cache-first SW serving yesterday’s law |
+| Auto-parse PDF/HTML into `fields[]` | Hallucinated required boxes; completeness becomes fiction |
+| Auto-promote `researched` when the hash is stable | Silence is not a primary-source read |
+| Watch Cornell only | 18/50 URLs are a mirror; LII can move independently of the state |
+| Treat `elaws.us` / `public.law` as official | Convenient HTML; promote only from the agency / SOS / legislature |
+| Store page snapshots in `sw.js` | Inflates the shell; not our job; goes stale offline |
+| Aggressive crawl ignoring robots / rate limits | Brittle, rude, and unnecessary when 50 URLs hashed weekly is enough |
+| Crowdsourced “inspector said the rule changed” | No citation, no freeze story, forks the matrix per device |
+
+Government public-records pages are usually fine to hash politely
+(identify the crawler, one request per URL per week, honor robots.txt).
+That is still **not** a license to republish full statute text inside the
+app. We ship a field list and a URL, not a copy of the code.
+
+### Later, if a GitHub Action is worth it
+
+A scheduled workflow that reads `--watch-list`, GETs each URL, writes
+`code\tsha256\tstatus` to an artifacts file, and opens an issue on
+hash or status change. Out of this repo’s runtime. Do not add the Action
+until someone is ready to **triage** those issues; an unread firehose is
+worse than `--oldest 13`.
 
 ## Implementation order
 
@@ -536,6 +674,9 @@ Same extract-and-run pattern as `tests/compliance.test.js`. Do not grep
 - **Live fetch dressed as freshness.** A button that pulls statutes or
   a remote JSON into the log is not “keeping states current.” It is a
   new backend and a new trust problem. SW Reload is the update path.
+- **AI or scraper as author.** A page-hash alert is useful. An unattended
+  model that writes `fields[]` or flips `researched` is how invented
+  boxes reach the cab. Diff assistant, then a human `--stamp`.
 - **Re-evaluating frozen packets** when `reviewedAt` or fields change.
 
 ## Success

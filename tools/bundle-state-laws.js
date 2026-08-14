@@ -10,7 +10,9 @@
  *   node tools/bundle-state-laws.js --status     table: verification, dates, Cornell
  *   node tools/bundle-state-laws.js --oldest 13  quarterly queue (oldest reviewedAt)
  *   node tools/bundle-state-laws.js --stale      states past the 12-month check
- *   node tools/bundle-state-laws.js --holes      partial / uncertain / privateDuty holes
+ *   node tools/bundle-state-laws.js --show KS    one state's citation + fields
+ *   node tools/bundle-state-laws.js --watch-list citation URLs for an external change monitor
+ *   node tools/bundle-state-laws.js --stamp KS   set KS reviewedAt + edition to today
  *   node tools/bundle-state-laws.js --init-from-js
  *        one-shot: split the current JS matrix into laws/*.json
  */
@@ -229,6 +231,52 @@ function cornellHost(url) {
   return /law\.cornell\.edu/i.test(String(url || ''));
 }
 
+function citationKind(url) {
+  return /\.pdf(\?|#|$)/i.test(String(url || '')) ? 'pdf' : 'html';
+}
+
+function citationHost(url) {
+  try {
+    return new URL(String(url || '')).hostname.replace(/^www\./i, '');
+  } catch (e) {
+    return '';
+  }
+}
+
+function watchRows() {
+  return statusRows().map((r) => {
+    const url = (r.citation && r.citation.url) || '';
+    return {
+      code: r.code,
+      kind: citationKind(url),
+      host: citationHost(url),
+      hole: r.verification !== 'researched' || r.privateDuty === 'uncertain',
+      cornell: r.cornell,
+      url: url
+    };
+  });
+}
+
+function printWatchList() {
+  const rows = watchRows();
+  console.log(['code', 'kind', 'host', 'hole', 'cornell', 'url'].join('\t'));
+  rows.forEach((r) => {
+    console.log([
+      r.code, r.kind, r.host,
+      r.hole ? 'yes' : 'no',
+      r.cornell ? 'yes' : 'no',
+      r.url
+    ].join('\t'));
+  });
+  const pdf = rows.filter((r) => r.kind === 'pdf').length;
+  const cornell = rows.filter((r) => r.cornell).length;
+  const hosts = {};
+  rows.forEach((r) => { hosts[r.host] = true; });
+  console.log('# ' + rows.length + ' citation URL(s); ' + pdf + ' PDF; ' +
+    cornell + ' Cornell; ' + Object.keys(hosts).length +
+    ' host(s). This command does not fetch. Feed an external page-change monitor.');
+}
+
 function statusRows(nowIso) {
   const meta = loadMeta();
   const states = loadAllStates();
@@ -372,6 +420,10 @@ function main(argv) {
     printHoles();
     return;
   }
+  if (args[0] === '--watch-list') {
+    printWatchList();
+    return;
+  }
   const meta = loadMeta();
   const states = loadAllStates();
   const base = loadBaseFields();
@@ -405,5 +457,5 @@ if (require.main === module) {
 
 module.exports = {
   US_STATES, loadMeta, loadAllStates, loadBaseFields, generatedSource, todayIso,
-  addDaysIso, statusRows
+  addDaysIso, statusRows, watchRows, citationKind, citationHost
 };

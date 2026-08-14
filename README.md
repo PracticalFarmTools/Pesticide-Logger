@@ -175,7 +175,7 @@ sw.js                      Service worker
 manifest.json              PWA manifest
 PRICING.md                 Business model: paid-only, 30-day trial, annual or perpetual keys
 tests/                     Node regression checks (no npm)
-docs/                      Product blueprints (spray window, farm scale, stay-in-lane)
+docs/                      Product blueprints (spray window, farm scale, stay-in-lane, 50-state research + keep-current)
 archive/vercel-2026.1.0/   Historical recovered deployment (reference only)
 ```
 

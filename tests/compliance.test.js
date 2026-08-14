@@ -620,6 +620,21 @@ check('schema default version is 5', () => {
   assert.ok(store.includes('d.version = 5'));
 });
 
+check('state-dataset blueprint specifies in-app keep-current without a live legal feed', () => {
+  const bp = fs.readFileSync(path.join(root, 'docs', 'state-dataset-blueprint.md'), 'utf8');
+  assert.ok(bp.includes('Keeping states current (in the app)'), 'keep-current section');
+  assert.ok(bp.includes('reviewedAt'), 'per-state last-checked date');
+  assert.ok(bp.includes('STATE_LAWS_RESEARCH_DATE'), 'exported file edition date');
+  assert.ok(bp.includes('Batch H'), 'Settings dates are a named batch');
+  assert.ok(bp.includes('Stale copy, not auto-demote'), 'calendar must not flip verification');
+  assert.ok(bp.includes('12 months'), 'stale window');
+  assert.ok(!/live statute feed/i.test(bp) || bp.includes('There is no live statute feed'), 'no live statute feed');
+  ['scraper', 'grower-editable', 'Crowdsource', 'Auto-parse PDFs'].forEach((refuse) => {
+    assert.ok(bp.includes(refuse), 'refuses ' + refuse);
+  });
+  assert.ok(/Ordinary compliance\s+tests must not fail solely because a date is old/.test(bp));
+});
+
 if (failed) {
   console.error(`\n${failed} check(s) failed`);
   process.exit(1);

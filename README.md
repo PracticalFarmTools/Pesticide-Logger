@@ -1,4 +1,4 @@
-# Pesticide Logger v2.9.6
+# Pesticide Logger v2.9.7
 
 **Offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite. Licensed software with
@@ -21,7 +21,7 @@ application at the repository root.
 |---|---|
 | **Dynamic per-state / class spray log** | The log reshapes by state **and** applicator class (private vs commercial). Private duty is scoped (`required` / `none` / `uncertain`) so commercial-only states do not invent private requirements. Conditional fields appear only when applicable. |
 | **Honest completion status** | Badges say “Fields complete / Needs review / Incomplete” — not a legal determination. Related fields are not treated as interchangeable. Missing REI/PHI fails loud. Edits preserve frozen compliance state/class. |
-| **In-cab workflow** | Spray now, duplicate last spray, recent-product chips, sticky large save buttons, and touch-friendly targets for phone/tablet use in the tractor. |
+| **In-cab workflow** | Spray now, duplicate last spray, Tank Mix jump from the log (calculator stays under More), recent-product chips, sticky large save buttons, and touch-friendly targets for phone/tablet use in the tractor. |
 | **Audit trail & soft-delete** | Edits keep snapshot history. Deletes are soft (recoverable) with retention-aware prompts. |
 | **Lot / batch + OMRI + PHI overrides** | Per-mix-row lot numbers, OMRI flags, and crop-specific REI/PHI overrides that beat library defaults. |
 | **Commercial clocks** | Record-completion deadlines use `recordDeadline` units (`hours` / `calendarDays` / `businessDays` / `sameDay`). Customer-copy clocks only for researched copy duties (never invented). |
@@ -29,11 +29,11 @@ application at the repository root.
 | **Post–Part 110 framing** | USDA rescinded 7 CFR Part 110 (effective July 11, 2025). State pesticide acts, labels, and WPS control. |
 | **REI / PHI tracking** | Label REI/PHI countdown for worker re-entry and harvest timing. |
 | **Tank mix calculator** | Area, tank size, spray volume, multi-product rates, printable W-A-L-E worksheet. |
-| **Live EPA product lookup** | Official EPA PPLS identity/status import via optional Vercel proxy. Rates, REI, and PHI stay label-entered. |
+| **Live EPA product lookup** | Official EPA PPLS identity/status import when the host provides `/api/epa`. USB, GitHub Pages, and local servers have no lookup — type the jug number or Scan label. Rates, REI, and PHI stay label-entered. |
 | **Field mapper** | Satellite corner tapping with geodesic acreage; boundaries stay local. **Fit all fields** when two or more rings exist. |
 | **Farm scale** | Same app for two tunnels or 150 named sites. Search appears on Fields/Products at 8+ rows; long pickers get a type-filter; Spray Log can default to this season on a long history — **Show prior years** is there for every farm size that has older logs. Optional field groups only if you actually named two. |
 | **Weather auto-fill** | Open-Meteo fill for wind, temperature, sky/humidity at the field’s forecast pin (or GPS if you are logging on-site). |
-| **Inspection output** | Print/PDF, CSV, **state compliance pack** (JSON with citation, field matrix, due/copy status, audit history), a **signed inspector HTML packet** (opens without the app — a snapshot, not a lock on the live log), and a **certifier/buyer packet** for organic & GAP audits. |
+| **Inspection output** | Print/PDF, CSV, **state compliance pack** (JSON with citation, field matrix, due/copy status, audit history), a **signed inspector HTML packet** from Home when logs exist (opens without the app — a snapshot, not a lock on the live log), and a **certifier/buyer packet** for organic & GAP audits. Reports stay under More. |
 | **Crew & gather** | Optional crew list suggests names on the log (you can still type any name). Cab phones **send logs**; the shop tablet **brings them in**. Newest edits win; the other version stays in History. Same-named fields/products can be combined or kept both. |
 | **Inspector view & REI board** | Optional shop view hides editing so you can hand the tablet over — Exit anytime, optional PIN, farm name recovers a forgotten PIN. **Print today’s REI board** for the shop door (not the official WPS sign). |
 | **Spray window outlook** | Glance rows (Go / Wait / No) at each field’s map pin — not the phone’s GPS. Tap a field for the next 12 hours, then Details for the 48-hour chart. CONUS near-term uses NOAA HRRR; stale data is labeled and cannot be used as a go/no-go for a trip. Planning guidance — the label still rules. |
@@ -53,8 +53,9 @@ all 50 states based on researched state statutes, rules, and agency guidance
 (matrix edition: 2026-08-14; each state also has a `reviewedAt` date in
 `laws/XX.json`). Settings and Home show last-checked and **check-again-by**
 dates, and warn if a state is older than 12 months — that warning does not
-change completeness badges. Home also names dataset holes (partial,
-uncertain, unverified private duty).
+change completeness badges. Home also names dataset holes (uncertain
+verification, unverified private duty). The schema still allows `partial`;
+this edition has none.
 
 To update one state's rule after a legal change, edit only `laws/XX.json`
 and run `node tools/bundle-state-laws.js`. See `laws/README.md`. What to
@@ -77,8 +78,9 @@ Do not change `app.js` or `compliance.js` for a citation or field-list edit.
 - Guarantee legal advice or inspectable perfection for every license class nuance
 - Auto-fill crop-specific rates, REI, or PHI from EPA (the label is the law)
 
-States marked `partial` or `uncertain` in Settings need grower confirmation with
-the state agency. Always follow the product label.
+States marked `uncertain` in Settings, or with unverified private-applicator
+duty, need grower confirmation with the state agency. Always follow the product
+label.
 
 ## $0 overhead
 
@@ -156,6 +158,7 @@ These are scope boundaries, not unfinished work:
 - California PUR / CalAgPermits or New York PRL electronic filing
 - Holiday-aware government calendars (business days = Mon–Fri only)
 - Auto-filled rates / REI / PHI from EPA (label remains authoritative)
+- In-app Buy / checkout until a merchant URL is set on `BUY_URL`
 
 ## Files
 

@@ -242,14 +242,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.6 + deadline/license wiring', () => {
+check('source files advertise v2.9.7 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.6'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.6'));
+  assert.ok(app.includes('v2.9.7'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.7'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-14'"));
-  assert.ok(html.includes('v2.9.6'));
+  assert.ok(html.includes('v2.9.7'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));
   assert.ok(html.includes('farm-scale.js'));
@@ -340,6 +340,35 @@ check('cab chrome: Home, Spray Log, Products, Fields, and More', () => {
   assert.strictEqual(i18n.ES['More'], 'Más');
   assert.strictEqual(i18n.ES['Home'], 'Inicio');
   assert.ok(!html.includes('📍') && !html.includes('🛰'), 'map toolbar does not use emoji');
+  assert.ok(html.includes('id="app-open-tank-mix"') && html.includes('data-goto="calculator"'),
+    'Tank Mix is a spray-log jump, not a primary tab');
+  assert.ok(/id="app-open-tank-mix"[^>]*data-goto="calculator"|data-goto="calculator"[^>]*id="app-open-tank-mix"/.test(html),
+    'Tank Mix jump targets the calculator');
+  assert.ok(html.includes('id="dash-inspect-packet"') && html.includes('data-scroll-to="report-inspect-html"'),
+    'Home Inspector packet jumps to the Reports packet button');
+  assert.ok(app.includes("$('#dash-inspect-packet').hidden = !(data.applications && data.applications.length)"),
+    'Inspector packet hides until a spray exists');
+});
+
+check('ship-ready: EPA host honesty, install timing, checkout note', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const i18n = require(path.join(root, 'i18n.js'));
+  assert.ok(app.includes('Live EPA lookup is not on this host'), 'HTML/404 from /api/epa is not a JSON parse fail');
+  assert.ok(app.includes('JSON.parse(text)'), 'EPA body is parsed as JSON only when it is JSON');
+  assert.ok(html.includes('USB, GitHub Pages, and local servers have no lookup'));
+  assert.ok(html.includes('id="license-checkout-note"') && html.includes('id="lock-checkout-note"'));
+  assert.ok(app.includes("'license-checkout-note', 'lock-checkout-note'"), 'checkout notes hide when BUY_URL is set');
+  assert.ok(app.includes("if (typeof isEmptyHome === 'function' ? isEmptyHome() : false)"),
+    'install banner yields to empty first-run home');
+  assert.ok(html.includes('This build has no in-app store.'));
+  assert.ok(!html.includes('no cost'), 'paid product must not say no cost');
+  assert.strictEqual(i18n.ES['Inspector packet'], 'Paquete de inspector');
+  assert.strictEqual(i18n.FR['Open citation'], 'Ouvrir la citation');
+  assert.notStrictEqual(
+    i18n.t('pt-BR', 'Live EPA lookup is not on this host (USB, GitHub Pages, and local servers have no /api/epa). Type the EPA number from the jug or Scan label. The label is the law.'),
+    'Live EPA lookup is not on this host (USB, GitHub Pages, and local servers have no /api/epa). Type the EPA number from the jug or Scan label. The label is the law.'
+  );
 });
 
 check('empty first-run home hides zeros until a field or log exists', () => {

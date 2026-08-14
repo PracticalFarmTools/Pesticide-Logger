@@ -1017,7 +1017,10 @@
     }
     const law = STATE_LAWS[code];
     const ctx = formContextApp();
-    const req = law.fields.filter(f => f.required && fieldAppliesToApp(ctx, f.name));
+    const applyMatrix = stateFieldsApply(ctx, law);
+    const req = applyMatrix
+      ? law.fields.filter(f => f.required && fieldAppliesToApp(ctx, f.name))
+      : [];
     const verLabel = law.verification === 'researched' ? 'Researched from state sources'
       : law.verification === 'partial' ? 'Partially verified — confirm private/commercial nuances'
       : 'Limited verification — confirm with your agency';
@@ -1040,8 +1043,10 @@
         ${typeof stateLawIsStale === 'function' && stateLawIsStale(law, now())
           ? '<p class="state-law-stale" id="state-law-stale">This state\'s rules were last checked more than 12 months ago. Open the citation and compare. Reload the app if a newer edition has shipped. Source status does not change because a calendar moved.</p>'
           : ''}
-        <p>Applicable required fields for ${esc(STATE_NAMES[code])} as a <strong>${esc(applicatorClassFor(ctx))}</strong> applicator (${req.length}):</p>
-        <ul>${req.map(r => `<li>${esc(r.label)}</li>`).join('')}</ul>
+        ${applyMatrix
+          ? `<p>Applicable required fields for ${esc(STATE_NAMES[code])} as a <strong>${esc(applicatorClassFor(ctx))}</strong> applicator (${req.length}):</p>
+        <ul>${req.map(r => `<li>${esc(r.label)}</li>`).join('')}</ul>`
+          : '<p class="card-hint">This state\'s sources indicate no private-applicator recordkeeping duty — still follow the label and keep the operational core (date, crop, field, applicator, amount).</p>'}
         ${law.notes ? `<p class="card-hint">${esc(law.notes)}</p>` : ''}
         <p class="card-hint">Completion means required fields are filled for this context — not a legal determination.
         This app does not file electronic reports (CA PUR, NY PRL, etc.) and does not replace WPS employer duties.</p>

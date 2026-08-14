@@ -27,7 +27,9 @@ vm.runInNewContext(
   '\nthis.BASE_RECORD_FIELDS = BASE_RECORD_FIELDS;' +
   '\nthis.STATE_LAWS_RESEARCH_DATE = STATE_LAWS_RESEARCH_DATE;' +
   '\nthis.STATE_LAW_STALE_DAYS = STATE_LAW_STALE_DAYS;' +
-  '\nthis.stateLawIsStale = stateLawIsStale;',
+  '\nthis.stateLawIsStale = stateLawIsStale;' +
+  '\nthis.stateLawReviewBy = stateLawReviewBy;' +
+  '\nthis.stateLawFreshness = stateLawFreshness;',
   ctx
 );
 
@@ -143,10 +145,47 @@ check('engine and app do not hard-code per-state law branches; engine ignores re
 
 check('sw cache name splits app version from laws edition', () => {
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
-  assert.ok(sw.includes("const APP_CACHE = 'pesticide-logger-v2.9.4'"));
+  assert.ok(sw.includes("const APP_CACHE = 'pesticide-logger-v2.9.5'"));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-07-31'"));
   assert.ok(sw.includes("const CACHE_NAME = APP_CACHE + '-laws-' + LAWS_EDITION"));
-  assert.ok(!sw.includes("const CACHE_NAME = 'pesticide-logger-v2.9.4';"));
+  assert.ok(!sw.includes("const CACHE_NAME = 'pesticide-logger-v2.9.5';"));
+});
+
+check('reviewBy is 12 months after reviewedAt; freshness helper matches', () => {
+  assert.strictEqual(ctx.stateLawReviewBy({ reviewedAt: '2026-07-31' }), '2027-07-31');
+  const fresh = ctx.stateLawFreshness({ reviewedAt: '2026-07-31' }, new Date('2026-08-14T00:00:00Z'));
+  assert.strictEqual(fresh.stale, false);
+  assert.strictEqual(fresh.reviewBy, '2027-07-31');
+  const stale = ctx.stateLawFreshness({ reviewedAt: '2020-01-01' }, new Date('2026-08-14T00:00:00Z'));
+  assert.strictEqual(stale.stale, true);
+  assert.strictEqual(stale.reviewBy, '2020-12-31');
+});
+
+check('Home and Settings surface check-again dates; maintainer queue lists holes', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  assert.ok(html.includes('id="compliance-fresh"'));
+  assert.ok(html.includes('id="dash-open-state-rules"'));
+  assert.ok(app.includes('lawFreshness'));
+  assert.ok(app.includes('datasetHonestyLine'));
+  assert.ok(app.includes('Check again by:'));
+  const status = spawnSync(process.execPath, [path.join(root, 'tools', 'bundle-state-laws.js'), '--status', '2026-08-14'], {
+    encoding: 'utf8', cwd: root
+  });
+  assert.strictEqual(status.status, 0, status.stderr);
+  assert.ok(status.stdout.includes('IA\tresearched\trequired\t2026-07-31\t2027-07-31\tno'));
+  assert.ok(status.stdout.includes('0 stale'));
+  const holes = spawnSync(process.execPath, [path.join(root, 'tools', 'bundle-state-laws.js'), '--holes'], {
+    encoding: 'utf8', cwd: root
+  });
+  assert.strictEqual(holes.status, 0, holes.stderr);
+  assert.ok(holes.stdout.includes('MS\tuncertain'));
+  assert.ok(holes.stdout.includes('AL\tpartial\tnone'));
+  assert.ok(holes.stdout.includes('VA\tresearched\tuncertain'));
+  const show = spawnSync(process.execPath, [path.join(root, 'tools', 'bundle-state-laws.js'), '--show', 'MS'], {
+    encoding: 'utf8', cwd: root
+  });
+  assert.ok(show.stdout.includes('https://agnet.mdac.ms.gov'));
 });
 
 if (failed) {

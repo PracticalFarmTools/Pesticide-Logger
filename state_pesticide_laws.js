@@ -47,12 +47,30 @@ function stateLawParseIsoDate(iso) {
   return Date.parse(iso + 'T00:00:00Z');
 }
 
+function stateLawAddDays(iso, days) {
+  const t = stateLawParseIsoDate(iso);
+  if (!Number.isFinite(t) || !Number.isFinite(Number(days))) return '';
+  return new Date(t + Number(days) * 86400000).toISOString().slice(0, 10);
+}
+
 function stateLawIsStale(law, now) {
   const t = stateLawParseIsoDate(law && law.reviewedAt);
   if (!Number.isFinite(t)) return true;
   const n = now instanceof Date ? now.getTime() : Number(now);
   if (!Number.isFinite(n)) return true;
   return (n - t) > STATE_LAW_STALE_DAYS * 86400000;
+}
+
+function stateLawReviewBy(law) {
+  return stateLawAddDays(law && law.reviewedAt, STATE_LAW_STALE_DAYS);
+}
+
+function stateLawFreshness(law, now) {
+  return {
+    reviewedAt: (law && law.reviewedAt) || '',
+    reviewBy: stateLawReviewBy(law),
+    stale: stateLawIsStale(law, now)
+  };
 }
 
 const STATE_LAWS = {

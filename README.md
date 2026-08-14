@@ -1,4 +1,4 @@
-# Pesticide Logger v2.9.4
+# Pesticide Logger v2.9.5
 
 **Offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite. Licensed software with
@@ -51,8 +51,10 @@ application at the repository root.
 This app aims for **complete application recordkeeping field coverage** across
 all 50 states based on researched state statutes, rules, and agency guidance
 (matrix edition: 2026-07-31; each state also has a `reviewedAt` date in
-`laws/XX.json`). Settings shows both dates and warns if a state is older than
-12 months — that warning does not change completeness badges.
+`laws/XX.json`). Settings and Home show last-checked and **check-again-by**
+dates, and warn if a state is older than 12 months — that warning does not
+change completeness badges. Home also names dataset holes (partial,
+uncertain, unverified private duty).
 
 To update one state's rule after a legal change, edit only `laws/XX.json`
 and run `node tools/bundle-state-laws.js`. See `laws/README.md`. Do not
@@ -61,7 +63,7 @@ change `app.js` or `compliance.js` for a citation or field-list edit.
 **It does:**
 
 - Capture and validate the record fields each state requires (when known)
-- Show agency, citation, retention years, last-checked date, and source verification status
+- Show agency, citation, retention years, last-checked / check-again-by dates, and source verification status
 - Mark incomplete records and block complete-save under strict mode
 - Export complete field sets for inspections and backups
 - Surface completion / customer-copy clocks as guidance from state rules

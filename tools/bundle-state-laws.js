@@ -7,7 +7,10 @@
  *
  *   node tools/bundle-state-laws.js              write runtime file + SW edition
  *   node tools/bundle-state-laws.js --check      exit 1 if generated file is stale
- *   node tools/bundle-state-laws.js --stamp KS   set KS reviewedAt + edition to today
+ *   node tools/bundle-state-laws.js --status     table: verification, dates, Cornell
+ *   node tools/bundle-state-laws.js --oldest 13  quarterly queue (oldest reviewedAt)
+ *   node tools/bundle-state-laws.js --stale      states past the 12-month check
+ *   node tools/bundle-state-laws.js --holes      partial / uncertain / privateDuty holes
  *   node tools/bundle-state-laws.js --init-from-js
  *        one-shot: split the current JS matrix into laws/*.json
  */
@@ -144,12 +147,30 @@ function stateLawParseIsoDate(iso) {
   return Date.parse(iso + 'T00:00:00Z');
 }
 
+function stateLawAddDays(iso, days) {
+  const t = stateLawParseIsoDate(iso);
+  if (!Number.isFinite(t) || !Number.isFinite(Number(days))) return '';
+  return new Date(t + Number(days) * 86400000).toISOString().slice(0, 10);
+}
+
 function stateLawIsStale(law, now) {
   const t = stateLawParseIsoDate(law && law.reviewedAt);
   if (!Number.isFinite(t)) return true;
   const n = now instanceof Date ? now.getTime() : Number(now);
   if (!Number.isFinite(n)) return true;
   return (n - t) > STATE_LAW_STALE_DAYS * 86400000;
+}
+
+function stateLawReviewBy(law) {
+  return stateLawAddDays(law && law.reviewedAt, STATE_LAW_STALE_DAYS);
+}
+
+function stateLawFreshness(law, now) {
+  return {
+    reviewedAt: (law && law.reviewedAt) || '',
+    reviewBy: stateLawReviewBy(law),
+    stale: stateLawIsStale(law, now)
+  };
 }
 
 const STATE_LAWS = ${lawsJson};
@@ -197,6 +218,108 @@ function initFromJs() {
   });
 }
 
+function addDaysIso(iso, days) {
+  if (!ISO_DATE.test(iso) || !Number.isFinite(Number(days))) return '';
+  return new Date(Date.parse(iso + 'T00:00:00Z') + Number(days) * 86400000)
+    .toISOString()
+    .slice(0, 10);
+}
+
+function cornellHost(url) {
+  return /law\.cornell\.edu/i.test(String(url || ''));
+}
+
+function statusRows(nowIso) {
+  const meta = loadMeta();
+  const states = loadAllStates();
+  const today = nowIso || todayIso();
+  return US_STATES.map((code) => {
+    const law = states[code];
+    const reviewBy = addDaysIso(law.reviewedAt, meta.staleDays);
+    return {
+      code,
+      verification: law.verification,
+      privateDuty: law.privateDuty,
+      reviewedAt: law.reviewedAt,
+      reviewBy,
+      stale: today > reviewBy,
+      cornell: cornellHost(law.citation && law.citation.url),
+      agency: law.agency,
+      citation: law.citation || {},
+      notes: law.notes || '',
+      fieldCount: (law.fields || []).length
+    };
+  });
+}
+
+function printStatus(nowIso) {
+  const rows = statusRows(nowIso);
+  console.log(['code', 'verification', 'privateDuty', 'reviewedAt', 'reviewBy', 'stale', 'cornell'].join('\t'));
+  rows.forEach((r) => {
+    console.log([
+      r.code, r.verification, r.privateDuty, r.reviewedAt, r.reviewBy,
+      r.stale ? 'yes' : 'no', r.cornell ? 'yes' : 'no'
+    ].join('\t'));
+  });
+  const holes = rows.filter((r) => r.verification !== 'researched' || r.privateDuty === 'uncertain');
+  const stale = rows.filter((r) => r.stale);
+  console.log('# ' + holes.length + ' dataset hole(s); ' + stale.length + ' stale; ' +
+    rows.filter((r) => r.cornell).length + ' Cornell URL(s). Holes and stale do not fail this command.');
+}
+
+function printOldest(n, nowIso) {
+  const count = Math.max(1, Number(n) || 13);
+  const rows = statusRows(nowIso).slice().sort((a, b) => {
+    if (a.reviewedAt !== b.reviewedAt) return a.reviewedAt < b.reviewedAt ? -1 : 1;
+    return a.code < b.code ? -1 : 1;
+  }).slice(0, count);
+  console.log('Oldest ' + rows.length + ' by reviewedAt (quarterly pass). Edit laws/XX.json, then --stamp XX.');
+  rows.forEach((r) => {
+    console.log(r.code + '\t' + r.reviewedAt + '\t' + r.verification + '\t' + r.privateDuty + '\t' +
+      (r.citation.url || ''));
+  });
+}
+
+function printStale(nowIso) {
+  const rows = statusRows(nowIso).filter((r) => r.stale);
+  if (!rows.length) {
+    console.log('No states are past their 12-month check date.');
+    return;
+  }
+  console.log(rows.length + ' stale state(s):');
+  rows.forEach((r) => {
+    console.log(r.code + '\t' + r.reviewedAt + '\t' + r.reviewBy + '\t' + (r.citation.url || ''));
+  });
+}
+
+function printHoles() {
+  const rows = statusRows().filter((r) => r.verification !== 'researched' || r.privateDuty === 'uncertain');
+  console.log('Dataset holes (not invented promotions). ' + rows.length + ' row(s).');
+  rows.forEach((r) => {
+    console.log(r.code + '\t' + r.verification + '\t' + r.privateDuty + '\t' + (r.citation.url || ''));
+  });
+}
+
+function printShow(code) {
+  const upper = String(code || '').toUpperCase();
+  if (US_STATES.indexOf(upper) < 0) throw new Error('unknown state ' + code);
+  const meta = loadMeta();
+  const law = loadStateFile(upper);
+  const reviewBy = addDaysIso(law.reviewedAt, meta.staleDays);
+  console.log('code\t' + upper);
+  console.log('agency\t' + law.agency);
+  console.log('citation\t' + (law.citation && law.citation.reference));
+  console.log('url\t' + (law.citation && law.citation.url));
+  console.log('verification\t' + law.verification);
+  console.log('privateDuty\t' + law.privateDuty);
+  console.log('reviewedAt\t' + law.reviewedAt);
+  console.log('reviewBy\t' + reviewBy);
+  console.log('retentionYears\t' + law.retentionYears);
+  console.log('fields\t' + (law.fields || []).map((f) => f.name + (f.required ? '*' : '')).join(', '));
+  console.log('notes\t' + (law.notes || ''));
+  console.log('Next: edit laws/' + upper + '.json, then: node tools/bundle-state-laws.js --stamp ' + upper);
+}
+
 function stamp(code) {
   const upper = String(code || '').toUpperCase();
   if (US_STATES.indexOf(upper) < 0) throw new Error('unknown state ' + code);
@@ -227,6 +350,26 @@ function main(argv) {
     const meta = loadMeta();
     writeRuntime(meta, loadAllStates(), loadBaseFields());
     console.log('Stamped', code, 'and edition', meta.researchDate);
+    return;
+  }
+  if (args[0] === '--status') {
+    printStatus(args[1]);
+    return;
+  }
+  if (args[0] === '--oldest') {
+    printOldest(args[1], args[2]);
+    return;
+  }
+  if (args[0] === '--stale') {
+    printStale(args[1]);
+    return;
+  }
+  if (args[0] === '--show') {
+    printShow(args[1]);
+    return;
+  }
+  if (args[0] === '--holes') {
+    printHoles();
     return;
   }
   const meta = loadMeta();
@@ -261,5 +404,6 @@ if (require.main === module) {
 }
 
 module.exports = {
-  US_STATES, loadMeta, loadAllStates, loadBaseFields, generatedSource, todayIso
+  US_STATES, loadMeta, loadAllStates, loadBaseFields, generatedSource, todayIso,
+  addDaysIso, statusRows
 };

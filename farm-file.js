@@ -540,6 +540,7 @@
         retentionYears: law ? (law.retentionYears || '') : '',
         verification: law ? (law.verification || '') : '',
         reviewedAt: law ? (law.reviewedAt || '') : '',
+        reviewBy: (law && typeof stateLawReviewBy === 'function') ? (stateLawReviewBy(law) || '') : '',
         matrixEdition: opts.matrixEdition
           || (typeof STATE_LAWS_RESEARCH_DATE !== 'undefined' ? STATE_LAWS_RESEARCH_DATE : '')
       },
@@ -771,6 +772,7 @@
       (verify ? '<p class="meta">' + esc(verify) + '</p>' : '') +
       (farm.reviewedAt
         ? '<p class="meta">Rules last checked ' + esc(farm.reviewedAt) +
+          (farm.reviewBy ? ' · check again by ' + esc(farm.reviewBy) : '') +
           (farm.matrixEdition ? ' · matrix edition ' + esc(farm.matrixEdition) : '') + '.</p>'
         : '') +
       '<p class="counts">' + esc(countLine) + '</p>' +

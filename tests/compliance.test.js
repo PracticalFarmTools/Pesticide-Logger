@@ -241,14 +241,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.4 + deadline/license wiring', () => {
+check('source files advertise v2.9.5 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.4'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.4'));
+  assert.ok(app.includes('v2.9.5'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.5'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-07-31'"));
-  assert.ok(html.includes('v2.9.4'));
+  assert.ok(html.includes('v2.9.5'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));
   assert.ok(html.includes('farm-scale.js'));

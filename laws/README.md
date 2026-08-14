@@ -32,6 +32,16 @@ Shortcut to stamp today’s date on one state and the edition, then bundle:
 node tools/bundle-state-laws.js --stamp KS
 ```
 
+Queue and inspect (does not change files):
+
+```bash
+node tools/bundle-state-laws.js --holes      # partial / uncertain / privateDuty holes
+node tools/bundle-state-laws.js --oldest 13  # quarterly re-read queue
+node tools/bundle-state-laws.js --stale
+node tools/bundle-state-laws.js --show MS    # citation URL + field names
+node tools/bundle-state-laws.js --status
+```
+
 6. Run `node tests/compliance.test.js` and `node tests/state-laws.test.js`.
 7. Commit **that state’s JSON**, `_meta.json` if the edition moved, the
    generated `state_pesticide_laws.js`, and `sw.js` (edition line only).

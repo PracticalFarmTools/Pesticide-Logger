@@ -1,9 +1,11 @@
 # Blueprint: 50-state pesticide recordkeeping research
 
-**Status: Batch H implemented** in v2.9.4 (per-state `laws/XX.json`,
-`reviewedAt`, Settings last-checked + 12-month stale warning). Dataset
-header / matrix edition date is still **2026-07-31**. Batches A–G
-(remaining `partial` / `uncertain` promotions) are specified, not done.
+**Status: Batch H implemented** in v2.9.4; Home / log / maintainer queue
+freshness in **v2.9.5** (`laws/XX.json`, `reviewedAt`, Settings + Home
+last-checked and check-again-by, 12-month stale warning, `--holes` /
+`--oldest`). Dataset header / matrix edition date is still **2026-07-31**.
+Batches A–G (remaining `partial` / `uncertain` promotions) are specified,
+not done.
 
 Job to be done: a grower in **any of the 50 states** can pick that state in
 Settings and get a spray log, completeness badge, and inspector packet that

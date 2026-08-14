@@ -557,6 +557,7 @@
     ["Send logs to the shop device.", "Envíe los registros al dispositivo del taller.", "Envoyez les registres vers l’appareil de l’atelier.", "Envie os registros para o aparelho da oficina."],
     ["Newer sprays on this phone have not been sent to the shop device.", "Hay aspersiones nuevas en este teléfono que no se enviaron al dispositivo del taller.", "De nouvelles pulvérisations sur ce téléphone n’ont pas été envoyées à l’appareil de l’atelier.", "Há aplicações novas neste celular que não foram enviadas ao aparelho da oficina."],
     ["Incomplete", "Incompleto", "Incomplet", "Incompleto"],
+    ["Last on this field:", "Última en este campo:", "Dernière sur cette parcelle :", "Última neste talhão:"],
     ["Product, field, EPA #…", "Producto, campo, n.º EPA…", "Produit, parcelle, n° EPA…", "Produto, talhão, n.º EPA…"],
     ["FSA farm #", "N.º de granja FSA", "N° de ferme FSA", "N.º da fazenda FSA"],
     ["Tract #", "N.º de tracto", "N° de tract", "N.º do trato"],

@@ -137,6 +137,27 @@ await check('crew unions by id; device nickname does not overwrite the shop', ()
   assert.strictEqual(local.settings.deviceLabel, 'Shop iPad');
 });
 
+await check('gather and send clocks stay on this device', () => {
+  const shop = farm({
+    settings: { deviceLabel: 'Shop iPad' },
+    meta: { lastGatherAt: '2026-08-01T00:00:00.000Z' }
+  });
+  const cab = farm({
+    settings: { deviceLabel: 'Cab iPhone' },
+    meta: {
+      lastGatherAt: '2026-01-01T00:00:00.000Z',
+      lastSendAt: '2026-01-02T00:00:00.000Z'
+    }
+  });
+  FarmFile.mergeInto(shop, cab);
+  assert.strictEqual(shop.meta.lastGatherAt, '2026-08-01T00:00:00.000Z');
+  assert.ok(!shop.meta.lastSendAt);
+  const quiet = farm({ settings: { deviceLabel: 'Shop iPad' } });
+  FarmFile.mergeInto(quiet, cab);
+  assert.ok(!quiet.meta.lastGatherAt);
+  assert.ok(!quiet.meta.lastSendAt);
+});
+
 await check('inspector PIN empty is not a lock; farm name unlocks', () => {
   assert.strictEqual(FarmFile.inspectorPinOk('', ''), false);
   assert.strictEqual(FarmFile.inspectorPinOk('1234', '1234'), true);
@@ -350,6 +371,15 @@ await check('equipment id appears on the packet when filled', async () => {
   assert.strictEqual(payload.records[0].equipmentId, 'Boom-4');
   const html = FarmFile.inspectPacketInnerHtml(payload, { showVerify: false });
   assert.ok(html.includes('Boom-4'));
+  const withCarrier = iaApp({ carrier: 100, carrierUnit: 'gal' });
+  const cPayload = await FarmFile.buildInspectPayload({
+    farm: farm({ settings: { farmName: 'Oak', state: 'IA' } }),
+    records: [withCarrier],
+    photos: [],
+    ...packetOpts
+  });
+  const cHtml = FarmFile.inspectPacketInnerHtml(cPayload, { showVerify: false });
+  assert.ok(cHtml.includes('Carrier 100'));
 });
 
 await check('v1 inspect payload still verifies independently', async () => {

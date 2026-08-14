@@ -304,9 +304,12 @@
     const sign = pickFarmSign(farm.meta, src.meta);
     farm.meta = farm.meta || {};
     if (sign) farm.meta.farmSign = sign;
-    // Gather/send clocks are per-device. Do not take the cab phone's.
+    // Gather/send clocks are per-device. Never adopt the cab phone's,
+    // including when this device has never gathered or sent.
     if (keepGather) farm.meta.lastGatherAt = keepGather;
+    else delete farm.meta.lastGatherAt;
     if (keepSend) farm.meta.lastSendAt = keepSend;
+    else delete farm.meta.lastSendAt;
 
     receipt.duplicateFields = findDuplicateFields(farm.fields);
     receipt.duplicateProducts = findDuplicateProducts(farm.products);
@@ -699,9 +702,12 @@
       const rate = (a.products || []).map((p) =>
         p.rate != null && p.rate !== '' ? fmtVal(p.rate) + ' ' + esc(p.rateUnit || '') : '—'
       ).join('<br>') || '—';
-      const total = (a.products || []).map((p) =>
+      const total = ((a.products || []).map((p) =>
         p.total != null && p.total !== '' ? fmtVal(p.total) + ' ' + esc(p.totalUnit || '') : '—'
-      ).join('<br>') || '—';
+      ).join('<br>') || '—') +
+        (a.carrier != null && a.carrier !== ''
+          ? '<br>Carrier ' + fmtVal(a.carrier) + ' ' + esc(a.carrierUnit || '')
+          : '');
       const weather = (a.windSpeed != null ? esc(a.windSpeed) + ' mph ' + esc(a.windDir || '') : '—') +
         (a.temperature != null ? '<br>' + esc(a.temperature) + ' °F' : '') +
         (a.sky ? '<br>' + esc(a.sky) : '');

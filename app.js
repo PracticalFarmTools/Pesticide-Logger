@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.2 — Practical Farm Tools
+/* Pesticide Logger v2.9.3 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -2251,7 +2251,7 @@
     }
     el.hidden = false;
     el.dataset.appId = hit.id;
-    el.textContent = 'Last on this field: ' + fmtDate(hit.date) + (hit.summary ? ' — ' + hit.summary : '');
+    el.textContent = tr('Last on this field:') + ' ' + fmtDate(hit.date) + (hit.summary ? ' — ' + hit.summary : '');
   }
 
   // Quick-add a field without leaving the spray log (avoids the tab-switch
@@ -2658,6 +2658,7 @@
     updateCompliancePreview();
     renderDueBanner();
     syncTempC();
+    updateLastOnFieldHint();
   }
 
   function editApp(id) {
@@ -2726,6 +2727,7 @@
     $('#app-form-title').textContent = `Edit record — ${appProductsLabel(a)} on ${fmtDate(a.date)}`;
     $('#app-save-btn').textContent = 'Update complete record';
     $('#app-cancel-btn').hidden = false;
+    updateLastOnFieldHint();
     showTab('log');
     $('#app-form').scrollIntoView({ behavior: 'smooth' });
   }
@@ -2829,7 +2831,7 @@
     if (!btn) return;
     const n = (windowed || []).filter(appIncomplete).length;
     btn.hidden = n === 0 && !logFilterIncomplete;
-    btn.textContent = n ? `Incomplete (${n})` : 'Incomplete';
+    btn.textContent = n ? tr('Incomplete') + ' (' + n + ')' : tr('Incomplete');
     btn.classList.toggle('active', !!logFilterIncomplete);
     btn.setAttribute('aria-pressed', logFilterIncomplete ? 'true' : 'false');
   }
@@ -3093,17 +3095,13 @@
     renderBackupBanner();
     renderGatherHint();
     renderSendNagBanner();
-    renderInstallBanner();
     renderForecastFieldOptions();
     const apps = sortedApps();
     const seasonStart = new Date(now().getFullYear(), 0, 1);
     const seasonApps = apps.filter(a => new Date(a.date + 'T12:00:00') >= seasonStart);
     $('#stat-season-apps').textContent = seasonApps.length;
     $('#stat-products').textContent = data.products.length;
-    const incomplete = apps.filter(a => {
-      const r = evaluateCompliance(a);
-      return a.draft || !r.complete || !r.intervalsOk || r.status === 'needs_review';
-    });
+    const incomplete = apps.filter(appIncomplete);
     if ($('#stat-incomplete')) {
       $('#stat-incomplete').textContent = incomplete.length;
       $('#stat-incomplete-card').classList.toggle('stat-alert', incomplete.length > 0);
@@ -3414,7 +3412,7 @@
       : '';
     $('#print-area').innerHTML = `
       <h1>Tank Mix Worksheet</h1>
-      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.9.2 (Practical Farm Tools)</p>
+      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.9.3 (Practical Farm Tools)</p>
       <table>
         <tr><th>Area treated</th><td>${fmtNum(c.area)} ${c.areaUnit === 'sqft' ? 'sq ft' : c.areaUnit === '1000sqft' ? '× 1,000 sq ft' : 'acres'} (${fmtNum(c.acres, 3)} ac)</td>
             <th>Spray volume</th><td>${fmtNum(c.gpa)} ${c.gpaUnit === 'gal_acre' ? 'gal/acre' : 'gal/1,000 sq ft'}</td></tr>
@@ -3499,7 +3497,7 @@
     });
     if ($('#send-nag-send')) $('#send-nag-send').addEventListener('click', () => {
       if ($('#backup-share') && !$('#backup-share').hidden) shareBackup();
-      else downloadBackup();
+      else downloadBackup({ sent: true });
     });
     if ($('#send-nag-snooze')) $('#send-nag-snooze').addEventListener('click', () => {
       data.meta.sendNagSnoozeUntil = Date.now() + 7 * 86400000;
@@ -3582,12 +3580,11 @@
       : 'All records';
   }
 
-  async function buildReportInspectPayload(apps) {
-    const photos = await idbPhotosGetAll();
+  async function buildReportInspectPayload(apps, photos) {
     return FarmFile.buildInspectPayload({
       farm: data,
       records: apps,
-      photos: photos,
+      photos: photos || [],
       generatedAt: new Date().toISOString(),
       period: reportPeriodLabel(),
       stateName: STATE_NAMES[data.settings.state] || '',
@@ -3607,7 +3604,7 @@
     }
     try {
       const photos = await idbPhotosGetAll();
-      const payload = await buildReportInspectPayload(apps);
+      const payload = await buildReportInspectPayload(apps, photos);
       const usedIds = new Set();
       apps.forEach((a) => (a.photoIds || []).forEach((id) => usedIds.add(String(id))));
       const usedPhotos = (photos || []).filter((p) => usedIds.has(String(p.id)));
@@ -3762,7 +3759,7 @@
       format: 'pesticide-logger-state-pack',
       version: 5,
       generatedAt: new Date().toISOString(),
-      app: 'Pesticide Logger v2.9.2 — Practical Farm Tools',
+      app: 'Pesticide Logger v2.9.3 — Practical Farm Tools',
       disclaimer: 'Completion means required fields are filled for this context — not a legal determination. Does not replace WPS duties or e-filing programs.',
       farm: {
         name: s.farmName || '',
@@ -3825,13 +3822,11 @@
     data.meta.lastSendAt = new Date().toISOString();
     save();
     renderSendNagBanner();
-    renderGatherHint();
   }
 
   function markGatheredAt() {
     data.meta.lastGatherAt = new Date().toISOString();
     save();
-    renderSendNagBanner();
     renderGatherHint();
   }
 
@@ -3839,7 +3834,6 @@
     data.meta.lastBackupAt = new Date().toISOString();
     save();
     renderBackupBanner();
-    markSentAt();
   }
 
   async function buildBackupObject() {
@@ -3855,16 +3849,12 @@
     return farm;
   }
 
-  function downloadBackup() {
-    data.meta.lastBackupAt = new Date().toISOString();
-    data.meta.lastSendAt = data.meta.lastBackupAt;
-    save();
+  function downloadBackup(opts) {
+    markBackedUp();
+    if (opts && opts.sent) markSentAt();
     buildBackupObject().then((packed) => {
       const blob = new Blob([JSON.stringify(packed, null, 2)], { type: 'application/json' });
       triggerDownload(blob, backupFilename());
-      renderBackupBanner();
-      renderSendNagBanner();
-      renderGatherHint();
       const info = (typeof BackupPack !== 'undefined' && BackupPack.inspect)
         ? BackupPack.inspect(packed)
         : { photoCount: 0 };
@@ -3882,6 +3872,7 @@
       const file = new File([JSON.stringify(packed, null, 2)], backupFilename(), { type: 'application/json' });
       await navigator.share({ files: [file], title: 'Pesticide Logger backup' });
       markBackedUp();
+      markSentAt();
     } catch (e) { /* user cancelled the share sheet */ }
   }
 
@@ -4223,7 +4214,7 @@
       await FarmFile.ensureFarmSignKeys(data.meta);
       save();
       const photos = await idbPhotosGetAll();
-      const payload = await buildReportInspectPayload(apps);
+      const payload = await buildReportInspectPayload(apps, photos);
       const signature = await FarmFile.signPayload(payload, data.meta.farmSign);
       const usedIds = new Set();
       apps.forEach((a) => (a.photoIds || []).forEach((id) => usedIds.add(String(id))));

@@ -1,15 +1,15 @@
 {
   "code": "IN",
-  "reviewedAt": "2026-07-31",
+  "reviewedAt": "2026-08-14",
   "agency": "Office of Indiana State Chemist",
   "citation": {
-    "reference": "355 IAC 4-4-1 and OISC Pesticide Recordkeeping guidance (3/12/2024)",
+    "reference": "OISC Pesticide Recordkeeping guidance (3/12/2024); 355 IAC 4-4 voided July 1, 2024",
     "url": "https://oisc.purdue.edu/pesticide/pdf/pesticide_recordkeeping_031224.pdf"
   },
   "retentionYears": 2,
   "appliesTo": "Commercial and private applicators for RUP applications; certain commercial applicator categories must also record unrestricted general-use products.",
   "verification": "researched",
-  "notes": "No specific form required; paper or electronic records allowed. Records are generally created on date of application. Commercial applicator must provide a copy to customer upon request within 30 days under current rule language.",
+  "notes": "355 IAC 4-4 (commercial applicator use records) was voided by P.L. 29-2024 effective July 1, 2024. OISC’s March 12, 2024 guidance is the current agency list for restricted-use pesticide application records (2-year retention; no required form). Do not treat the voided IAC field list as still in force. Customer-copy-on-request language was in the voided rule; this matrix does not invent a replacement day count.",
   "fields": [
     {
       "name": "customer_name",
@@ -109,7 +109,7 @@
     }
   ],
   "recordWithinHours": 72,
-  "customerCopyDays": 30,
+  "customerCopyDays": null,
   "privateDuty": "required",
   "recordDeadline": {
     "count": 72,

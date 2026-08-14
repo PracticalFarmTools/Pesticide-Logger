@@ -1,15 +1,15 @@
 {
   "code": "OK",
-  "reviewedAt": "2026-07-31",
+  "reviewedAt": "2026-08-14",
   "agency": "Oklahoma Department of Agriculture, Food, and Forestry",
   "citation": {
     "reference": "2 O.S. §3-83; OAC 35:30-17-21",
-    "url": "https://okrules.elaws.us/oac/35:30-17-21"
+    "url": "https://ag.ok.gov/wp-content/uploads/2025/09/2025-Combined-Pesticide-Manual-Final.pdf"
   },
   "retentionYears": 2,
-  "appliesTo": "Commercial and noncommercial applicators; pesticide activities, applications, contracts, and wood infestation reports.",
+  "appliesTo": "Commercial and noncommercial applicators under 35:30-17-21(a); private applicators of restricted-use pesticides under 35:30-17-21(b).",
   "verification": "researched",
-  "notes": "Notes should capture required adjuvants or drift agents when label requires them, copy of product label/labeling, contracts, WDI reports, and other Board-required information. Records kept at principal business location and accessible for inspection.",
+  "notes": "ODAFF Combined Pesticide Manual (2025 reprint of OAC 35:30-17-21, read 2026-08-14): commercial/noncommercial (a) is this row's field list (start/stop, amount, company, applicator/cert, customer, legal description, date, rate, dilution, tank mix, trade name, EPA number, pest, site, area, REI). Adjuvants and drift agents when the label requires them, a copy of the label, contracts, and wood-infestation reports stay in notes — WDI is not a required farm box. Private RUP (b) is shorter (applicator name/address instead of customer; no contracts/WDI). The matrix uses (a) so commercial is not under-asked. No hours completion clock in 35:30-17-21 (24-hour fallback is operational). Do not watch okrules.elaws.us.",
   "fields": [
     {
       "name": "start_time",
@@ -104,6 +104,12 @@
     {
       "name": "crop_treated",
       "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
       "type": "string",
       "required": true
     },

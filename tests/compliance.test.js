@@ -242,14 +242,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.5 + deadline/license wiring', () => {
+check('source files advertise v2.9.6 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.5'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.5'));
+  assert.ok(app.includes('v2.9.6'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.6'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-14'"));
-  assert.ok(html.includes('v2.9.5'));
+  assert.ok(html.includes('v2.9.6'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));
   assert.ok(html.includes('farm-scale.js'));
@@ -483,7 +483,7 @@ check('code-pile hardening: trial merge, lock refresh, hidden Buy, interval fall
   assert.ok(app.includes("document.addEventListener('visibilitychange'"), 'trial lock refreshes on tab focus');
   assert.ok(/refreshLicenseState\(\)/.test(app.split('setInterval')[1] || ''), 'trial lock refreshes on the 60s timer');
   assert.ok(/const BUY_URL = ['"]['"]/.test(app), 'Buy URL is empty until checkout exists');
-  assert.ok(app.includes('function syncBuyButtons'), 'Buy buttons hide when URL is empty');
+  assert.ok(app.includes("const el = $('#' + id)"), 'Buy hide uses #id, not a tag named license-buy');
   assert.ok(html.includes('id="license-buy"') && html.includes('id="lock-buy"'), 'Buy button ids stay in the DOM');
   assert.ok(app.includes('This build cannot check license keys yet.'), 'unconfigured-key copy does not claim the trial still works on the lock screen');
   assert.ok(app.includes('function effectiveIntervalValue'), 'dashboard REI/PHI fall back to mix max');
@@ -529,6 +529,7 @@ check('paid-only: user-facing copy does not call the product free', () => {
     const text = fs.readFileSync(path.join(root, name), 'utf8');
     assert.ok(!/\bfree trial\b/i.test(text), `${name} still says "free trial"`);
     assert.ok(!/\bfree tier\b/i.test(text), `${name} still says "free tier"`);
+    assert.ok(!/\bno cost\b/i.test(text), `${name} still says "no cost"`);
   });
   const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'));
   assert.ok(!/^Free\b/i.test(manifest.description || ''), 'PWA description must not start with Free');

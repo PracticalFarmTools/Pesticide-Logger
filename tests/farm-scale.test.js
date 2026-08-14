@@ -107,6 +107,15 @@ check('orchard: search Tunnel 12, clear restores 40', () => {
   assert.strictEqual(cleared.length, 40);
 });
 
+check('FSA tract/field show on picker when filled; collision still uses location', () => {
+  const fsa = field('x', 'East', { fsaTract: '12', fsaField: '3' });
+  const label = FS.fieldPickerLabel(fsa, {});
+  assert.ok(label.includes('tract 12'), label);
+  assert.ok(label.includes('field 3'), label);
+  const hay = FS.fieldSearchHaystack(fsa);
+  assert.ok(hay.includes('12') && hay.includes('3'));
+});
+
 check('orchard: duplicate North kept; picker labels distinguish by location', () => {
   const warn = FS.duplicateNameWarning(orchardFields, 'North', 'new-id');
   assert.ok(warn && /North/.test(warn));

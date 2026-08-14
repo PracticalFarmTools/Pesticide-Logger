@@ -19,6 +19,7 @@
     'products',
     'fieldId', 'fieldName', 'fieldLocation', 'locationNote',
     'county', 'siteId', 'permitNumber',
+    'fsaFarm', 'fsaTract', 'fsaField',
     'crop', 'targetPest', 'applicationPurpose',
     'area', 'areaUnit', 'carrier', 'carrierUnit', 'dilution', 'concentration',
     'windSpeed', 'windDir', 'temperature', 'sky',
@@ -51,7 +52,7 @@
 
   function fieldSearchHaystack(field) {
     const f = field || {};
-    return [f.name, f.location, f.siteId, f.crop, f.group].map(norm).join(' ');
+    return [f.name, f.location, f.siteId, f.crop, f.group, f.fsaFarm, f.fsaTract, f.fsaField].map(norm).join(' ');
   }
 
   function productSearchHaystack(product) {
@@ -92,12 +93,21 @@
     return set;
   }
 
+  function fsaPickerBit(field) {
+    const f = field || {};
+    const bits = [];
+    if (norm(f.fsaTract)) bits.push('tract ' + norm(f.fsaTract));
+    if (norm(f.fsaField)) bits.push('field ' + norm(f.fsaField));
+    if (!bits.length && norm(f.fsaFarm)) bits.push('farm ' + norm(f.fsaFarm));
+    return bits.join(' / ');
+  }
+
   function fieldPickerLabel(field, colliding) {
     const f = field || {};
     const name = norm(f.name) || 'Untitled field';
+    const fsa = fsaPickerBit(f);
     const hit = colliding && colliding[nameKey(f.name)];
-    if (!hit) return name;
-    const extra = norm(f.location) || norm(f.siteId);
+    const extra = fsa || (hit ? (norm(f.location) || norm(f.siteId)) : '');
     return extra ? name + ' · ' + extra : name;
   }
 

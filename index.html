@@ -27,7 +27,7 @@
       </svg>
       <div>
         <h1>Pesticide Logger</h1>
-        <span class="header-sub">Practical Farm Tools · v2.9.0</span>
+        <span class="header-sub">Practical Farm Tools · v2.9.3</span>
       </div>
     </div>
     <div class="header-right">
@@ -70,7 +70,7 @@
     <p class="card-hint" id="lock-records-status">This is your farm file on this device. A lapsed license
       cannot take it. Two fields or 150 — every year you logged is still here.</p>
     <div class="history-controls">
-      <input type="search" id="lock-log-search" class="search-input" placeholder="Search product, field, crop…">
+      <input type="search" id="lock-log-search" class="search-input" placeholder="Product, field, EPA #…">
       <button type="button" class="btn btn-secondary btn-sm" id="lock-show-prior-years" hidden>Show prior years</button>
     </div>
     <div id="lock-app-list"></div>
@@ -180,6 +180,36 @@
       </div>
     </div>
 
+    <div id="send-nag-banner" class="setup-banner backup-banner" hidden>
+      <div>
+        <strong>Send logs to the shop device.</strong>
+        <p id="send-nag-msg">Newer sprays on this phone have not been sent to the shop device.</p>
+      </div>
+      <div class="banner-actions">
+        <button class="btn btn-primary" id="send-nag-send">Send logs to another device</button>
+        <button class="btn btn-secondary" id="send-nag-snooze">Remind me later</button>
+      </div>
+    </div>
+
+    <div id="gather-hint" class="card gather-hint-card" hidden>
+      <h3 class="card-title">Cab phones send. This device brings them in.</h3>
+      <p class="card-hint">Cab phones send a backup. This device brings them in. Newest edits win; the other version stays in History. You can still edit any spray.</p>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" id="gather-hint-jump" data-goto="reports" data-scroll-to="gather-card">Bring in logs</button>
+      </div>
+    </div>
+
+    <div id="install-banner" class="setup-banner install-banner" hidden>
+      <div>
+        <strong>Add to Home Screen for cab use.</strong>
+        <p id="install-banner-msg">iPhone: Share, then Add to Home Screen. Android: Install when the browser offers it. The log then works like an app, including offline after the first load.</p>
+      </div>
+      <div class="banner-actions">
+        <button class="btn btn-primary" id="install-banner-action" hidden>Install</button>
+        <button class="btn btn-secondary" id="install-banner-dismiss">Not now</button>
+      </div>
+    </div>
+
     <div class="stat-grid">
       <button type="button" class="stat-card" data-goto="log" data-scroll-to="app-history-card">
         <span class="stat-value" id="stat-season-apps">0</span>
@@ -193,7 +223,7 @@
         <span class="stat-value" id="stat-active-phi">0</span>
         <span class="stat-label">Crops in PHI wait</span>
       </button>
-      <button type="button" class="stat-card stat-warn" id="stat-incomplete-card" data-goto="log" data-scroll-to="app-history-card">
+      <button type="button" class="stat-card stat-warn" id="stat-incomplete-card" data-goto="log" data-scroll-to="app-history-card" data-incomplete-filter="1">
         <span class="stat-value" id="stat-incomplete">0</span>
         <span class="stat-label">Incomplete state records</span>
       </button>
@@ -350,6 +380,7 @@
           <div id="app-products"></div>
           <button type="button" class="btn btn-secondary btn-sm" id="app-add-product">+ Add product to mix</button>
           <div id="app-product-info" class="product-info-strip" hidden></div>
+          <button type="button" class="text-btn" id="app-last-on-field" hidden></button>
         </fieldset>
 
         <fieldset data-log-section="when">
@@ -565,7 +596,8 @@
       <div class="card-title-row">
         <h3 class="card-title">Application history</h3>
         <div class="history-controls">
-          <input type="search" id="log-search" class="search-input" placeholder="Search product, field, crop…">
+          <input type="search" id="log-search" class="search-input" placeholder="Product, field, EPA #…">
+          <button type="button" class="btn btn-secondary btn-sm" id="log-filter-incomplete" hidden>Incomplete</button>
           <button type="button" class="btn btn-secondary btn-sm" id="log-show-prior-years" hidden>Show prior years</button>
           <label class="checkbox-label">
             <input type="checkbox" id="log-show-deleted">
@@ -821,6 +853,17 @@
             <input type="text" id="field-group" placeholder="e.g. Home place — optional">
           </label>
         </div>
+        <div class="form-row form-row-3">
+          <label>FSA farm #
+            <input type="text" id="field-fsa-farm" placeholder="Optional" autocomplete="off">
+          </label>
+          <label>Tract #
+            <input type="text" id="field-fsa-tract" placeholder="Optional" autocomplete="off">
+          </label>
+          <label>CLU / field #
+            <input type="text" id="field-fsa-field" placeholder="Optional" autocomplete="off">
+          </label>
+        </div>
         <div class="form-actions sticky-actions">
           <button type="submit" class="btn btn-primary" id="field-save-btn">Save field</button>
           <button type="button" class="btn btn-secondary" id="field-cancel-btn" hidden>Cancel edit</button>
@@ -873,7 +916,7 @@
           <button class="btn btn-secondary btn-lg" id="report-inspect-html">Save inspector packet (.html)</button>
           <button class="btn btn-secondary btn-lg" id="report-state-pack">Download state compliance pack</button>
         </div>
-        <p class="card-hint">The HTML packet opens on any phone or laptop — no app install. It is a snapshot. You can keep editing the live log afterward. Signing shows the file was not changed after you saved it.</p>
+        <p class="card-hint">Opens on any phone or laptop — no app, no account. Snapshot only. Signing shows the file was not changed after you saved it. You can keep editing the live log. How inspectors read this file: rates, REI, and PHI were copied from the product label — the label is the law. Incomplete rows are marked. This is not the agency’s form and is not a filing.</p>
       </div>
       <div class="report-action-group">
         <p class="report-action-group-label">For your records</p>
@@ -892,9 +935,9 @@
       <p class="card-hint" id="report-count"></p>
     </div>
 
-    <div class="card">
-      <h3 class="card-title">Backup, gather &amp; restore</h3>
-      <p class="card-hint">Your records live only in this browser. If more than one phone logs sprays, send a backup from each cab phone and tap Bring in logs on the shop tablet. Newest edits win; the other version stays in that spray’s History so you can still change it. A full backup is one JSON file with the farm file and attached photos. Older backups from before photos were packed still restore records; you will be told if photos are missing.</p>
+    <div class="card" id="gather-card">
+      <h3 class="card-title">Shop gathers / cab sends</h3>
+      <p class="card-hint">Your records live only in this browser. Cab phones send a backup; this shop tablet brings them in. Newest edits win; the other version stays in that spray’s History so you can still change it. A full backup is one JSON file with the farm file and attached photos. Older backups from before photos were packed still restore records; you will be told if photos are missing.</p>
       <div class="auto-backup-box">
         <p class="card-hint" id="auto-backup-status"></p>
         <div class="form-actions">
@@ -1076,7 +1119,7 @@
 
     <div class="card about-card">
       <h3 class="card-title">About</h3>
-      <p>Pesticide Logger v2.9.0 — part of the <strong>Practical Farm Tools</strong> suite. A licensed, offline-first tool built for farms of every size; your farm records stay on this device.</p>
+      <p>Pesticide Logger v2.9.3 — part of the <strong>Practical Farm Tools</strong> suite. A licensed, offline-first tool built for farms of every size; your farm records stay on this device.</p>
       <p class="card-hint">This tool provides 50-state application <em>recordkeeping field coverage</em> with audit history, lot tracking, and in-cab workflows. It is not legal advice, does not replace WPS employer duties, and does not file California PUR, New York PRL, or other electronic reports for you. Always follow the product label and confirm requirements with your state pesticide agency.</p>
       <details class="legal-details">
         <summary>Terms of use, license &amp; privacy</summary>

@@ -1,4 +1,4 @@
-# Pesticide Logger v2.9.0
+# Pesticide Logger v2.9.3
 
 **Offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite. Licensed software with
@@ -175,6 +175,7 @@ sw.js                      Service worker
 manifest.json              PWA manifest
 PRICING.md                 Business model: paid-only, 30-day trial, annual or perpetual keys
 tests/                     Node regression checks (no npm)
+docs/                      Product blueprints (spray window, farm scale, stay-in-lane)
 archive/vercel-2026.1.0/   Historical recovered deployment (reference only)
 ```
 

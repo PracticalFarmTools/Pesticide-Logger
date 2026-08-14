@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.0 — Practical Farm Tools
+/* Pesticide Logger v2.9.3 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -623,6 +623,11 @@
         return;
       }
       showTab(goto.dataset.goto);
+      if (goto.dataset.incompleteFilter) {
+        logFilterIncomplete = true;
+        logShowPriorYears = true;
+        renderAppList();
+      }
     }
     const closeDialog = e.target.closest('[data-close-dialog]');
     if (closeDialog) closeDialog.closest('dialog')?.close();
@@ -1582,6 +1587,9 @@
         location: $('#field-location').value.trim(),
         siteId: ($('#field-site-id') && $('#field-site-id').value.trim()) || '',
         group: ($('#field-group') && $('#field-group').value.trim()) || '',
+        fsaFarm: ($('#field-fsa-farm') && $('#field-fsa-farm').value.trim()) || '',
+        fsaTract: ($('#field-fsa-tract') && $('#field-fsa-tract').value.trim()) || '',
+        fsaField: ($('#field-fsa-field') && $('#field-fsa-field').value.trim()) || '',
         boundary,
         weatherLat: pin.weatherLat,
         weatherLng: pin.weatherLng,
@@ -1631,6 +1639,9 @@
     $('#field-location').value = f.location;
     if ($('#field-site-id')) $('#field-site-id').value = f.siteId || '';
     if ($('#field-group')) $('#field-group').value = f.group || '';
+    if ($('#field-fsa-farm')) $('#field-fsa-farm').value = f.fsaFarm || '';
+    if ($('#field-fsa-tract')) $('#field-fsa-tract').value = f.fsaTract || '';
+    if ($('#field-fsa-field')) $('#field-fsa-field').value = f.fsaField || '';
     $('#field-form-title').textContent = `Edit — ${f.name}`;
     $('#field-save-btn').textContent = 'Update field';
     $('#field-cancel-btn').hidden = false;
@@ -1661,6 +1672,7 @@
 
   let fieldGroupFilter = '';
   let logShowPriorYears = null;
+  let logFilterIncomplete = false;
   let lockShowPriorYears = null;
 
   function renderFields() {
@@ -1712,7 +1724,7 @@
     }
     const rows = list.map(f => `
         <tr>
-          <td><strong>${esc(f.name)}</strong>${f.group ? ` <span class="badge-pill">${esc(f.group)}</span>` : ''}${f.boundary && f.boundary.length >= 3 ? ' <span class="badge-pill badge-signal-caution">Mapped</span>' : ''}${typeof SprayWindow !== 'undefined' && SprayWindow.fieldPin(f) ? ' <span class="badge-pill">Forecast pin</span>' : ''}${f.siteId ? `<br><span class="card-hint">${esc(f.siteId)}</span>` : ''}</td>
+          <td><strong>${esc(f.name)}</strong>${f.group ? ` <span class="badge-pill">${esc(f.group)}</span>` : ''}${f.boundary && f.boundary.length >= 3 ? ' <span class="badge-pill badge-signal-caution">Mapped</span>' : ''}${typeof SprayWindow !== 'undefined' && SprayWindow.fieldPin(f) ? ' <span class="badge-pill">Forecast pin</span>' : ''}${f.siteId ? `<br><span class="card-hint">${esc(f.siteId)}</span>` : ''}${typeof FarmFile !== 'undefined' && FarmFile.fsaLine(f) ? `<br><span class="card-hint">${esc(FarmFile.fsaLine(f))}</span>` : ''}</td>
           <td>${f.size != null ? `${fmtNum(f.size)} ${f.sizeUnit === 'sqft' ? 'sq ft' : 'acres'}` : '—'}</td>
           <td>${esc(f.crop || '—')}</td>
           <td>${esc(f.location || '—')}</td>
@@ -1808,6 +1820,19 @@
     $('#app-save-draft-btn').addEventListener('click', () => onAppSubmit(null, true));
     $('#app-cancel-btn').addEventListener('click', resetAppForm);
     $('#log-search').addEventListener('input', renderAppList);
+    if ($('#log-filter-incomplete')) {
+      $('#log-filter-incomplete').addEventListener('click', () => {
+        logFilterIncomplete = !logFilterIncomplete;
+        if (!logFilterIncomplete) logShowPriorYears = null;
+        renderAppList();
+      });
+    }
+    if ($('#app-last-on-field')) {
+      $('#app-last-on-field').addEventListener('click', () => {
+        const id = $('#app-last-on-field').dataset.appId;
+        if (id) editApp(id);
+      });
+    }
     if ($('#log-show-deleted')) $('#log-show-deleted').addEventListener('change', renderAppList);
     if ($('#log-show-prior-years')) {
       $('#log-show-prior-years').addEventListener('click', () => {
@@ -2191,7 +2216,7 @@
   function updateMixInfo() {
     const prods = selectedMixProducts();
     const strip = $('#app-product-info');
-    if (!prods.length) { strip.hidden = true; return; }
+    if (!prods.length) { strip.hidden = true; updateLastOnFieldHint(); return; }
     strip.hidden = false;
     const bits = prods.map(p => {
       const parts = [esc(p.name), `EPA ${esc(p.epaRegNo)}`];
@@ -2206,6 +2231,27 @@
         REI ${rei != null ? fmtNum(rei) + ' hr' : '—'} · PHI ${phi != null ? fmtNum(phi) + ' d' : '—'}</span>`);
     }
     strip.innerHTML = bits.join('');
+    updateLastOnFieldHint();
+  }
+
+  function updateLastOnFieldHint() {
+    const el = $('#app-last-on-field');
+    if (!el || typeof FarmFile === 'undefined' || !FarmFile.lastOnField) return;
+    const fieldId = $('#app-field') && $('#app-field').value;
+    const prods = selectedMixProducts();
+    const hit = FarmFile.lastOnField(data.applications, fieldId, prods, {
+      excludeId: ($('#app-id') && $('#app-id').value) || '',
+      fieldName: (getField(fieldId) && getField(fieldId).name) || ''
+    });
+    if (!hit) {
+      el.hidden = true;
+      el.textContent = '';
+      el.dataset.appId = '';
+      return;
+    }
+    el.hidden = false;
+    el.dataset.appId = hit.id;
+    el.textContent = tr('Last on this field:') + ' ' + fmtDate(hit.date) + (hit.summary ? ' — ' + hit.summary : '');
   }
 
   // Quick-add a field without leaving the spray log (avoids the tab-switch
@@ -2255,7 +2301,7 @@
       return;
     }
     const f = getField($('#app-field').value);
-    if (!f) return;
+    if (!f) { updateLastOnFieldHint(); return; }
     if (f.size != null) {
       $('#app-area').value = f.size;
       $('#app-area-unit').value = f.sizeUnit === 'sqft' ? 'sqft' : 'acres';
@@ -2264,6 +2310,7 @@
     if (f.siteId && $('#app-site-id') && !$('#app-site-id').value) $('#app-site-id').value = f.siteId;
     computeMixTotals();
     updateCompliancePreview();
+    updateLastOnFieldHint();
   }
 
   function round3(n) { return Math.round(n * 1000) / 1000; }
@@ -2408,6 +2455,9 @@
       locationNote: ($('#app-location-note') && $('#app-location-note').value.trim()) || '',
       county: ($('#app-county') && $('#app-county').value.trim()) || s.county || '',
       siteId: ($('#app-site-id') && $('#app-site-id').value.trim()) || (f && f.siteId) || '',
+      fsaFarm: (f && f.fsaFarm) || '',
+      fsaTract: (f && f.fsaTract) || '',
+      fsaField: (f && f.fsaField) || '',
       permitNumber: ($('#app-permit') && $('#app-permit').value.trim()) || '',
       crop: $('#app-crop').value.trim(),
       targetPest: $('#app-pest').value.trim(),
@@ -2608,6 +2658,7 @@
     updateCompliancePreview();
     renderDueBanner();
     syncTempC();
+    updateLastOnFieldHint();
   }
 
   function editApp(id) {
@@ -2676,6 +2727,7 @@
     $('#app-form-title').textContent = `Edit record — ${appProductsLabel(a)} on ${fmtDate(a.date)}`;
     $('#app-save-btn').textContent = 'Update complete record';
     $('#app-cancel-btn').hidden = false;
+    updateLastOnFieldHint();
     showTab('log');
     $('#app-form').scrollIntoView({ behavior: 'smooth' });
   }
@@ -2766,9 +2818,27 @@
     btn.textContent = open ? 'This season only' : 'Show prior years';
   }
 
+  function appIncomplete(a) {
+    if (typeof FarmFile !== 'undefined' && FarmFile.recordIsIncomplete) {
+      return FarmFile.recordIsIncomplete(a, evaluateCompliance(a));
+    }
+    const r = evaluateCompliance(a);
+    return !!(a.draft || !r.complete || !r.intervalsOk || r.status === 'needs_review');
+  }
+
+  function syncIncompleteChip(windowed) {
+    const btn = $('#log-filter-incomplete');
+    if (!btn) return;
+    const n = (windowed || []).filter(appIncomplete).length;
+    btn.hidden = n === 0 && !logFilterIncomplete;
+    btn.textContent = n ? tr('Incomplete') + ' (' + n + ')' : tr('Incomplete');
+    btn.classList.toggle('active', !!logFilterIncomplete);
+    btn.setAttribute('aria-pressed', logFilterIncomplete ? 'true' : 'false');
+  }
+
   function renderAppList() {
     const host = $('#app-list');
-    const q = ($('#log-search').value || '').toLowerCase();
+    const q = ($('#log-search').value || '');
     const showDeleted = !!( $('#log-show-deleted') && $('#log-show-deleted').checked );
     const all = sortedApps(showDeleted);
     const flag = { value: logShowPriorYears };
@@ -2778,14 +2848,18 @@
     let apps = typeof FarmScale !== 'undefined'
       ? FarmScale.filterLogWindow(all, open, now())
       : all;
-    if (q) {
-      apps = apps.filter(a =>
-        [appProductsLabel(a), a.fieldName, a.crop, a.targetPest, a.applicatorName, a.notes, ...(a.products || []).map(p => p.lotNumber)]
-          .join(' ').toLowerCase().includes(q));
+    syncIncompleteChip(apps);
+    if (logFilterIncomplete) apps = apps.filter(appIncomplete);
+    if (q.trim()) {
+      apps = typeof FarmFile !== 'undefined' && FarmFile.recordMatchesQuery
+        ? apps.filter((a) => FarmFile.recordMatchesQuery(a, q))
+        : apps.filter((a) =>
+          [appProductsLabel(a), a.fieldName, a.crop, a.targetPest, a.applicatorName, a.notes, ...(a.products || []).map((p) => p.lotNumber)]
+            .join(' ').toLowerCase().includes(q.toLowerCase()));
     }
     if (!apps.length) {
       let note = 'No applications logged yet. Your history will appear here.';
-      if (q) note = 'No records match your search.';
+      if (q.trim() || logFilterIncomplete) note = 'No records match your search.';
       else if (typeof FarmScale !== 'undefined' && FarmScale.shouldShowPriorYearsControl(all, now()) && !open) {
         note = 'No applications this season. Show prior years to review older logs — they are still on this device.';
       }
@@ -3013,21 +3087,21 @@
     const empty = isEmptyHome();
     if ($('#dash-first-run')) $('#dash-first-run').hidden = !empty;
     if ($('#dash-working')) $('#dash-working').hidden = empty;
+    renderInstallBanner();
     if (empty) {
       renderFirstRun();
       return;
     }
     renderBackupBanner();
+    renderGatherHint();
+    renderSendNagBanner();
     renderForecastFieldOptions();
     const apps = sortedApps();
     const seasonStart = new Date(now().getFullYear(), 0, 1);
     const seasonApps = apps.filter(a => new Date(a.date + 'T12:00:00') >= seasonStart);
     $('#stat-season-apps').textContent = seasonApps.length;
     $('#stat-products').textContent = data.products.length;
-    const incomplete = apps.filter(a => {
-      const r = evaluateCompliance(a);
-      return a.draft || !r.complete || !r.intervalsOk || r.status === 'needs_review';
-    });
+    const incomplete = apps.filter(appIncomplete);
     if ($('#stat-incomplete')) {
       $('#stat-incomplete').textContent = incomplete.length;
       $('#stat-incomplete-card').classList.toggle('stat-alert', incomplete.length > 0);
@@ -3338,7 +3412,7 @@
       : '';
     $('#print-area').innerHTML = `
       <h1>Tank Mix Worksheet</h1>
-      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.9.0 (Practical Farm Tools)</p>
+      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.9.3 (Practical Farm Tools)</p>
       <table>
         <tr><th>Area treated</th><td>${fmtNum(c.area)} ${c.areaUnit === 'sqft' ? 'sq ft' : c.areaUnit === '1000sqft' ? '× 1,000 sq ft' : 'acres'} (${fmtNum(c.acres, 3)} ac)</td>
             <th>Spray volume</th><td>${fmtNum(c.gpa)} ${c.gpaUnit === 'gal_acre' ? 'gal/acre' : 'gal/1,000 sq ft'}</td></tr>
@@ -3421,6 +3495,15 @@
       save();
       renderBackupBanner();
     });
+    if ($('#send-nag-send')) $('#send-nag-send').addEventListener('click', () => {
+      if ($('#backup-share') && !$('#backup-share').hidden) shareBackup();
+      else downloadBackup({ sent: true });
+    });
+    if ($('#send-nag-snooze')) $('#send-nag-snooze').addEventListener('click', () => {
+      data.meta.sendNagSnoozeUntil = Date.now() + 7 * 86400000;
+      save();
+      renderSendNagBanner();
+    });
 
     if ($('#auto-backup-connect')) {
       $('#auto-backup-connect').addEventListener('click', connectAutoBackup);
@@ -3489,64 +3572,51 @@
     toast(`Exported ${apps.length} record(s) to CSV`);
   }
 
-  function printReport() {
+  function reportPeriodLabel() {
+    const from = $('#report-from') && $('#report-from').value;
+    const to = $('#report-to') && $('#report-to').value;
+    return from || to
+      ? `${from ? fmtDate(from) : 'start'} – ${to ? fmtDate(to) : 'today'}`
+      : 'All records';
+  }
+
+  async function buildReportInspectPayload(apps, photos) {
+    return FarmFile.buildInspectPayload({
+      farm: data,
+      records: apps,
+      photos: photos || [],
+      generatedAt: new Date().toISOString(),
+      period: reportPeriodLabel(),
+      stateName: STATE_NAMES[data.settings.state] || '',
+      evaluateCompliance: evaluateCompliance,
+      stateLaws: typeof STATE_LAWS !== 'undefined' ? STATE_LAWS : {}
+    });
+  }
+
+  async function printReport() {
     const apps = reportApps();
     if (!apps.length) { toast('No records match the filter'); return; }
     const incomplete = apps.filter(a => !evaluateCompliance(a).complete);
     if (incomplete.length && !confirm(`${incomplete.length} record(s) are missing required state fields. Print anyway?`)) return;
-    const s = data.settings;
-    const law = stateLaw();
-    const from = $('#report-from').value, to = $('#report-to').value;
-    const range = from || to ? `${from ? fmtDate(from) : 'start'} – ${to ? fmtDate(to) : 'today'}` : 'All records';
-    const retain = (law && law.retentionYears) || 2;
-
-    const rows = apps.map(a => {
-      const result = evaluateCompliance(a);
-      return `
-      <tr>
-        <td>${fmtDate(a.date)}${a.startTime ? `<br>${esc(a.startTime)}${a.endTime ? '–' + esc(a.endTime) : ''}` : ''}<br><span class="card-hint">${result.complete ? 'Complete' : 'INCOMPLETE'}</span></td>
-        <td>${(a.products || []).map(pr =>
-          `${esc(pr.productName)}${pr.rup ? ' <strong>(RUP)</strong>' : ''} — ${esc(pr.epaRegNo)}${pr.activeIngredient ? `<br><em>${esc(pr.activeIngredient)}</em>` : ''}`
-        ).join('<br>')}</td>
-        <td>${esc(a.fieldName)}${a.fieldLocation ? `<br>${esc(a.fieldLocation)}` : ''}${a.county ? `<br>${esc(a.county)} County` : ''}${a.siteId ? `<br>Site ${esc(a.siteId)}` : ''}${a.permitNumber ? `<br>Permit ${esc(a.permitNumber)}` : ''}</td>
-        <td>${esc(a.crop)}${a.targetPest ? `<br>vs. ${esc(a.targetPest)}` : ''}${a.applicationPurpose ? `<br>${esc(a.applicationPurpose)}` : ''}</td>
-        <td>${fmtNum(a.area)} ${a.areaUnit === 'sqft' ? 'sq ft' : a.areaUnit === '1000sqft' ? '×1,000 sq ft' : 'ac'}</td>
-        <td>${(a.products || []).map(pr =>
-          pr.rate != null ? `${fmtNum(pr.rate)} ${esc(pr.rateUnit)}` : esc(a.dilution || '—')).join('<br>')}</td>
-        <td>${(a.products || []).map(pr => `${fmtNum(pr.total)} ${esc(pr.totalUnit)}`).join('<br>')}${a.carrier != null ? `<br>Carrier ${fmtNum(a.carrier)} ${esc(a.carrierUnit || '')}` : ''}</td>
-        <td>${a.windSpeed != null ? `${fmtNum(a.windSpeed)} mph ${esc(a.windDir || '')}` : '—'}${a.temperature != null ? `<br>${esc(fmtTempPair(a.temperature))}` : ''}${a.sky ? `<br>${esc(a.sky)}` : ''}</td>
-        <td>${esc(a.method || '—')}${a.nozzleType ? `<br>${esc(a.nozzleType)}` : ''}${a.sprayerPressure ? `<br>${esc(a.sprayerPressure)}` : ''}</td>
-        <td>${a.reiHours != null ? fmtNum(a.reiHours) + ' hr' : '—'} / ${a.phiDays != null ? fmtNum(a.phiDays) + ' d' : '—'}</td>
-        <td>${esc(a.applicatorName)}${a.certNumber ? `<br>#${esc(a.certNumber)}` : ''}${a.supervisorName ? `<br>Supv ${esc(a.supervisorName)}` : ''}${a.customerName ? `<br>For ${esc(a.customerName)}` : ''}</td>
-      </tr>`;
-    }).join('');
-
-    $('#print-area').innerHTML = `
-      <h1>Pesticide Application Records</h1>
-      <p class="print-meta">
-        ${esc(s.farmName || 'Farm')}${s.county ? ` · ${esc(s.county)} County` : ''}${s.state ? `, ${esc(STATE_NAMES[s.state] || s.state)}` : ''}
-        · Period: ${range} · ${apps.length} application(s) · Generated ${now().toLocaleString()}
-      </p>
-      <p class="print-meta">
-        ${law
-          ? `Prepared for ${esc(law.agency)} recordkeeping (${esc(law.citation.reference)}). Retain ${retain} year(s).`
-          : 'Select a state in Settings to attach state-specific recordkeeping citations.'}
-        USDA 7 CFR Part 110 was rescinded July 11, 2025.
-      </p>
-      <table>
-        <thead><tr>
-          <th>Date / status</th><th>Product / EPA Reg # / AI</th><th>Location</th><th>Crop / pest</th>
-          <th>Area</th><th>Rate</th><th>Total</th><th>Weather</th><th>Equipment</th><th>REI / PHI</th><th>Applicator</th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-      <div class="sig-line"><span>Certified applicator signature / date</span><span>Reviewed by / date</span></div>
-      <p class="print-footer">
-        Generated by Pesticide Logger v2.9.0 — Practical Farm Tools. Retain records per your state
-        (${retain} year(s) shown above). This report is a record-keeping aid, not legal advice,
-        and does not replace WPS duties or electronic reporting programs.
-      </p>`;
-    window.print();
+    if (typeof FarmFile === 'undefined' || !FarmFile.buildInspectPayload) {
+      toast('Inspector packet is unavailable in this build');
+      return;
+    }
+    try {
+      const photos = await idbPhotosGetAll();
+      const payload = await buildReportInspectPayload(apps, photos);
+      const usedIds = new Set();
+      apps.forEach((a) => (a.photoIds || []).forEach((id) => usedIds.add(String(id))));
+      const usedPhotos = (photos || []).filter((p) => usedIds.has(String(p.id)));
+      $('#print-area').innerHTML = FarmFile.inspectPacketInnerHtml(payload, {
+        photos: usedPhotos,
+        showVerify: false,
+        mark: ''
+      });
+      window.print();
+    } catch (err) {
+      toast('Could not build the inspection report');
+    }
   }
 
   // Certifier / buyer packet: the same records, shaped the way organic
@@ -3689,7 +3759,7 @@
       format: 'pesticide-logger-state-pack',
       version: 5,
       generatedAt: new Date().toISOString(),
-      app: 'Pesticide Logger v2.9.0 — Practical Farm Tools',
+      app: 'Pesticide Logger v2.9.3 — Practical Farm Tools',
       disclaimer: 'Completion means required fields are filled for this context — not a legal determination. Does not replace WPS duties or e-filing programs.',
       farm: {
         name: s.farmName || '',
@@ -3748,6 +3818,18 @@
     return `pesticide-logger-backup-${new Date().toISOString().slice(0, 10)}.json`;
   }
 
+  function markSentAt() {
+    data.meta.lastSendAt = new Date().toISOString();
+    save();
+    renderSendNagBanner();
+  }
+
+  function markGatheredAt() {
+    data.meta.lastGatherAt = new Date().toISOString();
+    save();
+    renderGatherHint();
+  }
+
   function markBackedUp() {
     data.meta.lastBackupAt = new Date().toISOString();
     save();
@@ -3767,13 +3849,12 @@
     return farm;
   }
 
-  function downloadBackup() {
-    data.meta.lastBackupAt = new Date().toISOString();
-    save();
+  function downloadBackup(opts) {
+    markBackedUp();
+    if (opts && opts.sent) markSentAt();
     buildBackupObject().then((packed) => {
       const blob = new Blob([JSON.stringify(packed, null, 2)], { type: 'application/json' });
       triggerDownload(blob, backupFilename());
-      renderBackupBanner();
       const info = (typeof BackupPack !== 'undefined' && BackupPack.inspect)
         ? BackupPack.inspect(packed)
         : { photoCount: 0 };
@@ -3791,6 +3872,7 @@
       const file = new File([JSON.stringify(packed, null, 2)], backupFilename(), { type: 'application/json' });
       await navigator.share({ files: [file], title: 'Pesticide Logger backup' });
       markBackedUp();
+      markSentAt();
     } catch (e) { /* user cancelled the share sheet */ }
   }
 
@@ -3912,7 +3994,7 @@
         if (merge) {
           const receipt = mergeData(migrate(Object.assign(defaultData(), farmIn)));
           await idbPhotosPutAll(info.photos);
-          save();
+          markGatheredAt();
           refreshAfterGather();
           toast('Logs brought in — you can still edit any spray');
           showGatherReceipt(receipt);
@@ -4132,12 +4214,7 @@
       await FarmFile.ensureFarmSignKeys(data.meta);
       save();
       const photos = await idbPhotosGetAll();
-      const payload = await FarmFile.buildInspectPayload({
-        farm: data,
-        records: apps,
-        photos: photos,
-        generatedAt: new Date().toISOString()
-      });
+      const payload = await buildReportInspectPayload(apps, photos);
       const signature = await FarmFile.signPayload(payload, data.meta.farmSign);
       const usedIds = new Set();
       apps.forEach((a) => (a.photoIds || []).forEach((id) => usedIds.add(String(id))));
@@ -4409,12 +4486,66 @@
 
   function renderBackupBanner() {
     const el = $('#backup-banner');
+    if (!el) return;
     el.hidden = !backupDue();
     if (!el.hidden) {
       $('#backup-banner-msg').textContent = data.meta.lastBackupAt
         ? `Your last backup was ${fmtDate(data.meta.lastBackupAt.slice(0, 10))} and you have newer records. Regulators expect records kept for years — don't trust a single browser with them.`
         : `You have ${data.applications.length} spray records that exist only in this browser. Download a backup and keep it with your farm files.`;
     }
+  }
+
+  function hasNewerSpraysSince(iso) {
+    if (!iso) return false;
+    return data.applications.some((a) => !a.deletedAt && (a.createdAt || '') > iso);
+  }
+
+  function renderGatherHint() {
+    const el = $('#gather-hint');
+    if (!el || typeof FarmFile === 'undefined' || !FarmFile.shouldShowGatherHint) return;
+    const show = FarmFile.shouldShowGatherHint({
+      deviceLabel: data.settings.deviceLabel,
+      lastGatherAt: data.meta.lastGatherAt
+    });
+    el.hidden = !show;
+  }
+
+  function renderSendNagBanner() {
+    const el = $('#send-nag-banner');
+    if (!el) return;
+    const m = data.meta;
+    if (m.sendNagSnoozeUntil && Date.now() < m.sendNagSnoozeUntil) {
+      el.hidden = true;
+      return;
+    }
+    const show = typeof FarmFile !== 'undefined' && FarmFile.shouldShowSendNag
+      ? FarmFile.shouldShowSendNag({
+        lastSendAt: m.lastSendAt,
+        hasNewerSprays: hasNewerSpraysSince(m.lastSendAt),
+        now: Date.now()
+      })
+      : false;
+    el.hidden = !show;
+  }
+
+  function isStandaloneDisplay() {
+    try {
+      if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return true;
+    } catch (e) { /* */ }
+    return !!window.navigator.standalone;
+  }
+
+  function renderInstallBanner() {
+    const el = $('#install-banner');
+    if (!el) return;
+    if (isStandaloneDisplay()) { el.hidden = true; return; }
+    try {
+      if (localStorage.getItem('pesticide-logger.installHintDismissed')) {
+        el.hidden = true;
+        return;
+      }
+    } catch (e) { /* */ }
+    el.hidden = false;
   }
 
   function clearAllData() {
@@ -6094,11 +6225,13 @@
     let apps = typeof FarmScale !== 'undefined'
       ? FarmScale.filterLogWindow(all, open, now())
       : all;
-    const q = ($('#lock-log-search') && $('#lock-log-search').value || '').toLowerCase();
-    if (q) {
-      apps = apps.filter((a) =>
-        [appProductsLabel(a), a.fieldName, a.crop, a.targetPest, a.applicatorName, a.notes]
-          .join(' ').toLowerCase().includes(q));
+    const q = ($('#lock-log-search') && $('#lock-log-search').value) || '';
+    if (q.trim()) {
+      apps = typeof FarmFile !== 'undefined' && FarmFile.recordMatchesQuery
+        ? apps.filter((a) => FarmFile.recordMatchesQuery(a, q))
+        : apps.filter((a) =>
+          [appProductsLabel(a), a.fieldName, a.crop, a.targetPest, a.applicatorName, a.notes]
+            .join(' ').toLowerCase().includes(q.toLowerCase()));
     }
     if (!apps.length) {
       host.innerHTML = `<p class="empty-note">${q ? 'No records match your search.' : (open ? 'No spray logs on this device.' : 'No applications this season. Show prior years — older logs are still here.')}</p>`;
@@ -6224,6 +6357,37 @@
     }
   }
 
+  function initInstallHint() {
+    let deferredPrompt = null;
+    const action = $('#install-banner-action');
+    const dismiss = $('#install-banner-dismiss');
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (action) action.hidden = false;
+      renderInstallBanner();
+    });
+    if (action) {
+      action.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        try { await deferredPrompt.userChoice; } catch (err) { /* */ }
+        deferredPrompt = null;
+        action.hidden = true;
+        const el = $('#install-banner');
+        if (el) el.hidden = true;
+      });
+    }
+    if (dismiss) {
+      dismiss.addEventListener('click', () => {
+        try { localStorage.setItem('pesticide-logger.installHintDismissed', '1'); } catch (err) { /* */ }
+        const el = $('#install-banner');
+        if (el) el.hidden = true;
+      });
+    }
+    renderInstallBanner();
+  }
+
   function showUpdateBanner() {
     const el = $('#update-banner');
     if (!el || el.dataset.shown) return;
@@ -6253,6 +6417,7 @@
     initInspectorView();
     initGatherUi();
     if ($('#dash-rei-board')) $('#dash-rei-board').addEventListener('click', printReiBoard);
+    initInstallHint();
     initLanguageControls();
     applyUiLanguage();
     if ($('#history-close')) $('#history-close').addEventListener('click', () => $('#history-dialog').close());

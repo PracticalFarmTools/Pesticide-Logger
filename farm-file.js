@@ -8,7 +8,8 @@
 (function (root) {
   'use strict';
 
-  const INSPECT_FORMAT = 'pesticide-logger-inspect-v1';
+  const INSPECT_FORMAT_V1 = 'pesticide-logger-inspect-v1';
+  const INSPECT_FORMAT = 'pesticide-logger-inspect-v2';
   const COMPARE_KEYS = [
     'date', 'startTime', 'endTime',
     'fieldId', 'fieldName', 'crop', 'targetPest',
@@ -293,6 +294,8 @@
       if (!farm.settings[k] && src.settings[k]) farm.settings[k] = src.settings[k];
     });
 
+    const keepGather = farm.meta && farm.meta.lastGatherAt;
+    const keepSend = farm.meta && farm.meta.lastSendAt;
     if (typeof BackupMerge !== 'undefined' && BackupMerge.mergeMeta) {
       farm.meta = BackupMerge.mergeMeta(farm.meta, src.meta);
     } else {
@@ -301,6 +304,12 @@
     const sign = pickFarmSign(farm.meta, src.meta);
     farm.meta = farm.meta || {};
     if (sign) farm.meta.farmSign = sign;
+    // Gather/send clocks are per-device. Never adopt the cab phone's,
+    // including when this device has never gathered or sent.
+    if (keepGather) farm.meta.lastGatherAt = keepGather;
+    else delete farm.meta.lastGatherAt;
+    if (keepSend) farm.meta.lastSendAt = keepSend;
+    else delete farm.meta.lastSendAt;
 
     receipt.duplicateFields = findDuplicateFields(farm.fields);
     receipt.duplicateProducts = findDuplicateProducts(farm.products);
@@ -375,7 +384,37 @@
       .map((b) => b.toString(16).padStart(2, '0')).join('');
   }
 
-  function inspectRecord(a) {
+  function freezeCompliance(result) {
+    const r = result || {};
+    return {
+      status: r.status || 'incomplete',
+      complete: !!r.complete,
+      missing: Array.isArray(r.missing) ? r.missing.slice() : [],
+      warnings: Array.isArray(r.warnings) ? r.warnings.slice() : []
+    };
+  }
+
+  function evaluateForPacket(app, farm, opts) {
+    opts = opts || {};
+    const fn = opts.evaluateCompliance
+      || (typeof Compliance !== 'undefined' && Compliance.evaluateCompliance);
+    if (typeof fn !== 'function') {
+      return freezeCompliance({
+        status: app && app.draft ? 'incomplete' : 'no_state',
+        complete: false,
+        missing: [],
+        warnings: []
+      });
+    }
+    const laws = opts.stateLaws
+      || (typeof STATE_LAWS !== 'undefined' ? STATE_LAWS : {});
+    return freezeCompliance(fn(app, {
+      settings: (farm && farm.settings) || {},
+      stateLaws: laws
+    }));
+  }
+
+  function inspectRecord(a, compliance) {
     const r = a || {};
     return {
       id: r.id || '',
@@ -384,12 +423,24 @@
       endTime: r.endTime || '',
       fieldName: r.fieldName || '',
       fieldLocation: r.fieldLocation || '',
+      locationNote: r.locationNote || '',
+      county: r.county || '',
+      siteId: r.siteId || '',
+      permitNumber: r.permitNumber || '',
+      fsaFarm: r.fsaFarm || '',
+      fsaTract: r.fsaTract || '',
+      fsaField: r.fsaField || '',
       crop: r.crop || '',
       targetPest: r.targetPest || '',
+      applicationPurpose: r.applicationPurpose || '',
       area: r.area,
       areaUnit: r.areaUnit || '',
+      carrier: r.carrier,
+      carrierUnit: r.carrierUnit || '',
       applicatorName: r.applicatorName || '',
       certNumber: r.certNumber || '',
+      supervisorName: r.supervisorName || '',
+      customerName: r.customerName || '',
       loggedBy: r.loggedBy || '',
       deviceLabel: r.deviceLabel || '',
       windSpeed: r.windSpeed,
@@ -397,13 +448,22 @@
       temperature: r.temperature,
       sky: r.sky || '',
       method: r.method || '',
+      nozzleType: r.nozzleType || '',
+      sprayerPressure: r.sprayerPressure || '',
+      equipmentId: r.equipmentId || '',
+      aircraftId: r.aircraftId || '',
+      reiHours: r.reiHours,
+      phiDays: r.phiDays,
       notes: r.notes || '',
       draft: !!r.draft,
       deletedAt: r.deletedAt || null,
       photoIds: Array.isArray(r.photoIds) ? r.photoIds.slice() : [],
+      compliance: freezeCompliance(compliance),
       products: (r.products || []).map((p) => ({
         productName: p.productName || '',
         epaRegNo: p.epaRegNo || '',
+        activeIngredient: p.activeIngredient || '',
+        rup: !!p.rup,
         rate: p.rate,
         rateUnit: p.rateUnit || '',
         total: p.total,
@@ -415,7 +475,27 @@
     };
   }
 
+  function lawForPacket(farm, stateLaws) {
+    const laws = stateLaws || (typeof STATE_LAWS !== 'undefined' ? STATE_LAWS : {});
+    const code = norm(farm && farm.settings && farm.settings.state);
+    const law = code && laws[code] ? laws[code] : null;
+    return { code: code, law: law };
+  }
+
+  function verificationSentence(v) {
+    if (v === 'partial') return 'Field list is partially verified — confirm with the agency.';
+    if (v === 'uncertain') return 'Field list is uncertain — confirm with the agency.';
+    if (v === 'researched') return 'Field list researched from state sources — not a legal determination.';
+    return '';
+  }
+
+  function statuteChecklist(law) {
+    if (!law || !Array.isArray(law.fields)) return [];
+    return law.fields.filter((f) => f && f.required && f.label).map((f) => f.label);
+  }
+
   async function buildInspectPayload(opts) {
+    opts = opts || {};
     const farm = opts.farm || {};
     const settings = farm.settings || {};
     const apps = Array.isArray(opts.records) ? opts.records : (farm.applications || []);
@@ -433,20 +513,45 @@
     for (let i = 0; i < usedPhotos.length; i++) {
       photoHashes[usedPhotos[i].id] = await sha256Hex(String(usedPhotos[i].dataUrl));
     }
+    const { code, law } = lawForPacket(farm, opts.stateLaws);
+    const records = apps.map((a) => inspectRecord(a, evaluateForPacket(a, farm, opts)));
+    let filled = 0;
+    let incomplete = 0;
+    let needsReview = 0;
+    records.forEach((r) => {
+      const c = r.compliance || {};
+      if (r.draft || !c.complete) incomplete++;
+      else filled++;
+      if (c.status === 'needs_review') needsReview++;
+    });
     return {
       format: INSPECT_FORMAT,
       generatedAt: opts.generatedAt || new Date().toISOString(),
+      period: opts.period || 'All records',
       farm: {
         name: settings.farmName || '',
-        state: settings.state || '',
+        state: code,
+        stateName: opts.stateName || '',
         county: settings.county || '',
-        applicatorClass: settings.applicatorClass || 'private'
+        applicatorClass: settings.applicatorClass || 'private',
+        agency: law ? (law.agency || '') : '',
+        citationReference: law && law.citation ? (law.citation.reference || '') : '',
+        citationUrl: law && law.citation ? (law.citation.url || '') : '',
+        retentionYears: law ? (law.retentionYears || '') : '',
+        verification: law ? (law.verification || '') : ''
+      },
+      checklist: statuteChecklist(law),
+      counts: {
+        total: records.length,
+        filled: filled,
+        incomplete: incomplete,
+        needsReview: needsReview
       },
       disclaimer: 'This packet is a snapshot of records as exported. ' +
         'The live log on the farm can still be edited. ' +
         '"Complete" means required fields were filled — not a legal determination. ' +
-        'The product label is the law.',
-      records: apps.map(inspectRecord),
+        'Rates, REI, and PHI were copied from the product label. The label is the law.',
+      records: records,
       photoHashes: photoHashes
     };
   }
@@ -494,32 +599,149 @@
     return String(v);
   }
 
-  function inspectPacketHtml(opts) {
-    const payload = opts.payload;
-    const signature = opts.signature;
-    const publicKey = opts.publicKeySpkiB64;
+  function statusLabel(rec) {
+    const c = (rec && rec.compliance) || {};
+    if (rec && rec.draft) return 'Draft';
+    if (c.status === 'needs_review') return 'Needs review';
+    if (c.complete) return 'Complete';
+    return 'INCOMPLETE';
+  }
+
+  function fsaLine(a) {
+    const parts = [];
+    if (norm(a && a.fsaFarm)) parts.push('Farm ' + norm(a.fsaFarm));
+    if (norm(a && a.fsaTract)) parts.push('Tract ' + norm(a.fsaTract));
+    if (norm(a && a.fsaField)) parts.push('Field ' + norm(a.fsaField));
+    return parts.join(' / ');
+  }
+
+  function areaLabel(a) {
+    const unit = a.areaUnit === 'sqft' ? 'sq ft'
+      : a.areaUnit === '1000sqft' ? '×1,000 sq ft'
+      : a.areaUnit === 'acres' ? 'ac'
+      : (a.areaUnit || '');
+    if (a.area == null || a.area === '') return '—';
+    return fmtVal(a.area) + (unit ? ' ' + unit : '');
+  }
+
+  function inspectPacketStyles() {
+    return 'body{font-family:Georgia,"Times New Roman",serif;color:#1e2e22;background:#f4f7f4;margin:0;padding:1.25rem;}' +
+      'h1{font-size:1.35rem;margin:0 0 .25rem;color:#0f2814;}' +
+      'h2{font-size:1.05rem;margin:1rem 0 .4rem;color:#0f2814;}' +
+      '.meta,.hint,footer,.print-meta{color:#4a5e50;font-size:.9rem;}' +
+      '.mark{font-family:ui-monospace,monospace;letter-spacing:.04em;}' +
+      'table{width:100%;border-collapse:collapse;background:#fff;margin:1rem 0;}' +
+      'th,td{border:1px solid #c5d2c8;padding:.45rem .5rem;text-align:left;vertical-align:top;font-size:.8rem;}' +
+      'th{background:#e8efe9;}' +
+      'tr{page-break-inside:avoid;}' +
+      '.banner{background:#fff;border:1px solid #c5d2c8;border-radius:10px;padding:.9rem 1rem;margin:0 0 1rem;}' +
+      '.cover{page-break-after:always;}' +
+      '.checklist{columns:2;gap:1.25rem;margin:.4rem 0 0;padding-left:1.1rem;}' +
+      '.checklist li{break-inside:avoid;margin:0 0 .2rem;font-size:.85rem;}' +
+      '.counts{font-weight:600;}' +
+      '.incomplete{font-weight:700;letter-spacing:.02em;}' +
+      'button{background:#1b4322;color:#fff;border:0;border-radius:8px;padding:.45rem .8rem;font:inherit;cursor:pointer;}' +
+      '#verify-out{margin-left:.6rem;}' +
+      '.shots{display:flex;flex-wrap:wrap;gap:.75rem;}' +
+      '.shot img{max-width:220px;height:auto;border:1px solid #c5d2c8;}' +
+      '.sig-line{margin-top:28px;display:flex;gap:40px;}' +
+      '.sig-line span{border-top:1px solid #000;padding-top:3px;flex:1;font-size:.85rem;}' +
+      'footer{margin-top:1.5rem;border-top:1px solid #c5d2c8;padding-top:.75rem;}' +
+      '@media print{' +
+      'body{background:#fff;padding:0;color:#000;}' +
+      '.banner{border-color:#999;border-radius:0;}' +
+      '#verify-btn,#verify-out,.no-print{display:none !important;}' +
+      'table{font-size:9.5px;}' +
+      'th,td{border-color:#999;padding:4px 6px;}' +
+      '}';
+  }
+
+  function inspectPacketInnerHtml(payload, opts) {
+    opts = opts || {};
+    const farm = (payload && payload.farm) || {};
+    const showVerify = opts.showVerify !== false;
     const photos = opts.photos || [];
-    const mark = fingerprintOf(publicKey);
-    const farm = payload.farm || {};
+    const mark = opts.mark || '';
+    const place = [farm.county, farm.stateName || farm.state].filter(Boolean).join(', ');
+    const classLine = farm.applicatorClass ? farm.applicatorClass + ' applicator' : '';
+    const cite = farm.citationReference
+      ? (farm.agency ? farm.agency + ' (' + farm.citationReference + ')' : farm.citationReference)
+      : '';
+    const retain = farm.retentionYears ? ('Retain ' + farm.retentionYears + ' year(s).') : '';
+    const verify = farm.verification ? verificationSentence(farm.verification) : '';
+    const counts = payload.counts || {};
+    const countLine = (counts.filled || 0) + ' record(s) have required fields filled; ' +
+      (counts.incomplete || 0) + ' incomplete; ' +
+      (counts.needsReview || 0) + ' need review. Not a legal determination.';
+    const checklist = Array.isArray(payload.checklist) ? payload.checklist : [];
+    const checklistHtml = checklist.length
+      ? '<p class="meta">This packet is organized to include these record elements. It is not the agency’s form and is not a filing.</p>' +
+        '<ul class="checklist">' + checklist.map((l) => '<li>' + esc(l) + '</li>').join('') + '</ul>'
+      : (farm.state
+        ? ''
+        : '<p class="meta">Select a state in Settings to attach state-specific recordkeeping citations.</p>');
     const rows = (payload.records || []).map((a) => {
+      const st = statusLabel(a);
+      const stClass = st === 'Complete' ? '' : ' incomplete';
       const products = (a.products || []).map((p) =>
-        esc(p.productName) + (p.epaRegNo ? ' <span class="hint">EPA ' + esc(p.epaRegNo) + '</span>' : '')
-      ).join('<br>');
-      const who = esc(a.applicatorName || '') +
-        (a.certNumber ? '<br><span class="hint">#' + esc(a.certNumber) + '</span>' : '') +
+        esc(p.productName) + (p.rup ? ' <strong>(RUP)</strong>' : '') +
+        (p.epaRegNo ? ' — ' + esc(p.epaRegNo) : '') +
+        (p.activeIngredient ? '<br><em>' + esc(p.activeIngredient) + '</em>' : '') +
+        (p.lotNumber ? '<br><span class="hint">lot ' + esc(p.lotNumber) + '</span>' : '')
+      ).join('<br>') || '—';
+      const locBits = [esc(a.fieldName || '—')];
+      if (a.fieldLocation) locBits.push(esc(a.fieldLocation));
+      if (a.county) locBits.push(esc(a.county) + ' County');
+      if (a.siteId) locBits.push('Site ' + esc(a.siteId));
+      if (a.permitNumber) locBits.push('Permit ' + esc(a.permitNumber));
+      const fsa = fsaLine(a);
+      if (fsa) locBits.push(esc(fsa));
+      const crop = esc(a.crop || '—') +
+        (a.targetPest ? '<br>vs. ' + esc(a.targetPest) : '') +
+        (a.applicationPurpose ? '<br>' + esc(a.applicationPurpose) : '');
+      const rate = (a.products || []).map((p) =>
+        p.rate != null && p.rate !== '' ? fmtVal(p.rate) + ' ' + esc(p.rateUnit || '') : '—'
+      ).join('<br>') || '—';
+      const total = ((a.products || []).map((p) =>
+        p.total != null && p.total !== '' ? fmtVal(p.total) + ' ' + esc(p.totalUnit || '') : '—'
+      ).join('<br>') || '—') +
+        (a.carrier != null && a.carrier !== ''
+          ? '<br>Carrier ' + fmtVal(a.carrier) + ' ' + esc(a.carrierUnit || '')
+          : '');
+      const weather = (a.windSpeed != null ? esc(a.windSpeed) + ' mph ' + esc(a.windDir || '') : '—') +
+        (a.temperature != null ? '<br>' + esc(a.temperature) + ' °F' : '') +
+        (a.sky ? '<br>' + esc(a.sky) : '');
+      const equip = esc(a.method || '—') +
+        (a.nozzleType ? '<br>' + esc(a.nozzleType) : '') +
+        (a.sprayerPressure ? '<br>' + esc(a.sprayerPressure) : '') +
+        (a.equipmentId ? '<br>' + esc(a.equipmentId) : '') +
+        (a.aircraftId ? '<br>' + esc(a.aircraftId) : '');
+      const intervals = (a.reiHours != null ? fmtVal(a.reiHours) + ' hr' : '—') +
+        ' / ' + (a.phiDays != null ? fmtVal(a.phiDays) + ' d' : '—');
+      const who = esc(a.applicatorName || '—') +
+        (a.certNumber ? '<br>#' + esc(a.certNumber) : '') +
+        (a.supervisorName ? '<br>Supv ' + esc(a.supervisorName) : '') +
+        (a.customerName ? '<br>For ' + esc(a.customerName) : '') +
         (a.loggedBy || a.deviceLabel
           ? '<br><span class="hint">' +
             esc([a.loggedBy ? ('logged by ' + a.loggedBy) : '', a.deviceLabel].filter(Boolean).join(' · ')) +
             '</span>'
           : '');
+      const time = a.startTime
+        ? esc(a.startTime) + (a.endTime ? '–' + esc(a.endTime) : '')
+        : '';
       return '<tr>' +
-        '<td>' + esc(a.date) + (a.startTime ? '<br><span class="hint">' + esc(a.startTime) + '</span>' : '') +
-          (a.draft ? '<br><span class="hint">Draft</span>' : '') + '</td>' +
+        '<td>' + esc(a.date) + (time ? '<br>' + time : '') +
+          '<br><span class="hint' + stClass + '">' + esc(st) + '</span></td>' +
         '<td>' + products + '</td>' +
-        '<td>' + esc(a.fieldName) + (a.crop ? '<br><span class="hint">' + esc(a.crop) + '</span>' : '') + '</td>' +
-        '<td>' + esc(fmtVal(a.area)) + (a.areaUnit ? ' ' + esc(a.areaUnit) : '') + '</td>' +
-        '<td>' + (a.windSpeed != null ? esc(a.windSpeed) + ' mph ' + esc(a.windDir || '') : '—') +
-          (a.temperature != null ? '<br>' + esc(a.temperature) + ' °F' : '') + '</td>' +
+        '<td>' + locBits.join('<br>') + '</td>' +
+        '<td>' + crop + '</td>' +
+        '<td>' + esc(areaLabel(a)) + '</td>' +
+        '<td>' + rate + '</td>' +
+        '<td>' + total + '</td>' +
+        '<td>' + weather + '</td>' +
+        '<td>' + equip + '</td>' +
+        '<td>' + intervals + '</td>' +
         '<td>' + who + '</td>' +
         '</tr>';
     }).join('');
@@ -529,6 +751,60 @@
       '<figcaption>' + esc(p.label || p.id) + '</figcaption></figure>'
     ).join('');
 
+    const notes = (payload.records || []).filter((a) => norm(a.notes)).map((a) =>
+      '<p><strong>' + esc(a.date) + ' · ' + esc(a.fieldName || '') + '</strong> — ' + esc(a.notes) + '</p>'
+    ).join('');
+
+    return '<div class="banner cover">' +
+      '<h1>' + esc(farm.name || 'Farm') + ' — inspector packet</h1>' +
+      '<p class="meta">' + esc(place) +
+      (classLine ? ' · ' + esc(classLine) : '') +
+      ' · Period: ' + esc(payload.period || 'All records') +
+      ' · Saved ' + esc(payload.generatedAt || '') +
+      (mark ? ' · Farm file mark <span class="mark">' + esc(mark) + '</span>' : '') +
+      '</p>' +
+      (cite ? '<p class="meta">Prepared for ' + esc(cite) + (retain ? ' ' + esc(retain) : '') + '</p>' : '') +
+      (farm.citationUrl ? '<p class="meta">' + esc(farm.citationUrl) + '</p>' : '') +
+      (verify ? '<p class="meta">' + esc(verify) + '</p>' : '') +
+      '<p class="counts">' + esc(countLine) + '</p>' +
+      '<p>Rates, REI, and PHI were copied from the product label. The label is the law.</p>' +
+      '<p>' + esc(payload.disclaimer || '') + '</p>' +
+      checklistHtml +
+      (showVerify
+        ? '<p class="no-print"><button type="button" id="verify-btn">Check this file</button>' +
+          '<span id="verify-out"></span></p>'
+        : '') +
+      '</div>' +
+      '<table><thead><tr>' +
+      '<th>Date / status</th><th>Product / EPA Reg # / AI</th><th>Location</th><th>Crop / pest</th>' +
+      '<th>Area</th><th>Rate</th><th>Total</th><th>Weather</th><th>Equipment</th><th>REI / PHI</th><th>Applicator</th>' +
+      '</tr></thead><tbody>' +
+      (rows || '<tr><td colspan="11">No records in this packet.</td></tr>') +
+      '</tbody></table>' +
+      (notes ? '<h2>Notes</h2>' + notes : '') +
+      (photoHtml ? ('<h2>Photos</h2><div class="shots">' + photoHtml + '</div>') : '') +
+      '<div class="sig-line"><span>Certified applicator signature / date</span><span>Reviewed by / date</span></div>' +
+      '<footer>Pesticide Logger — Practical Farm Tools. Snapshot only; the live spray log is not frozen. ' +
+      'This is a record-keeping aid, not legal advice, and does not replace WPS duties or electronic reporting programs. ' +
+      (showVerify
+        ? 'If Check this file is unavailable (some downloaded files), compare the farm file mark with the copy on the farm tablet.'
+        : '') +
+      '</footer>';
+  }
+
+  function inspectPacketHtml(opts) {
+    opts = opts || {};
+    const payload = opts.payload || {};
+    const signature = opts.signature;
+    const publicKey = opts.publicKeySpkiB64;
+    const photos = opts.photos || [];
+    const mark = fingerprintOf(publicKey);
+    const farm = payload.farm || {};
+    const inner = inspectPacketInnerHtml(payload, {
+      photos: photos,
+      mark: mark,
+      showVerify: true
+    });
     const packJson = JSON.stringify({
       payload: payload,
       signature: signature,
@@ -539,39 +815,11 @@
     return '<!DOCTYPE html>\n<html lang="en"><head><meta charset="UTF-8">' +
       '<meta name="viewport" content="width=device-width, initial-scale=1">' +
       '<title>Inspector packet — ' + esc(farm.name || 'Farm') + '</title>' +
-      '<style>' +
-      'body{font-family:Georgia,serif;color:#1e2e22;background:#f4f7f4;margin:0;padding:1.25rem;}' +
-      'h1{font-size:1.35rem;margin:0 0 .25rem;color:#0f2814;}' +
-      '.meta,.hint,footer{color:#4a5e50;font-size:.9rem;}' +
-      '.mark{font-family:ui-monospace,monospace;letter-spacing:.04em;}' +
-      'table{width:100%;border-collapse:collapse;background:#fff;margin:1rem 0;}' +
-      'th,td{border:1px solid #c5d2c8;padding:.45rem .5rem;text-align:left;vertical-align:top;font-size:.85rem;}' +
-      'th{background:#e8efe9;}' +
-      '.banner{background:#fff;border:1px solid #c5d2c8;border-radius:10px;padding:.9rem 1rem;margin:0 0 1rem;}' +
-      'button{background:#1b4322;color:#fff;border:0;border-radius:8px;padding:.45rem .8rem;font:inherit;cursor:pointer;}' +
-      '#verify-out{margin-left:.6rem;}' +
-      '.shots{display:flex;flex-wrap:wrap;gap:.75rem;}' +
-      '.shot img{max-width:220px;height:auto;border:1px solid #c5d2c8;}' +
-      'footer{margin-top:1.5rem;border-top:1px solid #c5d2c8;padding-top:.75rem;}' +
-      '</style></head><body>' +
-      '<div class="banner">' +
-      '<h1>' + esc(farm.name || 'Farm') + ' — inspector packet</h1>' +
-      '<p class="meta">' + esc(farm.county ? farm.county + ', ' : '') + esc(farm.state || '') +
-      ' · Saved ' + esc(payload.generatedAt || '') +
-      ' · Farm file mark <span class="mark">' + esc(mark || '—') + '</span></p>' +
-      '<p>' + esc(payload.disclaimer) + '</p>' +
-      '<p><button type="button" id="verify-btn">Check this file</button>' +
-      '<span id="verify-out"></span></p>' +
-      '</div>' +
-      '<table><thead><tr><th>Date</th><th>Product</th><th>Field / crop</th><th>Area</th>' +
-      '<th>Weather</th><th>Applicator</th></tr></thead><tbody>' +
-      (rows || '<tr><td colspan="6">No records in this packet.</td></tr>') +
-      '</tbody></table>' +
-      (photoHtml ? ('<h2>Photos</h2><div class="shots">' + photoHtml + '</div>') : '') +
-      '<footer>Pesticide Logger — Practical Farm Tools. Snapshot only; the live spray log is not frozen. ' +
-      'If Check this file is unavailable (some downloaded files), compare the farm file mark with the copy on the farm tablet.</footer>' +
+      '<style>' + inspectPacketStyles() + '</style></head><body>' +
+      inner +
       '<script>const PACK=' + packJson + ';' +
       '(function(){const btn=document.getElementById("verify-btn");const out=document.getElementById("verify-out");' +
+      'if(!btn)return;' +
       'function b64urlDecode(str){const b64=String(str||"").replace(/-/g,"+").replace(/_/g,"/")+"=".repeat((4-String(str||"").length%4)%4);const bin=atob(b64);const o=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)o[i]=bin.charCodeAt(i);return o;}' +
       'btn.addEventListener("click",async()=>{out.textContent="Checking…";' +
       'try{const subtle=window.crypto&&crypto.subtle;if(!subtle){out.textContent="This browser cannot check the signature here. Compare farm file mark " +(PACK.publicKeySpkiB64||"").replace(/[^A-Za-z0-9]/g,"").slice(0,8).toUpperCase()+" with the farm tablet.";return;}' +
@@ -604,6 +852,105 @@
       '<p class="print-footer">Pesticide Logger — Practical Farm Tools. Hang in the shop. Live log can still be edited.</p>';
   }
 
+  function searchTokens(q) {
+    return String(q == null ? '' : q)
+      .toLowerCase()
+      .split(/[\s,]+/)
+      .map((t) => t.replace(/^[^\w.#-]+|[^\w.#-]+$/g, ''))
+      .filter(Boolean);
+  }
+
+  function recordSearchHaystack(a) {
+    const r = a || {};
+    const products = (r.products || []).map((p) =>
+      [p.productName, p.epaRegNo, p.epaRegNo ? ('epa ' + p.epaRegNo) : '', p.activeIngredient, p.lotNumber].join(' ')
+    );
+    return [
+      r.date, r.fieldName, r.fieldLocation, r.crop, r.targetPest,
+      r.applicatorName, r.certNumber, r.notes, r.siteId,
+      r.deviceLabel, r.loggedBy, r.county, r.permitNumber,
+      r.fsaFarm, r.fsaTract, r.fsaField,
+      ...products
+    ].join(' ').toLowerCase();
+  }
+
+  function recordMatchesQuery(a, q) {
+    const tokens = searchTokens(q);
+    if (!tokens.length) return true;
+    const hay = recordSearchHaystack(a);
+    return tokens.every((t) => hay.includes(t));
+  }
+
+  function recordIsIncomplete(a, result) {
+    if (a && a.draft) return true;
+    if (!result) return false;
+    return !result.complete || result.intervalsOk === false || result.status === 'needs_review';
+  }
+
+  function productKeySet(p) {
+    return new Set(
+      [p && p.productId, p && p.id, p && p.epaRegNo, p && p.productName, p && p.name]
+        .map(nameKey)
+        .filter(Boolean)
+    );
+  }
+
+  function lastOnField(apps, fieldId, products, opts) {
+    opts = opts || {};
+    const fid = norm(fieldId);
+    const fname = nameKey(opts.fieldName);
+    if (!fid && !fname) return null;
+    const want = new Set();
+    (products || []).forEach((p) => {
+      productKeySet(p).forEach((k) => want.add(k));
+    });
+    if (!want.size) return null;
+    const exclude = opts.excludeId;
+    const list = (apps || []).filter((a) => {
+      if (!a || a.deletedAt) return false;
+      if (exclude && a.id === exclude) return false;
+      const sameId = fid && norm(a.fieldId) === fid;
+      const sameName = !norm(a.fieldId) && fname && nameKey(a.fieldName) === fname;
+      if (!sameId && !sameName) return false;
+      return (a.products || []).some((p) => {
+        const have = productKeySet(p);
+        let hit = false;
+        have.forEach((k) => { if (want.has(k)) hit = true; });
+        return hit;
+      });
+    });
+    list.sort((a, b) => {
+      const d = String(b.date || '').localeCompare(String(a.date || ''));
+      if (d) return d;
+      return String(b.startTime || '').localeCompare(String(a.startTime || ''));
+    });
+    const hit = list[0];
+    if (!hit) return null;
+    const summary = (hit.products || []).map((p) => {
+      const rate = p.rate != null && p.rate !== ''
+        ? String(p.rate) + (p.rateUnit ? ' ' + p.rateUnit : '')
+        : '';
+      return (p.productName || '') + (rate ? ', ' + rate : '');
+    }).filter(Boolean).join('; ');
+    return { id: hit.id, date: hit.date, summary: summary };
+  }
+
+  function shouldShowGatherHint(opts) {
+    opts = opts || {};
+    return !!(norm(opts.deviceLabel) || opts.lastGatherAt);
+  }
+
+  function shouldShowSendNag(opts) {
+    opts = opts || {};
+    const lastSend = opts.lastSendAt;
+    if (!lastSend) return false;
+    if (!opts.hasNewerSprays) return false;
+    const now = opts.now != null ? Number(opts.now) : Date.now();
+    const t = Date.parse(lastSend);
+    if (!Number.isFinite(t)) return false;
+    return (now - t) > 14 * 86400000;
+  }
+
   function receiptSummary(receipt) {
     const r = receipt || {};
     const parts = [];
@@ -619,6 +966,7 @@
 
   const api = {
     INSPECT_FORMAT,
+    INSPECT_FORMAT_V1,
     COMPARE_KEYS,
     norm,
     nameKey,
@@ -642,7 +990,18 @@
     signPayload,
     verifyPayload,
     inspectPacketHtml,
+    inspectPacketInnerHtml,
+    inspectPacketStyles,
     inspectRecord,
+    statusLabel,
+    fsaLine,
+    searchTokens,
+    recordSearchHaystack,
+    recordMatchesQuery,
+    recordIsIncomplete,
+    lastOnField,
+    shouldShowGatherHint,
+    shouldShowSendNag,
     reiBoardHtml,
     receiptSummary,
     pickFarmSign

@@ -8,7 +8,7 @@
  * edition string so growers Reload the updated matrix.
  */
 const APP_CACHE = 'pesticide-logger-v2.9.5';
-const LAWS_EDITION = '2026-07-31';
+const LAWS_EDITION = '2026-08-14';
 const CACHE_NAME = APP_CACHE + '-laws-' + LAWS_EDITION;
 const APP_SHELL = [
   './',

@@ -146,7 +146,7 @@ check('engine and app do not hard-code per-state law branches; engine ignores re
 check('sw cache name splits app version from laws edition', () => {
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   assert.ok(sw.includes("const APP_CACHE = 'pesticide-logger-v2.9.5'"));
-  assert.ok(sw.includes("const LAWS_EDITION = '2026-07-31'"));
+  assert.ok(sw.includes("const LAWS_EDITION = '2026-08-14'"));
   assert.ok(sw.includes("const CACHE_NAME = APP_CACHE + '-laws-' + LAWS_EDITION"));
   assert.ok(!sw.includes("const CACHE_NAME = 'pesticide-logger-v2.9.5';"));
 });
@@ -179,9 +179,11 @@ check('Home and Settings surface check-again dates; maintainer queue lists holes
     encoding: 'utf8', cwd: root
   });
   assert.strictEqual(holes.status, 0, holes.stderr);
-  assert.ok(holes.stdout.includes('MS\tuncertain'));
-  assert.ok(holes.stdout.includes('AL\tpartial\tnone'));
+  assert.ok(holes.stdout.includes('MS\tuncertain\tuncertain'));
+  assert.ok(!holes.stdout.includes('AL\t'), 'Alabama commercial list is researched; privateDuty none is not a hole');
+  assert.ok(!holes.stdout.includes('RI\t'), 'Rhode Island 2.6(C) names private RUP/SLU records');
   assert.ok(holes.stdout.includes('VA\tresearched\tuncertain'));
+  assert.ok(holes.stdout.includes('AR\tresearched\tuncertain'));
   const show = spawnSync(process.execPath, [path.join(root, 'tools', 'bundle-state-laws.js'), '--show', 'MS'], {
     encoding: 'utf8', cwd: root
   });
@@ -205,19 +207,75 @@ check('watch-list prints 50 local citation URLs and does not fetch', () => {
     assert.ok(cols[1] === 'pdf' || cols[1] === 'html', cols[1]);
     assert.ok(/^https?:\/\//.test(cols[5]), cols[5]);
   });
+  const rows = bundle.watchRows();
   const pdf = data.filter((line) => line.split('\t')[1] === 'pdf').length;
   const cornell = data.filter((line) => line.split('\t')[4] === 'yes').length;
-  assert.strictEqual(pdf, 11);
-  assert.strictEqual(cornell, 18);
-  assert.ok(r.stdout.includes('50 citation URL(s); 11 PDF; 18 Cornell; 33 host(s)'));
+  assert.strictEqual(rows.length, 50);
+  assert.strictEqual(pdf, rows.filter((row) => row.kind === 'pdf').length);
+  assert.strictEqual(cornell, rows.filter((row) => row.cornell).length);
+  assert.ok(cornell <= 9, 'leftover Cornell should be only hosts that 403/404/redirect');
+  assert.ok(r.stdout.includes(rows.length + ' citation URL(s); ' + pdf + ' PDF; ' + cornell + ' Cornell;'));
   assert.ok(r.stdout.includes('This command does not fetch'));
+  const fl = data.find((line) => line.indexOf('FL\t') === 0);
+  assert.ok(fl.indexOf('flrules.org') >= 0, fl);
+  assert.ok(fl.indexOf('elaws') < 0, fl);
+  const al = data.find((line) => line.indexOf('AL\t') === 0);
+  assert.ok(al.indexOf('admincode.legislature.state.al.us') >= 0, al);
   const ia = data.find((line) => line.indexOf('IA\t') === 0);
   assert.ok(ia.indexOf('\tno\tno\thttps://') >= 0, ia);
   const ms = data.find((line) => line.indexOf('MS\t') === 0);
   assert.ok(ms.indexOf('pdf\tagnet.mdac.ms.gov\tyes\tno\thttps://') >= 0, ms);
-  const rows = bundle.watchRows();
-  assert.strictEqual(rows.length, 50);
-  assert.strictEqual(rows.filter((row) => row.cornell).length, 18);
+  const ok = data.find((line) => line.indexOf('OK\t') === 0);
+  assert.ok(ok.indexOf('ag.ok.gov') >= 0, ok);
+  assert.ok(ok.indexOf('elaws') < 0, ok);
+  const la = data.find((line) => line.indexOf('LA\t') === 0);
+  assert.ok(la.indexOf('doa.louisiana.gov') >= 0, la);
+  assert.ok(la.indexOf('ctfassets') < 0, la);
+});
+
+check('each state keeps its own citation URL and field list; no mixed matrices', () => {
+  const states = bundle.loadAllStates();
+  const urls = bundle.US_STATES.map((code) => states[code].citation.url);
+  assert.strictEqual(new Set(urls).size, 50, 'citation URLs must be unique per state');
+  const names = (code) => (states[code].fields || []).map((f) => f.name + (f.required ? '*' : '')).join(',');
+  const nameMap = {};
+  bundle.US_STATES.forEach((code) => {
+    const n = names(code);
+    nameMap[n] = nameMap[n] || [];
+    nameMap[n].push(code);
+  });
+  const dupes = Object.values(nameMap).filter((g) => g.length > 1);
+  assert.deepStrictEqual(dupes, [], 'no two states may share an identical field list');
+  assert.notStrictEqual(names('AL'), names('MS'));
+  assert.notStrictEqual(names('AL'), names('KS'));
+  assert.notStrictEqual(names('HI'), names('ME'));
+  assert.notStrictEqual(names('AR'), names('KS'));
+  assert.notStrictEqual(names('CT'), names('HI'));
+  assert.notStrictEqual(names('OK'), names('KS'));
+  assert.notStrictEqual(names('LA'), names('MS'));
+  assert.ok(!names('MS').includes('sprayer_pressure'), 'Mississippi farm row must not require WDI PSI');
+  assert.ok(!names('MS').includes('nozzle_type'), 'Mississippi farm row must not require termiticide nozzles');
+  assert.ok(names('OK').includes('area_treated*'), 'Oklahoma 35:30-17-21 names size of area treated');
+  assert.ok(!names('OK').includes('sprayer_pressure'), 'Oklahoma farm row must not require WDI PSI');
+  const ver = { researched: [], partial: [], uncertain: [] };
+  const duty = { required: [], none: [], uncertain: [] };
+  bundle.US_STATES.forEach((code) => {
+    ver[states[code].verification].push(code);
+    duty[states[code].privateDuty].push(code);
+  });
+  assert.deepStrictEqual(ver.partial, []);
+  assert.deepStrictEqual(ver.uncertain, ['MS']);
+  assert.deepStrictEqual(duty.none, ['AL']);
+  assert.deepStrictEqual(duty.uncertain, ['AR', 'KS', 'MI', 'MN', 'MS', 'SC', 'SD', 'VA']);
+  assert.strictEqual(states.AL.verification, 'researched');
+  assert.strictEqual(states.AL.privateDuty, 'none');
+  assert.strictEqual(states.MS.verification, 'uncertain');
+  assert.strictEqual(states.MS.privateDuty, 'uncertain');
+  assert.strictEqual(states.HI.customerCopyDays, null, 'HI employer copy is before application, not a 30-day clock');
+  assert.strictEqual(states.KS.customerCopyDays, 30);
+  assert.strictEqual(states.IN.customerCopyDays, null, 'voided 355 IAC 4-4 is not a copy clock');
+  assert.strictEqual(states.OK.customerCopyDays, null);
+  assert.strictEqual(states.LA.customerCopyDays, null);
 });
 
 check('maintainer playbook is event-driven and refuses in-app scrape', () => {

@@ -51,7 +51,7 @@ check('each state has agency, citation, retention, verification, fields, private
       assert.strictEqual(typeof f.required, 'boolean', `${code}.${f.name} required`);
     });
   });
-  assert.strictEqual(ctx.STATE_LAWS_RESEARCH_DATE, '2026-07-31');
+  assert.strictEqual(ctx.STATE_LAWS_RESEARCH_DATE, '2026-08-14');
 });
 
 check('customerCopyDays only set when researched (not invented for all states)', () => {
@@ -66,9 +66,10 @@ check('customerCopyDays only set when researched (not invented for all states)',
 
 check('AL privateDuty is none; several private-uncertain states encoded', () => {
   assert.strictEqual(STATE_LAWS.AL.privateDuty, 'none');
-  ['AR', 'KS', 'MI'].forEach(code => {
+  ['AR', 'KS', 'MI', 'MN', 'SC', 'SD', 'VA'].forEach(code => {
     assert.strictEqual(STATE_LAWS[code].privateDuty, 'uncertain', code);
   });
+  assert.strictEqual(STATE_LAWS.RI.privateDuty, 'required');
 });
 
 check('BASE_RECORD_FIELDS includes drift + customer copy extras', () => {
@@ -247,7 +248,7 @@ check('source files advertise v2.9.5 + deadline/license wiring', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert.ok(app.includes('v2.9.5'));
   assert.ok(sw.includes('pesticide-logger-v2.9.5'));
-  assert.ok(sw.includes("const LAWS_EDITION = '2026-07-31'"));
+  assert.ok(sw.includes("const LAWS_EDITION = '2026-08-14'"));
   assert.ok(html.includes('v2.9.5'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));

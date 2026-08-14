@@ -65,8 +65,8 @@ check('AL privateDuty none still requires the operational core', () => {
   );
   assert.strictEqual(ok.complete, true);
   assert.strictEqual(ok.intervalsOk, true);
-  assert.strictEqual(ok.status, 'needs_review');
-  assert.strictEqual(ok.verification, 'partial');
+  assert.strictEqual(ok.status, 'fields_complete');
+  assert.strictEqual(ok.verification, 'researched');
 });
 
 check('missing mix REI is needs_review, never intervalsOk', () => {

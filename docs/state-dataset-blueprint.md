@@ -1,15 +1,13 @@
 # Blueprint: 50-state pesticide recordkeeping research
 
 **Status: Batch H implemented** in v2.9.4; Home / log / maintainer queue
-freshness in **v2.9.5** (`laws/XX.json`, `reviewedAt`, Settings + Home
-last-checked and check-again-by, 12-month stale warning, `--holes` /
-`--oldest`). Off-app citation monitoring is documented; `--watch-list`
-exports the 50 URLs (no fetch). **From this point, follow
-`docs/state-maintainer-playbook.md`:** citation hygiene first, one
-external hasher, holes only when you want completeness, event-driven
-stamps (no quarterly 13-state reread). Dataset header / matrix edition
-date is still **2026-07-31**. Batches A–G (remaining `partial` /
-`uncertain` promotions) are specified, not done.
+freshness in **v2.9.5**. Playbook Tracks 1 and 3 for this pass landed
+**2026-08-14** (`docs/state-maintainer-playbook.md`): official citation
+URLs where a primary host answered; hole states researched or frozen
+from that state's source only. Dataset header / matrix edition is
+**2026-08-14**. Remaining work is leftover Cornell URLs that 403/404,
+private-duty holes, and the external hasher (Track 2) — not a new
+engine.
 
 Job to be done: a grower in **any of the 50 states** can pick that state in
 Settings and get a spray log, completeness badge, and inspector packet that
@@ -51,18 +49,18 @@ Packet checklist: `FarmFile.statuteChecklist` (required `law.fields` labels).
 Gate: `tests/compliance.test.js` (50 states present; agency / citation /
 retention / verification / fields / `privateDuty`).
 
-Research date in the file header: **2026-07-31**.
+Research date in the file header: **2026-08-14**.
 
 | Bucket | Count | Codes |
 |---|---|---|
-| `verification: researched` | 43 | All except the 7 below |
-| `verification: partial` | 6 | AL, AR, CT, HI, KS, ME |
+| `verification: researched` | 49 | All except MS |
+| `verification: partial` | 0 | — |
 | `verification: uncertain` | 1 | MS |
-| `privateDuty: required` | 41 | Default |
+| `privateDuty: required` | 41 | Default (RI private RUP/SLU is named in 250-RICR-40-15-2.6(C)) |
 | `privateDuty: none` | 1 | AL |
-| `privateDuty: uncertain` | 8 | AR, KS, MI, MN, RI, SC, SD, VA |
-| Customer-copy days encoded | 7 | FL, HI, IN, ND, NM, PA, WA (all 30; commercial) |
-| Citation host = Cornell LII | 18 | AL, AZ, CA, ID, IL, MA, MD, MI, MO, NE, NJ, NV, SC, SD, TN, UT, WV, WY |
+| `privateDuty: uncertain` | 8 | AR, KS, MI, MN, MS, SC, SD, VA |
+| Customer-copy days encoded | 6 | FL, KS, ND, NM, PA, WA (commercial; KS is the 30-day statute; HI employer copy is before application; IN 30-day copy was in voided 355 IAC 4-4) |
+| Citation host = Cornell LII | 9 | AZ, CA, IL, MA, MI, NE, TN, UT, WY (official host 403/404/redirect on 2026-08-14) |
 
 `evaluateCompliance` already treats dataset quality as a **warning**, not a
 pass:
@@ -84,9 +82,9 @@ without ever flipping a state to Complete by inventing fields.
 | Settings state | Private grower | Commercial grower |
 |---|---|---|
 | Iowa (`researched` / `required`) | State required tags; Complete is possible | Same |
-| Alabama (`partial` / `none`) | No Alabama matrix; core still required; Needs review because verification is `partial` | Commercial matrix; Needs review until AL is promoted |
+| Alabama (`researched` / `none`) | No Alabama matrix; operational core still required; **Fields complete** is possible | Commercial r. 80-1-13-.14 matrix; Complete is possible |
 | Virginia (`researched` / `uncertain`) | Commercial field list shown; Needs review because private duty is unverified | Complete is possible |
-| Mississippi (`uncertain` / `required`) | Professional-services field list (WDI/termiticide extras); Needs review; ag rule not verified | Same warning |
+| Mississippi (`uncertain` / `uncertain`) | Short generic farm row only (no WDI PSI/nozzles); Needs review; ag rule not verified | Same warning |
 
 A grower in a `partial` state can still save drafts, save complete-looking
 rows (strict mode uses the same engine), print, and export. They cannot get
@@ -439,15 +437,15 @@ GET the URLs.
 
 ### What the 50 citations actually are
 
-Counts from the current matrix (edition **2026-07-31**):
+Counts from the current matrix (edition **2026-08-14**):
 
 | Slice | Count | Notes |
 |---|---|---|
-| Distinct hosts | 33 | One Cornell host covers 18 states; every other host is unique |
-| Cornell LII | 18 | AL, AZ, CA, ID, IL, MA, MD, MI, MO, NE, NJ, NV, SC, SD, TN, UT, WV, WY |
-| Direct PDFs | 11 | AK, AR, IN, IA, LA, ME, MS, MT, ND, TX, VT |
-| `http://` (not TLS) | 2 | FL (`flrules.elaws.us`), NC (`ncrules.state.nc.us`) |
-| Unofficial / CDN mirrors | several | `elaws.us` (FL, OK), `colorado.public.law`, LA on Contentful (`assets.ctfassets.net`), IN extension PDF on Purdue |
+| Distinct hosts | 50 citation URLs, unique per state | Isolation test: no shared URL, no identical field list |
+| Cornell LII | 9 | AZ, CA, IL, MA, MI, NE, TN, UT, WY — official host 403/404/redirect |
+| Direct PDFs | many | Including AL SOS chapter, OK ODAFF manual, LA DOA LAC, HI HAR, ME ch. 50, MS MDAC |
+| `http://` (not TLS) | 1 | NC (`ncrules.state.nc.us`); official host has no working https |
+| Unofficial / CDN mirrors | 0 | FL, OK, CO, LA, IN, NY, HI, CT swapped off junk hosts |
 
 Watching `citation.url` is necessary and not sufficient. A rule can change
 on the official SOS site while our URL still points at last year’s PDF, a

@@ -5,7 +5,7 @@
 `laws/README.md`. This playbook is the **order of work** and the
 **ongoing cadence** so maintenance is not a quarterly research program.
 
-Matrix edition is still **2026-07-31**. App version **v2.9.5**. The log,
+Matrix edition is **2026-08-14**. App version **v2.9.5**. The log,
 badges, packet freeze, and `laws/XX.json` isolation are already shipped.
 
 ## Proposal
@@ -15,7 +15,7 @@ badges, packet freeze, and `laws/XX.json` isolation are already shipped.
 | **0. Stop** | No `app.js` / `compliance.js` / `index.html` / `sw.js` logic for laws. No in-app scrape, no live statute API, no GitHub Action yet. | Already done. More cab code does not make the matrix more current. |
 | **1. Citation hygiene** | One-state JSON: put `citation.url` on the **official** HTML/PDF. Cornell, `elaws.us`, `public.law`, CDN paths, and guidance pages (HI RUP, NY PRL, Purdue handout) are not the watch target. | Hashing a mirror is wasted time. Hash-stable confirmation is only honest on an official URL. |
 | **2. One hasher** | Point Changedetection (or similar) at `node tools/bundle-state-laws.js --watch-list`. Alert on body/ETag change or 404. Snapshots stay **outside** this repo. | Detection without you opening 50 tabs. |
-| **3. Holes when you want completeness** | Batches A–E in the research blueprint (`--holes`, 13 rows). Promote only from a primary source. Otherwise freeze `uncertain` / `partial` and **do not revisit** until that URL’s hash changes. | Unfinished research is not maintenance. Re-reading MS every quarter is how this stays expensive. |
+| **3. Holes when you want completeness** | Batches A–E done 2026-08-14. Remaining `--holes`: MS (`uncertain`/`uncertain`) plus private-duty-only AR, KS, MI, MN, SC, SD, VA. Promote only from a primary source. Freeze until that URL’s hash changes. | Unfinished research is not maintenance. Re-reading MS every quarter is how this stays expensive. |
 | **4. Event-driven forever** | Touch a state only on hash change, dead link, or an annual hash-stable `--stamp` for `researched` rows with official URLs. Drop the quarterly `--oldest 13` duty. | These rules rarely move. Rereading 13 statutes on a calendar is the time sink. |
 
 Do **not** auto-write `fields[]`, auto-promote `researched`, or let an AI
@@ -49,28 +49,26 @@ Rules:
 - Skip a state if you cannot find a stable official URL; leave Cornell
   and say so in `notes`. Do not invent a link.
 
-### 1a. Cornell → official (18)
+### 1a. Cornell → official (leftover 9)
 
-AL, AZ, CA, ID, IL, MA, MD, MI, MO, NE, NJ, NV, SC, SD, TN, UT, WV, WY.
+Swapped 2026-08-14: AL, ID, MD, MO, NJ, NV, SC, SD, WV.
 
-Highest leverage: the `researched` ones that are not also holes
-(everything here except AL, MI, SC, SD). Swap those first so Track 4
-confirmations are safe on the majority of the matrix.
-
-AL / MI / SC / SD: swap URL only, or wait and do URL + research in
-Track 3 — **never** promote in the swap commit.
+Leftover (official host 403/404/generic redirect — leave Cornell, do not invent a link): AZ, CA, IL, MA, MI, NE, TN, UT, WY.
 
 ### 1b. Replace junk watch targets
 
-| Code | Why the current URL is a bad watch |
-|---|---|
-| HI | RUP-report explainer, not HAR §4-66-62 |
-| NY | PRL e-file page, not the use-record rule |
-| FL, OK | `elaws.us` (unofficial HTML) |
-| CO | `colorado.public.law` (unofficial) |
-| LA | Contentful CDN path will 404 on re-upload |
-| IN | Purdue extension PDF, not the statute/rule |
-| CT | DEEP “clarification” page — find the statute/reg |
+| Code | Why the current URL is a bad watch | 2026-08-14 |
+|---|---|---|
+| HI | RUP-report explainer, not HAR §4-66-62 | Swapped to HAR ch. 66 PDF |
+| NY | PRL e-file page, not the use-record rule | Swapped to DEC statutes page |
+| FL | `elaws.us` | Swapped to flrules.org |
+| OK | `elaws.us` | Swapped to ODAFF 2025 combined manual PDF |
+| CO | `colorado.public.law` | Swapped to leg.colorado.gov CRS title 35 PDF |
+| LA | Contentful CDN path will 404 on re-upload | Swapped to DOA LAC Title 7 Part XXIII PDF |
+| IN | Purdue extension PDF / voided IAC | Swapped to OISC 3/12/2024 guidance |
+| CT | DEEP “clarification” page | Swapped to CGS chapter 441 |
+
+Leftover Cornell (official host 403/404/redirect; leave until a primary is found): AZ, CA, IL, MA, MI, NE, TN, UT, WY. NC stays `http://` because the official host has no working TLS.
 
 ### 1c. TLS if the official host supports it
 
@@ -103,19 +101,18 @@ the same week they open. An unread firehose is worse than no hasher.
 
 ## Track 3 — holes (optional product completeness)
 
-`node tools/bundle-state-laws.js --holes` — 13 rows today. This is
+`node tools/bundle-state-laws.js --holes` — **8 rows** after the 2026-08-14
+pass (MS verification + seven `privateDuty: uncertain` states). This is
 **research**, scheduled when you want fewer Needs review badges, not
 when the hasher is quiet.
 
-Order (unchanged from the research blueprint; one state per promotion):
+Order (one state per promotion; A–E already run):
 
 | Next | Codes | Why this order |
 |---|---|---|
-| A | AL | Smallest honest promotion; `privateDuty: none` already encoded |
-| B | ME, CT, HI | Primary PDFs/pages already in the file |
-| C | AR, KS | Verification + private duty together; expect `uncertain` private to survive |
-| D | MS | Only `uncertain` verification; ag vs professional-services |
-| E | MI, MN, RI, SC, SD, VA | Private duty only; do not retouch commercial fields unless the same page contradicts them |
+| Done | AL, ME, CT, HI, AR, KS, MS, RI | Promoted or frozen from primary sources on 2026-08-14 |
+| Remaining private duty | MI, MN, SC, SD, VA (plus AR, KS still `uncertain` private) | Do not retouch commercial fields unless the same page contradicts them |
+| Frozen | MS | No ag field list found; do not paste professional-services WDI onto a farm row |
 
 How to research one state: `docs/state-dataset-blueprint.md` (How to
 research one state). Trust rules there still apply: no invented

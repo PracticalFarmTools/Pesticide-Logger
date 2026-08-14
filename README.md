@@ -50,7 +50,7 @@ application at the repository root.
 
 This app aims for **complete application recordkeeping field coverage** across
 all 50 states based on researched state statutes, rules, and agency guidance
-(matrix edition: 2026-07-31; each state also has a `reviewedAt` date in
+(matrix edition: 2026-08-14; each state also has a `reviewedAt` date in
 `laws/XX.json`). Settings and Home show last-checked and **check-again-by**
 dates, and warn if a state is older than 12 months — that warning does not
 change completeness badges. Home also names dataset holes (partial,

@@ -9,7 +9,7 @@
   "retentionYears": 2,
   "appliesTo": "Commercial applicators: any pesticide application; non-commercial applicators: RUP applications; private applicators: covered pesticide applications under R68-7-13, exact post-rescission private scope partially verified.",
   "verification": "researched",
-  "notes": "Records created within 24 hours and kept in uniform format. Commercial records require business address and commercial applicator license number; noncommercial/private rules are similar but scope differs.",
+  "notes": "Records created within 24 hours and kept in uniform format. Commercial records require business address and commercial applicator license number; noncommercial/private rules are similar but scope differs. adminrules.utah.gov R68-7 returned 404 on 2026-08-14; Cornell LII remains the citation watch until a primary host is found.",
   "fields": [
     {
       "name": "customer_name",

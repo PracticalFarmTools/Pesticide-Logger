@@ -1,10 +1,10 @@
 {
   "code": "NY",
-  "reviewedAt": "2026-07-31",
+  "reviewedAt": "2026-08-14",
   "agency": "New York State Department of Environmental Conservation",
   "citation": {
     "reference": "ECL §33-1205; 6 NYCRR 325.25; PRL electronic reporting",
-    "url": "https://dec.ny.gov/environmental-protection/pesticides/pesticide-reporting-law"
+    "url": "https://dec.ny.gov/regulatory/regulations/pesticide-statutes-regulations-and-policies"
   },
   "retentionYears": 3,
   "appliesTo": "Commercial applicators, technicians, commercial permittees: all pesticide applications; private applicators: restricted pesticides purchased/crop/method/date records.",

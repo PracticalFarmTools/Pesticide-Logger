@@ -9,7 +9,7 @@
   "retentionYears": 2,
   "appliesTo": "Any person using pesticides for agricultural use; operators of property producing agricultural commodities; agricultural pest control businesses; broader California PUR/use-reporting duties apply.",
   "verification": "researched",
-  "notes": "CA requires production-ag PUR/use reporting: property operators report to the county by the 10th of the following month unless an agricultural pest control business reports; ag pest control businesses report within 7 days and send the operator a copy within 30 days. Operator identification numbers and site IDs are central; site IDs are issued by county and retained with permits/forms for two years. REI/rate/dilution fields may be optional on PUR forms but are recommended for the logger.",
+  "notes": "CA requires production-ag PUR/use reporting: property operators report to the county by the 10th of the following month unless an agricultural pest control business reports; ag pest control businesses report within 7 days and send the operator a copy within 30 days. Operator identification numbers and site IDs are central; site IDs are issued by county and retained with permits/forms for two years. REI/rate/dilution fields may be optional on PUR forms but are recommended for the logger. CDPR calcode deep links redirected to a general laws page on 2026-08-14; Cornell LII remains the citation watch until a stable 3 CCR 6624 host is found.",
   "fields": [
     {
       "name": "date",

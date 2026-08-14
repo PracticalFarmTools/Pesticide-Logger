@@ -9,7 +9,7 @@
   "retentionYears": 3,
   "appliesTo": "All certified commercial applicators, certified private applicators, and licensed applicators or their employers; each pesticide application.",
   "verification": "researched",
-  "notes": "Operational records must also include pollution incidents, liability insurance amount/insurer, and pesticide-related illnesses/injuries reported to applicator. RUP/state-limited applications require specific site description and supervising applicator signature/license review within 72 hours where applicable.",
+  "notes": "Operational records must also include pollution incidents, liability insurance amount/insurer, and pesticide-related illnesses/injuries reported to applicator. RUP/state-limited applications require specific site description and supervising applicator signature/license review within 72 hours where applicable. mass.gov 333 CMR 10.14 returned 403 on 2026-08-14; Cornell LII remains the citation watch until a primary host is found.",
   "fields": [
     {
       "name": "location",

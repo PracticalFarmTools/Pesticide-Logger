@@ -9,7 +9,7 @@
   "retentionYears": 2,
   "appliesTo": "Commercial applicators must maintain records for any commercial pesticide application; rule also states commercial and private applicators retain required accurate records for pesticides applied, but private field list was partially verified.",
   "verification": "researched",
-  "notes": "Records include state special local need number if applicable and names/certification numbers of commercial applicator or supervising applicator plus apprentice applicators. Weather required at time of application.",
+  "notes": "Records include state special local need number if applicable and names/certification numbers of commercial applicator or supervising applicator plus apprentice applicators. Weather required at time of application. rules.wyo.gov had no stable Chapter 62 file on 2026-08-14; Cornell LII remains the citation watch until a primary host is found.",
   "fields": [
     {
       "name": "customer_name",

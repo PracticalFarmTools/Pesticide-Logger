@@ -9,7 +9,7 @@
   "retentionYears": 2,
   "appliesTo": "Certified commercial applicators and operators; all restricted pesticide/RUP usage. State private-applicator RUP duty not verified after 7 CFR Part 110 rescission.",
   "verification": "researched",
-  "notes": "Rule text lists chemical name, USEPA registration number, amount of chemical concentration per unit treated, date, and use site. Illinois Extension says wind speed/direction is not required in Illinois but recommended for drift defense. WPS records can still apply to agricultural employers.",
+  "notes": "Rule text lists chemical name, USEPA registration number, amount of chemical concentration per unit treated, date, and use site. Illinois Extension says wind speed/direction is not required in Illinois but recommended for drift defense. WPS records can still apply to agricultural employers. JCAR 8 Ill. Adm. Code 250.150 returned 404 on 2026-08-14; Cornell LII remains the citation watch until a primary host is found.",
   "fields": [
     {
       "name": "brand_name",

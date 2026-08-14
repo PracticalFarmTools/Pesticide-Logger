@@ -1,15 +1,15 @@
 {
   "code": "LA",
-  "reviewedAt": "2026-07-31",
+  "reviewedAt": "2026-08-14",
   "agency": "Louisiana Department of Agriculture and Forestry",
   "citation": {
-    "reference": "LAC Title 7, Part XXIII, §2101 and LDAF Certified Pesticide Applicator Record Keeping form",
-    "url": "https://assets.ctfassets.net/pc5e1rlgfrov/1l8HzBeIHNBeZkVHhLYmdL/0af46ed6626f0d9bbdae54e1c0fe6ea9/AES-41-06_CERT_PEST_APP_RECORD_R04-27-2026_ADA.pdf"
+    "reference": "LAC Title 7, Part XXIII, §2101 and LDAF Certified Pesticide Applicator Record Keeping form AES-41-06",
+    "url": "https://wwwcfprd.doa.louisiana.gov/boardsandcommissions/RulesAndRegulations/404_TITLE%207%20PESTICIDE%20RULES.pdf"
   },
   "retentionYears": 2,
-  "appliesTo": "Certified pesticide applicators/owner-operators/private and commercial applicators covered by LDAF pesticide law; records within three days according to LSU/LDAF materials.",
+  "appliesTo": "Any person applying pesticides for a fee, private applicators described in §709, and commercial applicators described in §711 except Category 7; records within three days at the employer or owner/operator-license address.",
   "verification": "researched",
-  "notes": "LDAF form AES-41-06 uses RUP checkbox and fields for owner/operator firm, LDAF card number, customer/applicator tables, crop/type, location, size, rate, and total concentrate applied. Some LDEQ permit language references three-year retention for permittees; LDAF/LSU state minimum two years.",
+  "notes": "Official LAC Title 7 Part XXIII (April 2024 compilation on doa.louisiana.gov, read 2026-08-14): §2101 names who must keep records, two-year retention, and a three-day clock on a director-approved form. It does not enumerate columns. The field list on this row is LDAF form AES-41-06 (owner/operator, card number, customer, applicator, product, EPA number, RUP flag, date, crop/type, location, size, rate, concentrate), not copied from another state. Dealer §2103 and consultant §2105 are not this agricultural spray matrix. Some LDEQ permit language uses three-year retention; LDAF §2101 is two years.",
   "fields": [
     {
       "name": "owner_operator_name",

@@ -1,4 +1,4 @@
-# Pesticide Logger v2.9.8
+# Pesticide Logger v2.9.9
 
 **Offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite. Licensed software with
@@ -140,6 +140,9 @@ node --check compliance.js
 node --check camera-scan.js
 node --check farm-scale.js
 node --check farm-file.js
+node --check mix-calc.js
+node --check csv-import.js
+node --check field-map.js
 node --check units.js
 node --check i18n.js
 node --check sw.js
@@ -159,6 +162,9 @@ node tests/farm-scale.test.js
 node tests/farm-file.test.js
 node tests/i18n.test.js
 node tests/units.test.js
+node tests/mix-calc.test.js
+node tests/csv-import.test.js
+node tests/field-map.test.js
 ```
 
 ## Intentional non-goals
@@ -177,6 +183,9 @@ These are scope boundaries, not unfinished work:
 index.html                 App shell
 styles.css                 Theme + print stylesheet
 app.js                     UI shell
+mix-calc.js                Tank-mix / rate math (acres, gal, product amounts)
+csv-import.js              Spreadsheet parse + draft-record builder
+field-map.js               Geodesic field-ring area and perimeter
 store.js                   IndexedDB-primary farm persistence (localStorage is a boot cache)
 compliance.js              Recordkeeping completion / interval helpers
 camera-scan.js             Camera / still-photo / OCR scan path

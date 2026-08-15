@@ -242,20 +242,23 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.8 + deadline/license wiring', () => {
+check('source files advertise v2.9.9 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.8'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.8'));
+  assert.ok(app.includes('v2.9.9'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.9'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-14'"));
-  assert.ok(html.includes('v2.9.8'));
+  assert.ok(html.includes('v2.9.9'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));
   assert.ok(html.includes('farm-scale.js'));
   assert.ok(html.includes('farm-file.js'));
   assert.ok(html.includes('i18n.js'));
   assert.ok(html.includes('units.js'));
+  assert.ok(html.includes('mix-calc.js'));
+  assert.ok(html.includes('csv-import.js'));
+  assert.ok(html.includes('field-map.js'));
   assert.ok(html.includes('epa-rank.js'));
   assert.ok(html.includes('backup-merge.js'));
   assert.ok(html.includes('backup-pack.js'));
@@ -270,6 +273,9 @@ check('source files advertise v2.9.8 + deadline/license wiring', () => {
   assert.ok(sw.includes('./i18n.js'));
   assert.ok(sw.includes('./epa-rank.js'));
   assert.ok(sw.includes('./units.js'));
+  assert.ok(sw.includes('./mix-calc.js'));
+  assert.ok(sw.includes('./csv-import.js'));
+  assert.ok(sw.includes('./field-map.js'));
   assert.ok(sw.includes('./backup-merge.js'));
   assert.ok(sw.includes('./backup-pack.js'));
   assert.ok(sw.includes('./spray-window.js'));
@@ -445,8 +451,12 @@ check('v2.7 features wired: forecast, photos, barcode, posting, import, i18n', (
   assert.ok(app.includes('NO ENTRE'), 'bilingual posting');
   assert.ok(app.includes('function checkReminders'), 'reminders');
   assert.ok(app.includes('function printCertifierPacket'), 'certifier packet');
-  assert.ok(app.includes('function parseCsv'), 'csv import');
+  assert.ok(fs.existsSync(path.join(root, 'csv-import.js')));
+  const csvImport = fs.readFileSync(path.join(root, 'csv-import.js'), 'utf8');
+  assert.ok(csvImport.includes('function parseCsv'), 'csv parser lives in csv-import.js');
+  assert.ok(app.includes('CsvImport.parseCsv'), 'shell parses through CsvImport');
   assert.ok(app.includes('function runCsvImport'), 'csv import run');
+  assert.ok(app.includes('CsvImport.importRows'), 'rows become drafts in the module');
   const i18n = require(path.join(root, 'i18n.js'));
   assert.ok(Object.keys(i18n.ES).length >= 180, 'spanish dictionary size');
   assert.ok(Object.keys(i18n.FR).length >= 180, 'french dictionary size');
@@ -533,6 +543,23 @@ check('cab scan / EPA ranking / mix chrome: whole-word ranker, state rules, add-
   assert.ok(html.includes('Choose from library') || app.includes('Choose from library'));
   assert.ok(app.includes("value=\"__custom__\""), 'calculator custom name is opt-in');
   assert.ok(html.includes('Scan jug barcode or label'));
+});
+
+check('mix-calc, csv-import, and field-map are extracted modules the shell calls', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
+  assert.ok(fs.existsSync(path.join(root, 'mix-calc.js')));
+  assert.ok(fs.existsSync(path.join(root, 'csv-import.js')));
+  assert.ok(fs.existsSync(path.join(root, 'field-map.js')));
+  assert.ok(html.includes('mix-calc.js') && sw.includes('./mix-calc.js'));
+  assert.ok(html.includes('csv-import.js') && sw.includes('./csv-import.js'));
+  assert.ok(html.includes('field-map.js') && sw.includes('./field-map.js'));
+  assert.ok(app.includes('MixCalc.jobSpray') && app.includes('MixCalc.productAmounts'));
+  assert.ok(app.includes('FieldMap.ringAreaSqm') && app.includes('FieldMap.ringPerimeterM'));
+  assert.ok(app.includes('CsvImport.importRows'));
+  assert.ok(!app.includes('function parseCsv'), 'CSV parser is not still inline in the shell');
+  assert.ok(!app.includes('const SQM_PER_ACRE = 4046'), 'field acre constant is not still inline');
 });
 
 check('code-pile hardening: trial merge, lock refresh, hidden Buy, interval fallback', () => {

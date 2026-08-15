@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.8 — Practical Farm Tools
+/* Pesticide Logger v2.9.9 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -492,21 +492,13 @@
   }
 
   function areaToAcres(value, unit) {
-    if (unit === 'acres') return value;
-    if (unit === 'sqft') return value / 43560;
-    if (unit === '1000sqft') return value * 1000 / 43560;
-    return value;
+    return MixCalc.areaToAcres(value, unit);
   }
 
-  const RATE_PER_LABEL = {
-    acre: '/ acre', '1000sqft': '/ 1,000 sq ft', gal: '/ gal water', '100gal': '/ 100 gal water'
-  };
+  const RATE_PER_LABEL = MixCalc.RATE_PER_LABEL;
 
-  // How many "rate units" of area are in the treated area.
   function areaUnitsFor(per, areaAcres) {
-    if (per === 'acre') return areaAcres;
-    if (per === '1000sqft') return areaAcres * 43.56;
-    return null; // water-based rates need carrier volume, not area
+    return MixCalc.areaUnitsFor(per, areaAcres);
   }
 
   const now = () => new Date();
@@ -1899,7 +1891,7 @@
 
   // -------------------------------------------------------------- app form
 
-  const RATE_UNITS = ['fl oz', 'pt', 'qt', 'gal', 'oz', 'lb', 'g', 'kg', 'mL', 'L'];
+  const RATE_UNITS = MixCalc.RATE_UNITS;
 
   let appFormPhotoIds = [];
 
@@ -3496,12 +3488,12 @@
       return;
     }
 
-    const acres = areaToAcres(area, areaUnit);
-    const gpaAcre = gpaUnit === 'gal_acre' ? gpa : gpa * 43.56; // gal/1000sqft → gal/acre
-    const totalSpray = acres * gpaAcre; // gallons of finished spray
-    const tanksExact = tank > 0 ? totalSpray / tank : 0;
-    const fullTanks = tank > 0 ? Math.floor(tanksExact) : 0;
-    const partialGal = tank > 0 ? totalSpray - fullTanks * tank : 0;
+    const job = MixCalc.jobSpray({ area, areaUnit, tank, gpa, gpaUnit });
+    const acres = job.acres;
+    const gpaAcre = job.gpaAcre;
+    const totalSpray = job.totalSpray;
+    const fullTanks = job.fullTanks;
+    const partialGal = job.partialGal;
 
     const products = [];
     let warn = [];
@@ -3510,29 +3502,15 @@
       const rate = parseFloat(row.querySelector('.calc-rate').value);
       const unit = row.querySelector('.calc-rate-unit').value;
       const per = row.querySelector('.calc-rate-per').value;
-      if (!isFinite(rate) || rate <= 0) return;
-
-      let perGalSpray; // product per gallon of finished spray
-      let total;       // total product for the job
-      if (per === 'acre') {
-        total = rate * acres;
-        perGalSpray = rate / gpaAcre;
-      } else if (per === '1000sqft') {
-        const per1000 = acres * 43.56;
-        total = rate * per1000;
-        perGalSpray = total / totalSpray;
-      } else if (per === 'gal') {
-        perGalSpray = rate;
-        total = rate * totalSpray;
-      } else { // 100gal
-        perGalSpray = rate / 100;
-        total = perGalSpray * totalSpray;
-      }
+      const amt = MixCalc.productAmounts({
+        rate, per, acres, gpaAcre, totalSpray, tank, partialGal
+      });
+      if (!amt) return;
       products.push({
         name, unit, rate, per,
-        total,
-        perTank: perGalSpray * tank,
-        perPartial: perGalSpray * partialGal
+        total: amt.total,
+        perTank: amt.perTank,
+        perPartial: amt.perPartial
       });
     });
 
@@ -3605,7 +3583,7 @@
       : '';
     $('#print-area').innerHTML = `
       <h1>Tank Mix Worksheet</h1>
-      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.9.8 (Practical Farm Tools)</p>
+      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.9.9 (Practical Farm Tools)</p>
       <table>
         <tr><th>Area treated</th><td>${fmtNum(c.area)} ${c.areaUnit === 'sqft' ? 'sq ft' : c.areaUnit === '1000sqft' ? '× 1,000 sq ft' : 'acres'} (${fmtNum(c.acres, 3)} ac)</td>
             <th>Spray volume</th><td>${fmtNum(c.gpa)} ${c.gpaUnit === 'gal_acre' ? 'gal/acre' : 'gal/1,000 sq ft'}</td></tr>
@@ -3953,7 +3931,7 @@
       format: 'pesticide-logger-state-pack',
       version: 5,
       generatedAt: new Date().toISOString(),
-      app: 'Pesticide Logger v2.9.8 — Practical Farm Tools',
+      app: 'Pesticide Logger v2.9.9 — Practical Farm Tools',
       disclaimer: 'Completion means required fields are filled for this context — not a legal determination. Does not replace WPS duties or e-filing programs.',
       farm: {
         name: s.farmName || '',
@@ -4464,66 +4442,7 @@
 
   // -------------------------------------------------------------- CSV import
 
-  // Minimal RFC-4180-ish parser: quoted fields, embedded commas/newlines.
-  function parseCsv(text) {
-    const rows = [];
-    let row = [];
-    let cell = '';
-    let inQuotes = false;
-    for (let i = 0; i < text.length; i++) {
-      const ch = text[i];
-      if (inQuotes) {
-        if (ch === '"') {
-          if (text[i + 1] === '"') { cell += '"'; i++; }
-          else inQuotes = false;
-        } else cell += ch;
-      } else if (ch === '"') {
-        inQuotes = true;
-      } else if (ch === ',') {
-        row.push(cell); cell = '';
-      } else if (ch === '\n' || ch === '\r') {
-        if (ch === '\r' && text[i + 1] === '\n') i++;
-        row.push(cell); cell = '';
-        if (row.some(c => c.trim() !== '')) rows.push(row);
-        row = [];
-      } else cell += ch;
-    }
-    row.push(cell);
-    if (row.some(c => c.trim() !== '')) rows.push(row);
-    return rows;
-  }
-
-  const IMPORT_FIELDS = [
-    { key: 'date', label: 'Application date', required: true, guess: /date|applied/i },
-    { key: 'productName', label: 'Product / brand name', required: true, guess: /product|chemical|brand|material/i },
-    { key: 'epaRegNo', label: 'EPA registration #', guess: /epa|reg/i },
-    { key: 'fieldName', label: 'Field / site name', guess: /field|block|site|location/i },
-    { key: 'crop', label: 'Crop / commodity', guess: /crop|commodity/i },
-    { key: 'area', label: 'Area treated (acres)', guess: /acre|area/i },
-    { key: 'rate', label: 'Rate', guess: /rate/i },
-    { key: 'total', label: 'Total applied', guess: /total|amount|qty|quantity/i },
-    { key: 'applicatorName', label: 'Applicator', guess: /applicator|operator|sprayer/i },
-    { key: 'certNumber', label: 'Certification #', guess: /cert|license/i },
-    { key: 'targetPest', label: 'Target pest', guess: /pest|target|weed|insect/i },
-    { key: 'startTime', label: 'Start time', guess: /start|time/i },
-    { key: 'notes', label: 'Notes', guess: /note|comment|remark/i }
-  ];
-
   let importCsvRows = null;
-
-  function parseImportDate(v) {
-    const t = String(v || '').trim();
-    if (!t) return null;
-    if (/^\d{4}-\d{2}-\d{2}/.test(t)) return t.slice(0, 10);
-    const m = t.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})/);
-    if (m) {
-      let y = Number(m[3]);
-      if (y < 100) y += 2000;
-      return `${y}-${String(m[1]).padStart(2, '0')}-${String(m[2]).padStart(2, '0')}`;
-    }
-    const d = new Date(t);
-    return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
-  }
 
   function initCsvImport() {
     const input = $('#csv-import-file');
@@ -4534,7 +4453,7 @@
       if (!file) return;
       const reader = new FileReader();
       reader.onload = () => {
-        const rows = parseCsv(String(reader.result || ''));
+        const rows = CsvImport.parseCsv(String(reader.result || ''));
         if (rows.length < 2) { toast('That CSV needs a header row plus at least one record'); return; }
         importCsvRows = rows;
         openImportDialog();
@@ -4557,8 +4476,8 @@
     const colOptions = (selected) => `<option value="">— not in my sheet —</option>` +
       header.map((h, i) =>
         `<option value="${i}" ${i === selected ? 'selected' : ''}>${esc(h || 'column ' + (i + 1))}</option>`).join('');
-    $('#import-mapping').innerHTML = IMPORT_FIELDS.map(f => {
-      const guessIdx = header.findIndex(h => f.guess.test(h));
+    $('#import-mapping').innerHTML = CsvImport.FIELDS.map(f => {
+      const guessIdx = CsvImport.guessColumnIndex(header, f);
       return `<label class="import-map-row">${f.label}${f.required ? ' <span class="req-star">*</span>' : ''}
         <select data-import-key="${f.key}">${colOptions(guessIdx)}</select>
       </label>`;
@@ -4575,89 +4494,18 @@
       toast('Map at least the date and product name columns');
       return;
     }
-    const s = data.settings;
-    let imported = 0, skipped = 0;
-    const cell = (row, key) => map[key] != null ? String(row[map[key]] || '').trim() : '';
-    importCsvRows.slice(1).forEach(row => {
-      const date = parseImportDate(cell(row, 'date'));
-      const productName = cell(row, 'productName');
-      if (!date || !productName) { skipped++; return; }
-
-      let product = data.products.find(p => p.name.toLowerCase() === productName.toLowerCase());
-      if (!product) {
-        product = {
-          id: uid(), name: productName,
-          epaRegNo: cell(row, 'epaRegNo'), activeIngredient: '', type: '', signalWord: '',
-          rup: false, reiHours: null, phiDays: null,
-          rateAmount: null, rateUnit: 'fl oz', ratePer: 'acre',
-          notes: 'Imported from spreadsheet — verify against the label',
-          stateRegNo: '', omri: false, lotHint: '', barcode: '', photoIds: [],
-          createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
-        };
-        data.products.push(product);
-      }
-
-      const fieldName = cell(row, 'fieldName');
-      let field = fieldName
-        ? data.fields.find(f => f.name.toLowerCase() === fieldName.toLowerCase())
-        : null;
-      if (fieldName && !field) {
-        field = {
-          id: uid(), name: fieldName, size: null, sizeUnit: 'acres',
-          crop: cell(row, 'crop'), location: '', siteId: '', boundary: null,
-          createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
-        };
-        data.fields.push(field);
-      }
-
-      const num = (key) => {
-        const v = parseFloat(cell(row, key).replace(/[^0-9.\-]/g, ''));
-        return isFinite(v) ? v : null;
-      };
-
-      const app = {
-        id: uid(), date,
-        startTime: cell(row, 'startTime'), endTime: '',
-        products: [{
-          productId: product.id, productName: product.name,
-          epaRegNo: product.epaRegNo || cell(row, 'epaRegNo'),
-          activeIngredient: '', rup: false, type: '', signalWord: '', omri: false,
-          epaStatus: null, epaCheckedAt: null, epaLabelUrl: null, epaCompany: '', stateRegNo: '',
-          lotNumber: '', reiHours: null, phiDays: null, reiOverride: null, phiOverride: null,
-          rate: num('rate'), rateUnit: 'fl oz',
-          total: num('total'), totalUnit: 'fl oz'
-        }],
-        reiHours: null, phiDays: null, rup: false,
-        fieldId: field ? field.id : '', fieldName: field ? field.name : fieldName,
-        fieldLocation: '', locationNote: '', county: s.county || '', siteId: '', permitNumber: '',
-        crop: cell(row, 'crop'), targetPest: cell(row, 'targetPest'), applicationPurpose: '',
-        area: num('area'), areaUnit: 'acres', carrier: null, carrierUnit: 'gal',
-        dilution: '', concentration: '', mixLoadLocation: '',
-        windSpeed: null, windDir: '', temperature: null, sky: '',
-        applicationType: 'ground', method: '', nozzleType: '', sprayerPressure: '',
-        equipmentId: '', aircraftId: '',
-        applicatorName: cell(row, 'applicatorName') || s.applicatorName || '',
-        certNumber: cell(row, 'certNumber') || '',
-        supervisorName: '', usedNoncertified: false, noncertifiedApplicatorName: '',
-        ownerOperatorName: s.farmName || '', customerName: '', customerAddress: '', customerPhone: '',
-        businessNameAddress: '', companyLicense: '', pesticideSupplier: '', disposalMethod: '',
-        notes: cell(row, 'notes') ? cell(row, 'notes') + ' [imported]' : '[imported from spreadsheet]',
-        boomHeight: '', groundSpeed: '', bufferDistance: '', sensitiveSites: '',
-        inversionObserved: false, customerCopyProvided: false, customerCopyDate: '',
-        photoIds: [],
-        complianceState: s.state || '', complianceApplicatorClass: s.applicatorClass || 'private',
-        draft: true, deletedAt: null, history: [],
-        updatedAt: new Date().toISOString(), createdAt: new Date().toISOString()
-      };
-      const result = evaluateCompliance(app);
-      app.complianceComplete = result.complete;
-      app.complianceStatus = result.status;
-      app.complianceMissing = result.missing.slice();
-      app.retentionYears = result.retentionYears;
-      app.recordDueAt = computeRecordDueAt(app);
-      data.applications.push(app);
-      imported++;
+    const result = CsvImport.importRows(importCsvRows.slice(1), map, {
+      settings: data.settings,
+      products: data.products,
+      fields: data.fields,
+      uid,
+      nowIso: new Date().toISOString(),
+      evaluateCompliance,
+      computeRecordDueAt
     });
+    data.products = result.products;
+    data.fields = result.fields;
+    data.applications.push(...result.applications);
     save();
     $('#import-dialog').close();
     renderAppList();
@@ -4665,7 +4513,7 @@
     renderFieldOptions();
     renderProductOptions();
     renderDashboard();
-    toast(`Imported ${imported} record(s) as drafts${skipped ? `; skipped ${skipped} row(s) missing date/product` : ''} — finish them from the Spray Log`);
+    toast(`Imported ${result.imported} record(s) as drafts${result.skipped ? `; skipped ${result.skipped} row(s) missing date/product` : ''} — finish them from the Spray Log`);
   }
 
   // Nudge when records exist that no backup covers.
@@ -4780,29 +4628,14 @@
   let weatherPinMarker = null;
   let mapClickMode = 'draw';
 
-  const SQM_PER_ACRE = 4046.8564224;
+  const SQM_PER_ACRE = FieldMap.SQM_PER_ACRE;
 
-  // Geodesic ring area on the WGS84 sphere (same algorithm as Turf.js /
-  // L.GeometryUtil): accurate to well under 0.5% for field-sized parcels.
   function ringAreaSqm(latlngs) {
-    const R = 6378137;
-    const rad = (d) => d * Math.PI / 180;
-    let total = 0;
-    const n = latlngs.length;
-    if (n < 3) return 0;
-    for (let i = 0; i < n; i++) {
-      const a = latlngs[i], b = latlngs[(i + 1) % n];
-      total += rad(b.lng - a.lng) * (2 + Math.sin(rad(a.lat)) + Math.sin(rad(b.lat)));
-    }
-    return Math.abs(total * R * R / 2);
+    return FieldMap.ringAreaSqm(latlngs);
   }
 
   function ringPerimeterM(latlngs) {
-    let d = 0;
-    for (let i = 0; i < latlngs.length; i++) {
-      d += latlngs[i].distanceTo(latlngs[(i + 1) % latlngs.length]);
-    }
-    return d;
+    return FieldMap.ringPerimeterM(latlngs);
   }
 
   function setPendingWeatherPin(lat, lng, manual) {

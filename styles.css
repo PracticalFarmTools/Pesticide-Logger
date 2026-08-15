@@ -372,6 +372,9 @@ main {
   margin: 0 0 1rem;
 }
 .log-mode-toggle .btn { flex: 1 1 0; }
+@media (max-width: 720px) {
+  .log-mode-toggle { flex-direction: column; align-items: stretch; }
+}
 .mix-scan-row {
   display: flex;
   flex-wrap: wrap;

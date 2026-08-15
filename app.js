@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.13 — Practical Farm Tools
+/* Pesticide Logger v2.9.14 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -578,6 +578,8 @@
 
   $$('.tab-btn[data-tab]').forEach(b => b.addEventListener('click', () => {
     if (b.dataset.tab === 'log') setLogMode('new');
+    if (b.dataset.tab === 'products') setProductsMode('library');
+    if (b.dataset.tab === 'fields') setFieldsMode('list');
     showTab(b.dataset.tab);
   }));
   if ($('#tab-more')) $('#tab-more').addEventListener('click', (e) => {
@@ -602,6 +604,12 @@
       if (goto.dataset.goto === 'log') {
         const toHistory = goto.dataset.scrollTo === 'app-history-card' || goto.dataset.incompleteFilter;
         setLogMode(toHistory ? 'history' : 'new');
+      }
+      if (goto.dataset.goto === 'products') {
+        setProductsMode(goto.dataset.listMode === 'add' ? 'add' : 'library');
+      }
+      if (goto.dataset.goto === 'fields') {
+        setFieldsMode(goto.dataset.listMode === 'add' ? 'add' : 'list');
       }
       showTab(goto.dataset.goto);
       if (goto.dataset.incompleteFilter) {
@@ -1417,6 +1425,7 @@
       : `Finish label details — ${result.name}`;
     $('#prod-save-btn').textContent = existing ? 'Update product' : 'Save product';
     $('#prod-cancel-btn').hidden = false;
+    setProductsMode('add');
     $('#product-form').scrollIntoView({ behavior: 'smooth' });
     $('#prod-rei').focus();
     toast('EPA identity imported. Copy REI, PHI, and crop-specific rate from the official label.');
@@ -1527,10 +1536,17 @@
       renderProducts();
       renderProductOptions();
       renderDashboard();
+      setProductsMode('library');
       toast(idx >= 0 ? 'Product updated' : 'Product added to library');
     });
-    $('#prod-cancel-btn').addEventListener('click', resetProductForm);
+    $('#prod-cancel-btn').addEventListener('click', () => {
+      resetProductForm();
+      setProductsMode('library');
+    });
     if ($('#product-search')) $('#product-search').addEventListener('input', renderProducts);
+    if ($('#products-mode-library')) $('#products-mode-library').addEventListener('click', () => setProductsMode('library'));
+    if ($('#products-mode-add')) $('#products-mode-add').addEventListener('click', () => setProductsMode('add'));
+    if ($('#products-mode-epa')) $('#products-mode-epa').addEventListener('click', () => setProductsMode('epa'));
     renderProducts();
   }
 
@@ -1572,6 +1588,7 @@
     $('#product-form-title').textContent = `Edit — ${p.name}`;
     $('#prod-save-btn').textContent = 'Update product';
     $('#prod-cancel-btn').hidden = false;
+    setProductsMode('add');
     $('#product-form').scrollIntoView({ behavior: 'smooth' });
   }
 
@@ -1610,7 +1627,10 @@
     const searchEl = $('#product-search');
     if (!data.products.length) {
       if (searchEl) searchEl.hidden = true;
-      host.innerHTML = `<p class="empty-note">No products yet. Add the pesticides you use — REI, PHI, and rates come straight off the label.</p>`;
+      host.innerHTML = `<p class="empty-note">No products yet. Add the pesticides you use — REI, PHI, and rates come straight off the label.</p>
+        <button type="button" class="btn btn-primary" id="products-empty-add">Add a product</button>`;
+      const emptyAdd = $('#products-empty-add');
+      if (emptyAdd) emptyAdd.addEventListener('click', () => setProductsMode('add'));
       return;
     }
     if (searchEl) {
@@ -1717,9 +1737,16 @@
         : null;
       if (dup) toast(dup);
       else toast(idx >= 0 ? 'Field updated' : 'Field added');
+      setFieldsMode('list');
     });
-    $('#field-cancel-btn').addEventListener('click', resetFieldForm);
+    $('#field-cancel-btn').addEventListener('click', () => {
+      resetFieldForm();
+      setFieldsMode('list');
+    });
     if ($('#field-search')) $('#field-search').addEventListener('input', renderFields);
+    if ($('#fields-mode-list')) $('#fields-mode-list').addEventListener('click', () => setFieldsMode('list'));
+    if ($('#fields-mode-add')) $('#fields-mode-add').addEventListener('click', () => setFieldsMode('add'));
+    if ($('#fields-mode-map')) $('#fields-mode-map').addEventListener('click', () => setFieldsMode('map'));
     renderFields();
   }
 
@@ -1760,6 +1787,7 @@
       if (c) setPendingWeatherPin(c.lat, c.lng, false);
     }
     syncWeatherPinButton();
+    setFieldsMode('add');
     $('#field-form').scrollIntoView({ behavior: 'smooth' });
   }
 
@@ -1789,7 +1817,10 @@
     if (!data.fields.length) {
       if (searchEl) searchEl.hidden = true;
       if (chipsHost) { chipsHost.hidden = true; chipsHost.innerHTML = ''; }
-      host.innerHTML = `<p class="empty-note">No fields yet. Add each block, tunnel, or site you treat so records auto-fill the location and size.</p>`;
+      host.innerHTML = `<p class="empty-note">No fields yet. Add each block, tunnel, or site you treat so records auto-fill the location and size.</p>
+        <button type="button" class="btn btn-primary" id="fields-empty-add">Add a field</button>`;
+      const emptyAdd = $('#fields-empty-add');
+      if (emptyAdd) emptyAdd.addEventListener('click', () => setFieldsMode('add'));
       return;
     }
     if (searchEl) {
@@ -1885,6 +1916,43 @@
       histBtn.classList.toggle('btn-secondary', !on);
     }
     if (logMode === 'history') renderAppList();
+  }
+
+  function setTogglePressed(btn, on) {
+    if (!btn) return;
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    btn.classList.toggle('btn-primary', on);
+    btn.classList.toggle('btn-secondary', !on);
+  }
+
+  function setProductsMode(mode) {
+    const next = mode === 'add' || mode === 'epa' ? mode : 'library';
+    const lib = $('#products-library-pane');
+    const add = $('#products-add-pane');
+    const epa = $('#products-epa-pane');
+    if (lib) lib.hidden = next !== 'library';
+    if (add) add.hidden = next !== 'add';
+    if (epa) epa.hidden = next !== 'epa';
+    setTogglePressed($('#products-mode-library'), next === 'library');
+    setTogglePressed($('#products-mode-add'), next === 'add');
+    setTogglePressed($('#products-mode-epa'), next === 'epa');
+  }
+
+  function setFieldsMode(mode) {
+    const next = mode === 'add' || mode === 'map' ? mode : 'list';
+    const list = $('#fields-list-pane');
+    const add = $('#fields-add-pane');
+    const map = $('#fields-map-pane');
+    if (list) list.hidden = next !== 'list';
+    if (add) add.hidden = next !== 'add';
+    if (map) map.hidden = next !== 'map';
+    setTogglePressed($('#fields-mode-list'), next === 'list');
+    setTogglePressed($('#fields-mode-add'), next === 'add');
+    setTogglePressed($('#fields-mode-map'), next === 'map');
+    if (next === 'map') {
+      initFieldMap();
+      if (fieldMap) setTimeout(() => fieldMap.invalidateSize(), 50);
+    }
   }
 
   function sectionHasVisibleRequired(fs) {
@@ -3249,7 +3317,7 @@
     syncFirstRunFarmForm();
     const steps = FarmStore.firstRunSteps(data);
     host.innerHTML = steps.map((s) => `
-      <button type="button" class="interval-item setup-step ${s.done ? 'clear' : ''}" data-goto="${s.goto}">
+      <button type="button" class="interval-item setup-step ${s.done ? 'clear' : ''}" data-goto="${s.goto}"${s.goto === 'fields' || s.goto === 'products' ? ' data-list-mode="add"' : ''}>
         <div>
           <div class="where">${esc(s.where)}</div>
           <div class="what">${esc(s.what)}</div>
@@ -5087,6 +5155,7 @@
     toast(`Shape captured: ${fmtNum(acres, acres < 1 ? 3 : 2)} acres — name the field below`);
     syncWeatherPinButton();
     updateDrawUI();
+    setFieldsMode('add');
     $('#field-form').scrollIntoView({ behavior: 'smooth' });
     $('#field-name').focus();
   }
@@ -6815,7 +6884,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.13';
+  const APP_VERSION = 'v2.9.14';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {

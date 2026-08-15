@@ -689,6 +689,12 @@
 
   <!-- ============ PRODUCTS ============ -->
   <section id="tab-products" class="tab-panel" role="tabpanel">
+    <div class="log-mode-toggle" role="group" aria-label="Products">
+      <button type="button" class="btn btn-primary btn-lg" id="products-mode-library" aria-pressed="true">Product library</button>
+      <button type="button" class="btn btn-secondary btn-lg" id="products-mode-add" aria-pressed="false">Add a product</button>
+      <button type="button" class="btn btn-secondary btn-lg" id="products-mode-epa" aria-pressed="false">EPA lookup</button>
+    </div>
+    <div id="products-library-pane">
     <div class="card">
       <div class="card-title-row">
         <h3 class="card-title">Product library</h3>
@@ -696,6 +702,8 @@
       </div>
       <div id="product-list"></div>
     </div>
+    </div>
+    <div id="products-add-pane" hidden>
     <div class="card">
       <h3 class="card-title" id="product-form-title">Add a product</h3>
       <p class="card-hint">Copy REI, PHI, and rates straight from the product label. The label is the law — this tool never overrides it.</p>
@@ -808,6 +816,8 @@
         </div>
       </form>
     </div>
+    </div>
+    <div id="products-epa-pane" hidden>
     <div class="card epa-lookup-card">
       <div class="card-title-row">
         <div>
@@ -825,11 +835,17 @@
       <div id="epa-search-status" class="epa-search-status" role="status"></div>
       <div id="epa-search-results" class="epa-search-results"></div>
     </div>
-
+    </div>
   </section>
 
   <!-- ============ FIELDS ============ -->
   <section id="tab-fields" class="tab-panel" role="tabpanel">
+    <div class="log-mode-toggle" role="group" aria-label="Fields">
+      <button type="button" class="btn btn-primary btn-lg" id="fields-mode-list" aria-pressed="true">Fields &amp; sites</button>
+      <button type="button" class="btn btn-secondary btn-lg" id="fields-mode-add" aria-pressed="false">Add a field</button>
+      <button type="button" class="btn btn-secondary btn-lg" id="fields-mode-map" aria-pressed="false">Field mapper</button>
+    </div>
+    <div id="fields-list-pane">
     <div class="card">
       <div class="card-title-row">
         <h3 class="card-title">Fields &amp; sites</h3>
@@ -838,6 +854,8 @@
       <div id="field-group-chips" class="group-chips" hidden></div>
       <div id="field-list"></div>
     </div>
+    </div>
+    <div id="fields-add-pane" hidden>
     <div class="card">
       <h3 class="card-title" id="field-form-title">Add a field / site</h3>
       <form id="field-form" class="form-grid" autocomplete="off">
@@ -887,6 +905,8 @@
         </div>
       </form>
     </div>
+    </div>
+    <div id="fields-map-pane" hidden>
     <div class="card map-card">
       <h3 class="card-title">Field mapper — draw your acreage</h3>
       <p class="card-hint">Zoom to your farm (or tap My location). Turn on Add corners to drop points — drag a green handle to move a corner instead of erasing. Tap a field line to insert a corner. Tap the first corner or turn off Add corners when the ring is right, then Use this shape. The amber pin is the forecast spot; drag it anytime without adding a corner. Set forecast pin is only for sites with no drawn boundary.</p>
@@ -912,7 +932,7 @@
       </div>
       <div class="map-readout" id="map-readout">Add corners is off — turn it on to drop points. Drag a handle to move a corner; drag the amber pin anytime without adding a point.</div>
     </div>
-
+    </div>
   </section>
 
   <!-- ============ REPORTS ============ -->

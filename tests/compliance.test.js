@@ -242,14 +242,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.14 + deadline/license wiring', () => {
+check('source files advertise v2.9.15 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.14'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.14'));
+  assert.ok(app.includes('v2.9.15'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.15'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-14'"));
-  assert.ok(!html.includes('v2.9.14'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.15'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for updates lives in the header');
@@ -360,8 +360,8 @@ check('cab chrome: Home, Spray Log, Products, Fields, and More', () => {
     'Tank Mix jump targets the calculator');
   assert.ok(html.includes('id="dash-inspect-packet"') && html.includes('data-scroll-to="report-inspect-html"'),
     'Home Inspector packet jumps to the Reports packet button');
-  assert.ok(app.includes("$('#dash-inspect-packet').hidden = !(data.applications && data.applications.length)"),
-    'Inspector packet hides until a spray exists');
+  assert.ok(app.includes('isQuietHome()') && app.includes("dash-inspect-packet"),
+    'Inspector packet hides until a spray exists and on a quiet Home');
 });
 
 check('cab UX: compact spray log, library-first lists, quieter home, calc copy, map default', () => {
@@ -398,16 +398,24 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('function setProductsMode') && app.includes('function setFieldsMode'));
   assert.ok(app.includes('data-list-mode="add"'), 'first-run Add a field/product opens the add pane');
   assert.ok(html.includes('id="stat-products-card"'));
-  assert.ok(app.includes('FarmScale.shouldHideLibraryStat') || app.includes('shouldHideLibraryStat'));
+  assert.ok(app.includes('function isQuietHome') && app.includes('shouldQuietHome'));
+  assert.ok(app.includes('summaryEl.hidden = quiet') && app.includes('citeEl.hidden = quiet'),
+    'quiet Home parks the long state paragraph');
+  assert.ok(html.includes('id="settings-download-backup"'), 'Settings Data is the quiet download place');
+  assert.ok(!html.includes('id="header-language"'), 'header language picker is gone');
+  assert.ok(!app.includes("APP_VERSION + ')'") && !app.includes("' (' + APP_VERSION"),
+    'update status does not show a version number');
   assert.ok(html.includes('id="calc-copy-to-log"'));
   assert.ok(app.includes('function copyCalcOntoLog'));
+  assert.ok(app.includes('Add those products to your library before copying onto the spray log'),
+    'calc copy never invents a product');
   assert.ok(!/id="map-add-corners"[^>]*aria-pressed="true"/.test(html), 'Add corners does not start pressed');
   assert.ok(!/id="field-map"[^>]*class="map-adding"/.test(html), 'map does not start in add-corners mode');
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.14'"));
-  assert.ok(!html.includes('v2.9.14'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.15'"));
+  assert.ok(!html.includes('v2.9.15'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {

@@ -278,11 +278,15 @@
     return JSON.stringify(obj == null ? {} : obj).length;
   }
 
-  // Home hides idle counts (library size, and similar non-jobs) on a small
-  // farm. Records, REI/PHI, windows, and Log stay visible.
-  function shouldHideLibraryStat(fieldCount, appCount) {
+  // Home hides idle chrome on a small farm: library size, inspector packet
+  // jump, and the long state paragraph. Records, REI/PHI, windows, and Log stay.
+  function shouldQuietHome(fieldCount, appCount) {
     return Number(fieldCount) < QUIET_HOME_MAX_FIELDS
       && Number(appCount) < QUIET_HOME_MAX_APPS;
+  }
+
+  function shouldHideLibraryStat(fieldCount, appCount) {
+    return shouldQuietHome(fieldCount, appCount);
   }
 
   // A license or trial ending must never delete or rewrite spray logs.
@@ -333,6 +337,7 @@
     stripForecastFromFarm,
     adoptForecastFromMeta,
     jsonBytes,
+    shouldQuietHome,
     shouldHideLibraryStat,
     licenseEndPreservesRecords
   };

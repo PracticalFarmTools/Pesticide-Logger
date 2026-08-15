@@ -122,7 +122,9 @@ check('app.js applies any dictionary language, not only Spanish', () => {
   assert.ok(i18nSrc.includes("closest('.posting-sheet')"), 'WPS posting skipped');
   assert.ok(html.includes('value="fr">Français'), 'French option');
   assert.ok(html.includes('value="pt-BR">Português (Brasil)'), 'Brazilian Portuguese option');
-  assert.ok(html.includes('id="header-language"'), 'header language control');
+  assert.ok(!html.includes('id="header-language"'), 'language picker is not in the header');
+  assert.ok(html.includes('id="set-language"') && html.includes('id="first-run-language"'),
+    'language stays on first-run and Settings');
   assert.ok(app.includes('NO ENTRE'), 'posting stays bilingual EN/ES');
 });
 

@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.14 — Practical Farm Tools
+/* Pesticide Logger v2.9.15 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -413,7 +413,7 @@
 
   function syncLanguageSelects() {
     const lang = uiLang();
-    ['#header-language', '#set-language', '#first-run-language'].forEach((sel) => {
+    ['#set-language', '#first-run-language'].forEach((sel) => {
       const el = $(sel);
       if (el) el.value = lang;
     });
@@ -429,11 +429,6 @@
 
   function initLanguageControls() {
     syncLanguageSelects();
-    const header = $('#header-language');
-    if (header && !header.dataset.bound) {
-      header.dataset.bound = '1';
-      header.addEventListener('change', () => setUiLanguage(header.value));
-    }
     const first = $('#first-run-language');
     if (first && !first.dataset.bound) {
       first.dataset.bound = '1';
@@ -3326,11 +3321,23 @@
       </button>`).join('');
   }
 
+  function isQuietHome() {
+    const fields = (data.fields || []).length;
+    const apps = (data.applications || []).length;
+    if (typeof FarmScale !== 'undefined' && FarmScale.shouldQuietHome) {
+      return FarmScale.shouldQuietHome(fields, apps);
+    }
+    return fields < 8 && apps < 20;
+  }
+
   function renderDashboard() {
     const empty = isEmptyHome();
     if ($('#dash-first-run')) $('#dash-first-run').hidden = !empty;
     if ($('#dash-working')) $('#dash-working').hidden = empty;
-    if ($('#dash-inspect-packet')) $('#dash-inspect-packet').hidden = !(data.applications && data.applications.length);
+    if ($('#dash-inspect-packet')) {
+      const hasLogs = !!(data.applications && data.applications.length);
+      $('#dash-inspect-packet').hidden = !hasLogs || isQuietHome();
+    }
     renderInstallBanner();
     if (empty) {
       renderFirstRun();
@@ -3345,12 +3352,7 @@
     const seasonApps = apps.filter(a => new Date(a.date + 'T12:00:00') >= seasonStart);
     $('#stat-season-apps').textContent = seasonApps.length;
     $('#stat-products').textContent = data.products.length;
-    if ($('#stat-products-card')) {
-      const quiet = typeof FarmScale !== 'undefined'
-        ? FarmScale.shouldHideLibraryStat((data.fields || []).length, (data.applications || []).length)
-        : ((data.fields || []).length < 8 && (data.applications || []).length < 20);
-      $('#stat-products-card').hidden = quiet;
-    }
+    if ($('#stat-products-card')) $('#stat-products-card').hidden = isQuietHome();
     const incomplete = apps.filter(appIncomplete);
     if ($('#stat-incomplete')) {
       $('#stat-incomplete').textContent = incomplete.length;
@@ -3427,33 +3429,44 @@
           </div>`).join('')}</div>`
       : `<p class="empty-note">Nothing logged yet — hit “Log application” after your next spray.</p>`;
 
-    // Compliance card
+    // Compliance card — small farms keep the honesty line + Settings jump.
     const law = stateLaw();
     const card = $('#compliance-card');
     if (law) {
       card.hidden = false;
+      const quiet = isQuietHome();
+      card.classList.toggle('compliance-card-quiet', quiet);
       const incompleteCount = apps.filter(a => a.draft || !evaluateCompliance(a).complete).length;
       const needsReview = apps.filter(a => evaluateCompliance(a).status === 'needs_review').length;
       const filled = apps.filter(a => evaluateCompliance(a).complete && evaluateCompliance(a).intervalsOk).length;
       const cls = data.settings.applicatorClass || 'private';
       const fresh = lawFreshness(law);
       const honesty = datasetHonestyLine(law, cls);
-      $('#compliance-summary').textContent =
-        `${STATE_NAMES[data.settings.state]} recordkeeping via ${law.agency}. Retain ${law.retentionYears} year(s). ${filled} record(s) have required fields + intervals filled; ${incompleteCount} incomplete; ${needsReview} need review. Not a legal determination.`;
+      const summaryEl = $('#compliance-summary');
+      if (summaryEl) {
+        summaryEl.textContent =
+          `${STATE_NAMES[data.settings.state]} recordkeeping via ${law.agency}. Retain ${law.retentionYears} year(s). ${filled} record(s) have required fields + intervals filled; ${incompleteCount} incomplete; ${needsReview} need review. Not a legal determination.`;
+        summaryEl.hidden = quiet;
+      }
       const freshEl = $('#compliance-fresh');
       if (freshEl) {
         freshEl.textContent = fresh.stale
           ? `Rules last checked ${fresh.reviewedAt || '—'}. Check again by ${fresh.reviewBy || '—'}. This check is older than 12 months — open the citation in Settings. Source status does not change because a calendar moved.`
           : `Rules last checked ${fresh.reviewedAt || '—'}. Check again by ${fresh.reviewBy || '—'}.`;
         freshEl.classList.toggle('state-law-stale', !!fresh.stale);
+        freshEl.hidden = quiet && !fresh.stale;
       }
       const honestyEl = $('#compliance-honesty');
       if (honestyEl) {
         honestyEl.textContent = honesty;
         honestyEl.hidden = !honesty;
       }
-      $('#compliance-citation').textContent =
-        `Citation: ${law.citation.reference}. USDA 7 CFR Part 110 was rescinded July 11, 2025 — state rules, labels, and WPS control. This app covers record fields; it does not file electronic reports or replace WPS duties.`;
+      const citeEl = $('#compliance-citation');
+      if (citeEl) {
+        citeEl.textContent =
+          `Citation: ${law.citation.reference}. USDA 7 CFR Part 110 was rescinded July 11, 2025 — state rules, labels, and WPS control. This app covers record fields; it does not file electronic reports or replace WPS duties.`;
+        citeEl.hidden = quiet;
+      }
     } else {
       card.hidden = true;
     }
@@ -3789,6 +3802,7 @@
     if ($('#report-certifier')) $('#report-certifier').addEventListener('click', printCertifierPacket);
     if ($('#report-inspect-html')) $('#report-inspect-html').addEventListener('click', downloadInspectPacket);
     $('#backup-download').addEventListener('click', downloadBackup);
+    if ($('#settings-download-backup')) $('#settings-download-backup').addEventListener('click', downloadBackup);
     $('#backup-restore').addEventListener('change', restoreBackup);
     $('#data-clear').addEventListener('click', clearAllData);
 
@@ -6884,7 +6898,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.14';
+  const APP_VERSION = 'v2.9.15';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {
@@ -6922,7 +6936,7 @@
       return;
     }
     if (typeof navigator.onLine === 'boolean' && !navigator.onLine) {
-      setUpdateStatus(tr("You're offline. Updates need a connection.") + ' (' + APP_VERSION + ')');
+      setUpdateStatus(tr("You're offline. Updates need a connection."));
       done();
       return;
     }
@@ -6949,7 +6963,7 @@
           setUpdateStatus(tr('A new version of Pesticide Logger is ready.'));
           return;
         }
-        setUpdateStatus(tr('This is the latest on this device.') + ' (' + APP_VERSION + ')', { autoHide: true });
+        setUpdateStatus(tr('This is the latest on this device.'), { autoHide: true });
       });
     }).catch(() => {
       setUpdateStatus(tr('Could not check for an update.'));

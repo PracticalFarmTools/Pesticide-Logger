@@ -46,6 +46,7 @@
     ["Print posting sheet", "Imprimir letrero", "Imprimer l’affiche", "Imprimir cartaz"],
     ["Back up your records.", "Respalde sus registros.", "Sauvegardez vos registres.", "Faça a cópia de segurança dos seus registros."],
     ["Download backup", "Descargar respaldo", "Télécharger la sauvegarde", "Baixar cópia de segurança"],
+    ["Send and bring-in stay on Reports. This downloads a file for your records.", "Enviar y traer registros sigue en Informes. Aquí se descarga un archivo para su archivo.", "Envoyer et ramener restent dans Rapports. Ici, vous téléchargez un fichier pour vos dossiers.", "Enviar e trazer registros ficam em Relatórios. Aqui você baixa um arquivo para os seus registros."],
     ["Remind me later", "Recordarme después", "Me le rappeler plus tard", "Lembrar mais tarde"],
     ["Get set up to log", "Prepárese para registrar", "Préparez-vous à enregistrer", "Prepare-se para registrar"],
     ["Farm name and state", "Nombre de la granja y estado", "Nom de l’exploitation et État", "Nome da fazenda e estado"],

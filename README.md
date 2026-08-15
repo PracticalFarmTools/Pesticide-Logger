@@ -1,4 +1,4 @@
-# Pesticide Logger v2.9.14
+# Pesticide Logger v2.9.15
 
 **Offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite. Licensed software with
@@ -33,7 +33,7 @@ application at the repository root.
 | **Field mapper** | Satellite corner tapping with geodesic acreage; boundaries stay local. **Add corners** is a toggle so dragging a handle or the amber forecast pin does not drop extra points. Tap a field line to insert a corner; tap the first corner to close. Saved rings show last spray / REI / PHI. **Fit all fields** when two or more rings exist. First open zooms toward the farm state, not CONUS. |
 | **Farm scale** | Same app for two tunnels or 150 named sites. Search appears on Fields/Products at 8+ rows; long pickers get a type-filter; Spray Log can default to this season on a long history — **Show prior years** is there for every farm size that has older logs. Optional field groups only if you actually named two. |
 | **Weather auto-fill** | Open-Meteo fill for wind, temperature, sky/humidity at the field’s forecast pin (or GPS if you are logging on-site). |
-| **Inspection output** | Print/PDF, CSV, **state compliance pack** (JSON with citation, field matrix, due/copy status, audit history), a **signed inspector HTML packet** from Home when logs exist (opens without the app — a snapshot, not a lock on the live log), and a **certifier/buyer packet** for organic & GAP audits. Reports stay under More. |
+| **Inspection output** | Print/PDF, CSV, **state compliance pack** (JSON with citation, field matrix, due/copy status, audit history), a **signed inspector HTML packet** from Reports (Home keeps the jump on larger farms — a snapshot, not a lock on the live log), and a **certifier/buyer packet** for organic & GAP audits. Reports stay under More. |
 | **Crew & gather** | Optional crew list suggests names on the log (you can still type any name). Cab phones **send logs**; the shop tablet **brings them in**. Newest edits win; the other version stays in History. Same-named fields/products can be combined or kept both. |
 | **Inspector view & REI board** | Optional shop view hides editing so you can hand the tablet over — Exit anytime, optional PIN, farm name recovers a forgotten PIN. **Print today’s REI board** for the shop door (not the official WPS sign). |
 | **Spray window outlook** | Glance rows (Go / Wait / No) at each field’s map pin — not the phone’s GPS. Tap a field for the next 12 hours, then Details for the 48-hour chart. CONUS near-term uses NOAA HRRR; stale data is labeled and cannot be used as a go/no-go for a trip. Planning guidance — the label still rules. |
@@ -41,7 +41,7 @@ application at the repository root.
 | **OCR label scanning** | Photograph a product label to read its EPA registration number and signal word on-device (Tesseract.js). Works on iPhone and Android via the native camera. A ~7MB text reader downloads in the background after first visit, then scans work offline. The match is verified through the same live EPA lookup as manual search before anything is saved. |
 | **REI posting & reminders** | Bilingual DO NOT ENTER / NO ENTRE posting sheet from any active REI, plus opt-in browser notifications when REI clears or PHI dates arrive. |
 | **CSV import** | Bring existing Excel/Sheets records in with a column-mapping wizard — rows land as compliance-checked drafts. |
-| **Spanish, French & Brazilian Portuguese** | Header language control covering menus, buttons, toasts, and first-run setup. Printed REI posting stays English/Spanish (DO NOT ENTER / NO ENTRE). |
+| **Spanish, French & Brazilian Portuguese** | Language control on first-run and Settings covering menus, buttons, and toasts. Printed REI posting stays English/Spanish (DO NOT ENTER / NO ENTRE). |
 | **Celsius & metric reference** | Spray records stay US customary. The log shows °C next to stored °F; tank-mix results add a conversion reference (ha, L, L/ha, mL). CSV and inspector packs still use Fahrenheit and gallons. |
 | **Smarter backup merge** | Newest `updatedAt` wins; audit histories union; trial start and license key merge conservatively (earliest trial wins, local key kept). Device nicknames stay per-device. A full backup is one JSON file with the farm file **and** attached JPEG photos. Older record-only backups still restore; the app says so if photos are missing. |
 | **Offline-first PWA** | Installable; core logging works with no connectivity after first load. |

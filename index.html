@@ -38,14 +38,6 @@
       <span id="offline-badge" class="offline-badge" hidden>Offline — records save locally</span>
       <span id="license-badge" class="license-badge" hidden></span>
       <span id="farm-name-display" class="farm-name-display"></span>
-      <label class="header-lang">
-        <select id="header-language" aria-label="Interface language">
-          <option value="">English</option>
-          <option value="es">Español</option>
-          <option value="fr">Français</option>
-          <option value="pt-BR">Português (Brasil)</option>
-        </select>
-      </label>
     </div>
   </div>
 </header>
@@ -1172,7 +1164,9 @@
     <div class="card">
       <h3 class="card-title">Data</h3>
       <p class="card-hint">All data is stored locally in this browser (<span id="storage-usage">…</span>). No account and no server — this is paid software; records still stay on this device.</p>
+      <p class="card-hint">Send and bring-in stay on Reports. This downloads a file for your records.</p>
       <div class="form-actions">
+        <button type="button" class="btn btn-secondary" id="settings-download-backup">Download backup</button>
         <button class="btn btn-danger" id="data-clear">Erase all data on this device</button>
       </div>
     </div>

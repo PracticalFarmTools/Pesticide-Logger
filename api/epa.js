@@ -8,6 +8,7 @@
  */
 
 const EPA_BASE = 'https://ordspub.epa.gov/ords/pesticides/cswu';
+const { rankEpaResults } = require('../epa-rank.js');
 
 // In-memory per-IP rate limit. This only protects a single warm function
 // instance (it resets on cold start and isn't shared across regions), so it
@@ -111,10 +112,16 @@ module.exports = async function handler(req, res) {
     if (!upstream.ok) throw new Error(`EPA returned ${upstream.status}`);
     const payload = await upstream.json();
     const seen = new Set();
-    const results = (payload.items || [])
-      .filter((item) => item.eparegno && !seen.has(item.eparegno) && seen.add(item.eparegno))
-      .slice(0, 25)
-      .map(normalize);
+    const unique = [];
+    for (const item of payload.items || []) {
+      if (!item.eparegno || seen.has(item.eparegno)) continue;
+      seen.add(item.eparegno);
+      unique.push(normalize(item));
+      if (unique.length >= 200) break;
+    }
+    // Rank before the 25-cap so a whole-word hit is not dropped behind
+    // substring cousins. Never invents rows that EPA did not return.
+    const results = (query && !reg ? rankEpaResults(query, unique) : unique).slice(0, 25);
 
     res.setHeader('Cache-Control', 's-maxage=21600, stale-while-revalidate=86400');
     return res.status(200).json({

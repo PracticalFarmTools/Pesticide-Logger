@@ -67,6 +67,30 @@ async function run() {
     assert.strictEqual(res.statusCode, 400);
   });
 
+  await check('name search ranks whole-word hits above substring traps before the 25 cap', async () => {
+    const orig = global.fetch;
+    global.fetch = async () => ({
+      ok: true,
+      json: async () => ({
+        items: [
+          { productname: 'CEASEFIRE FIRE ANT BAIT INSECTICIDE', eparegno: '101563-38', product_status: 'Active', cancel_flag: 'No', signal_word: 'Caution', active_ingredients: [], companyinfo: [] },
+          { productname: 'STARFIRE HERBICIDE', eparegno: '100-1', product_status: 'Active', cancel_flag: 'No', signal_word: 'Caution', active_ingredients: [], companyinfo: [] },
+          { productname: 'CEASE BIOFUNGICIDE', eparegno: '70051-19', product_status: 'Active', cancel_flag: 'No', signal_word: 'Caution', active_ingredients: [], companyinfo: [] }
+        ]
+      })
+    });
+    try {
+      const res = mockRes();
+      await handler(mockReq({ q: 'Cease' }), res);
+      assert.strictEqual(res.statusCode, 200);
+      assert.strictEqual(res.body.results[0].epaRegNo, '70051-19');
+      assert.strictEqual(res.body.results[0].name, 'CEASE BIOFUNGICIDE');
+      assert.ok(res.body.results.some((r) => r.epaRegNo === '101563-38'));
+    } finally {
+      global.fetch = orig;
+    }
+  });
+
   await check('upstream 404 returns empty results, not 502', async () => {
     const orig = global.fetch;
     global.fetch = async () => ({ ok: false, status: 404 });

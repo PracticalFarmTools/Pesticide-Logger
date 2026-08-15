@@ -27,7 +27,7 @@
       </svg>
       <div>
         <h1>Pesticide Logger</h1>
-        <span class="header-sub">Practical Farm Tools · v2.9.7</span>
+        <span class="header-sub">Practical Farm Tools · v2.9.8</span>
       </div>
     </div>
     <div class="header-right">
@@ -309,7 +309,7 @@
         <button type="button" class="btn btn-secondary btn-lg" data-goto="calculator" id="app-open-tank-mix">Tank Mix</button>
         <button type="button" class="btn btn-secondary btn-lg" id="app-scan-jug" hidden>Scan jug</button>
         <label class="btn btn-secondary btn-lg camera-file-btn" id="app-scan-jug-photo" hidden>Scan jug
-          <input type="file" id="app-scan-jug-input" accept="image/*" capture="environment" aria-label="Scan jug barcode">
+          <input type="file" id="app-scan-jug-input" accept="image/*" capture="environment" aria-label="Scan jug barcode or label">
         </label>
         <label class="checkbox-label cab-toggle">
           <input type="checkbox" id="app-show-recommended">
@@ -318,6 +318,7 @@
       </div>
       <div id="recent-products" class="recent-products" hidden></div>
       <p class="card-hint" id="app-form-shape-summary"></p>
+      <button type="button" class="text-btn" data-goto="settings" data-scroll-to="state-info-card" id="app-open-state-rules" hidden>View state rules</button>
       <p class="card-hint field-req-legend"><span class="req-star">*</span> always required · <span class="state-req-tag">state</span> required for your state · no tag = optional</p>
       <nav class="log-section-nav" id="log-section-nav" aria-label="Jump to spray log section">
         <button type="button" class="log-section-nav-item" data-jump-section="where">Where</button>
@@ -373,7 +374,10 @@
         </fieldset>
 
         <fieldset data-log-section="products">
-          <legend>Products applied (tank mix) <span class="req-star">*</span>
+          <legend>Products applied (tank mix) <span class="req-star">*</span></legend>
+          <p class="card-hint" id="app-mix-state-req" hidden></p>
+          <p class="card-hint" id="app-mix-empty-hint">Scan the jug or add a product from your library.</p>
+          <div id="app-mix-req-tags" hidden>
             <span id="req-brand_name" class="state-req-tag" hidden>state</span>
             <span id="req-epa_reg_no" class="state-req-tag" hidden>state</span>
             <span id="req-amount_applied" class="state-req-tag" hidden>state</span>
@@ -381,10 +385,10 @@
             <span id="req-active_ingredient" class="state-req-tag" hidden>state</span>
             <span id="req-rei_hours" class="state-req-tag" hidden>state</span>
             <span id="req-phi_days" class="state-req-tag" hidden>state</span>
-          </legend>
+          </div>
           <input type="search" id="app-product-filter" class="select-filter" placeholder="Type to find a product…" hidden autocomplete="off">
           <div id="app-products"></div>
-          <button type="button" class="btn btn-secondary btn-sm" id="app-add-product">+ Add product to mix</button>
+          <button type="button" class="btn btn-secondary" id="app-add-product">+ Add another product to this mix</button>
           <div id="app-product-info" class="product-info-strip" hidden></div>
           <button type="button" class="text-btn" id="app-last-on-field" hidden></button>
         </fieldset>
@@ -656,7 +660,7 @@
         <fieldset>
           <legend>Products in the mix</legend>
           <div id="calc-products"></div>
-          <button type="button" class="btn btn-secondary btn-sm" id="calc-add-product">+ Add product to mix</button>
+          <button type="button" class="btn btn-secondary" id="calc-add-product">+ Add another product to this mix</button>
         </fieldset>
       </div>
 
@@ -683,6 +687,7 @@
         <button type="submit" class="btn btn-primary">Search EPA</button>
       </form>
       <p class="card-hint epa-lookup-note">When lookup works, EPA verifies identity, registration status, active ingredients, RUP, signal word, and label documents. Copy rates, REI, and PHI from the current label. The label is the law.</p>
+      <p class="card-hint" id="epa-search-hint" hidden>Short names match many EPA records. Whole-word names are listed first. If this is not your jug, type more of the name or the EPA registration number from the label.</p>
       <div id="epa-search-status" class="epa-search-status" role="status"></div>
       <div id="epa-search-results" class="epa-search-results"></div>
     </div>
@@ -1053,6 +1058,15 @@
       </form>
     </div>
 
+    <div class="card" id="state-info-card" hidden>
+      <h3 class="card-title">State recordkeeping requirements</h3>
+      <div id="state-info"></div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" id="state-laws-update-btn">Check for app update</button>
+      </div>
+      <p class="card-hint" id="state-laws-update-out"></p>
+    </div>
+
     <div class="card" id="crew-card">
       <h3 class="card-title">Crew</h3>
       <p class="card-hint">Optional. If more than one person sprays, add them here so the log can suggest names. You can still type any name on a spray.</p>
@@ -1083,15 +1097,6 @@
         <button type="button" class="btn btn-primary" id="inspector-enter">Turn on inspector view</button>
         <button type="button" class="btn btn-secondary" id="inspector-clear-pin">Remove PIN</button>
       </div>
-    </div>
-
-    <div class="card" id="state-info-card" hidden>
-      <h3 class="card-title">State recordkeeping requirements</h3>
-      <div id="state-info"></div>
-      <div class="form-actions">
-        <button type="button" class="btn btn-secondary" id="state-laws-update-btn">Check for app update</button>
-      </div>
-      <p class="card-hint" id="state-laws-update-out"></p>
     </div>
 
     <div class="card">
@@ -1130,7 +1135,7 @@
 
     <div class="card about-card">
       <h3 class="card-title">About</h3>
-      <p>Pesticide Logger v2.9.7 — part of the <strong>Practical Farm Tools</strong> suite. A licensed, offline-first tool built for farms of every size; your farm records stay on this device.</p>
+      <p>Pesticide Logger v2.9.8 — part of the <strong>Practical Farm Tools</strong> suite. A licensed, offline-first tool built for farms of every size; your farm records stay on this device.</p>
       <p class="card-hint">This tool provides 50-state application <em>recordkeeping field coverage</em> with audit history, lot tracking, and in-cab workflows. It is not legal advice, does not replace WPS employer duties, and does not file California PUR, New York PRL, or other electronic reports for you. Always follow the product label and confirm requirements with your state pesticide agency.</p>
       <details class="legal-details">
         <summary>Terms of use, license &amp; privacy</summary>
@@ -1363,6 +1368,7 @@
 <script src="farm-file.js"></script>
 <script src="license.js"></script>
 <script src="label-ocr.js"></script>
+<script src="epa-rank.js"></script>
 <script src="i18n.js"></script>
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="app.js"></script>

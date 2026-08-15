@@ -1,4 +1,4 @@
-# Pesticide Logger v2.9.7
+# Pesticide Logger v2.9.8
 
 **Offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite. Licensed software with
@@ -29,7 +29,7 @@ application at the repository root.
 | **Post–Part 110 framing** | USDA rescinded 7 CFR Part 110 (effective July 11, 2025). State pesticide acts, labels, and WPS control. |
 | **REI / PHI tracking** | Label REI/PHI countdown for worker re-entry and harvest timing. |
 | **Tank mix calculator** | Area, tank size, spray volume, multi-product rates, printable W-A-L-E worksheet. |
-| **Live EPA product lookup** | Official EPA PPLS identity/status import when the host provides `/api/epa`. USB, GitHub Pages, and local servers have no lookup — type the jug number or Scan label. Rates, REI, and PHI stay label-entered. |
+| **Live EPA product lookup** | Official EPA PPLS identity/status import when the host provides `/api/epa`. Name search ranks whole-word matches first so short queries are not trapped by a longer substring. USB, GitHub Pages, and local servers have no lookup — type the jug number or Scan label. Rates, REI, and PHI stay label-entered. |
 | **Field mapper** | Satellite corner tapping with geodesic acreage; boundaries stay local. **Fit all fields** when two or more rings exist. |
 | **Farm scale** | Same app for two tunnels or 150 named sites. Search appears on Fields/Products at 8+ rows; long pickers get a type-filter; Spray Log can default to this season on a long history — **Show prior years** is there for every farm size that has older logs. Optional field groups only if you actually named two. |
 | **Weather auto-fill** | Open-Meteo fill for wind, temperature, sky/humidity at the field’s forecast pin (or GPS if you are logging on-site). |
@@ -37,7 +37,7 @@ application at the repository root.
 | **Crew & gather** | Optional crew list suggests names on the log (you can still type any name). Cab phones **send logs**; the shop tablet **brings them in**. Newest edits win; the other version stays in History. Same-named fields/products can be combined or kept both. |
 | **Inspector view & REI board** | Optional shop view hides editing so you can hand the tablet over — Exit anytime, optional PIN, farm name recovers a forgotten PIN. **Print today’s REI board** for the shop door (not the official WPS sign). |
 | **Spray window outlook** | Glance rows (Go / Wait / No) at each field’s map pin — not the phone’s GPS. Tap a field for the next 12 hours, then Details for the 48-hour chart. CONUS near-term uses NOAA HRRR; stale data is labeled and cannot be used as a go/no-go for a trip. Planning guidance — the label still rules. |
-| **Photos & barcode** | Attach label/lot/condition photos to records (device-local). Scan a jug's UPC in the cab: live camera on Android Chrome, still photo on iPhone (ZXing). |
+| **Photos & barcode** | Attach label/lot/condition photos to records (device-local). Scan jug reads a UPC **and** the brand panel (EPA #) from one photo: live camera on Android Chrome, still photo on iPhone (ZXing + OCR). Review before the mix row changes. |
 | **OCR label scanning** | Photograph a product label to read its EPA registration number and signal word on-device (Tesseract.js). Works on iPhone and Android via the native camera. A ~7MB text reader downloads in the background after first visit, then scans work offline. The match is verified through the same live EPA lookup as manual search before anything is saved. |
 | **REI posting & reminders** | Bilingual DO NOT ENTER / NO ENTRE posting sheet from any active REI, plus opt-in browser notifications when REI clears or PHI dates arrive. |
 | **CSV import** | Bring existing Excel/Sheets records in with a column-mapping wizard — rows land as compliance-checked drafts. |
@@ -122,6 +122,7 @@ node --check state_pesticide_laws.js
 node --check deadline.js
 node --check license.js
 node --check label-ocr.js
+node --check epa-rank.js
 node --check backup-merge.js
 node --check backup-pack.js
 node --check spray-window.js
@@ -137,6 +138,7 @@ node tests/compliance.test.js
 node tests/state-laws.test.js
 node tests/license.test.js
 node tests/label-ocr.test.js
+node tests/epa-rank.test.js
 node tests/backup-merge.test.js
 node tests/backup-pack.test.js
 node tests/epa-proxy.test.js
@@ -183,6 +185,7 @@ tools/                     License signing + `bundle-state-laws.js`
 vendor/leaflet/            Leaflet 1.9.4 (vendored)
 vendor/fonts/              Inter + Outfit latin WOFF2 (SIL OFL, app-shell precache)
 label-ocr.js               Label-photo text parsing (EPA reg #, signal word) — pure functions
+epa-rank.js                Rank EPA name-search hits (whole-word before substring traps)
 vendor/tesseract/          Tesseract.js 7.0.0 OCR engine (vendored, lazy-loaded)
 vendor/zxing/              ZXing barcode decoder for iPhone still-photo scans (vendored, lazy-loaded)
 sw.js                      Service worker

@@ -546,7 +546,16 @@ input:hover, select:hover, textarea:hover { border-color: var(--border-color-hov
 
 .app-product-row { align-items: end; }
 .app-product-row .apr-remove { align-self: end; height: 38px; }
-#app-add-product { margin-top: 0.25rem; }
+#app-add-product, #calc-add-product {
+  margin-top: 0.35rem;
+  width: 100%;
+  min-height: 2.75rem;
+}
+#app-open-state-rules {
+  display: inline-block;
+  margin: 0.15rem 0 0.65rem;
+}
+#app-mix-state-req:not([hidden]) { margin: 0.2rem 0 0.55rem; }
 
 .legend-btn {
   margin-left: 0.6rem;
@@ -593,6 +602,16 @@ input:hover, select:hover, textarea:hover { border-color: var(--border-color-hov
 .epa-lookup-note { margin-bottom: 0.5rem; }
 .epa-search-status { min-height: 1.3rem; font-size: 0.82rem; color: var(--text-muted); }
 .epa-search-results { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.5rem; }
+.epa-library-heading {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--primary-green-dark);
+}
+.epa-result-library { border-left-color: var(--primary-green); background: var(--ok-bg, #eef6ef); }
+#epa-search-hint:not([hidden]) { margin-top: 0.35rem; }
 .epa-result {
   display: flex;
   align-items: center;
@@ -793,14 +812,34 @@ label.state-required-field {
 
 /* ---------- Calculator ---------- */
 .calc-product-row {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  display: flex;
+  flex-direction: column;
   gap: 0.5rem;
-  align-items: end;
-  margin-bottom: 0.6rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-white);
+  margin-bottom: 0.75rem;
 }
-@media (max-width: 760px) {
-  .calc-product-row { grid-template-columns: 1fr 1fr; }
+.calc-product-main {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.55rem;
+  align-items: end;
+}
+.calc-rate-pair {
+  display: grid;
+  grid-template-columns: minmax(4.5rem, 1fr) 5.5rem minmax(6.5rem, 1fr);
+  gap: 0.35rem;
+}
+.calc-remove {
+  justify-self: start;
+  min-height: 2.5rem;
+}
+@media (min-width: 760px) {
+  .calc-product-main {
+    grid-template-columns: minmax(12rem, 1.5fr) minmax(14rem, 1.2fr) auto;
+  }
 }
 
 .calc-results { margin-top: 1.25rem; }

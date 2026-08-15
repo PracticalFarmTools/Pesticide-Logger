@@ -1,7 +1,12 @@
 # Blueprint: cab scan, EPA identity, state rules, tank mix
 
-**Status: proposed.** Field-tested on production v2.9.7 (Spear Farm, Maine,
-commercial). Do not implement in the same change as this document.
+**Status: implemented** in v2.9.8 (`epa-rank.js`, cab Scan jug barcode+label,
+mix STATE line, Settings card order, calculator add-to-mix). Field-tested
+on production v2.9.7 (Spear Farm, Maine, commercial) before this work.
+
+The ranking is **generic** — any short pesticide name, not a Cease special
+case. Whole-word hits beat substring traps (Ceasefire, Starfire, Rallybio,
+Captanol, …). Ranking never invents a product EPA did not return.
 
 Job to be done: in the cab, a grower photographs the jug, gets the **right**
 product into the mix, sees **which boxes Maine (or their state) actually

@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.7 — Practical Farm Tools
+/* Pesticide Logger v2.9.8 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -941,6 +941,64 @@
     return { visible, required, law, ctx };
   }
 
+  const MIX_REQ_FIELDS = [
+    'brand_name', 'epa_reg_no', 'amount_applied', 'rate',
+    'active_ingredient', 'rei_hours', 'phi_days'
+  ];
+
+  function mixRequiredLabels() {
+    const { required, law } = visibleLogFields();
+    const fields = (law && law.fields) || [];
+    return MIX_REQ_FIELDS.filter((name) => required.has(name)).map((name) => {
+      const f = fields.find((x) => x.name === name);
+      return (f && f.label) || name.replace(/_/g, ' ');
+    });
+  }
+
+  function syncMixRowTags(row) {
+    const { required } = visibleLogFields();
+    const set = (sel, on) => {
+      const host = row.querySelector(sel);
+      if (!host) return;
+      host.innerHTML = on ? ' <span class="state-req-tag">state</span>' : '';
+    };
+    set('.apr-tag-product', required.has('brand_name') || required.has('epa_reg_no') || required.has('active_ingredient'));
+    set('.apr-tag-rate', required.has('rate'));
+    set('.apr-tag-total', required.has('amount_applied'));
+    set('.apr-tag-rei', required.has('rei_hours'));
+    set('.apr-tag-phi', required.has('phi_days'));
+  }
+
+  function updateMixEmptyHint() {
+    const hint = $('#app-mix-empty-hint');
+    if (!hint) return;
+    const filled = $$('#app-products .app-product-row').some((r) => {
+      const sel = r.querySelector('.apr-product');
+      return sel && sel.value;
+    });
+    hint.hidden = filled;
+  }
+
+  function syncMixStateChrome() {
+    const line = $('#app-mix-state-req');
+    const openBtn = $('#app-open-state-rules');
+    const { law } = visibleLogFields();
+    const labels = mixRequiredLabels();
+    const stateName = data.settings.state ? (STATE_NAMES[data.settings.state] || data.settings.state) : '';
+    if (line) {
+      if (stateName && labels.length) {
+        line.hidden = false;
+        line.textContent = `${stateName} requires on each product: ${labels.join(', ')}.`;
+      } else {
+        line.hidden = true;
+        line.textContent = '';
+      }
+    }
+    if (openBtn) openBtn.hidden = !law;
+    $$('#app-products .app-product-row').forEach(syncMixRowTags);
+    updateMixEmptyHint();
+  }
+
   function applyStateRequiredTags() {
     reshapeAppFormForState();
   }
@@ -1016,6 +1074,7 @@
     if (title && !title.textContent.startsWith('Edit record')) {
       title.textContent = stateName ? `Log an application — ${stateName}` : 'Log an application';
     }
+    syncMixStateChrome();
   }
 
   function lawFreshness(law) {
@@ -1288,16 +1347,31 @@
     const seq = ++epaSearchSeq;
     const status = $('#epa-search-status');
     const host = $('#epa-search-results');
+    const hint = $('#epa-search-hint');
     status.textContent = 'Searching the official EPA database…';
     host.innerHTML = '';
+    if (hint) hint.hidden = true;
     try {
-      const isReg = /^\d{1,6}-\d{1,6}(?:-\d{1,6})?$/.test(query);
+      const isReg = typeof EpaRank !== 'undefined' && EpaRank.isEpaRegQuery
+        ? EpaRank.isEpaRegQuery(query)
+        : /^\d{1,6}-\d{1,6}(?:-\d{1,6})?$/.test(query);
       const payload = await fetchEpa(isReg ? { reg: query } : { q: query });
       if (seq !== epaSearchSeq) return;
-      status.textContent = payload.results.length
-        ? `${payload.results.length} EPA record${payload.results.length === 1 ? '' : 's'} found.`
+      const ranked = (!isReg && typeof EpaRank !== 'undefined' && EpaRank.rankEpaResults)
+        ? EpaRank.rankEpaResults(query, payload.results || [])
+        : (payload.results || []);
+      const library = (!isReg && typeof EpaRank !== 'undefined' && EpaRank.libraryHits)
+        ? EpaRank.libraryHits(query, data.products)
+        : [];
+      status.textContent = ranked.length
+        ? `${ranked.length} EPA record${ranked.length === 1 ? '' : 's'} found.`
         : 'No matching EPA records found.';
-      renderEpaResults(payload.results);
+      if (hint) {
+        hint.hidden = !(typeof EpaRank !== 'undefined' && EpaRank.needsNameSearchHint
+          ? EpaRank.needsNameSearchHint(query) && ranked.length
+          : (!isReg && ranked.length));
+      }
+      renderEpaResults(ranked, { query, libraryHits: library });
     } catch (error) {
       if (seq !== epaSearchSeq) return;
       status.textContent = error.message ||
@@ -1305,10 +1379,27 @@
     }
   }
 
-  function renderEpaResults(results) {
+  function renderEpaResults(results, opts) {
     const host = $('#epa-search-results');
-    host.innerHTML = results.map((result, index) => {
+    const libraryHits = (opts && opts.libraryHits) || [];
+    const libHtml = libraryHits.map((product) => `
+      <article class="epa-result epa-result-library">
+        <div class="epa-result-main">
+          <div>
+            <strong>${esc(product.name)}</strong>
+            <span class="badge-pill badge-signal-caution">In your library</span>
+          </div>
+          <div class="epa-result-meta">
+            EPA ${esc(product.epaRegNo || '—')} · ${esc(product.activeIngredient || 'Active ingredients: see label')}
+          </div>
+        </div>
+        <div class="epa-result-actions">
+          <button type="button" class="btn btn-primary btn-sm" data-lib-open="${esc(product.id)}">Open in library</button>
+        </div>
+      </article>`).join('');
+    const epaHtml = results.map((result, index) => {
       const active = result.status === 'Active' && !result.cancelled;
+      const inLib = data.products.some(p => p.epaRegNo === result.epaRegNo);
       return `<article class="epa-result ${active ? '' : 'epa-result-alert'}">
         <div class="epa-result-main">
           <div>
@@ -1328,11 +1419,17 @@
         <div class="epa-result-actions">
           <a class="btn btn-secondary btn-sm" href="${esc(safeUrl(result.labelUrl))}" target="_blank" rel="noopener">Official label</a>
           <button type="button" class="btn btn-primary btn-sm" data-epa-import="${index}">
-            ${data.products.some(p => p.epaRegNo === result.epaRegNo) ? 'Update library entry' : 'Add to library'}
+            ${inLib ? 'Update library entry' : 'Add to library'}
           </button>
         </div>
       </article>`;
     }).join('');
+    host.innerHTML = (libHtml
+      ? `<p class="epa-library-heading">In your library</p>${libHtml}`
+      : '') + epaHtml;
+    host.querySelectorAll('[data-lib-open]').forEach((button) => {
+      button.addEventListener('click', () => editProduct(button.dataset.libOpen));
+    });
     host.querySelectorAll('[data-epa-import]').forEach((button) => {
       button.addEventListener('click', () => importEpaProduct(results[Number(button.dataset.epaImport)]));
     });
@@ -1867,7 +1964,10 @@
     ['#app-date', '#app-start', '#app-end']
       .forEach(sel => $(sel).addEventListener('input', updateIntervalPreview));
 
-    $('#app-add-product').addEventListener('click', () => addAppProductRow());
+    $('#app-add-product').addEventListener('click', () => {
+      const row = addAppProductRow();
+      if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
     $('#app-weather').addEventListener('click', fetchWeather);
     if ($('#app-temp')) {
       $('#app-temp').addEventListener('input', syncTempC);
@@ -2045,19 +2145,19 @@
     row.className = 'app-product-row';
     row.innerHTML = `
       <div class="form-row form-row-4">
-        <label>Product <span class="req-star">*</span>
+        <label>Product <span class="req-star">*</span><span class="apr-tag-product"></span>
           <select class="apr-product">${productOptionsHtml()}</select>
         </label>
         <label>Lot / batch #
           <input type="text" class="apr-lot" placeholder="Jug / batch lot">
         </label>
-        <label>Rate
+        <label>Rate<span class="apr-tag-rate"></span>
           <div class="input-pair">
             <input type="number" class="apr-rate" step="any" min="0">
             <select class="apr-rate-unit">${UNIT_OPTS}</select>
           </div>
         </label>
-        <label>Total applied <span class="req-star">*</span>
+        <label>Total applied <span class="req-star">*</span><span class="apr-tag-total"></span>
           <div class="input-pair">
             <input type="number" class="apr-total" step="any" min="0">
             <select class="apr-total-unit">${UNIT_OPTS}</select>
@@ -2065,10 +2165,10 @@
         </label>
       </div>
       <div class="form-row form-row-4">
-        <label>REI hours (label / override)
+        <label>REI hours (label / override)<span class="apr-tag-rei"></span>
           <input type="number" class="apr-rei" step="any" min="0" placeholder="From product">
         </label>
-        <label>PHI days (label / override)
+        <label>PHI days (label / override)<span class="apr-tag-phi"></span>
           <input type="number" class="apr-phi" step="any" min="0" placeholder="Crop-specific if needed">
         </label>
         <label class="checkbox-label apr-omri-wrap">
@@ -2095,6 +2195,7 @@
       updateMixInfo();
       updateIntervalPreview();
       updateCompliancePreview();
+      updateMixEmptyHint();
     });
 
     if (pre) {
@@ -2113,6 +2214,8 @@
     } else if (pre == null) {
       // leave empty
     }
+    syncMixRowTags(row);
+    updateMixEmptyHint();
     return row;
   }
 
@@ -2208,6 +2311,7 @@
     updateMixInfo();
     updateIntervalPreview();
     updateCompliancePreview();
+    updateMixEmptyHint();
   }
 
   // Total for one mix row: label rate × area, or × carrier for water-based rates.
@@ -3287,7 +3391,8 @@
   let calcRowSeq = 0;
 
   function calcProductOptionsHtml() {
-    return '<option value="">Custom / type below</option>' +
+    return '<option value="">Choose from library…</option>' +
+      '<option value="__custom__">Not in library — type a name</option>' +
       data.products.slice().sort((a, b) => a.name.localeCompare(b.name))
         .map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
   }
@@ -3297,7 +3402,9 @@
     $$('#calc-products .calc-prod-select').forEach(sel => {
       const keep = sel.value;
       sel.innerHTML = calcProductOptionsHtml();
-      sel.value = getProduct(keep) ? keep : '';
+      if (keep === '__custom__' || getProduct(keep)) sel.value = keep;
+      else sel.value = '';
+      syncCalcRowName(sel.closest('.calc-product-row'));
     });
   }
 
@@ -3305,59 +3412,71 @@
     $('#calc-add-product').addEventListener('click', () => addCalcRow());
     $('#calc-run').addEventListener('click', runCalc);
     $('#calc-print').addEventListener('click', printCalcWorksheet);
-    addCalcRow();
+    addCalcRow({ quiet: true });
   }
 
-  function addCalcRow() {
+  function syncCalcRowName(wrap) {
+    if (!wrap) return;
+    const sel = wrap.querySelector('.calc-prod-select');
+    const nameInput = wrap.querySelector('.calc-prod-name');
+    if (!sel || !nameInput) return;
+    const p = getProduct(sel.value);
+    if (p) {
+      nameInput.value = p.name;
+      nameInput.hidden = true;
+      nameInput.disabled = true;
+      if (p.rateAmount != null) {
+        wrap.querySelector('.calc-rate').value = p.rateAmount;
+        wrap.querySelector('.calc-rate-unit').value = p.rateUnit;
+        wrap.querySelector('.calc-rate-per').value = p.ratePer;
+      }
+    } else if (sel.value === '__custom__') {
+      nameInput.hidden = false;
+      nameInput.disabled = false;
+    } else {
+      nameInput.hidden = true;
+      nameInput.disabled = false;
+      nameInput.value = '';
+    }
+  }
+
+  function addCalcRow(opts) {
     const id = 'calc-row-' + (++calcRowSeq);
     const wrap = document.createElement('div');
     wrap.className = 'calc-product-row';
     wrap.id = id;
 
     wrap.innerHTML = `
-      <label>Product
-        <select class="calc-prod-select">
-          ${calcProductOptionsHtml()}
-        </select>
-        <input type="text" class="calc-prod-name" placeholder="Product name" style="margin-top:0.3rem">
-      </label>
-      <label>Rate
-        <input type="number" class="calc-rate" step="any" min="0">
-      </label>
-      <label>Unit
-        <select class="calc-rate-unit">${RATE_UNITS.map(u => `<option>${u}</option>`).join('')}</select>
-      </label>
-      <label>Per
-        <select class="calc-rate-per">
-          <option value="acre">acre</option>
-          <option value="1000sqft">1,000 sq ft</option>
-          <option value="gal">gal water</option>
-          <option value="100gal">100 gal water</option>
-        </select>
-      </label>
-      <button type="button" class="icon-btn danger calc-remove" title="Remove">✕</button>`;
+      <div class="calc-product-main">
+        <label>Product
+          <select class="calc-prod-select">
+            ${calcProductOptionsHtml()}
+          </select>
+          <input type="text" class="calc-prod-name" placeholder="Product name" hidden>
+        </label>
+        <label>Rate
+          <div class="input-pair calc-rate-pair">
+            <input type="number" class="calc-rate" step="any" min="0" aria-label="Rate amount">
+            <select class="calc-rate-unit" aria-label="Rate unit">${RATE_UNITS.map(u => `<option>${u}</option>`).join('')}</select>
+            <select class="calc-rate-per" aria-label="Rate per">
+              <option value="acre">per acre</option>
+              <option value="1000sqft">per 1,000 sq ft</option>
+              <option value="gal">per gal water</option>
+              <option value="100gal">per 100 gal water</option>
+            </select>
+          </div>
+        </label>
+        <button type="button" class="text-btn calc-remove">Remove</button>
+      </div>`;
 
     $('#calc-products').appendChild(wrap);
 
-    wrap.querySelector('.calc-prod-select').addEventListener('change', (e) => {
-      const p = getProduct(e.target.value);
-      const nameInput = wrap.querySelector('.calc-prod-name');
-      if (p) {
-        nameInput.value = p.name;
-        nameInput.disabled = true;
-        if (p.rateAmount != null) {
-          wrap.querySelector('.calc-rate').value = p.rateAmount;
-          wrap.querySelector('.calc-rate-unit').value = p.rateUnit;
-          wrap.querySelector('.calc-rate-per').value = p.ratePer;
-        }
-      } else {
-        nameInput.disabled = false;
-      }
-    });
+    wrap.querySelector('.calc-prod-select').addEventListener('change', () => syncCalcRowName(wrap));
     wrap.querySelector('.calc-remove').addEventListener('click', () => {
       wrap.remove();
-      if (!$('#calc-products').children.length) addCalcRow();
+      if (!$('#calc-products').children.length) addCalcRow({ quiet: true });
     });
+    if (!(opts && opts.quiet)) wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   let lastCalc = null;
@@ -3486,7 +3605,7 @@
       : '';
     $('#print-area').innerHTML = `
       <h1>Tank Mix Worksheet</h1>
-      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.9.7 (Practical Farm Tools)</p>
+      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.9.8 (Practical Farm Tools)</p>
       <table>
         <tr><th>Area treated</th><td>${fmtNum(c.area)} ${c.areaUnit === 'sqft' ? 'sq ft' : c.areaUnit === '1000sqft' ? '× 1,000 sq ft' : 'acres'} (${fmtNum(c.acres, 3)} ac)</td>
             <th>Spray volume</th><td>${fmtNum(c.gpa)} ${c.gpaUnit === 'gal_acre' ? 'gal/acre' : 'gal/1,000 sq ft'}</td></tr>
@@ -3834,7 +3953,7 @@
       format: 'pesticide-logger-state-pack',
       version: 5,
       generatedAt: new Date().toISOString(),
-      app: 'Pesticide Logger v2.9.7 — Practical Farm Tools',
+      app: 'Pesticide Logger v2.9.8 — Practical Farm Tools',
       disclaimer: 'Completion means required fields are filled for this context — not a legal determination. Does not replace WPS duties or e-filing programs.',
       farm: {
         name: s.farmName || '',
@@ -5295,9 +5414,9 @@
     if (dlg && dlg.open) dlg.close();
   }
 
-  async function openScanner(onCode) {
+  async function openScanner(onCode, options) {
     if (!liveBarcodeSupported()) {
-      toast('Use Scan jug to photograph the barcode');
+      toast('Use Scan jug to photograph the barcode or the EPA number on the panel');
       return;
     }
     const dlg = $('#scan-dialog');
@@ -5326,8 +5445,9 @@
         const codes = await detector.detect(video);
         if (codes.length) {
           const value = codes[0].rawValue;
+          const frame = options && options.captureFrame ? canvasFromVideo(video) : null;
           closeScanner();
-          onCode(value);
+          onCode(value, frame);
           return;
         }
       } catch (e) { /* keep trying */ }
@@ -5336,27 +5456,165 @@
     requestAnimationFrame(tick);
   }
 
-  function onJugBarcode(code) {
-    const p = data.products.find(pr => pr.barcode === code);
+  function canvasFromVideo(video) {
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, video.videoWidth || 640);
+    canvas.height = Math.max(1, video.videoHeight || 480);
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    return canvas;
+  }
+
+  function canvasToFile(canvas) {
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        if (!blob) { resolve(null); return; }
+        resolve(new File([blob], 'jug-scan.jpg', { type: 'image/jpeg' }));
+      }, 'image/jpeg', 0.9);
+    });
+  }
+
+  function emptyMixRow() {
     const rows = $$('#app-products .app-product-row');
     const empty = rows.find(r => !r.querySelector('.apr-product').value);
     const row = empty || addAppProductRow();
-    if (!p) {
-      toast('New barcode — add this jug\u2019s product now');
-      openQuickAddProduct(row, code);
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return row;
+  }
+
+  function selectMixProduct(product) {
+    const row = emptyMixRow();
+    row.querySelector('.apr-product').value = product.id;
+    onRowProductChange(row);
+    toast(`Scanned: ${product.name}`);
+  }
+
+  function applyEpaResultToQuickAdd(result, barcode) {
+    $('#qp-name').value = result.name || '';
+    $('#qp-epa').value = result.epaRegNo || '';
+    $('#qp-ai').value = epaAiText(result);
+    $('#qp-rup').checked = !!result.rup;
+    if ($('#qp-company')) $('#qp-company').value = result.company || '';
+    if (barcode) {
+      $('#qp-barcode').value = barcode;
+      $('#qp-barcode-hint').hidden = false;
+      $('#qp-barcode-hint').textContent = `Linking scanned barcode ${barcode} to this product for next time.`;
+    }
+  }
+
+  async function resolveJugScan(facts) {
+    const barcode = facts && facts.barcode;
+    const epaRegNo = facts && facts.epaRegNo;
+    if (barcode) {
+      const hits = data.products.filter(pr => pr.barcode === barcode);
+      if (hits.length > 1) {
+        toast('Two products share this barcode — pick the right one from the mix');
+        return;
+      }
+      if (hits.length === 1) {
+        selectMixProduct(hits[0]);
+        return;
+      }
+    }
+    if (epaRegNo) {
+      const byEpa = data.products.filter(pr => pr.epaRegNo === epaRegNo);
+      if (byEpa.length === 1) {
+        if (barcode && !byEpa[0].barcode) {
+          byEpa[0].barcode = barcode;
+          save();
+        }
+        selectMixProduct(byEpa[0]);
+        return;
+      }
+      const row = emptyMixRow();
+      openQuickAddProduct(row, barcode);
+      $('#qp-epa').value = epaRegNo;
+      if (facts.activeIngredientGuess) $('#qp-ai').value = facts.activeIngredientGuess;
+      toast('Looking up EPA registration…');
+      try {
+        const payload = await fetchEpa({ reg: epaRegNo });
+        if (payload.results && payload.results.length === 1) {
+          applyEpaResultToQuickAdd(payload.results[0], barcode);
+          toast(`Found: ${payload.results[0].name} — review and Save & select`);
+        } else if (payload.results && payload.results.length > 1) {
+          toast('EPA match was not unique — verify the details before saving');
+        } else {
+          toast('No EPA record for that number — verify it on the label and fill in the rest');
+        }
+      } catch (e) {
+        toast('Could not verify with EPA — fill in the rest and save');
+      }
       return;
     }
-    row.querySelector('.apr-product').value = p.id;
-    onRowProductChange(row);
-    toast(`Scanned: ${p.name}`);
+    if (barcode) {
+      toast('New barcode — add this jug\u2019s product now');
+      openQuickAddProduct(emptyMixRow(), barcode);
+      return;
+    }
+    toast('Could not read a barcode or EPA number — type the EPA # from the jug, or search Products.');
+  }
+
+  function onJugBarcode(code) {
+    resolveJugScan({ barcode: code });
+  }
+
+  async function onJugLiveScan(code, frameCanvas) {
+    const hits = data.products.filter(pr => pr.barcode === code);
+    if (hits.length === 1) {
+      selectMixProduct(hits[0]);
+      return;
+    }
+    if (hits.length > 1) {
+      toast('Two products share this barcode — pick the right one from the mix');
+      return;
+    }
+    let facts = { barcode: code };
+    if (frameCanvas && ocrSupported()) {
+      try {
+        const file = await canvasToFile(frameCanvas);
+        if (file) {
+          toast('Barcode is new — reading the label…');
+          const ocr = await captureAndReadLabel(file, status => toast(status));
+          facts = Object.assign({ barcode: code }, ocr);
+        }
+      } catch (e) { /* barcode-only fallback */ }
+    }
+    await resolveJugScan(facts);
+  }
+
+  async function scanJugPhoto(file) {
+    if (!file) return;
+    if (ocrSupported()) {
+      try {
+        const facts = await captureAndReadLabel(file, status => toast(status));
+        await resolveJugScan(facts);
+        return;
+      } catch (e) {
+        if (e && e.message !== 'ocr-offline' && e.message !== 'unsupported' && e.message !== 'load-failed') {
+          /* try barcode-only below */
+        } else {
+          toastOcrError(e);
+        }
+      }
+    }
+    toast('Reading barcode…');
+    try {
+      const code = await decodeBarcodeFromFile(file);
+      if (!code) {
+        toast('Could not read a barcode or EPA number — type the EPA # from the jug, or search Products.');
+        return;
+      }
+      await resolveJugScan({ barcode: code });
+    } catch (e) {
+      toast('Could not read a barcode or EPA number — type the EPA # from the jug, or search Products.');
+    }
   }
 
   function scanJugIntoMix() {
-    if (liveBarcodeSupported()) openScanner(onJugBarcode);
+    if (liveBarcodeSupported()) openScanner((code, frame) => { onJugLiveScan(code, frame); }, { captureFrame: true });
     else {
       const input = $('#app-scan-jug-input');
       if (input) input.click();
-      else toast('Photograph the barcode, or type the UPC on the product');
+      else toast('Photograph the barcode or the EPA number on the panel');
     }
   }
 
@@ -5739,12 +5997,23 @@
       });
     }
 
-    setupBarcodeButton({
-      liveBtn: $('#app-scan-jug'),
-      photoLabel: $('#app-scan-jug-photo'),
-      photoInput: $('#app-scan-jug-input'),
-      onCode: onJugBarcode
-    });
+    const jugLive = $('#app-scan-jug');
+    const jugPhoto = $('#app-scan-jug-photo');
+    const jugInput = $('#app-scan-jug-input');
+    const liveJug = liveBarcodeSupported();
+    if (jugLive) jugLive.hidden = !liveJug;
+    if (jugPhoto) jugPhoto.hidden = liveJug;
+    if (liveJug && jugLive) {
+      jugLive.addEventListener('click', () => openScanner((code, frame) => {
+        onJugLiveScan(code, frame);
+      }, { captureFrame: true }));
+    }
+    if (jugInput) {
+      jugInput.addEventListener('change', async () => {
+        const file = fileFromInput(jugInput);
+        if (file) await scanJugPhoto(file);
+      });
+    }
     setupBarcodeButton({
       liveBtn: $('#prod-scan-barcode'),
       photoLabel: $('#prod-scan-barcode-photo'),

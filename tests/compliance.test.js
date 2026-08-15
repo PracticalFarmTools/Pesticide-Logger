@@ -242,20 +242,21 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.7 + deadline/license wiring', () => {
+check('source files advertise v2.9.8 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.7'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.7'));
+  assert.ok(app.includes('v2.9.8'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.8'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-14'"));
-  assert.ok(html.includes('v2.9.7'));
+  assert.ok(html.includes('v2.9.8'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));
   assert.ok(html.includes('farm-scale.js'));
   assert.ok(html.includes('farm-file.js'));
   assert.ok(html.includes('i18n.js'));
   assert.ok(html.includes('units.js'));
+  assert.ok(html.includes('epa-rank.js'));
   assert.ok(html.includes('backup-merge.js'));
   assert.ok(html.includes('backup-pack.js'));
   assert.ok(html.includes('spray-window.js'));
@@ -267,6 +268,7 @@ check('source files advertise v2.9.7 + deadline/license wiring', () => {
   assert.ok(sw.includes('./farm-scale.js'));
   assert.ok(sw.includes('./farm-file.js'));
   assert.ok(sw.includes('./i18n.js'));
+  assert.ok(sw.includes('./epa-rank.js'));
   assert.ok(sw.includes('./units.js'));
   assert.ok(sw.includes('./backup-merge.js'));
   assert.ok(sw.includes('./backup-pack.js'));
@@ -476,6 +478,8 @@ check('OCR label scanning wired: parser, lazy loader, both entry points, hardene
   assert.ok(app.includes('function captureAndReadLabel'), 'capture+recognize pipeline');
   assert.ok(app.includes('function scanProductLabel'), 'product-form entry point');
   assert.ok(app.includes('function scanQuickAddProductLabel'), 'cab quick-add entry point');
+  assert.ok(app.includes('function scanJugPhoto'), 'cab Scan jug still-photo uses barcode+OCR');
+  assert.ok(app.includes('function resolveJugScan'), 'jug scan goes through a review path, not a silent first hit');
   assert.ok(app.includes('function initCameraCapture'), 'camera init wires iPhone + Android paths');
   assert.ok(app.includes('function prefetchScanEngines'), 'OCR/ZXing engines prefetch in the background');
   assert.ok(app.includes("dlg.addEventListener('close', stopScanStream)"), 'live barcode camera stops on any dialog close');
@@ -501,6 +505,34 @@ check('OCR label scanning wired: parser, lazy loader, both entry points, hardene
   // Shared worker must forward progress to the *current* scan's callback.
   assert.ok(app.includes('ocrProgressHandler'), 'OCR progress logger is mutable across scans');
   assert.ok(!app.includes('function statusLabel'), 'dead statusLabel() removed');
+});
+
+check('cab scan / EPA ranking / mix chrome: whole-word ranker, state rules, add-to-mix', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const epa = fs.readFileSync(path.join(root, 'api/epa.js'), 'utf8');
+  assert.ok(fs.existsSync(path.join(root, 'epa-rank.js')));
+  assert.ok(epa.includes('rankEpaResults'), 'proxy ranks before the 25 cap');
+  assert.ok(app.includes('EpaRank.rankEpaResults'), 'client re-ranks and joins library hits');
+  assert.ok(html.includes('id="epa-search-hint"'), 'name-search hint is in the page');
+  assert.ok(html.includes('Whole-word names are listed first'));
+  const productsFieldset = html.match(/<fieldset data-log-section="products">[\s\S]*?<\/fieldset>/);
+  assert.ok(productsFieldset, 'products fieldset present');
+  const mixLegend = productsFieldset[0].match(/<legend[\s\S]*?<\/legend>/);
+  assert.ok(mixLegend && !mixLegend[0].includes('req-brand_name'),
+    'mix STATE tags are not piled on the legend');
+  assert.ok(html.includes('id="app-mix-state-req"'), 'one mix requirement line');
+  assert.ok(html.includes('id="app-open-state-rules"') && html.includes('data-scroll-to="state-info-card"'),
+    'spray log jumps to state rules');
+  const farmAt = html.indexOf('Farm &amp; applicator');
+  const stateAt = html.indexOf('id="state-info-card"');
+  const crewAt = html.indexOf('id="crew-card"');
+  assert.ok(farmAt >= 0 && stateAt > farmAt && crewAt > stateAt,
+    'state rules sit after Farm & applicator and before Crew');
+  assert.ok(html.includes('+ Add another product to this mix'));
+  assert.ok(html.includes('Choose from library') || app.includes('Choose from library'));
+  assert.ok(app.includes("value=\"__custom__\""), 'calculator custom name is opt-in');
+  assert.ok(html.includes('Scan jug barcode or label'));
 });
 
 check('code-pile hardening: trial merge, lock refresh, hidden Buy, interval fallback', () => {

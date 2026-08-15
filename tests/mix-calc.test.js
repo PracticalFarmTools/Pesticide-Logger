@@ -80,5 +80,55 @@ check('rate unit list is the same set the log already offers', () => {
   assert.strictEqual(MixCalc.RATE_PER_LABEL.acre, '/ acre');
 });
 
+check('empty REI/PHI override keeps the library value (may be null — do not invent)', () => {
+  const lib = {
+    id: 'p1', name: 'Cease', epaRegNo: '70051-19', activeIngredient: 'QST 713',
+    rup: false, reiHours: 4, phiDays: 0, type: 'fungicide', signalWord: 'Caution'
+  };
+  const snap = MixCalc.snapshotMixProduct(lib, {
+    reiHours: '', phiDays: '', lotNumber: 'A1', rate: '', rateUnit: 'fl oz',
+    total: '', totalUnit: 'fl oz', omri: false
+  });
+  assert.strictEqual(snap.productId, 'p1');
+  assert.strictEqual(snap.productName, 'Cease');
+  assert.strictEqual(snap.epaRegNo, '70051-19');
+  assert.strictEqual(snap.reiHours, 4);
+  assert.strictEqual(snap.phiDays, 0);
+  assert.strictEqual(snap.reiOverride, null);
+  assert.strictEqual(snap.phiOverride, null);
+  assert.strictEqual(snap.rate, null);
+  assert.strictEqual(snap.lotNumber, 'A1');
+  const blank = MixCalc.snapshotMixProduct(
+    { id: 'p2', name: 'X', epaRegNo: '1-1', reiHours: null, phiDays: null },
+    { reiHours: '', phiDays: '' }
+  );
+  assert.strictEqual(blank.reiHours, null);
+  assert.strictEqual(blank.phiDays, null);
+});
+
+check('typed REI/PHI override the library; missing product is null', () => {
+  const snap = MixCalc.snapshotMixProduct(
+    { id: 'p2', name: 'X', epaRegNo: '1-1', reiHours: 4, phiDays: 0 },
+    { reiHours: '12', phiDays: '7', rate: '8', rateUnit: 'fl oz', total: '80', totalUnit: 'fl oz', omri: true }
+  );
+  assert.strictEqual(snap.reiHours, 12);
+  assert.strictEqual(snap.phiDays, 7);
+  assert.strictEqual(snap.reiOverride, 12);
+  assert.strictEqual(snap.phiOverride, 7);
+  assert.strictEqual(snap.rate, 8);
+  assert.strictEqual(snap.total, 80);
+  assert.strictEqual(snap.omri, true);
+  assert.strictEqual(MixCalc.snapshotMixProduct(null, {}), null);
+  assert.strictEqual(MixCalc.mixInterval('', 4), 4);
+  assert.strictEqual(MixCalc.mixInterval('12', 4), 12);
+});
+
+check('maxOrNull is the most restrictive interval, never invents a number', () => {
+  assert.strictEqual(MixCalc.maxOrNull([4, 24, null]), 24);
+  assert.strictEqual(MixCalc.maxOrNull([null, undefined]), null);
+  assert.strictEqual(MixCalc.maxOrNull([]), null);
+  assert.strictEqual(MixCalc.maxOrNull(null), null);
+});
+
 if (failed) process.exit(1);
 console.log('\nAll mix-calc checks passed.');

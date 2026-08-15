@@ -59,6 +59,57 @@ check('stopMediaStream stops every track and is null-safe', () => {
   assert.strictEqual(CameraScan.stopMediaStream(null), 0);
 });
 
+check('unique library barcode selects that product — never invents one', () => {
+  const products = [
+    { id: 'a', name: 'Cease', barcode: '111' },
+    { id: 'b', name: 'Rally', barcode: '222' }
+  ];
+  const d = CameraScan.resolveJugFacts({ barcode: '111' }, products);
+  assert.strictEqual(d.action, 'select');
+  assert.strictEqual(d.product.id, 'a');
+  assert.ok(!d.linkBarcode);
+});
+
+check('two library products with the same barcode are ambiguous', () => {
+  const products = [{ id: 'a', barcode: '111' }, { id: 'b', barcode: '111' }];
+  const d = CameraScan.resolveJugFacts({ barcode: '111' }, products);
+  assert.strictEqual(d.action, 'ambiguous-barcode');
+  assert.strictEqual(d.hits.length, 2);
+  assert.ok(!d.product);
+});
+
+check('unique library EPA selects; barcode is linked only if the jug had none', () => {
+  const products = [{ id: 'a', name: 'Cease', epaRegNo: '70051-19', barcode: '' }];
+  const linked = CameraScan.resolveJugFacts({ barcode: '999', epaRegNo: '70051-19' }, products);
+  assert.strictEqual(linked.action, 'select');
+  assert.strictEqual(linked.product.id, 'a');
+  assert.strictEqual(linked.linkBarcode, true);
+  const already = CameraScan.resolveJugFacts(
+    { barcode: '111', epaRegNo: '70051-19' },
+    [{ id: 'a', epaRegNo: '70051-19', barcode: '111' }]
+  );
+  assert.strictEqual(already.action, 'select');
+  assert.ok(!already.linkBarcode);
+});
+
+check('unknown barcode with an EPA number looks up EPA — does not invent a product', () => {
+  const d = CameraScan.resolveJugFacts({ barcode: '999', epaRegNo: '70051-19' }, []);
+  assert.strictEqual(d.action, 'lookup-epa');
+  assert.strictEqual(d.epaRegNo, '70051-19');
+  assert.ok(!d.product);
+});
+
+check('unknown barcode with no EPA is a new jug to add', () => {
+  const d = CameraScan.resolveJugFacts({ barcode: '999' }, []);
+  assert.strictEqual(d.action, 'new-barcode');
+  assert.strictEqual(d.barcode, '999');
+});
+
+check('no barcode and no EPA is empty', () => {
+  assert.strictEqual(CameraScan.resolveJugFacts({}, []).action, 'empty');
+  assert.strictEqual(CameraScan.resolveJugFacts(null, null).action, 'empty');
+});
+
 check('in-page file inputs exist with capture=environment (iOS gesture)', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   [

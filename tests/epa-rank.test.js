@@ -11,6 +11,7 @@ const {
   libraryHits,
   scoreEpaResult,
   needsNameSearchHint,
+  epaAiText,
   NAME_SEARCH_HINT
 } = require(path.join(__dirname, '..', 'epa-rank.js'));
 
@@ -142,6 +143,18 @@ check('name-search hint is for names, not EPA numbers', () => {
   assert.strictEqual(needsNameSearchHint('70051-19'), false);
   assert.ok(NAME_SEARCH_HINT.includes('EPA registration number'));
   assert.ok(NAME_SEARCH_HINT.includes('Whole-word'));
+});
+
+check('epaAiText joins percents from PPLS and never invents an ingredient', () => {
+  assert.strictEqual(epaAiText({
+    activeIngredients: [
+      { name: 'Bacillus subtilis QST 713', percent: 1.34 },
+      { name: 'Other', percent: '' }
+    ]
+  }), 'Bacillus subtilis QST 713 1.34%, Other');
+  assert.strictEqual(epaAiText({ activeIngredients: [] }), '');
+  assert.strictEqual(epaAiText({}), '');
+  assert.strictEqual(epaAiText(null), '');
 });
 
 if (failed) {

@@ -242,14 +242,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.11 + deadline/license wiring', () => {
+check('source files advertise v2.9.12 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.11'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.11'));
+  assert.ok(app.includes('v2.9.12'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.12'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-14'"));
-  assert.ok(!html.includes('v2.9.11'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.12'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="map-add-corners"'));
@@ -432,7 +432,7 @@ check('empty first-run home hides zeros until a field or log exists', () => {
 check('v2.7 features wired: forecast, photos, barcode, posting, import, i18n', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('function scoreSprayHour'), 'forecast scoring');
+  assert.ok(app.includes('SprayWindow.scoreSprayHour'), 'forecast scoring');
   assert.ok(app.includes('function fetchSprayForecast'), 'forecast fetch');
   assert.ok(html.includes('spray-window-card'), 'forecast card');
   assert.ok(html.includes('id="forecast-strip"'), 'all-fields planning strip');
@@ -497,10 +497,12 @@ check('OCR label scanning wired: parser, lazy loader, both entry points, hardene
   assert.ok(app.includes('function scanQuickAddProductLabel'), 'cab quick-add entry point');
   assert.ok(app.includes('function scanJugPhoto'), 'cab Scan jug still-photo uses barcode+OCR');
   assert.ok(app.includes('function resolveJugScan'), 'jug scan goes through a review path, not a silent first hit');
+  assert.ok(app.includes('CameraScan.resolveJugFacts'), 'library match vs EPA lookup is decided in camera-scan.js');
   assert.ok(app.includes('function initCameraCapture'), 'camera init wires iPhone + Android paths');
   assert.ok(app.includes('function prefetchScanEngines'), 'OCR/ZXing engines prefetch in the background');
   assert.ok(app.includes("dlg.addEventListener('close', stopScanStream)"), 'live barcode camera stops on any dialog close');
   assert.ok(app.includes('function liveBarcodeSupported'), 'live vs still-photo barcode split');
+  assert.ok(app.includes('CameraScan.liveBarcodeSupported'), 'live vs still-photo uses CameraScan');
   assert.ok(html.includes('id="scan-label-btn"'), 'product-form button present');
   assert.ok(html.includes('id="scan-label-input"'), 'Scan label uses an in-page file input (iOS gesture)');
   assert.ok(html.includes('id="qp-scan-label-btn"'), 'quick-add dialog button present');
@@ -563,9 +565,13 @@ check('mix-calc, csv-import, and field-map are extracted modules the shell calls
   assert.ok(html.includes('csv-import.js') && sw.includes('./csv-import.js'));
   assert.ok(html.includes('field-map.js') && sw.includes('./field-map.js'));
   assert.ok(app.includes('MixCalc.jobSpray') && app.includes('MixCalc.productAmounts'));
+  assert.ok(app.includes('MixCalc.snapshotMixProduct') && app.includes('MixCalc.maxOrNull'));
   assert.ok(app.includes('FieldMap.ringAreaSqm') && app.includes('FieldMap.ringPerimeterM'));
   assert.ok(app.includes('CsvImport.importRows'));
+  assert.ok(app.includes('EpaRank.epaAiText'));
   assert.ok(!app.includes('function parseCsv'), 'CSV parser is not still inline in the shell');
+  assert.ok(!app.includes('function epaAiText'), 'EPA AI join is not still inline in the shell');
+  assert.ok(!app.includes('function maxOrNull'), 'mix max is not still inline in the shell');
   assert.ok(!app.includes('const SQM_PER_ACRE = 4046'), 'field acre constant is not still inline');
 });
 
@@ -581,10 +587,10 @@ check('code-pile hardening: trial merge, lock refresh, hidden Buy, interval fall
   assert.ok(app.includes("const el = $('#' + id)"), 'Buy hide uses #id, not a tag named license-buy');
   assert.ok(html.includes('id="license-buy"') && html.includes('id="lock-buy"'), 'Buy button ids stay in the DOM');
   assert.ok(app.includes('This build cannot check license keys yet.'), 'unconfigured-key copy does not claim the trial still works on the lock screen');
-  assert.ok(app.includes('function effectiveIntervalValue'), 'dashboard REI/PHI fall back to mix max');
-  assert.ok(app.includes('Compliance.effectiveIntervalValue'));
   const compliance = fs.readFileSync(path.join(root, 'compliance.js'), 'utf8');
-  assert.ok(compliance.includes("effectiveIntervalValue(app, 'reiHours')") || compliance.includes('function effectiveIntervalValue'));
+  assert.ok(app.includes('Compliance.reiExpiry') && app.includes('Compliance.phiDate'),
+    'dashboard REI/PHI use Compliance, which falls back to the mix max');
+  assert.ok(compliance.includes('function effectiveIntervalValue'), 'mix-max fallback lives in compliance.js');
   assert.strictEqual(require(path.join(root, 'compliance.js')).effectiveIntervalValue(
     { products: [{ reiHours: 4 }, { reiHours: 24 }] }, 'reiHours'
   ), 24);
@@ -610,7 +616,7 @@ check('audit hardening: EPA proxy + interval/deadline correctness', () => {
   assert.ok(epa.includes('%'), 'product-name search allows percent');
   assert.ok(epa.includes('upstream.status === 404'), 'EPA 404 returns empty results, not 502');
   assert.ok(app.includes('GAP_MS') || app.includes('2100'), 'library verify throttles under rate limit');
-  assert.ok(app.includes('intervalHoursPresent'), 'REI/PHI require finite non-negative values');
+  assert.ok(compliance.includes('function intervalHoursPresent'), 'REI/PHI require finite non-negative values');
   assert.ok(compliance.includes("'23:59'"), 'REI countdown defaults to end-of-day, not noon');
   assert.ok(deadline.includes('normalizeClockTime'), 'HH:MM:SS times normalize before parsing');
   assert.ok(camera.includes('data:image\\/jpeg'), 'photo allowlist is JPEG-only');

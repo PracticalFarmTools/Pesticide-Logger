@@ -93,6 +93,54 @@
     };
   }
 
+  // Empty override keeps the library value (may be null). Do not invent REI/PHI.
+  function mixInterval(raw, libraryValue) {
+    return raw === '' || raw == null ? libraryValue : Number(raw);
+  }
+
+  function maxOrNull(values) {
+    const nums = (values || []).filter((v) => v != null && isFinite(v));
+    return nums.length ? Math.max(...nums) : null;
+  }
+
+  function emptyToNullNumber(raw) {
+    if (raw === '' || raw == null) return null;
+    return parseFloat(raw);
+  }
+
+  // Snapshot one mix row so history stays true if the library product changes.
+  function snapshotMixProduct(libraryProduct, rowVals) {
+    const p = libraryProduct;
+    if (!p) return null;
+    const vals = rowVals || {};
+    const reiRaw = vals.reiHours;
+    const phiRaw = vals.phiDays;
+    return {
+      productId: p.id,
+      productName: p.name,
+      epaRegNo: p.epaRegNo,
+      activeIngredient: p.activeIngredient,
+      rup: !!p.rup,
+      type: p.type || '',
+      signalWord: p.signalWord || '',
+      omri: !!vals.omri,
+      epaStatus: p.epaStatus || null,
+      epaCheckedAt: p.epaCheckedAt || null,
+      epaLabelUrl: p.epaLabelUrl || null,
+      epaCompany: p.epaCompany || '',
+      stateRegNo: p.stateRegNo || '',
+      lotNumber: String(vals.lotNumber == null ? '' : vals.lotNumber).trim(),
+      reiHours: mixInterval(reiRaw, p.reiHours),
+      phiDays: mixInterval(phiRaw, p.phiDays),
+      reiOverride: reiRaw === '' || reiRaw == null ? null : Number(reiRaw),
+      phiOverride: phiRaw === '' || phiRaw == null ? null : Number(phiRaw),
+      rate: emptyToNullNumber(vals.rate),
+      rateUnit: vals.rateUnit,
+      total: emptyToNullNumber(vals.total),
+      totalUnit: vals.totalUnit
+    };
+  }
+
   const api = {
     SQFT_PER_ACRE,
     RATE_UNITS,
@@ -101,7 +149,10 @@
     gpaToGalPerAcre,
     areaUnitsFor,
     jobSpray,
-    productAmounts
+    productAmounts,
+    mixInterval,
+    maxOrNull,
+    snapshotMixProduct
   };
 
   if (typeof module !== 'undefined' && module.exports) {

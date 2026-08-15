@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.11 — Practical Farm Tools
+/* Pesticide Logger v2.9.12 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -491,32 +491,14 @@
     echo.hidden = !txt;
   }
 
-  function areaToAcres(value, unit) {
-    return MixCalc.areaToAcres(value, unit);
-  }
-
   const RATE_PER_LABEL = MixCalc.RATE_PER_LABEL;
-
-  function areaUnitsFor(per, areaAcres) {
-    return MixCalc.areaUnitsFor(per, areaAcres);
-  }
 
   const now = () => new Date();
 
-  // Without an application end/start time, count from end-of-day so the
-  // countdown never reports "clear" before a same-day afternoon spray's REI
-  // would actually expire. Prefer endTime, then startTime, then 23:59.
-  function effectiveIntervalValue(app, key) {
-    return Compliance.effectiveIntervalValue(app, key);
-  }
-
-  function reiExpiry(app) {
-    return Compliance.reiExpiry(app);
-  }
-
-  function phiDate(app) {
-    return Compliance.phiDate(app);
-  }
+  // Without an application end/start time, Compliance.reiExpiry counts from
+  // end-of-day so the countdown never reports "clear" before a same-day
+  // afternoon spray's REI would actually expire. Prefer endTime, then
+  // startTime, then 23:59.
 
   function hoursLeft(target) {
     return (target.getTime() - now().getTime()) / 3600000;
@@ -835,18 +817,6 @@
       typeof STATE_LAWS !== 'undefined' ? STATE_LAWS : {});
   }
 
-  function isAerialApp(app) {
-    return Compliance.isAerialApp(app);
-  }
-
-  function usedTrainee(app) {
-    return Compliance.usedTrainee(app);
-  }
-
-  function privateDutyFor(law) {
-    return Compliance.privateDutyFor(law);
-  }
-
   function fieldAppliesToApp(app, fieldName) {
     return Compliance.fieldAppliesToApp(app, fieldName, settingsForCompliance());
   }
@@ -896,8 +866,8 @@
     if (law && law.fields.some(f => f.name === 'noncertified_applicator_name' && f.required)) {
       visible.add('used_noncertified');
     }
-    if (isAerialApp(ctx) || hasText(ctx.aircraftId)) visible.add('aircraft_id');
-    if (usedTrainee(ctx)) {
+    if (Compliance.isAerialApp(ctx) || hasText(ctx.aircraftId)) visible.add('aircraft_id');
+    if (Compliance.usedTrainee(ctx)) {
       visible.add('used_noncertified');
       visible.add('noncertified_applicator_name');
     }
@@ -1136,24 +1106,8 @@
 
   // -------- 50-state compliance engine --------
 
-  function productsOk(app, pred) {
-    return Compliance.productsOk(app, pred);
-  }
-
   function complianceValuePresent(app, name) {
     return Compliance.complianceValuePresent(app, name, settingsForCompliance());
-  }
-
-  function intervalHoursPresent(v) {
-    return Compliance.intervalHoursPresent(v);
-  }
-
-  function intervalDaysPresent(v) {
-    return Compliance.intervalDaysPresent(v);
-  }
-
-  function intervalsStatus(app) {
-    return Compliance.intervalsStatus(app);
   }
 
   function evaluateCompliance(app) {
@@ -1325,14 +1279,6 @@
     return body;
   }
 
-  function epaAiText(result) {
-    return (result.activeIngredients || []).map((ai) =>
-      ai.percent == null || ai.percent === ''
-        ? ai.name
-        : `${ai.name} ${ai.percent}%`
-    ).filter(Boolean).join(', ');
-  }
-
   let epaSearchSeq = 0;
 
   async function searchEpaProducts(query) {
@@ -1402,7 +1348,7 @@
           <div class="epa-result-meta">
             EPA ${esc(result.epaRegNo)} · ${esc(result.company || 'Registrant not listed')}
           </div>
-          <div class="epa-result-meta">${esc(epaAiText(result) || 'Active ingredients: see label')}</div>
+          <div class="epa-result-meta">${esc(EpaRank.epaAiText(result) || 'Active ingredients: see label')}</div>
           <div class="epa-result-meta">
             Signal word: ${esc(result.signalWord || 'not listed')}
             ${result.labelAcceptedDate ? ` · Label accepted ${esc(result.labelAcceptedDate)}` : ''}
@@ -1435,7 +1381,7 @@
       epaLabelUrl: result.labelUrl,
       epaLabelAcceptedDate: result.labelAcceptedDate,
       epaCompany: result.company,
-      epaActiveIngredient: epaAiText(result),
+      epaActiveIngredient: EpaRank.epaAiText(result),
       epaSource: result.source || 'EPA PPLS'
     };
   }
@@ -1446,7 +1392,7 @@
 
     $('#prod-name').value = result.name;
     $('#prod-epa').value = result.epaRegNo;
-    $('#prod-ai').value = epaAiText(result);
+    $('#prod-ai').value = EpaRank.epaAiText(result);
     $('#prod-signal').value = normalizedSignalWord(result.signalWord);
     $('#prod-rup').checked = !!result.rup;
     if ($('#prod-company')) $('#prod-company').value = result.company || '';
@@ -1490,7 +1436,7 @@
             product.rup = !!result.rup;
             const signal = normalizedSignalWord(result.signalWord);
             if (signal) product.signalWord = signal;
-            if (!product.activeIngredient) product.activeIngredient = epaAiText(result);
+            if (!product.activeIngredient) product.activeIngredient = EpaRank.epaAiText(result);
             if (result.cancelled || result.status !== 'Active') cancelled++;
             verified++;
             break;
@@ -2324,9 +2270,9 @@
       return;
     }
     if (isFinite(rate) && rate > 0 && isFinite(area) && area > 0) {
-      const acres = areaToAcres(area, $('#app-area-unit').value);
+      const acres = MixCalc.areaToAcres(area, $('#app-area-unit').value);
       const per = (p && p.ratePer === '1000sqft') ? '1000sqft' : 'acre';
-      totalEl.value = round3(rate * areaUnitsFor(per, acres));
+      totalEl.value = round3(rate * MixCalc.areaUnitsFor(per, acres));
       unitEl.value = row.querySelector('.apr-rate-unit').value;
       showCalcNote();
     }
@@ -2351,20 +2297,14 @@
     return {
       ...p,
       lotNumber: row.querySelector('.apr-lot').value.trim(),
-      reiHours: reiRaw === '' ? p.reiHours : Number(reiRaw),
-      phiDays: phiRaw === '' ? p.phiDays : Number(phiRaw),
+      reiHours: MixCalc.mixInterval(reiRaw, p.reiHours),
+      phiDays: MixCalc.mixInterval(phiRaw, p.phiDays),
       omri: !!(row.querySelector('.apr-omri') && row.querySelector('.apr-omri').checked)
     };
   }
 
   function selectedMixProducts() {
     return $$('#app-products .app-product-row').map(mixRowEffective).filter(Boolean);
-  }
-
-  // Effective (most restrictive) interval across a mix.
-  function maxOrNull(values) {
-    const nums = values.filter(v => v != null && isFinite(v));
-    return nums.length ? Math.max(...nums) : null;
   }
 
   function updateMixInfo() {
@@ -2379,8 +2319,8 @@
       return `<span${p.rup ? ' class="pill-danger"' : ''}>${parts.join(' · ')}${p.rup ? ' · RUP' : ''}</span>`;
     });
     if (prods.length > 1) {
-      const rei = maxOrNull(prods.map(p => p.reiHours));
-      const phi = maxOrNull(prods.map(p => p.phiDays));
+      const rei = MixCalc.maxOrNull(prods.map(p => p.reiHours));
+      const phi = MixCalc.maxOrNull(prods.map(p => p.phiDays));
       bits.push(`<span><strong>Mix follows the most restrictive label:</strong>
         REI ${rei != null ? fmtNum(rei) + ' hr' : '—'} · PHI ${phi != null ? fmtNum(phi) + ' d' : '—'}</span>`);
     }
@@ -2472,8 +2412,8 @@
   function updateIntervalPreview() {
     const prods = selectedMixProducts();
     const box = $('#app-interval-preview');
-    const rei = maxOrNull(prods.map(p => p.reiHours));
-    const phi = maxOrNull(prods.map(p => p.phiDays));
+    const rei = MixCalc.maxOrNull(prods.map(p => p.reiHours));
+    const phi = MixCalc.maxOrNull(prods.map(p => p.phiDays));
     if ((rei == null && phi == null) || !$('#app-date').value) {
       box.hidden = true;
       return;
@@ -2486,9 +2426,9 @@
       phiDays: phi
     };
     const parts = [];
-    const reiAt = reiExpiry(fake);
+    const reiAt = Compliance.reiExpiry(fake);
     if (reiAt) parts.push(`<strong>Re-entry allowed after:</strong> ${reiAt.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`);
-    const phiAt = phiDate(fake);
+    const phiAt = Compliance.phiDate(fake);
     if (phiAt) parts.push(`<strong>Earliest harvest:</strong> ${phiAt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}`);
     box.hidden = parts.length === 0;
     box.innerHTML = parts.join(' &nbsp;·&nbsp; ');
@@ -2557,30 +2497,16 @@
     $$('#app-products .app-product-row').forEach(row => {
       const p = getProduct(row.querySelector('.apr-product').value);
       if (!p) return;
-      const reiRaw = row.querySelector('.apr-rei').value;
-      const phiRaw = row.querySelector('.apr-phi').value;
-      const rei = reiRaw === '' ? p.reiHours : Number(reiRaw);
-      const phi = phiRaw === '' ? p.phiDays : Number(phiRaw);
-      out.push({
-        productId: p.id, productName: p.name, epaRegNo: p.epaRegNo,
-        activeIngredient: p.activeIngredient, rup: !!p.rup,
-        type: p.type || '',
-        signalWord: p.signalWord || '',
-        omri: !!(row.querySelector('.apr-omri') && row.querySelector('.apr-omri').checked),
-        epaStatus: p.epaStatus || null,
-        epaCheckedAt: p.epaCheckedAt || null,
-        epaLabelUrl: p.epaLabelUrl || null,
-        epaCompany: p.epaCompany || '',
-        stateRegNo: p.stateRegNo || '',
-        lotNumber: row.querySelector('.apr-lot').value.trim(),
-        reiHours: rei, phiDays: phi,
-        reiOverride: reiRaw === '' ? null : Number(reiRaw),
-        phiOverride: phiRaw === '' ? null : Number(phiRaw),
-        rate: row.querySelector('.apr-rate').value === '' ? null : parseFloat(row.querySelector('.apr-rate').value),
+      out.push(MixCalc.snapshotMixProduct(p, {
+        reiHours: row.querySelector('.apr-rei').value,
+        phiDays: row.querySelector('.apr-phi').value,
+        omri: row.querySelector('.apr-omri') && row.querySelector('.apr-omri').checked,
+        lotNumber: row.querySelector('.apr-lot').value,
+        rate: row.querySelector('.apr-rate').value,
         rateUnit: row.querySelector('.apr-rate-unit').value,
-        total: row.querySelector('.apr-total').value === '' ? null : parseFloat(row.querySelector('.apr-total').value),
+        total: row.querySelector('.apr-total').value,
         totalUnit: row.querySelector('.apr-total-unit').value
-      });
+      }));
     });
     return out;
   }
@@ -2600,8 +2526,8 @@
       startTime: $('#app-start').value,
       endTime: $('#app-end').value,
       products: mix,
-      reiHours: maxOrNull(mix.map(p => p.reiHours)),
-      phiDays: maxOrNull(mix.map(p => p.phiDays)),
+      reiHours: MixCalc.maxOrNull(mix.map(p => p.reiHours)),
+      phiDays: MixCalc.maxOrNull(mix.map(p => p.phiDays)),
       rup: mix.some(p => p.rup),
       fieldId: f ? f.id : '',
       fieldName: f ? f.name : '',
@@ -2943,9 +2869,9 @@
       out.push('<span class="badge-pill badge-incomplete">Copy overdue</span>');
     }
     if (!a.deletedAt) {
-      const rei = reiExpiry(a);
+      const rei = Compliance.reiExpiry(a);
       if (rei && hoursLeft(rei) > 0) out.push(`<span class="badge-pill badge-rei">REI ${fmtCountdown(hoursLeft(rei))}</span>`);
-      const phi = phiDate(a);
+      const phi = Compliance.phiDate(a);
       if (phi && phi > now()) out.push(`<span class="badge-pill badge-phi">PHI until ${phi.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>`);
     }
     if (a.rup) out.push('<span class="badge-pill badge-rup">RUP</span>');
@@ -3264,9 +3190,9 @@
     }
 
     // Active REI
-    const missingIntervals = apps.filter(a => !intervalsStatus(a).ok);
+    const missingIntervals = apps.filter(a => !Compliance.intervalsStatus(a).ok);
     const reiActive = apps
-      .map(a => ({ a, exp: reiExpiry(a) }))
+      .map(a => ({ a, exp: Compliance.reiExpiry(a) }))
       .filter(x => x.exp && hoursLeft(x.exp) > 0)
       .sort((x, y) => x.exp - y.exp);
     $('#stat-active-rei').textContent = reiActive.length;
@@ -3296,7 +3222,7 @@
 
     // Active PHI
     const phiActive = apps
-      .map(a => ({ a, d: phiDate(a) }))
+      .map(a => ({ a, d: Compliance.phiDate(a) }))
       .filter(x => x.d && x.d > now())
       .sort((x, y) => x.d - y.d);
     $('#stat-active-phi').textContent = phiActive.length;
@@ -3833,7 +3759,7 @@
     apps.forEach(a => { (byCrop[a.crop || '(no crop)'] = byCrop[a.crop || '(no crop)'] || []).push(a); });
     const cropSections = Object.keys(byCrop).sort().map(crop => {
       const rows = byCrop[crop].map(a => {
-        const clear = phiDate(a);
+        const clear = Compliance.phiDate(a);
         return `
         <tr>
           <td>${fmtDate(a.date)}</td>
@@ -4395,7 +4321,7 @@
     if (typeof FarmFile === 'undefined' || !FarmFile.reiBoardHtml) return;
     const apps = sortedApps();
     const reiRows = apps
-      .map((a) => ({ a, exp: reiExpiry(a) }))
+      .map((a) => ({ a, exp: Compliance.reiExpiry(a) }))
       .filter((x) => x.exp && hoursLeft(x.exp) > 0)
       .sort((x, y) => x.exp - y.exp)
       .map(({ a, exp }) => ({
@@ -4404,7 +4330,7 @@
         when: exp.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
       }));
     const phiRows = apps
-      .map((a) => ({ a, d: phiDate(a) }))
+      .map((a) => ({ a, d: Compliance.phiDate(a) }))
       .filter((x) => x.d && x.d > now())
       .sort((x, y) => x.d - y.d)
       .map(({ a, d }) => ({
@@ -5064,8 +4990,8 @@
     if (last) {
       const prod = (last.products || []).map((p) => p.productName).filter(Boolean).join(', ');
       lines.push(`Last: ${esc(prod || 'spray')} ${esc(fmtDate(last.date))}`);
-      const rei = reiExpiry(last);
-      const phi = phiDate(last);
+      const rei = Compliance.reiExpiry(last);
+      const phi = Compliance.phiDate(last);
       if (rei) {
         if (rei.getTime() > nowMs) {
           kind = 'rei';
@@ -5125,7 +5051,7 @@
   function printReiPosting(appId) {
     const a = data.applications.find(x => x.id === appId);
     if (!a) return;
-    const exp = reiExpiry(a);
+    const exp = Compliance.reiExpiry(a);
     const s = data.settings;
     $('#print-area').innerHTML = `
       <div class="posting-sheet">
@@ -5154,7 +5080,7 @@
     const events = [];
     const t = now();
     sortedApps().forEach(a => {
-      const rei = reiExpiry(a);
+      const rei = Compliance.reiExpiry(a);
       if (rei) {
         const dh = (rei - t) / 3600000;
         if (dh > 0 && dh <= 1) {
@@ -5165,7 +5091,7 @@
             body: `${a.fieldName} cleared REI at ${rei.toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' })} — follow label PPE rules for early entry exceptions` });
         }
       }
-      const phi = phiDate(a);
+      const phi = Compliance.phiDate(a);
       if (phi) {
         const dd = Math.floor((phi - t) / 86400000);
         if (dd === 0 || (phi <= t && t - phi < 86400000)) {
@@ -5507,7 +5433,7 @@
   function applyEpaResultToQuickAdd(result, barcode) {
     $('#qp-name').value = result.name || '';
     $('#qp-epa').value = result.epaRegNo || '';
-    $('#qp-ai').value = epaAiText(result);
+    $('#qp-ai').value = EpaRank.epaAiText(result);
     $('#qp-rup').checked = !!result.rup;
     if ($('#qp-company')) $('#qp-company').value = result.company || '';
     if (barcode) {
@@ -5518,36 +5444,28 @@
   }
 
   async function resolveJugScan(facts) {
-    const barcode = facts && facts.barcode;
-    const epaRegNo = facts && facts.epaRegNo;
-    if (barcode) {
-      const hits = data.products.filter(pr => pr.barcode === barcode);
-      if (hits.length > 1) {
-        toast('Two products share this barcode — pick the right one from the mix');
-        return;
-      }
-      if (hits.length === 1) {
-        selectMixProduct(hits[0]);
-        return;
-      }
+    const decision = CameraScan.resolveJugFacts(facts, data.products);
+    if (decision.action === 'ambiguous-barcode') {
+      toast('Two products share this barcode — pick the right one from the mix');
+      return;
     }
-    if (epaRegNo) {
-      const byEpa = data.products.filter(pr => pr.epaRegNo === epaRegNo);
-      if (byEpa.length === 1) {
-        if (barcode && !byEpa[0].barcode) {
-          byEpa[0].barcode = barcode;
-          save();
-        }
-        selectMixProduct(byEpa[0]);
-        return;
+    if (decision.action === 'select') {
+      if (decision.linkBarcode) {
+        decision.product.barcode = decision.barcode;
+        save();
       }
+      selectMixProduct(decision.product);
+      return;
+    }
+    if (decision.action === 'lookup-epa') {
+      const barcode = decision.barcode;
       const row = emptyMixRow();
       openQuickAddProduct(row, barcode);
-      $('#qp-epa').value = epaRegNo;
-      if (facts.activeIngredientGuess) $('#qp-ai').value = facts.activeIngredientGuess;
+      $('#qp-epa').value = decision.epaRegNo;
+      if (decision.activeIngredientGuess) $('#qp-ai').value = decision.activeIngredientGuess;
       toast('Looking up EPA registration…');
       try {
-        const payload = await fetchEpa({ reg: epaRegNo });
+        const payload = await fetchEpa({ reg: decision.epaRegNo });
         if (payload.results && payload.results.length === 1) {
           applyEpaResultToQuickAdd(payload.results[0], barcode);
           toast(`Found: ${payload.results[0].name} — review and Save & select`);
@@ -5561,21 +5479,21 @@
       }
       return;
     }
-    if (barcode) {
+    if (decision.action === 'new-barcode') {
       toast('New barcode — add this jug\u2019s product now');
-      openQuickAddProduct(emptyMixRow(), barcode);
+      openQuickAddProduct(emptyMixRow(), decision.barcode);
       return;
     }
     toast('Could not read a barcode or EPA number — type the EPA # from the jug, or search Products.');
   }
 
   async function onJugLiveScan(code, frameCanvas) {
-    const hits = data.products.filter(pr => pr.barcode === code);
-    if (hits.length === 1) {
-      selectMixProduct(hits[0]);
+    const decision = CameraScan.resolveJugFacts({ barcode: code }, data.products);
+    if (decision.action === 'select') {
+      selectMixProduct(decision.product);
       return;
     }
-    if (hits.length > 1) {
+    if (decision.action === 'ambiguous-barcode') {
       toast('Two products share this barcode — pick the right one from the mix');
       return;
     }
@@ -5935,7 +5853,7 @@
           const result = payload.results[0];
           $('#qp-name').value = result.name;
           $('#qp-epa').value = result.epaRegNo;
-          $('#qp-ai').value = epaAiText(result);
+          $('#qp-ai').value = EpaRank.epaAiText(result);
           $('#qp-rup').checked = !!result.rup;
           $('#qp-company').value = result.company || '';
           toast(`Found: ${result.name} — review and Save & select`);
@@ -6037,10 +5955,6 @@
 
   // -------------------------------------------------------------- spray window forecast
   // Per-field caches. Never paint Field A's hours under Field B's name.
-
-  function scoreSprayHour(h, opts) {
-    return SprayWindow.scoreSprayHour(h, opts);
-  }
 
   let forecastSeq = 0;
   const forecastErrors = {};
@@ -6317,7 +6231,7 @@
       const t = new Date(h.time).getTime();
       return t <= end;
     }).map((h) => {
-      const { score } = scoreSprayHour(h);
+      const { score } = SprayWindow.scoreSprayHour(h);
       const hr = new Date(h.time).getHours();
       return `<button type="button" class="fc-block fc-block-quiet fc-${score}${stale ? ' fc-stale' : ''}"
         data-fc-open-details="1" aria-label="${esc(`${hr}:00 ${score}`)}"></button>`;
@@ -6361,7 +6275,7 @@
       const label = new Date(day + 'T12:00:00')
         .toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
       const blocks = hours.map((h) => {
-        const { score, reasons } = scoreSprayHour(h);
+        const { score, reasons } = SprayWindow.scoreSprayHour(h);
         const hr = new Date(h.time).getHours();
         const detail = `${label} ${hr}:00 — ${reasons.join('; ')} · ${fmtTempPair(h.temp)}, RH ${h.rh}%`
           + (h.source === 'hrrr' ? ' · HRRR' : h.source ? ` · ${h.source}` : '');

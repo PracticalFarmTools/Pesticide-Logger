@@ -59,6 +59,44 @@
     return document.contains(input);
   }
 
+  // Pure jug-scan decision. Never invents a product: unique library
+  // barcode or EPA only. DOM (toast, mix row, EPA fetch) stays in app.js.
+  function resolveJugFacts(facts, products) {
+    const list = Array.isArray(products) ? products : [];
+    const barcode = facts && facts.barcode;
+    const epaRegNo = facts && facts.epaRegNo;
+    if (barcode) {
+      const hits = list.filter((pr) => pr.barcode === barcode);
+      if (hits.length > 1) {
+        return { action: 'ambiguous-barcode', barcode, hits };
+      }
+      if (hits.length === 1) {
+        return { action: 'select', product: hits[0], barcode };
+      }
+    }
+    if (epaRegNo) {
+      const byEpa = list.filter((pr) => pr.epaRegNo === epaRegNo);
+      if (byEpa.length === 1) {
+        const product = byEpa[0];
+        return {
+          action: 'select',
+          product,
+          barcode,
+          epaRegNo,
+          linkBarcode: !!(barcode && !product.barcode)
+        };
+      }
+      return {
+        action: 'lookup-epa',
+        barcode: barcode || '',
+        epaRegNo,
+        activeIngredientGuess: (facts && facts.activeIngredientGuess) || ''
+      };
+    }
+    if (barcode) return { action: 'new-barcode', barcode };
+    return { action: 'empty' };
+  }
+
   const api = {
     BARCODE_FORMATS,
     JPEG_SRC_RE,
@@ -68,7 +106,8 @@
     stillPhotoScanRequired,
     fileFromInput,
     stopMediaStream,
-    inPageFileInputReady
+    inPageFileInputReady,
+    resolveJugFacts
   };
 
   if (typeof module !== 'undefined' && module.exports) {

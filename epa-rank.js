@@ -114,6 +114,15 @@
     return q.length >= 2 && !isEpaRegQuery(q);
   }
 
+  // Join PPLS active-ingredient rows for display. Never invents a name.
+  function epaAiText(result) {
+    return ((result && result.activeIngredients) || []).map((ai) =>
+      ai.percent == null || ai.percent === ''
+        ? ai.name
+        : `${ai.name} ${ai.percent}%`
+    ).filter(Boolean).join(', ');
+  }
+
   const api = {
     fold,
     tokens,
@@ -122,6 +131,7 @@
     rankEpaResults,
     libraryHits,
     needsNameSearchHint,
+    epaAiText,
     NAME_SEARCH_HINT,
     EPA_REG_PATTERN
   };

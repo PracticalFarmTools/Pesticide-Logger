@@ -49,5 +49,54 @@ check('perimeter of two identical points is zero', () => {
   assert.strictEqual(FieldMap.ringPerimeterM([{ lat: 44, lng: -70 }]), 0);
 });
 
+check('nearest vertex in pixel space snaps within the handle, not past it', () => {
+  const pts = [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 80 }];
+  const near = FieldMap.nearestVertexPx({ x: 6, y: 4 }, pts, 20);
+  assert.strictEqual(near.index, 0);
+  const miss = FieldMap.nearestVertexPx({ x: 40, y: 40 }, pts, 20);
+  assert.strictEqual(miss.index, -1);
+});
+
+check('tap on an edge inserts between its endpoints, not a new stray corner', () => {
+  const pts = [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 80 }];
+  const hit = FieldMap.nearestEdgePx({ x: 50, y: 4 }, pts, 16, false);
+  assert.strictEqual(hit.insertAt, 1);
+  assert.ok(hit.dist <= 16);
+  assert.ok(Math.abs(hit.x - 50) < 1);
+});
+
+check('tap near the first corner of a 3+ ring is a close, not another point', () => {
+  const pts = [{ x: 10, y: 10 }, { x: 80, y: 10 }, { x: 80, y: 70 }];
+  assert.strictEqual(FieldMap.shouldSnapClosePx({ x: 12, y: 14 }, pts, 24), true);
+  assert.strictEqual(FieldMap.shouldSnapClosePx({ x: 80, y: 70 }, [{ x: 10, y: 10 }, { x: 80, y: 10 }], 24), false);
+});
+
+check('Maine opens on Maine, not CONUS; CONUS start is a placeholder', () => {
+  const me = FieldMap.stateView('ME');
+  assert.ok(me.lat > 43 && me.lat < 48);
+  assert.ok(me.lng < -66 && me.lng > -72);
+  assert.ok(me.zoom >= 6);
+  assert.strictEqual(FieldMap.isPlaceholderView({ lat: 39.8, lng: -98.6, zoom: 4 }), true);
+  assert.strictEqual(FieldMap.isPlaceholderView({ lat: 44.08, lng: -69.52, zoom: 16 }), false);
+  assert.strictEqual(FieldMap.stateView('xx'), null);
+});
+
+check('ring paint: REI is terracotta, idle is muted sage', () => {
+  assert.strictEqual(FieldMap.ringStyle('rei').color, '#8b3a2a');
+  assert.strictEqual(FieldMap.ringStyle('phi').fillColor, '#c47b17');
+  assert.strictEqual(FieldMap.ringStyle('idle').color, '#4a6b50');
+});
+
+check('inspector SVG draws named rings without live tiles', () => {
+  const svg = FieldMap.ringsSvg([
+    { name: 'North block', boundary: [[44.1, -69.5], [44.1, -69.49], [44.11, -69.49], [44.11, -69.5]], labelExtra: 'Farm 12' }
+  ]);
+  assert.ok(svg.includes('<svg'));
+  assert.ok(svg.includes('North block'));
+  assert.ok(svg.includes('Farm 12'));
+  assert.ok(svg.includes('<path'));
+  assert.ok(!svg.includes('arcgisonline'));
+});
+
 if (failed) process.exit(1);
 console.log('\nAll field-map checks passed.');

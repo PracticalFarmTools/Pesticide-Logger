@@ -648,6 +648,7 @@
       '#verify-out{margin-left:.6rem;}' +
       '.shots{display:flex;flex-wrap:wrap;gap:.75rem;}' +
       '.shot img{max-width:220px;height:auto;border:1px solid #c5d2c8;}' +
+      '.outlines svg{width:100%;max-width:640px;height:auto;background:#fff;border:1px solid #c5d2c8;}' +
       '.sig-line{margin-top:28px;display:flex;gap:40px;}' +
       '.sig-line span{border-top:1px solid #000;padding-top:3px;flex:1;font-size:.85rem;}' +
       'footer{margin-top:1.5rem;border-top:1px solid #c5d2c8;padding-top:.75rem;}' +
@@ -790,6 +791,7 @@
       '</tr></thead><tbody>' +
       (rows || '<tr><td colspan="11">No records in this packet.</td></tr>') +
       '</tbody></table>' +
+      fieldOutlinesHtml(opts.fields) +
       (notes ? '<h2>Notes</h2>' + notes : '') +
       (photoHtml ? ('<h2>Photos</h2><div class="shots">' + photoHtml + '</div>') : '') +
       '<div class="sig-line"><span>Certified applicator signature / date</span><span>Reviewed by / date</span></div>' +
@@ -812,7 +814,8 @@
     const inner = inspectPacketInnerHtml(payload, {
       photos: photos,
       mark: mark,
-      showVerify: true
+      showVerify: true,
+      fields: opts.fields
     });
     const packJson = JSON.stringify({
       payload: payload,
@@ -902,6 +905,42 @@
         .map(nameKey)
         .filter(Boolean)
     );
+  }
+
+  function latestOnField(apps, fieldId) {
+    const fid = norm(fieldId);
+    if (!fid) return null;
+    const list = (apps || []).filter((a) => a && !a.deletedAt && norm(a.fieldId) === fid);
+    list.sort((a, b) => {
+      const d = String(b.date || '').localeCompare(String(a.date || ''));
+      if (d) return d;
+      return String(b.endTime || b.startTime || '').localeCompare(String(a.endTime || a.startTime || ''));
+    });
+    return list[0] || null;
+  }
+
+  function fieldOutlineItems(fields) {
+    return (fields || []).filter((f) => f && Array.isArray(f.boundary) && f.boundary.length >= 3).map((f) => ({
+      name: f.name || 'Field',
+      boundary: f.boundary,
+      labelExtra: fsaLine(f) || ''
+    }));
+  }
+
+  function fieldOutlinesHtml(fields) {
+    const items = fieldOutlineItems(fields);
+    if (!items.length) return '';
+    let svg = '';
+    try {
+      const FM = (typeof FieldMap !== 'undefined') ? FieldMap : require('./field-map.js');
+      svg = FM.ringsSvg(items);
+    } catch (e) {
+      svg = '';
+    }
+    if (!svg) return '';
+    return '<h2>Mapped fields</h2>' +
+      '<p class="meta">Simple outlines from this device — not live satellite imagery, and not a legal survey.</p>' +
+      '<div class="outlines">' + svg + '</div>';
   }
 
   function lastOnField(apps, fieldId, products, opts) {
@@ -1009,6 +1048,9 @@
     recordMatchesQuery,
     recordIsIncomplete,
     lastOnField,
+    latestOnField,
+    fieldOutlineItems,
+    fieldOutlinesHtml,
     shouldShowGatherHint,
     shouldShowSendNag,
     reiBoardHtml,

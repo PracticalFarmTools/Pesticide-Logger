@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.9 — Practical Farm Tools
+/* Pesticide Logger v2.9.10 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -798,6 +798,7 @@
     renderDashboard();
     updateStorageUsage();
     updateCompliancePreview();
+    maybeZoomMapToFarm();
   }
 
   const CORE_LOG_FIELDS = new Set(Compliance.CORE_LOG_FIELDS);
@@ -3218,6 +3219,7 @@
       reshapeAppFormForState();
       updateCompliancePreview();
       renderDashboard();
+      maybeZoomMapToFarm();
       toast('Farm saved — add a field next');
     });
   }
@@ -3583,7 +3585,7 @@
       : '';
     $('#print-area').innerHTML = `
       <h1>Tank Mix Worksheet</h1>
-      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.9.9 (Practical Farm Tools)</p>
+      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger (Practical Farm Tools)</p>
       <table>
         <tr><th>Area treated</th><td>${fmtNum(c.area)} ${c.areaUnit === 'sqft' ? 'sq ft' : c.areaUnit === '1000sqft' ? '× 1,000 sq ft' : 'acres'} (${fmtNum(c.acres, 3)} ac)</td>
             <th>Spray volume</th><td>${fmtNum(c.gpa)} ${c.gpaUnit === 'gal_acre' ? 'gal/acre' : 'gal/1,000 sq ft'}</td></tr>
@@ -3931,7 +3933,7 @@
       format: 'pesticide-logger-state-pack',
       version: 5,
       generatedAt: new Date().toISOString(),
-      app: 'Pesticide Logger v2.9.9 — Practical Farm Tools',
+      app: 'Pesticide Logger — Practical Farm Tools',
       disclaimer: 'Completion means required fields are filled for this context — not a legal determination. Does not replace WPS duties or e-filing programs.',
       farm: {
         name: s.farmName || '',
@@ -4395,7 +4397,8 @@
         payload,
         signature,
         publicKeySpkiB64: data.meta.farmSign.publicKeySpkiB64,
-        photos: usedPhotos
+        photos: usedPhotos,
+        fields: data.fields
       });
       const stamp = new Date().toISOString().slice(0, 10);
       const farm = (data.settings.farmName || 'farm').replace(/[^\w]+/g, '-').slice(0, 40);
@@ -4617,6 +4620,9 @@
   // -------------------------------------------------------------- field mapper
 
   const MAPVIEW_KEY = 'pesticide-logger.mapview';
+  const VERTEX_SNAP_PX = 20;
+  const EDGE_SNAP_PX = 16;
+  const CLOSE_SNAP_PX = 24;
   let fieldMap = null;
   let baseSatellite, baseStreets, usingSatellite = true;
   let drawPoints = [];        // L.LatLng[] of the shape being drawn
@@ -4626,7 +4632,9 @@
   let pendingBoundary = null; // [[lat,lng],...] to store on the next field save
   let pendingWeatherPin = null; // { lat, lng, manual }
   let weatherPinMarker = null;
-  let mapClickMode = 'draw';
+  let mapClickMode = 'draw';  // 'draw' | 'pin' (pin is one-shot)
+  let addingCorners = true;   // empty-map taps add vertices only when on
+  let ignoreMapClickUntil = 0;
 
   const SQM_PER_ACRE = FieldMap.SQM_PER_ACRE;
 
@@ -4636,6 +4644,14 @@
 
   function ringPerimeterM(latlngs) {
     return FieldMap.ringPerimeterM(latlngs);
+  }
+
+  function mappedRings() {
+    return data.fields.filter((f) => f.boundary && f.boundary.length >= 3);
+  }
+
+  function suppressNextMapClick() {
+    ignoreMapClickUntil = Date.now() + 400;
   }
 
   function setPendingWeatherPin(lat, lng, manual) {
@@ -4654,34 +4670,31 @@
   function drawWeatherPinMarker() {
     if (!fieldMap || !pendingWeatherPin) return;
     if (weatherPinMarker) fieldMap.removeLayer(weatherPinMarker);
-    weatherPinMarker = L.circleMarker([pendingWeatherPin.lat, pendingWeatherPin.lng], {
-      radius: 9, color: '#ffffff', weight: 2, fillColor: '#c47b17', fillOpacity: 1,
-      pane: 'markerPane', interactive: true, bubblingMouseEvents: false
-    }).bindTooltip('Forecast pin', { className: 'field-poly-tooltip', sticky: true }).addTo(fieldMap);
-    enableWeatherPinDrag(weatherPinMarker);
-  }
-
-  function enableWeatherPinDrag(marker) {
-    let dragging = false;
-    marker.on('mousedown', (e) => {
-      dragging = true;
+    weatherPinMarker = L.marker([pendingWeatherPin.lat, pendingWeatherPin.lng], {
+      icon: L.divIcon({
+        className: 'map-forecast-pin',
+        html: '<span class="map-forecast-pin-dot" aria-hidden="true"></span>',
+        iconSize: [28, 36],
+        iconAnchor: [14, 32]
+      }),
+      draggable: true,
+      autoPan: false,
+      zIndexOffset: 900,
+      bubblingMouseEvents: false
+    }).bindTooltip('Forecast pin — drag to the block you spray', {
+      className: 'field-poly-tooltip', sticky: true
+    }).addTo(fieldMap);
+    weatherPinMarker.on('dragstart', () => {
+      suppressNextMapClick();
       fieldMap.dragging.disable();
-      L.DomEvent.stop(e);
-      const move = (ev) => {
-        if (!dragging) return;
-        marker.setLatLng(ev.latlng);
-        pendingWeatherPin = { lat: ev.latlng.lat, lng: ev.latlng.lng, manual: true };
-      };
-      const up = () => {
-        dragging = false;
-        fieldMap.dragging.enable();
-        fieldMap.off('mousemove', move);
-        fieldMap.off('mouseup', up);
-      };
-      fieldMap.on('mousemove', move);
-      fieldMap.on('mouseup', up);
     });
-    marker.on('click', (e) => L.DomEvent.stop(e));
+    weatherPinMarker.on('dragend', (e) => {
+      fieldMap.dragging.enable();
+      suppressNextMapClick();
+      const ll = e.target.getLatLng();
+      pendingWeatherPin = { lat: ll.lat, lng: ll.lng, manual: true };
+    });
+    weatherPinMarker.on('click', (e) => L.DomEvent.stop(e));
   }
 
   function initFieldMap() {
@@ -4689,16 +4702,11 @@
     if (fieldMap) {
       setTimeout(() => fieldMap.invalidateSize(), 50);
       if (pendingWeatherPin) drawWeatherPinMarker();
+      syncMapOfflineNote();
       return;
     }
 
-    let view = { lat: 39.8, lng: -98.6, zoom: 4 };
-    try {
-      const saved = JSON.parse(localStorage.getItem(MAPVIEW_KEY));
-      if (saved && isFinite(saved.lat)) view = saved;
-    } catch (e) { /* first run */ }
-
-    fieldMap = L.map('field-map', { zoomControl: true }).setView([view.lat, view.lng], view.zoom);
+    fieldMap = L.map('field-map', { zoomControl: true }).setView([39.8, -98.6], 4);
 
     baseSatellite = L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -4710,20 +4718,14 @@
 
     savedPolysLayer = L.layerGroup().addTo(fieldMap);
     renderFieldPolys();
+    applyFarmMapView();
 
-    fieldMap.on('click', (e) => {
-      if (mapClickMode === 'pin') {
-        setPendingWeatherPin(e.latlng.lat, e.latlng.lng, true);
-        mapClickMode = 'draw';
-        toast('Forecast pin set — drag it onto the block you actually spray');
-        updateDrawUI();
-        return;
-      }
-      addDrawPoint(e.latlng);
-    });
+    fieldMap.on('click', (e) => handleMapClick(e.latlng));
     fieldMap.on('moveend', () => {
       const c = fieldMap.getCenter();
-      localStorage.setItem(MAPVIEW_KEY, JSON.stringify({ lat: c.lat, lng: c.lng, zoom: fieldMap.getZoom() }));
+      const view = { lat: c.lat, lng: c.lng, zoom: fieldMap.getZoom() };
+      if (FieldMap.isPlaceholderView(view) && !mappedRings().length) return;
+      localStorage.setItem(MAPVIEW_KEY, JSON.stringify(view));
     });
 
     $('#map-locate').addEventListener('click', locateMe);
@@ -4732,21 +4734,75 @@
     $('#map-undo').addEventListener('click', undoDrawPoint);
     $('#map-clear').addEventListener('click', () => clearDrawing(true));
     $('#map-use').addEventListener('click', useShape);
-    if ($('#map-weather-pin')) {
-      $('#map-weather-pin').addEventListener('click', () => {
-        mapClickMode = 'pin';
-        toast('Tap the map to drop the forecast pin');
+    if ($('#map-add-corners')) {
+      $('#map-add-corners').addEventListener('click', () => {
+        addingCorners = !addingCorners;
+        if (addingCorners) mapClickMode = 'draw';
         updateDrawUI();
       });
     }
+    if ($('#map-weather-pin')) {
+      $('#map-weather-pin').addEventListener('click', () => {
+        mapClickMode = 'pin';
+        toast('Tap the map to drop the forecast pin — dragging it later will not add a corner');
+        updateDrawUI();
+      });
+    }
+    window.addEventListener('online', syncMapOfflineNote);
+    window.addEventListener('offline', syncMapOfflineNote);
+    syncMapOfflineNote();
 
     setTimeout(() => fieldMap.invalidateSize(), 50);
     syncWeatherPinButton();
+    updateDrawUI();
+  }
+
+  function applyFarmMapView() {
+    if (!fieldMap) return;
+    const rings = mappedRings();
+    if (rings.length) {
+      const bounds = L.latLngBounds([]);
+      rings.forEach((f) => f.boundary.forEach(([lat, lng]) => bounds.extend([lat, lng])));
+      if (bounds.isValid()) fieldMap.fitBounds(bounds, { padding: [30, 30], maxZoom: 17 });
+      return;
+    }
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(MAPVIEW_KEY)); } catch (e) { /* first run */ }
+    if (saved && !FieldMap.isPlaceholderView(saved)) {
+      fieldMap.setView([saved.lat, saved.lng], saved.zoom);
+      return;
+    }
+    const st = FieldMap.stateView(data.settings && data.settings.state);
+    if (st) {
+      fieldMap.setView([st.lat, st.lng], st.zoom);
+      return;
+    }
+    fieldMap.setView([39.8, -98.6], 4);
+  }
+
+  function maybeZoomMapToFarm() {
+    if (!fieldMap) return;
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(MAPVIEW_KEY)); } catch (e) { /* ignore */ }
+    if (saved && !FieldMap.isPlaceholderView(saved) && !mappedRings().length) {
+      // Grower already panned to a farm; don't yank them to the state centroid.
+      return;
+    }
+    if (saved && !FieldMap.isPlaceholderView(saved) && mappedRings().length) return;
+    applyFarmMapView();
+  }
+
+  function syncMapOfflineNote() {
+    const note = $('#map-offline-note');
+    const online = navigator.onLine !== false;
+    if (note) note.hidden = online;
+    const el = $('#field-map');
+    if (el) el.classList.toggle('map-offline', !online);
   }
 
   function fitAllFields() {
     if (!fieldMap) return;
-    const rings = data.fields.filter((f) => f.boundary && f.boundary.length >= 3);
+    const rings = mappedRings();
     if (rings.length < 2) return;
     const bounds = L.latLngBounds([]);
     rings.forEach((f) => f.boundary.forEach(([lat, lng]) => bounds.extend([lat, lng])));
@@ -4758,7 +4814,7 @@
     if (!btn) return;
     const n = typeof FarmScale !== 'undefined'
       ? FarmScale.mappedFieldCount(data.fields)
-      : data.fields.filter((f) => f.boundary && f.boundary.length >= 3).length;
+      : mappedRings().length;
     btn.hidden = typeof FarmScale !== 'undefined' ? !FarmScale.shouldShowFitAll(n) : n < 2;
   }
 
@@ -4777,43 +4833,102 @@
     else { fieldMap.removeLayer(baseSatellite); baseStreets.addTo(fieldMap); }
   }
 
-  function addDrawPoint(latlng) {
-    drawPoints.push(latlng);
-    const marker = L.circleMarker(latlng, {
-      radius: 7, color: '#ffffff', weight: 2, fillColor: '#2d6b38', fillOpacity: 1,
-      pane: 'markerPane', interactive: true, bubblingMouseEvents: false
-    }).addTo(fieldMap);
+  function drawPtsPx() {
+    return drawPoints.map((ll) => fieldMap.latLngToContainerPoint(ll));
+  }
 
-    // circleMarker has no built-in drag; implement with mouse/touch events.
-    const idx = drawMarkers.length;
-    enableVertexDrag(marker, idx);
-    drawMarkers.push(marker);
+  function handleMapClick(latlng) {
+    if (Date.now() < ignoreMapClickUntil) return;
+    if (mapClickMode === 'pin') {
+      setPendingWeatherPin(latlng.lat, latlng.lng, true);
+      mapClickMode = 'draw';
+      toast('Forecast pin set — drag the amber pin; it will not add a field corner');
+      updateDrawUI();
+      return;
+    }
+    const pt = fieldMap.latLngToContainerPoint(latlng);
+    const px = drawPtsPx();
+    if (FieldMap.shouldSnapClosePx(pt, px, CLOSE_SNAP_PX)) {
+      addingCorners = false;
+      toast('Shape closed — drag the green handles to tweak, then Use this shape');
+      updateDrawUI();
+      return;
+    }
+    const nearV = FieldMap.nearestVertexPx(pt, px, VERTEX_SNAP_PX);
+    if (nearV.index >= 0) return;
+    const closed = drawPoints.length >= 3;
+    const edge = FieldMap.nearestEdgePx(pt, px, EDGE_SNAP_PX, closed);
+    if (edge.insertAt >= 0) {
+      const ll = fieldMap.containerPointToLatLng(L.point(edge.x, edge.y));
+      insertDrawPoint(ll, edge.insertAt);
+      return;
+    }
+    if (!addingCorners) return;
+    addDrawPoint(latlng);
+  }
+
+  function vertexIcon(isFirst, n) {
+    return L.divIcon({
+      className: 'map-vertex' + (isFirst && n >= 3 ? ' map-vertex-close' : ''),
+      iconSize: [22, 22],
+      iconAnchor: [11, 11]
+    });
+  }
+
+  function addDrawPoint(latlng, atIndex) {
+    const idx = atIndex == null ? drawPoints.length : atIndex;
+    drawPoints.splice(idx, 0, latlng);
+    const marker = L.marker(latlng, {
+      icon: vertexIcon(false, 0),
+      draggable: true,
+      autoPan: false,
+      zIndexOffset: 700,
+      bubblingMouseEvents: false
+    }).addTo(fieldMap);
+    drawMarkers.splice(idx, 0, marker);
+    bindVertex(marker);
+    refreshVertexIcons();
     redrawShape();
   }
 
-  function enableVertexDrag(marker, idx) {
-    let dragging = false;
-    marker.on('mousedown', (e) => {
-      dragging = true;
-      fieldMap.dragging.disable();
-      L.DomEvent.stop(e);
-      const move = (ev) => {
-        if (!dragging) return;
-        marker.setLatLng(ev.latlng);
-        drawPoints[idx] = ev.latlng;
-        redrawShape();
-      };
-      const up = () => {
-        dragging = false;
-        fieldMap.dragging.enable();
-        fieldMap.off('mousemove', move);
-        fieldMap.off('mouseup', up);
-      };
-      fieldMap.on('mousemove', move);
-      fieldMap.on('mouseup', up);
+  function insertDrawPoint(latlng, atIndex) {
+    addDrawPoint(latlng, atIndex);
+  }
+
+  function refreshVertexIcons() {
+    drawMarkers.forEach((marker, idx) => {
+      marker.setIcon(vertexIcon(idx === 0, drawPoints.length));
     });
-    // A click on an existing vertex should not add a new point.
-    marker.on('click', (e) => L.DomEvent.stop(e));
+  }
+
+  function bindVertex(marker) {
+    marker.on('dragstart', () => {
+      suppressNextMapClick();
+      fieldMap.dragging.disable();
+    });
+    marker.on('drag', (e) => {
+      const idx = drawMarkers.indexOf(marker);
+      if (idx < 0) return;
+      drawPoints[idx] = e.target.getLatLng();
+      redrawShape();
+    });
+    marker.on('dragend', (e) => {
+      fieldMap.dragging.enable();
+      suppressNextMapClick();
+      const idx = drawMarkers.indexOf(marker);
+      if (idx < 0) return;
+      drawPoints[idx] = e.target.getLatLng();
+      redrawShape();
+    });
+    marker.on('click', (e) => {
+      L.DomEvent.stop(e);
+      const idx = drawMarkers.indexOf(marker);
+      if (idx === 0 && drawPoints.length >= 3) {
+        addingCorners = false;
+        toast('Shape closed — drag corners to tweak, then Use this shape');
+        updateDrawUI();
+      }
+    });
   }
 
   function redrawShape() {
@@ -4823,34 +4938,56 @@
         ? L.polygon(drawPoints, { color: '#f0d99a', weight: 3, fillColor: '#2d6b38', fillOpacity: 0.35 })
         : L.polyline(drawPoints, { color: '#f0d99a', weight: 3 }));
       drawPoly.addTo(fieldMap);
+      drawPoly.on('click', (e) => {
+        L.DomEvent.stop(e);
+        handleMapClick(e.latlng);
+      });
     }
     updateDrawUI();
   }
 
   function updateDrawUI() {
     const n = drawPoints.length;
-    $('#map-undo').disabled = n === 0;
-    $('#map-clear').disabled = n === 0;
-    $('#map-use').disabled = n < 3;
+    if ($('#map-undo')) $('#map-undo').disabled = n === 0;
+    if ($('#map-clear')) $('#map-clear').disabled = n === 0;
+    if ($('#map-use')) $('#map-use').disabled = n < 3;
+    const addBtn = $('#map-add-corners');
+    if (addBtn) {
+      addBtn.setAttribute('aria-pressed', addingCorners ? 'true' : 'false');
+      addBtn.classList.toggle('is-on', addingCorners);
+    }
+    const mapEl = $('#field-map');
+    if (mapEl) {
+      mapEl.classList.toggle('map-adding', addingCorners && mapClickMode !== 'pin');
+    }
     syncWeatherPinButton();
     const readout = $('#map-readout');
+    if (!readout) return;
+    if (mapClickMode === 'pin') {
+      readout.innerHTML = 'Tap the field to drop the forecast pin. Your phone’s location is not this field. Drag the amber pin later — it will not add a corner.';
+      return;
+    }
     if (n === 0) {
-      readout.innerHTML = mapClickMode === 'pin'
-        ? 'Tap the field to drop the forecast pin. Your phone’s location is not this field.'
-        : 'Tap the map to start drawing a field boundary.';
+      readout.innerHTML = addingCorners
+        ? 'Add corners is on — tap each corner. Drag a handle to move it. Drag the amber pin anytime without adding a point.'
+        : 'Add corners is off. Turn it on to drop points, or drag an existing handle / amber pin.';
     } else if (n < 3) {
-      readout.innerHTML = `${n} point${n === 1 ? '' : 's'} placed — need at least 3 to close a shape.`;
+      readout.innerHTML = `${n} corner${n === 1 ? '' : 's'} — need 3 to close. Drag a handle to move it instead of undoing.`;
     } else {
       const sqm = ringAreaSqm(drawPoints);
       const acres = sqm / SQM_PER_ACRE;
       const perim = ringPerimeterM(drawPoints);
       const zoomWarn = fieldMap.getZoom() < 15
         ? ` &nbsp;·&nbsp; <span class="zoom-warn">Zoom in closer for corner-level accuracy</span>` : '';
+      const hint = addingCorners
+        ? ' Tap the hollow first corner (or turn off Add corners) when the ring is right.'
+        : ' Drag handles to tweak. Tap a field line to insert a corner.';
       readout.innerHTML =
         `<strong>${fmtNum(acres, acres < 1 ? 3 : 2)} acres</strong>
          &nbsp;·&nbsp; ${fmtNum(sqm * 10.7639, 0)} sq ft
          &nbsp;·&nbsp; perimeter ${fmtNum(perim * 3.28084, 0)} ft
-         &nbsp;·&nbsp; ${n} corners${zoomWarn}`;
+         &nbsp;·&nbsp; ${n} corners${zoomWarn}
+         <span class="card-hint">${hint}</span>`;
     }
   }
 
@@ -4859,6 +4996,7 @@
     drawPoints.pop();
     const m = drawMarkers.pop();
     if (m) fieldMap.removeLayer(m);
+    refreshVertexIcons();
     redrawShape();
   }
 
@@ -4868,7 +5006,10 @@
     drawMarkers = [];
     if (drawPoly && fieldMap) fieldMap.removeLayer(drawPoly);
     drawPoly = null;
-    if (alsoPending) pendingBoundary = null;
+    if (alsoPending) {
+      pendingBoundary = null;
+      addingCorners = true;
+    }
     if (fieldMap) updateDrawUI();
     else syncWeatherPinButton();
   }
@@ -4887,14 +5028,16 @@
         : null;
       if (c) setPendingWeatherPin(c.lat, c.lng, false);
     }
+    addingCorners = false;
     $('#field-acres').value = Math.round(acres * 1000) / 1000;
     $('#field-unit').value = 'acres';
     if (!$('#field-location').value) {
       const c = drawPoints[0];
       $('#field-location').value = `GPS ${c.lat.toFixed(5)}, ${c.lng.toFixed(5)}`;
     }
-    toast(`Shape captured: ${fmtNum(acres, acres < 1 ? 3 : 2)} acres — now name and save the field below`);
+    toast(`Shape captured: ${fmtNum(acres, acres < 1 ? 3 : 2)} acres — name the field below`);
     syncWeatherPinButton();
+    updateDrawUI();
     $('#field-form').scrollIntoView({ behavior: 'smooth' });
     $('#field-name').focus();
   }
@@ -4909,25 +5052,88 @@
     if (hasShape && mapClickMode === 'pin') mapClickMode = 'draw';
   }
 
-  // Load an existing boundary into the editor so corners can be adjusted.
+  // Load an existing boundary into the editor so corners can be adjusted
+  // without dropping extra points on every tap.
   function loadBoundaryForEdit(boundary) {
     if (!fieldMap || !boundary || !boundary.length) return;
     clearDrawing(false);
     boundary.forEach(([lat, lng]) => addDrawPoint(L.latLng(lat, lng)));
     pendingBoundary = boundary.slice();
+    addingCorners = false;
+    updateDrawUI();
     fieldMap.fitBounds(L.latLngBounds(boundary), { padding: [30, 30] });
+    toast('Drag the green handles to move corners. Turn on Add corners or tap a field line to insert one.');
+  }
+
+  function fieldGlanceLine(f) {
+    if (typeof SprayWindow === 'undefined' || !SprayWindow.fieldPin || !SprayWindow.getCached) return '';
+    const pin = SprayWindow.fieldPin(f);
+    const entry = SprayWindow.getCached(forecastMem, f.id, pin);
+    if (!entry) return '';
+    const g = SprayWindow.glanceStatus(entry.hours, entry.fetchedAt, Date.now(), navigator.onLine);
+    if (!g || g.kind === 'empty') return '';
+    return 'Outlook: ' + g.word + (g.clause ? ' — ' + g.clause : '');
+  }
+
+  function fieldRingPaint(f) {
+    const last = (typeof FarmFile !== 'undefined' && FarmFile.latestOnField)
+      ? FarmFile.latestOnField(data.applications, f.id)
+      : null;
+    const nowMs = Date.now();
+    const acres = ringAreaSqm(f.boundary.map(([lat, lng]) => L.latLng(lat, lng))) / SQM_PER_ACRE;
+    const lines = [`${esc(f.name)} · ${fmtNum(acres, acres < 1 ? 3 : 2)} ac`];
+    let kind = 'idle';
+    if (last) {
+      const prod = (last.products || []).map((p) => p.productName).filter(Boolean).join(', ');
+      lines.push(`Last: ${esc(prod || 'spray')} ${esc(fmtDate(last.date))}`);
+      const rei = reiExpiry(last);
+      const phi = phiDate(last);
+      if (rei) {
+        if (rei.getTime() > nowMs) {
+          kind = 'rei';
+          lines.push('REI until ' + rei.toLocaleString(undefined, {
+            weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+          }));
+        } else {
+          lines.push('REI ended (from entered label hours)');
+        }
+      } else {
+        lines.push('REI not on file — label is the law');
+      }
+      if (phi) {
+        if (phi.getTime() > nowMs) {
+          if (kind !== 'rei') kind = 'phi';
+          lines.push('PHI wait until ' + phi.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
+        }
+      } else {
+        lines.push('PHI not on file');
+      }
+      if (kind === 'idle') kind = 'sprayed';
+    } else {
+      lines.push('No spray on file for this ring');
+    }
+    const glance = fieldGlanceLine(f);
+    if (glance) lines.push(esc(glance));
+    return { kind, tooltip: lines.join('<br>') };
   }
 
   function renderFieldPolys() {
     if (!savedPolysLayer) return;
     savedPolysLayer.clearLayers();
-    data.fields.filter(f => f.boundary && f.boundary.length >= 3).forEach(f => {
-      const acres = ringAreaSqm(f.boundary.map(([lat, lng]) => L.latLng(lat, lng))) / SQM_PER_ACRE;
-      const poly = L.polygon(f.boundary, {
-        color: '#2d6b38', weight: 2, fillColor: '#2d6b38', fillOpacity: 0.22
-      }).bindTooltip(`${esc(f.name)} · ${fmtNum(acres, acres < 1 ? 3 : 2)} ac`,
-        { className: 'field-poly-tooltip', sticky: true });
-      poly.on('click', (e) => { L.DomEvent.stop(e); editField(f.id); });
+    mappedRings().forEach((f) => {
+      const paint = fieldRingPaint(f);
+      const style = FieldMap.ringStyle(paint.kind);
+      const poly = L.polygon(f.boundary, style).bindTooltip(paint.tooltip, {
+        className: 'field-poly-tooltip', sticky: true
+      });
+      poly.on('click', (e) => {
+        L.DomEvent.stop(e);
+        if (addingCorners || mapClickMode === 'pin' || drawPoints.length) {
+          handleMapClick(e.latlng);
+          return;
+        }
+        editField(f.id);
+      });
       savedPolysLayer.addLayer(poly);
     });
     syncFitAllButton();

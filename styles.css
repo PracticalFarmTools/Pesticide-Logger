@@ -661,6 +661,12 @@ input:hover, select:hover, textarea:hover { border-color: var(--border-color-hov
   transition: var(--transition-smooth);
 }
 .btn-sm { font-size: 0.8rem; padding: 0.45rem 0.9rem; }
+.btn.is-on {
+  background-color: var(--primary-green);
+  color: var(--bg-white);
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 2px rgba(27, 67, 34, 0.2);
+}
 
 .btn-primary {
   background-color: var(--primary-green);
@@ -909,9 +915,11 @@ label.state-required-field {
   border-radius: 10px;
   border: 1px solid var(--border-color);
   background: var(--accent-sage-light);
-  cursor: crosshair;
+  cursor: grab;
   z-index: 1; /* keep Leaflet panes under the sticky tab bar */
 }
+#field-map.map-adding { cursor: crosshair; }
+#field-map.map-offline { filter: grayscale(0.35) saturate(0.7); }
 @media (max-width: 600px) { #field-map { height: 340px; } }
 
 .map-toolbar {
@@ -922,6 +930,78 @@ label.state-required-field {
   margin-bottom: 0.75rem;
 }
 .map-toolbar-spacer { flex: 1; }
+
+.map-offline-note {
+  margin: 0 0 0.55rem;
+  background: var(--warn-bg);
+  border: 1px solid rgba(201, 155, 29, 0.35);
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--warn);
+}
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 1rem;
+  margin-top: 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.map-legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.map-swatch {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 3px;
+  display: inline-block;
+  border: 1px solid rgba(15, 40, 20, 0.25);
+}
+.map-swatch-rei { background: #c45c3e; }
+.map-swatch-phi { background: #c47b17; }
+.map-swatch-sprayed { background: #2d6b38; }
+.map-swatch-idle { background: #6b8f72; }
+.map-swatch-pin { background: #c47b17; border-radius: 50%; box-shadow: 0 0 0 2px #fff; }
+
+.map-vertex {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  border-radius: 50%;
+  background: #2d6b38;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1px rgba(15, 40, 20, 0.35);
+  cursor: grab;
+}
+.map-vertex-close {
+  background: #fff;
+  border: 3px solid #2d6b38;
+  box-shadow: 0 0 0 2px #f0d99a;
+}
+#field-map .leaflet-div-icon.map-vertex {
+  background: #2d6b38;
+  border: 3px solid #fff;
+}
+#field-map .leaflet-div-icon.map-vertex-close {
+  background: #fff;
+  border: 3px solid #2d6b38;
+}
+#field-map .leaflet-div-icon.map-forecast-pin {
+  background: transparent;
+  border: none;
+}
+.map-forecast-pin-dot {
+  display: block;
+  width: 18px;
+  height: 18px;
+  margin: 2px auto 0;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: #c47b17;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(15, 40, 20, 0.35);
+}
 
 .map-readout {
   margin-top: 0.75rem;
@@ -943,6 +1023,9 @@ label.state-required-field {
   font-family: var(--font-title);
   font-weight: 700;
   font-size: 0.78rem;
+  white-space: normal;
+  max-width: 240px;
+  line-height: 1.35;
 }
 
 /* ---------- In-cab / touch helpers (v2.5) ---------- */

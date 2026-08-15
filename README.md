@@ -1,4 +1,4 @@
-# Pesticide Logger v2.9.9
+# Pesticide Logger v2.9.10
 
 **Offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite. Licensed software with
@@ -30,7 +30,7 @@ application at the repository root.
 | **REI / PHI tracking** | Label REI/PHI countdown for worker re-entry and harvest timing. |
 | **Tank mix calculator** | Area, tank size, spray volume, multi-product rates, printable W-A-L-E worksheet. |
 | **Live EPA product lookup** | Official EPA PPLS identity/status import when the host provides `/api/epa`. Name search ranks whole-word matches first so short queries are not trapped by a longer substring. USB, GitHub Pages, and local servers have no lookup — type the jug number or Scan label. Rates, REI, and PHI stay label-entered. |
-| **Field mapper** | Satellite corner tapping with geodesic acreage; boundaries stay local. **Fit all fields** when two or more rings exist. |
+| **Field mapper** | Satellite corner tapping with geodesic acreage; boundaries stay local. **Add corners** is a toggle so dragging a handle or the amber forecast pin does not drop extra points. Tap a field line to insert a corner; tap the first corner to close. Saved rings show last spray / REI / PHI. **Fit all fields** when two or more rings exist. First open zooms toward the farm state, not CONUS. |
 | **Farm scale** | Same app for two tunnels or 150 named sites. Search appears on Fields/Products at 8+ rows; long pickers get a type-filter; Spray Log can default to this season on a long history — **Show prior years** is there for every farm size that has older logs. Optional field groups only if you actually named two. |
 | **Weather auto-fill** | Open-Meteo fill for wind, temperature, sky/humidity at the field’s forecast pin (or GPS if you are logging on-site). |
 | **Inspection output** | Print/PDF, CSV, **state compliance pack** (JSON with citation, field matrix, due/copy status, audit history), a **signed inspector HTML packet** from Home when logs exist (opens without the app — a snapshot, not a lock on the live log), and a **certifier/buyer packet** for organic & GAP audits. Reports stay under More. |

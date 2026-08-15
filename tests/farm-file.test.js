@@ -492,6 +492,34 @@ await check('AND search still works on a 40-row orchard log', () => {
   assert.strictEqual(epa.length, 1);
 });
 
+await check('inspector packet draws named rings as SVG, not live tiles', async () => {
+  const payload = await FarmFile.buildInspectPayload({
+    farm: farm({ settings: { farmName: 'Oak', state: 'IA' } }),
+    records: [iaApp()],
+    photos: [],
+    ...packetOpts
+  });
+  const fields = [{
+    name: 'North block',
+    fsaFarm: '88',
+    fsaTract: '2',
+    fsaField: '1',
+    boundary: [[42.0, -93.5], [42.0, -93.49], [42.01, -93.49], [42.01, -93.5]]
+  }];
+  const html = FarmFile.inspectPacketInnerHtml(payload, { showVerify: false, fields: fields });
+  assert.ok(html.includes('Mapped fields'));
+  assert.ok(html.includes('not live satellite'));
+  assert.ok(html.includes('North block'));
+  assert.ok(html.includes('Farm 88'));
+  assert.ok(html.includes('<svg'));
+  assert.ok(!html.includes('arcgisonline'));
+  const last = FarmFile.latestOnField([
+    iaApp({ id: 'old', date: '2026-07-01' }),
+    iaApp({ id: 'new', date: '2026-08-02', endTime: '09:00' })
+  ], 'f1');
+  assert.strictEqual(last.id, 'new');
+});
+
 if (failed) {
   console.error(`\n${failed} farm-file check(s) failed.`);
   process.exit(1);

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* Regression checks for Pesticide Logger v2.5.2 — run: node tests/compliance.test.js */
+/* Regression checks for Pesticide Logger — run: node tests/compliance.test.js */
 'use strict';
 
 const fs = require('fs');
@@ -242,14 +242,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.10 + deadline/license wiring', () => {
+check('source files advertise v2.9.11 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.10'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.10'));
+  assert.ok(app.includes('v2.9.11'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.11'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-14'"));
-  assert.ok(!html.includes('v2.9.10'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.11'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="map-add-corners"'));
@@ -451,6 +451,9 @@ check('v2.7 features wired: forecast, photos, barcode, posting, import, i18n', (
   assert.ok(app.includes('function capturePhotoInto'), 'photo capture');
   assert.ok(app.includes('function sweepOrphanPhotos'), 'photo sweep');
   assert.ok(app.includes('function scanJugIntoMix'), 'barcode jug scan');
+  assert.ok(app.includes("addEventListener('click', scanJugIntoMix)"), 'Scan jug uses the named entry point');
+  assert.ok(!/\n  function mergeHistory\(/.test(app), 'gather merge lives in farm-file.js');
+  assert.ok(!/\n  function newerRecord\(/.test(app), 'newer-record lives in farm-file.js');
   assert.ok(app.includes('function printReiPosting'), 'posting sheet');
   assert.ok(app.includes('NO ENTRE'), 'bilingual posting');
   assert.ok(app.includes('function checkReminders'), 'reminders');

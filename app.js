@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.10 — Practical Farm Tools
+/* Pesticide Logger v2.9.11 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -783,7 +783,6 @@
   function applySettings() {
     const s = data.settings;
     $('#farm-name-display').textContent = s.farmName || '';
-    if ($('#setup-banner')) $('#setup-banner').hidden = true;
     if (!$('#app-applicator').value) $('#app-applicator').value = s.applicatorName;
     if (!$('#app-cert').value) $('#app-cert').value = s.certNumber;
     if (!$('#app-county').value) $('#app-county').value = s.county || '';
@@ -1123,12 +1122,12 @@
           · <span>Check again by:</span> <strong>${esc(lawFreshness(law).reviewBy || '—')}</strong>
           · <span>Matrix edition:</span> <strong>${esc(typeof STATE_LAWS_RESEARCH_DATE !== 'undefined' ? STATE_LAWS_RESEARCH_DATE : '—')}</strong></p>
         ${typeof stateLawIsStale === 'function' && stateLawIsStale(law, now())
-          ? '<p class="state-law-stale" id="state-law-stale">This state\'s rules were last checked more than 12 months ago. Open the citation and compare. Reload the app if a newer edition has shipped. Source status does not change because a calendar moved.</p>'
+          ? `<p class="state-law-stale" id="state-law-stale">This state's rules were last checked more than 12 months ago. Open the citation and compare. Reload the app if a newer edition has shipped. Source status does not change because a calendar moved.</p>`
           : ''}
         ${applyMatrix
           ? `<p>Applicable required fields for ${esc(STATE_NAMES[code])} as a <strong>${esc(applicatorClassFor(ctx))}</strong> applicator (${req.length}):</p>
         <ul>${req.map(r => `<li>${esc(r.label)}</li>`).join('')}</ul>`
-          : '<p class="card-hint">This state\'s sources indicate no private-applicator recordkeeping duty — still follow the label and keep the operational core (date, crop, field, applicator, amount).</p>'}
+          : `<p class="card-hint">This state's sources indicate no private-applicator recordkeeping duty — still follow the label and keep the operational core (date, crop, field, applicator, amount).</p>`}
         ${law.notes ? `<p class="card-hint">${esc(law.notes)}</p>` : ''}
         <p class="card-hint">Completion means required fields are filled for this context — not a legal determination.
         This app does not file electronic reports (CA PUR, NY PRL, etc.) and does not replace WPS employer duties.</p>
@@ -4050,27 +4049,6 @@
     } catch (e) { /* user cancelled the share sheet */ }
   }
 
-  function mergeHistory(localHist, incomingHist) {
-    const map = new Map();
-    [...(localHist || []), ...(incomingHist || [])].forEach(h => {
-      if (!h || !h.at) return;
-      const key = h.at + '|' + ((h.snapshot && h.snapshot.updatedAt) || '');
-      if (!map.has(key)) map.set(key, h);
-    });
-    return Array.from(map.values())
-      .sort((a, b) => String(b.at).localeCompare(String(a.at)))
-      .slice(0, 25);
-  }
-
-  function newerRecord(a, b) {
-    const ta = a && a.updatedAt ? Date.parse(a.updatedAt) : 0;
-    const tb = b && b.updatedAt ? Date.parse(b.updatedAt) : 0;
-    if (ta !== tb) return ta >= tb ? a : b;
-    // Prefer non-deleted when timestamps tie.
-    if (!!a.deletedAt !== !!b.deletedAt) return a.deletedAt ? b : a;
-    return a;
-  }
-
   // Merge by id: keep newest updatedAt, union audit history, fill empty settings.
   function mergeData(incoming) {
     if (typeof FarmFile !== 'undefined' && FarmFile.mergeInto) {
@@ -5438,7 +5416,6 @@
   function liveBarcodeSupported() {
     return CameraScan.liveBarcodeSupported(window);
   }
-  function barcodeSupported() { return liveBarcodeSupported(); }
 
   function stopScanStream() {
     CameraScan.stopMediaStream(scanStream);
@@ -5590,10 +5567,6 @@
       return;
     }
     toast('Could not read a barcode or EPA number — type the EPA # from the jug, or search Products.');
-  }
-
-  function onJugBarcode(code) {
-    resolveJugScan({ barcode: code });
   }
 
   async function onJugLiveScan(code, frameCanvas) {
@@ -6043,9 +6016,7 @@
     if (jugLive) jugLive.hidden = !liveJug;
     if (jugPhoto) jugPhoto.hidden = liveJug;
     if (liveJug && jugLive) {
-      jugLive.addEventListener('click', () => openScanner((code, frame) => {
-        onJugLiveScan(code, frame);
-      }, { captureFrame: true }));
+      jugLive.addEventListener('click', scanJugIntoMix);
     }
     if (jugInput) {
       jugInput.addEventListener('change', async () => {

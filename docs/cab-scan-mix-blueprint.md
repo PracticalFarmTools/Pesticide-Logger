@@ -74,7 +74,7 @@ Code map (do not invent a second pipeline):
 
 - EPA proxy: `api/epa.js` (`normalize`, slice 25, no score).
 - EPA UI: `searchEpaProducts` / `renderEpaResults` / `importEpaProduct` in `app.js`.
-- Cab barcode: `scanJugIntoMix` → `onJugBarcode` (~5340).
+- Cab barcode: `scanJugIntoMix` → `onJugLiveScan` / `resolveJugScan` (library barcode, then EPA # from the panel).
 - Label+barcode: `captureAndReadLabel` (~5587); parser: `label-ocr.js`.
 - Mix rows: `addAppProductRow` (~2043). Calc rows: `addCalcRow` (~3312).
 - Tags: `index.html` legend `#req-brand_name` etc.; `reshapeAppFormForState`.

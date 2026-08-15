@@ -1026,6 +1026,27 @@ label.state-required-field {
   white-space: normal;
   max-width: 240px;
   line-height: 1.35;
+  background: #fff;
+  color: var(--primary-green-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  box-shadow: 0 4px 12px rgba(15, 40, 20, 0.12);
+}
+.leaflet-tooltip.field-pin-tooltip {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  background: #1b4322;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.35rem 0.65rem;
+  box-shadow: 0 4px 12px rgba(15, 40, 20, 0.2);
+}
+.leaflet-tooltip-top.field-pin-tooltip::before {
+  border-top-color: #1b4322;
 }
 
 /* ---------- In-cab / touch helpers (v2.5) ---------- */

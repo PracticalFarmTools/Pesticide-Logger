@@ -4681,8 +4681,8 @@
       autoPan: false,
       zIndexOffset: 900,
       bubblingMouseEvents: false
-    }).bindTooltip('Forecast pin — drag to the block you spray', {
-      className: 'field-poly-tooltip', sticky: true
+    }).bindTooltip('Forecast pin — drag anytime', {
+      className: 'field-pin-tooltip', direction: 'top', sticky: true, opacity: 1
     }).addTo(fieldMap);
     weatherPinMarker.on('dragstart', () => {
       suppressNextMapClick();

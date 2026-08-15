@@ -133,6 +133,47 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .logo-icon { width: 34px; height: 34px; color: #a8c8a8; flex-shrink: 0; }
 .logo-area h1 { font-size: 1.2rem; font-weight: 800; color: #e8f0e9; letter-spacing: -0.02em; }
 .header-sub { font-size: 0.72rem; color: var(--accent-sage); display: block; }
+.header-sub-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.12rem;
+}
+.header-update-btn {
+  appearance: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: #e8f0e9;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  font-family: var(--font-title);
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.2;
+  min-height: 1.7rem;
+  padding: 0.15rem 0.6rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.header-update-btn:hover { background: rgba(255, 255, 255, 0.2); }
+.header-update-btn:disabled { opacity: 0.7; cursor: wait; }
+.header-update-status {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--accent-sage-light);
+  max-height: 0;
+  margin: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: max-height 0.22s ease, opacity 0.2s ease, transform 0.22s ease, margin 0.22s ease;
+}
+.header-update-status.is-open {
+  max-height: 3.2rem;
+  margin-top: 0.22rem;
+  opacity: 1;
+  transform: translateY(0);
+}
 
 .header-right { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; justify-content: flex-end; }
 .header-lang { margin: 0; }
@@ -322,6 +363,22 @@ main {
   border: 1px solid var(--primary-green);
 }
 .log-section-nav-item.incomplete::before { background: var(--warn); border-color: var(--warn); }
+.log-section-nav-item.is-parked { opacity: 0.55; }
+.log-section-nav-item.is-open { border-color: var(--primary-green); }
+.log-section-parked { display: none; }
+.log-mode-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+}
+.log-mode-toggle .btn { flex: 1 1 0; }
+.mix-scan-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0.35rem 0 0.65rem;
+}
 #app-form fieldset { scroll-margin-top: calc(var(--tab-nav-h, 56px) + 52px); }
 
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }

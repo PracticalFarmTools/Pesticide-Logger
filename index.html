@@ -27,7 +27,11 @@
       </svg>
       <div>
         <h1>Pesticide Logger</h1>
-        <span class="header-sub">Practical Farm Tools</span>
+        <div class="header-sub-row">
+          <span class="header-sub">Practical Farm Tools</span>
+          <button type="button" class="header-update-btn" id="header-check-update">Check for updates</button>
+        </div>
+        <span class="header-update-status" id="header-update-status" role="status" aria-live="polite" hidden></span>
       </div>
     </div>
     <div class="header-right">
@@ -228,7 +232,7 @@
         <span class="stat-value" id="stat-incomplete">0</span>
         <span class="stat-label">Incomplete state records</span>
       </button>
-      <button type="button" class="stat-card" data-goto="products">
+      <button type="button" class="stat-card" id="stat-products-card" data-goto="products">
         <span class="stat-value" id="stat-products">0</span>
         <span class="stat-label">Products in library</span>
       </button>
@@ -300,20 +304,21 @@
 
   <!-- ============ SPRAY LOG ============ -->
   <section id="tab-log" class="tab-panel" role="tabpanel">
+    <div class="log-mode-toggle" role="group" aria-label="Spray log mode">
+      <button type="button" class="btn btn-primary btn-lg" id="log-mode-new" aria-pressed="true">Log this spray</button>
+      <button type="button" class="btn btn-secondary btn-lg" id="log-mode-history" aria-pressed="false">Past sprays</button>
+    </div>
+    <div id="log-new-pane">
     <div class="card">
       <h3 class="card-title" id="app-form-title">Log an application</h3>
       <p class="card-hint" id="app-form-hint">This spray log reshapes for your selected state and applicator class. Completion means required fields are filled — not a legal determination.</p>
       <div class="cab-toolbar">
         <button type="button" class="btn btn-primary btn-lg" id="app-spray-now">Spray now</button>
         <button type="button" class="btn btn-secondary btn-lg" id="app-duplicate-last">Duplicate last spray</button>
-        <button type="button" class="btn btn-secondary btn-lg" data-goto="calculator" id="app-open-tank-mix">Tank Mix</button>
-        <button type="button" class="btn btn-secondary btn-lg" id="app-scan-jug" hidden>Scan jug</button>
-        <label class="btn btn-secondary btn-lg camera-file-btn" id="app-scan-jug-photo" hidden>Scan jug
-          <input type="file" id="app-scan-jug-input" accept="image/*" capture="environment" aria-label="Scan jug barcode or label">
-        </label>
+        <button type="button" class="text-btn" data-goto="calculator" id="app-open-tank-mix">Tank Mix</button>
         <label class="checkbox-label cab-toggle">
           <input type="checkbox" id="app-show-recommended">
-          Show recommended extras
+          Show extra boxes
         </label>
       </div>
       <div id="recent-products" class="recent-products" hidden></div>
@@ -376,7 +381,7 @@
         <fieldset data-log-section="products">
           <legend>Products applied (tank mix) <span class="req-star">*</span></legend>
           <p class="card-hint" id="app-mix-state-req" hidden></p>
-          <p class="card-hint" id="app-mix-empty-hint">Scan the jug or add a product from your library.</p>
+          <p class="card-hint" id="app-mix-empty-hint">Scan the jug, or add from your library.</p>
           <div id="app-mix-req-tags" hidden>
             <span id="req-brand_name" class="state-req-tag" hidden>state</span>
             <span id="req-epa_reg_no" class="state-req-tag" hidden>state</span>
@@ -387,8 +392,14 @@
             <span id="req-phi_days" class="state-req-tag" hidden>state</span>
           </div>
           <input type="search" id="app-product-filter" class="select-filter" placeholder="Type to find a product…" hidden autocomplete="off">
+          <div class="mix-scan-row" id="app-mix-scan-row">
+            <button type="button" class="btn btn-secondary" id="app-scan-jug" hidden>Scan jug</button>
+            <label class="btn btn-secondary camera-file-btn" id="app-scan-jug-photo" hidden>Scan jug
+              <input type="file" id="app-scan-jug-input" accept="image/*" capture="environment" aria-label="Scan jug barcode or label">
+            </label>
+            <button type="button" class="btn btn-secondary" id="app-add-product">+ Add another product to this mix</button>
+          </div>
           <div id="app-products"></div>
-          <button type="button" class="btn btn-secondary" id="app-add-product">+ Add another product to this mix</button>
           <div id="app-product-info" class="product-info-strip" hidden></div>
           <button type="button" class="text-btn" id="app-last-on-field" hidden></button>
         </fieldset>
@@ -601,7 +612,9 @@
         </div>
       </form>
     </div>
+    </div>
 
+    <div id="log-history-pane" hidden>
     <div class="card" id="app-history-card">
       <div class="card-title-row">
         <h3 class="card-title">Application history</h3>
@@ -616,6 +629,7 @@
         </div>
       </div>
       <div id="app-list"></div>
+    </div>
     </div>
   </section>
 
@@ -668,30 +682,20 @@
       <div class="form-actions">
         <button type="button" class="btn btn-primary" id="calc-run">Calculate mix</button>
         <button type="button" class="btn btn-secondary" id="calc-print" hidden>Print mix worksheet</button>
+        <button type="button" class="btn btn-secondary" id="calc-copy-to-log" hidden>Copy these amounts onto the open spray log</button>
       </div>
     </div>
   </section>
 
   <!-- ============ PRODUCTS ============ -->
   <section id="tab-products" class="tab-panel" role="tabpanel">
-    <div class="card epa-lookup-card">
+    <div class="card">
       <div class="card-title-row">
-        <div>
-          <h3 class="card-title">Official EPA product lookup</h3>
-          <p class="card-hint">Search the official EPA Pesticide Product Label System when this host provides it. USB, GitHub Pages, and local servers have no lookup — type the EPA number from the jug or Scan label. EPA does not supply crop-specific rates, REI, or PHI.</p>
-        </div>
-        <button type="button" class="btn btn-secondary btn-sm" id="epa-verify-all">Verify my library</button>
+        <h3 class="card-title">Product library</h3>
+        <input type="search" id="product-search" class="search-input" placeholder="Search products…" hidden autocomplete="off">
       </div>
-      <form id="epa-search-form" class="epa-search-row" role="search">
-        <input type="search" id="epa-search-input" placeholder="Product name or EPA Reg. No. (for example: Entrust or 62719-621)" minlength="2" maxlength="100" required>
-        <button type="submit" class="btn btn-primary">Search EPA</button>
-      </form>
-      <p class="card-hint epa-lookup-note">When lookup works, EPA verifies identity, registration status, active ingredients, RUP, signal word, and label documents. Copy rates, REI, and PHI from the current label. The label is the law.</p>
-      <p class="card-hint" id="epa-search-hint" hidden>Short names match many EPA records. Whole-word names are listed first. If this is not your jug, type more of the name or the EPA registration number from the label.</p>
-      <div id="epa-search-status" class="epa-search-status" role="status"></div>
-      <div id="epa-search-results" class="epa-search-results"></div>
+      <div id="product-list"></div>
     </div>
-
     <div class="card">
       <h3 class="card-title" id="product-form-title">Add a product</h3>
       <p class="card-hint">Copy REI, PHI, and rates straight from the product label. The label is the law — this tool never overrides it.</p>
@@ -804,43 +808,36 @@
         </div>
       </form>
     </div>
-    <div class="card">
+    <div class="card epa-lookup-card">
       <div class="card-title-row">
-        <h3 class="card-title">Product library</h3>
-        <input type="search" id="product-search" class="search-input" placeholder="Search products…" hidden autocomplete="off">
+        <div>
+          <h3 class="card-title">Official EPA product lookup</h3>
+          <p class="card-hint">Search the official EPA Pesticide Product Label System when this host provides it. USB, GitHub Pages, and local servers have no lookup — type the EPA number from the jug or Scan label. EPA does not supply crop-specific rates, REI, or PHI.</p>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" id="epa-verify-all">Verify my library</button>
       </div>
-      <div id="product-list"></div>
+      <form id="epa-search-form" class="epa-search-row" role="search">
+        <input type="search" id="epa-search-input" placeholder="Product name or EPA Reg. No. (for example: Entrust or 62719-621)" minlength="2" maxlength="100" required>
+        <button type="submit" class="btn btn-primary">Search EPA</button>
+      </form>
+      <p class="card-hint epa-lookup-note">When lookup works, EPA verifies identity, registration status, active ingredients, RUP, signal word, and label documents. Copy rates, REI, and PHI from the current label. The label is the law.</p>
+      <p class="card-hint" id="epa-search-hint" hidden>Short names match many EPA records. Whole-word names are listed first. If this is not your jug, type more of the name or the EPA registration number from the label.</p>
+      <div id="epa-search-status" class="epa-search-status" role="status"></div>
+      <div id="epa-search-results" class="epa-search-results"></div>
     </div>
+
   </section>
 
   <!-- ============ FIELDS ============ -->
   <section id="tab-fields" class="tab-panel" role="tabpanel">
-    <div class="card map-card">
-      <h3 class="card-title">Field mapper — draw your acreage</h3>
-      <p class="card-hint">Zoom to your farm (or tap My location). Turn on Add corners to drop points — drag a green handle to move a corner instead of erasing. Tap a field line to insert a corner. Tap the first corner or turn off Add corners when the ring is right, then Use this shape. The amber pin is the forecast spot; drag it anytime without adding a corner. Set forecast pin is only for sites with no drawn boundary.</p>
-      <div class="map-toolbar">
-        <button type="button" class="btn btn-secondary btn-sm" id="map-locate">My location</button>
-        <button type="button" class="btn btn-secondary btn-sm" id="map-fit-all" hidden>Fit all fields</button>
-        <button type="button" class="btn btn-secondary btn-sm" id="map-basemap">Satellite / streets</button>
-        <button type="button" class="btn btn-secondary btn-sm" id="map-weather-pin">Set forecast pin</button>
-        <span class="map-toolbar-spacer"></span>
-        <button type="button" class="btn btn-secondary btn-sm is-on" id="map-add-corners" aria-pressed="true">Add corners</button>
-        <button type="button" class="btn btn-secondary btn-sm" id="map-undo" disabled>Undo point</button>
-        <button type="button" class="btn btn-secondary btn-sm" id="map-clear" disabled>Clear</button>
-        <button type="button" class="btn btn-primary btn-sm" id="map-use" disabled>Use this shape</button>
+    <div class="card">
+      <div class="card-title-row">
+        <h3 class="card-title">Fields &amp; sites</h3>
+        <input type="search" id="field-search" class="search-input" placeholder="Search fields…" hidden autocomplete="off">
       </div>
-      <p class="map-offline-note" id="map-offline-note" hidden>Imagery needs a network. Drawn boundaries stay on this device.</p>
-      <div id="field-map" class="map-adding" role="application" aria-label="Field boundary drawing map"></div>
-      <div class="map-legend" id="map-legend">
-        <span><i class="map-swatch map-swatch-rei"></i> REI</span>
-        <span><i class="map-swatch map-swatch-phi"></i> PHI wait</span>
-        <span><i class="map-swatch map-swatch-sprayed"></i> Last spray</span>
-        <span><i class="map-swatch map-swatch-idle"></i> No spray on file</span>
-        <span><i class="map-swatch map-swatch-pin"></i> Forecast pin</span>
-      </div>
-      <div class="map-readout" id="map-readout">Add corners is on — tap each corner. Drag a handle to move it; drag the amber pin anytime without adding a point.</div>
+      <div id="field-group-chips" class="group-chips" hidden></div>
+      <div id="field-list"></div>
     </div>
-
     <div class="card">
       <h3 class="card-title" id="field-form-title">Add a field / site</h3>
       <form id="field-form" class="form-grid" autocomplete="off">
@@ -890,14 +887,32 @@
         </div>
       </form>
     </div>
-    <div class="card">
-      <div class="card-title-row">
-        <h3 class="card-title">Fields &amp; sites</h3>
-        <input type="search" id="field-search" class="search-input" placeholder="Search fields…" hidden autocomplete="off">
+    <div class="card map-card">
+      <h3 class="card-title">Field mapper — draw your acreage</h3>
+      <p class="card-hint">Zoom to your farm (or tap My location). Turn on Add corners to drop points — drag a green handle to move a corner instead of erasing. Tap a field line to insert a corner. Tap the first corner or turn off Add corners when the ring is right, then Use this shape. The amber pin is the forecast spot; drag it anytime without adding a corner. Set forecast pin is only for sites with no drawn boundary.</p>
+      <div class="map-toolbar">
+        <button type="button" class="btn btn-secondary btn-sm" id="map-locate">My location</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="map-fit-all" hidden>Fit all fields</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="map-basemap">Satellite / streets</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="map-weather-pin">Set forecast pin</button>
+        <span class="map-toolbar-spacer"></span>
+        <button type="button" class="btn btn-secondary btn-sm" id="map-add-corners" aria-pressed="false">Add corners</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="map-undo" disabled>Undo point</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="map-clear" disabled>Clear</button>
+        <button type="button" class="btn btn-primary btn-sm" id="map-use" disabled>Use this shape</button>
       </div>
-      <div id="field-group-chips" class="group-chips" hidden></div>
-      <div id="field-list"></div>
+      <p class="map-offline-note" id="map-offline-note" hidden>Imagery needs a network. Drawn boundaries stay on this device.</p>
+      <div id="field-map" role="application" aria-label="Field boundary drawing map"></div>
+      <div class="map-legend" id="map-legend">
+        <span><i class="map-swatch map-swatch-rei"></i> REI</span>
+        <span><i class="map-swatch map-swatch-phi"></i> PHI wait</span>
+        <span><i class="map-swatch map-swatch-sprayed"></i> Last spray</span>
+        <span><i class="map-swatch map-swatch-idle"></i> No spray on file</span>
+        <span><i class="map-swatch map-swatch-pin"></i> Forecast pin</span>
+      </div>
+      <div class="map-readout" id="map-readout">Add corners is off — turn it on to drop points. Drag a handle to move a corner; drag the amber pin anytime without adding a point.</div>
     </div>
+
   </section>
 
   <!-- ============ REPORTS ============ -->
@@ -1071,7 +1086,7 @@
       <h3 class="card-title">State recordkeeping requirements</h3>
       <div id="state-info"></div>
       <div class="form-actions">
-        <button type="button" class="btn btn-secondary" id="state-laws-update-btn">Check for app update</button>
+        <button type="button" class="btn btn-secondary" id="state-laws-update-btn">Check for updates</button>
       </div>
       <p class="card-hint" id="state-laws-update-out"></p>
     </div>

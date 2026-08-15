@@ -86,6 +86,9 @@ check('tiny farm: no extra chrome', () => {
   assert.strictEqual(FS.shouldShowFitAll(FS.mappedFieldCount(tinyFields)), false);
   assert.strictEqual(FS.shouldShowPriorYearsControl(tinyApps, NOW), false);
   assert.strictEqual(FS.shouldShowGlanceRow('no', tinyFields.length, false), true);
+  assert.strictEqual(FS.shouldHideLibraryStat(tinyFields.length, tinyApps.length), true);
+  assert.strictEqual(FS.shouldHideLibraryStat(8, 5), false);
+  assert.strictEqual(FS.shouldHideLibraryStat(2, 20), false);
 });
 
 check('tiny farm with last year’s sprays can still review them', () => {

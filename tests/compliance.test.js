@@ -242,16 +242,18 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.12 + deadline/license wiring', () => {
+check('source files advertise v2.9.13 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.12'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.12'));
+  assert.ok(app.includes('v2.9.13'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.13'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-14'"));
-  assert.ok(!html.includes('v2.9.12'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.13'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
+  assert.ok(html.includes('id="header-check-update"'), 'Check for updates lives in the header');
+  assert.ok(html.includes('id="header-update-status"'));
   assert.ok(html.includes('id="map-add-corners"'));
   assert.ok(html.includes('id="map-offline-note"'));
   assert.ok(html.includes('deadline.js'));
@@ -360,6 +362,44 @@ check('cab chrome: Home, Spray Log, Products, Fields, and More', () => {
     'Home Inspector packet jumps to the Reports packet button');
   assert.ok(app.includes("$('#dash-inspect-packet').hidden = !(data.applications && data.applications.length)"),
     'Inspector packet hides until a spray exists');
+});
+
+check('cab UX: compact spray log, library-first lists, quieter home, calc copy, map default', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const i18n = require(path.join(root, 'i18n.js'));
+  assert.ok(html.includes('id="log-mode-new"') && html.includes('id="log-mode-history"'));
+  assert.ok(html.includes('id="log-new-pane"') && html.includes('id="log-history-pane"'));
+  assert.ok(html.includes('Show extra boxes'));
+  assert.ok(!html.includes('Show recommended extras'));
+  const logTab = html.split('id="tab-log"')[1].split('id="tab-calculator"')[0];
+  const scanAt = logTab.indexOf('id="app-scan-jug"');
+  const productsAt = logTab.indexOf('data-log-section="products"');
+  const toolbarAt = logTab.indexOf('class="cab-toolbar"');
+  assert.ok(scanAt > productsAt && productsAt > toolbarAt, 'Scan jug sits in the products fieldset, not the five-button row');
+  assert.ok(html.includes('Scan the jug, or add from your library.'));
+  assert.ok(/id="app-open-tank-mix"[^>]*class="text-btn"|class="text-btn"[^>]*id="app-open-tank-mix"/.test(html),
+    'Tank Mix is a text jump, not a primary cab button');
+  assert.ok(app.includes('function setLogMode') && app.includes('function updateLogSectionCollapse'));
+  assert.ok(app.includes('log-section-parked') || html.includes('log-section-parked') ||
+    fs.readFileSync(path.join(root, 'styles.css'), 'utf8').includes('.log-section-parked'));
+  const products = html.split('id="tab-products"')[1].split('id="tab-fields"')[0];
+  assert.ok(products.indexOf('Product library') < products.indexOf('id="product-form-title"'));
+  assert.ok(products.indexOf('id="product-form-title"') < products.indexOf('Official EPA product lookup'));
+  const fields = html.split('id="tab-fields"')[1].split('id="tab-reports"')[0];
+  assert.ok(fields.indexOf('Fields &amp; sites') < fields.indexOf('id="field-form-title"'));
+  assert.ok(fields.indexOf('id="field-form-title"') < fields.indexOf('Field mapper'));
+  assert.ok(html.includes('id="stat-products-card"'));
+  assert.ok(app.includes('FarmScale.shouldHideLibraryStat') || app.includes('shouldHideLibraryStat'));
+  assert.ok(html.includes('id="calc-copy-to-log"'));
+  assert.ok(app.includes('function copyCalcOntoLog'));
+  assert.ok(!/id="map-add-corners"[^>]*aria-pressed="true"/.test(html), 'Add corners does not start pressed');
+  assert.ok(!/id="field-map"[^>]*class="map-adding"/.test(html), 'map does not start in add-corners mode');
+  assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
+  assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
+  assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.13'"));
+  assert.ok(!html.includes('v2.9.13'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {

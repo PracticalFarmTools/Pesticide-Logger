@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.12 — Practical Farm Tools
+/* Pesticide Logger v2.9.13 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -576,7 +576,10 @@
     if (name === 'fields') initFieldMap();
   }
 
-  $$('.tab-btn[data-tab]').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+  $$('.tab-btn[data-tab]').forEach(b => b.addEventListener('click', () => {
+    if (b.dataset.tab === 'log') setLogMode('new');
+    showTab(b.dataset.tab);
+  }));
   if ($('#tab-more')) $('#tab-more').addEventListener('click', (e) => {
     e.stopPropagation();
     toggleMoreMenu();
@@ -595,6 +598,10 @@
         showTab('dashboard');
         focusFirstRunFarm();
         return;
+      }
+      if (goto.dataset.goto === 'log') {
+        const toHistory = goto.dataset.scrollTo === 'app-history-card' || goto.dataset.incompleteFilter;
+        setLogMode(toHistory ? 'history' : 'new');
       }
       showTab(goto.dataset.goto);
       if (goto.dataset.incompleteFilter) {
@@ -1018,7 +1025,7 @@
         ? ' Rules last checked more than 12 months ago — confirm with the citation. Source status does not change because a calendar moved.'
         : '';
       hint.innerHTML = stateName
-        ? `Showing the <strong>${esc(stateName)}</strong> / <strong>${esc(cls)}</strong> spray log: core fields + ${required.size} applicable required field(s)${$('#app-show-recommended') && $('#app-show-recommended').checked ? ' + recommended extras' : ''}.${verNote}${staleNote}`
+        ? `Showing the <strong>${esc(stateName)}</strong> / <strong>${esc(cls)}</strong> spray log: core fields + ${required.size} applicable required field(s)${$('#app-show-recommended') && $('#app-show-recommended').checked ? ' + extra boxes' : ''}.${verNote}${staleNote}`
         : 'Select your state in Settings — the spray log will reshape to that state’s required record fields instead of using one national form.';
     }
     if (summary) {
@@ -1037,6 +1044,7 @@
       title.textContent = stateName ? `Log an application — ${stateName}` : 'Log an application';
     }
     syncMixStateChrome();
+    updateLogSectionCollapse();
   }
 
   function lawFreshness(law) {
@@ -1130,6 +1138,7 @@
       status.textContent = 'Select your state in Settings to enable state-shaped recordkeeping checks.';
       missingBox.hidden = true;
       updateLogSectionNavDots([]);
+      updateLogSectionCollapse();
       return;
     }
     try {
@@ -1165,6 +1174,7 @@
       status.hidden = true;
       missingBox.hidden = true;
     }
+    updateLogSectionCollapse();
   }
 
   // Canonical compliance field name -> where to send focus. Most top-level
@@ -1182,6 +1192,7 @@
   };
 
   function focusProductsSection() {
+    revealLogSection('products');
     const section = document.querySelector('[data-log-section="products"]');
     if (!section) return;
     section.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1217,6 +1228,9 @@
   function focusMissingField(rawName) {
     const name = MISSING_FIELD_ALIASES[rawName] || rawName;
     if (!name) return;
+    setLogMode('new');
+    const sec = sectionForMissingField(name);
+    if (sec) revealLogSection(sec);
     if (name === 'state_select') { showTab('settings'); $('#set-state')?.focus(); return; }
     if (name === 'products') { focusProductsSection(); return; }
     if (PRODUCT_ROW_FIELD_CLASS[name]) { focusProductRowInput(name); return; }
@@ -1842,8 +1856,72 @@
   let appFormPhotoIds = [];
 
   // Sticky section-jump nav for the long spray-log form: click a chip to
-  // scroll to that fieldset; each chip's dot flips amber when that section
-  // still has an unresolved required field (see updateLogSectionNavDots()).
+  // open/park that fieldset (core and visible-required sections stay open);
+  // each chip's dot flips amber when that section still has an unresolved
+  // required field (see updateLogSectionNavDots()).
+  const LOG_CORE_SECTIONS = new Set(['where', 'products', 'when']);
+  let logMode = 'new';
+  let logPinnedSections = new Set();
+  let logForceExpand = false;
+
+  function setLogMode(mode) {
+    logMode = mode === 'history' ? 'history' : 'new';
+    const newPane = $('#log-new-pane');
+    const histPane = $('#log-history-pane');
+    if (newPane) newPane.hidden = logMode !== 'new';
+    if (histPane) histPane.hidden = logMode !== 'history';
+    const newBtn = $('#log-mode-new');
+    const histBtn = $('#log-mode-history');
+    if (newBtn) {
+      const on = logMode === 'new';
+      newBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      newBtn.classList.toggle('btn-primary', on);
+      newBtn.classList.toggle('btn-secondary', !on);
+    }
+    if (histBtn) {
+      const on = logMode === 'history';
+      histBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      histBtn.classList.toggle('btn-primary', on);
+      histBtn.classList.toggle('btn-secondary', !on);
+    }
+    if (logMode === 'history') renderAppList();
+  }
+
+  function sectionHasVisibleRequired(fs) {
+    if (!fs) return false;
+    return [...fs.querySelectorAll('label[data-log-field]')].some((l) => {
+      if (l.hidden) return false;
+      if (l.classList.contains('state-required-field')) return true;
+      const star = l.querySelector('.req-star');
+      return !!(star && !star.hidden);
+    });
+  }
+
+  function updateLogSectionCollapse() {
+    $$('#app-form fieldset[data-log-section]').forEach((fs) => {
+      const name = fs.dataset.logSection;
+      const expand = !!(logForceExpand
+        || LOG_CORE_SECTIONS.has(name)
+        || logPinnedSections.has(name)
+        || sectionHasVisibleRequired(fs));
+      fs.classList.toggle('log-section-parked', !expand);
+      const chip = document.querySelector(`.log-section-nav-item[data-jump-section="${name}"]`);
+      if (chip) {
+        chip.hidden = !!fs.hidden;
+        chip.classList.toggle('is-open', expand && !fs.hidden);
+        chip.classList.toggle('is-parked', !expand && !fs.hidden);
+      }
+    });
+  }
+
+  function revealLogSection(name) {
+    if (!name) return;
+    logPinnedSections.add(name);
+    const fs = document.querySelector(`[data-log-section="${name}"]`);
+    if (fs) fs.classList.remove('log-section-parked');
+    updateLogSectionCollapse();
+  }
+
   function initLogSectionNav() {
     const nav = $('#log-section-nav');
     if (!nav) return;
@@ -1856,8 +1934,16 @@
     nav.addEventListener('click', (e) => {
       const btn = e.target.closest('[data-jump-section]');
       if (!btn) return;
-      const section = document.querySelector(`[data-log-section="${btn.dataset.jumpSection}"]`);
-      if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const name = btn.dataset.jumpSection;
+      const section = document.querySelector(`[data-log-section="${name}"]`);
+      if (!section || section.hidden) return;
+      const parked = section.classList.contains('log-section-parked');
+      if (parked) logPinnedSections.add(name);
+      else if (!LOG_CORE_SECTIONS.has(name) && !sectionHasVisibleRequired(section)) {
+        logPinnedSections.delete(name);
+      }
+      updateLogSectionCollapse();
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }
 
@@ -1885,6 +1971,8 @@
   function initAppForm() {
     $('#app-date').value = new Date().toISOString().slice(0, 10);
     initLogSectionNav();
+    if ($('#log-mode-new')) $('#log-mode-new').addEventListener('click', () => setLogMode('new'));
+    if ($('#log-mode-history')) $('#log-mode-history').addEventListener('click', () => setLogMode('history'));
 
     if ($('#app-add-photo')) {
       $('#app-add-photo').addEventListener('click', () =>
@@ -2734,6 +2822,8 @@
     $('#app-form-title').textContent = 'Log an application';
     $('#app-save-btn').textContent = 'Save complete record';
     $('#app-cancel-btn').hidden = true;
+    logForceExpand = false;
+    logPinnedSections.clear();
     applyStateRequiredTags();
     updateCompliancePreview();
     renderDueBanner();
@@ -2808,6 +2898,9 @@
     $('#app-save-btn').textContent = 'Update complete record';
     $('#app-cancel-btn').hidden = false;
     updateLastOnFieldHint();
+    logForceExpand = true;
+    setLogMode('new');
+    updateLogSectionCollapse();
     showTab('log');
     $('#app-form').scrollIntoView({ behavior: 'smooth' });
   }
@@ -2998,6 +3091,7 @@
   }
 
   function sprayNow() {
+    setLogMode('new');
     resetAppForm();
     const d = new Date();
     $('#app-date').value = d.toISOString().slice(0, 10);
@@ -3183,6 +3277,12 @@
     const seasonApps = apps.filter(a => new Date(a.date + 'T12:00:00') >= seasonStart);
     $('#stat-season-apps').textContent = seasonApps.length;
     $('#stat-products').textContent = data.products.length;
+    if ($('#stat-products-card')) {
+      const quiet = typeof FarmScale !== 'undefined'
+        ? FarmScale.shouldHideLibraryStat((data.fields || []).length, (data.applications || []).length)
+        : ((data.fields || []).length < 8 && (data.applications || []).length < 20);
+      $('#stat-products-card').hidden = quiet;
+    }
     const incomplete = apps.filter(appIncomplete);
     if ($('#stat-incomplete')) {
       $('#stat-incomplete').textContent = incomplete.length;
@@ -3331,6 +3431,7 @@
     $('#calc-add-product').addEventListener('click', () => addCalcRow());
     $('#calc-run').addEventListener('click', runCalc);
     $('#calc-print').addEventListener('click', printCalcWorksheet);
+    if ($('#calc-copy-to-log')) $('#calc-copy-to-log').addEventListener('click', copyCalcOntoLog);
     addCalcRow({ quiet: true });
   }
 
@@ -3412,6 +3513,7 @@
       results.hidden = false;
       results.innerHTML = `<div class="calc-warning">Enter an area and a spray volume to calculate.</div>`;
       $('#calc-print').hidden = true;
+      if ($('#calc-copy-to-log')) $('#calc-copy-to-log').hidden = true;
       return;
     }
 
@@ -3429,12 +3531,14 @@
       const rate = parseFloat(row.querySelector('.calc-rate').value);
       const unit = row.querySelector('.calc-rate-unit').value;
       const per = row.querySelector('.calc-rate-per').value;
+      const sel = row.querySelector('.calc-prod-select');
+      const productId = sel && getProduct(sel.value) ? sel.value : '';
       const amt = MixCalc.productAmounts({
         rate, per, acres, gpaAcre, totalSpray, tank, partialGal
       });
       if (!amt) return;
       products.push({
-        name, unit, rate, per,
+        productId, name, unit, rate, per,
         total: amt.total,
         perTank: amt.perTank,
         perPartial: amt.perPartial
@@ -3445,6 +3549,7 @@
       results.hidden = false;
       results.innerHTML = `<div class="calc-warning">Add at least one product with a rate.</div>`;
       $('#calc-print').hidden = true;
+      if ($('#calc-copy-to-log')) $('#calc-copy-to-log').hidden = true;
       return;
     }
     if (tank <= 0) warn.push('No tank size entered — showing totals only.');
@@ -3484,7 +3589,45 @@
       <p class="card-hint" style="margin-top:0.75rem">Fill order: ¹⁄₂ tank of water → agitate → add products (follow label W-A-L-E order: wettables, agitate, liquids, emulsifiables) → top off with water.</p>`;
 
     $('#calc-print').hidden = false;
+    if ($('#calc-copy-to-log')) $('#calc-copy-to-log').hidden = false;
     lastCalc = { area, areaUnit, acres, tank, gpa, gpaUnit, totalSpray, fullTanks, partialGal, products };
+  }
+
+  function copyCalcOntoLog() {
+    if (!lastCalc) {
+      toast('Calculate a mix first');
+      return;
+    }
+    const rows = lastCalc.products || [];
+    const library = rows.filter(pr => pr.productId && getProduct(pr.productId));
+    const skipped = rows.length - library.length;
+    if (!library.length) {
+      toast('Add those products to your library before copying onto the spray log');
+      return;
+    }
+    setLogMode('new');
+    resetAppForm();
+    if ($('#app-area')) $('#app-area').value = lastCalc.area || '';
+    if ($('#app-area-unit')) $('#app-area-unit').value = lastCalc.areaUnit || 'acres';
+    if ($('#app-carrier') && lastCalc.totalSpray) $('#app-carrier').value = lastCalc.totalSpray;
+    if ($('#app-carrier-unit')) $('#app-carrier-unit').value = 'gal';
+    $('#app-products').innerHTML = '';
+    library.forEach(pr => {
+      addAppProductRow({
+        productId: pr.productId,
+        rate: pr.rate,
+        rateUnit: pr.unit,
+        total: pr.total,
+        totalUnit: pr.unit
+      });
+    });
+    updateMixInfo();
+    updateIntervalPreview();
+    updateCompliancePreview();
+    showTab('log');
+    let msg = `Copied ${library.length} product(s) onto the spray log`;
+    if (skipped) msg += `. Skipped ${skipped} mix row(s) not in your library`;
+    toast(msg);
   }
 
   function printCalcWorksheet() {
@@ -4537,7 +4680,7 @@
   let pendingWeatherPin = null; // { lat, lng, manual }
   let weatherPinMarker = null;
   let mapClickMode = 'draw';  // 'draw' | 'pin' (pin is one-shot)
-  let addingCorners = true;   // empty-map taps add vertices only when on
+  let addingCorners = false;  // empty-map taps add vertices only when on
   let ignoreMapClickUntil = 0;
 
   const SQM_PER_ACRE = FieldMap.SQM_PER_ACRE;
@@ -4655,6 +4798,8 @@
     window.addEventListener('online', syncMapOfflineNote);
     window.addEventListener('offline', syncMapOfflineNote);
     syncMapOfflineNote();
+
+    addingCorners = mappedRings().length === 0;
 
     setTimeout(() => fieldMap.invalidateSize(), 50);
     syncWeatherPinButton();
@@ -4912,7 +5057,7 @@
     drawPoly = null;
     if (alsoPending) {
       pendingBoundary = null;
-      addingCorners = true;
+      addingCorners = mappedRings().length === 0;
     }
     if (fieldMap) updateDrawUI();
     else syncWeatherPinButton();
@@ -6610,6 +6755,7 @@
     sync();
 
     $('#update-banner-reload')?.addEventListener('click', () => location.reload());
+    $('#header-check-update')?.addEventListener('click', checkForAppUpdate);
 
     if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       navigator.serviceWorker.register('sw.js')
@@ -6622,6 +6768,7 @@
               // app the browser already had open, not the very first install.
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                 showUpdateBanner();
+                setUpdateStatus(tr('A new version of Pesticide Logger is ready.'));
               }
             });
           });
@@ -6668,23 +6815,76 @@
     el.hidden = false;
   }
 
+  const APP_VERSION = 'v2.9.13';
+  let updateStatusHideTimer = 0;
+
+  function setUpdateStatus(msg, opts) {
+    const text = msg == null ? '' : String(msg);
+    const settingsOut = $('#state-laws-update-out');
+    if (settingsOut) settingsOut.textContent = text;
+    const status = $('#header-update-status');
+    if (status) {
+      status.textContent = text;
+      if (text) {
+        status.hidden = false;
+        requestAnimationFrame(() => status.classList.add('is-open'));
+      } else {
+        status.classList.remove('is-open');
+        setTimeout(() => {
+          if (status.classList.contains('is-open')) return;
+          status.hidden = true;
+        }, 240);
+      }
+    }
+    clearTimeout(updateStatusHideTimer);
+    if (text && opts && opts.autoHide) {
+      updateStatusHideTimer = setTimeout(() => setUpdateStatus(''), 5000);
+    }
+  }
+
   function checkForAppUpdate() {
-    const out = $('#state-laws-update-out');
-    const set = (msg) => { if (out) out.textContent = msg; };
-    if (!('serviceWorker' in navigator) || location.protocol === 'file:') {
-      set('Open this app over http:// to check for updates.');
+    const btn = $('#header-check-update');
+    const done = () => { if (btn) btn.disabled = false; };
+    if (btn) btn.disabled = true;
+
+    if (location.protocol === 'file:') {
+      setUpdateStatus(tr('Open this app over http:// to check for updates.'));
+      done();
       return;
     }
-    set('Checking for a newer edition…');
+    if (typeof navigator.onLine === 'boolean' && !navigator.onLine) {
+      setUpdateStatus(tr("You're offline. Updates need a connection.") + ' (' + APP_VERSION + ')');
+      done();
+      return;
+    }
+    if (!('serviceWorker' in navigator)) {
+      setUpdateStatus(tr('No service worker on this visit.'));
+      done();
+      return;
+    }
+
+    setUpdateStatus(tr('Checking for updates…'));
     navigator.serviceWorker.getRegistration().then((reg) => {
       if (!reg) {
-        set('No service worker on this visit.');
+        setUpdateStatus(tr('No service worker on this visit.'));
+        return;
+      }
+      if (reg.waiting && navigator.serviceWorker.controller) {
+        showUpdateBanner();
+        setUpdateStatus(tr('A new version of Pesticide Logger is ready.'));
         return;
       }
       return reg.update().then(() => {
-        set('If a newer edition is waiting, the Reload banner will appear. Source status does not change because a calendar moved.');
+        if (reg.waiting && navigator.serviceWorker.controller) {
+          showUpdateBanner();
+          setUpdateStatus(tr('A new version of Pesticide Logger is ready.'));
+          return;
+        }
+        setUpdateStatus(tr('This is the latest on this device.') + ' (' + APP_VERSION + ')', { autoHide: true });
       });
-    }).catch(() => set('Could not check for an update.'));
+    }).catch(() => {
+      setUpdateStatus(tr('Could not check for an update.'));
+    }).then(done, done);
   }
 
   // -------------------------------------------------------------- boot

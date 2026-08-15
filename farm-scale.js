@@ -12,6 +12,8 @@
   const SEASON_WINDOW_MIN_APPS = 40;
   const GLANCE_HIDE_NO_MIN = 6;
   const HISTORY_CAP = 25;
+  const QUIET_HOME_MAX_FIELDS = 8;
+  const QUIET_HOME_MAX_APPS = 20;
 
   // Audit snapshots keep the legal record, not photos or nested history.
   const HISTORY_SNAPSHOT_KEYS = [
@@ -276,6 +278,13 @@
     return JSON.stringify(obj == null ? {} : obj).length;
   }
 
+  // Home hides idle counts (library size, and similar non-jobs) on a small
+  // farm. Records, REI/PHI, windows, and Log stay visible.
+  function shouldHideLibraryStat(fieldCount, appCount) {
+    return Number(fieldCount) < QUIET_HOME_MAX_FIELDS
+      && Number(appCount) < QUIET_HOME_MAX_APPS;
+  }
+
   // A license or trial ending must never delete or rewrite spray logs.
   // The lock screen may hide logging chrome; records stay on the device
   // and stay reviewable / exportable.
@@ -291,6 +300,8 @@
     SEASON_WINDOW_MIN_APPS,
     GLANCE_HIDE_NO_MIN,
     HISTORY_CAP,
+    QUIET_HOME_MAX_FIELDS,
+    QUIET_HOME_MAX_APPS,
     HISTORY_SNAPSHOT_KEYS,
     haystackMatch,
     fieldSearchHaystack,
@@ -322,6 +333,7 @@
     stripForecastFromFarm,
     adoptForecastFromMeta,
     jsonBytes,
+    shouldHideLibraryStat,
     licenseEndPreservesRecords
   };
 

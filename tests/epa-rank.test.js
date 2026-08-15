@@ -70,6 +70,22 @@ check('type word in the query boosts matching names', () => {
   assert.strictEqual(ranked[0].name, 'CEASE FUNGICIDE');
 });
 
+check('Inactive exact names do not outrank an Active current jug', () => {
+  const ranked = rankEpaResults('Roundup', [
+    hit('ROUNDUP', { status: 'Inactive', cancelled: false, epaRegNo: 'AR840018' }),
+    hit('ROUNDUP POWERMAX', { status: 'Active', cancelled: false, epaRegNo: '524-549' })
+  ]);
+  assert.strictEqual(ranked[0].name, 'ROUNDUP POWERMAX');
+});
+
+check('Inactive STAR-prefix records lose to an Active whole-word STAR', () => {
+  const ranked = rankEpaResults('Star', [
+    hit('STAR .5% WARFARIN CONCENTRATED FORMULA "42"', { status: 'Inactive' }),
+    hit('STAR 650', { status: 'Active' })
+  ]);
+  assert.strictEqual(ranked[0].name, 'STAR 650');
+});
+
 check('Active whole-word outranks cancelled whole-word', () => {
   const ranked = rankEpaResults('Entrust', [
     hit('ENTRUST SC', { status: 'Cancelled', cancelled: true }),

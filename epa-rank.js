@@ -59,8 +59,12 @@
 
     if (qTokens[0] && nameTokens[0] === qTokens[0]) score += 120;
 
-    if (result && result.status === 'Active' && !result.cancelled) score += 50;
-    if (result && (result.cancelled || result.status === 'Cancelled')) score -= 80;
+    // PPLS uses Inactive for old labels far more often than Cancelled.
+    // A live "Roundup" / "Star" payload leads with Inactive exact names unless
+    // current Active jugs get a decisive lead.
+    const active = !!(result && result.status === 'Active' && !result.cancelled);
+    if (active) score += 50;
+    else score -= 500;
 
     TYPE_WORDS.forEach((tw) => {
       if (qTokens.includes(tw) && nameTokens.includes(tw)) score += 45;

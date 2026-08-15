@@ -114,6 +114,15 @@ python3 -m http.server 8000
 # open http://localhost:8000
 ```
 
+That static server has no `/api/epa`. Core logging still works; EPA name search
+shows the host-missing copy. To exercise live PPLS ranking locally:
+
+```bash
+node tools/dev-server.js
+# open http://localhost:8080
+node tools/live-epa-rank.js Cease Star Captan Roundup
+```
+
 ## Checks
 
 ```bash

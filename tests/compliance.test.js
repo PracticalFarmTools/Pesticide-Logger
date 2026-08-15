@@ -242,14 +242,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.7 + deadline/license wiring', () => {
+check('source files advertise v2.9.8 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.7'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.7'));
+  assert.ok(app.includes('v2.9.8'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.8'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-14'"));
-  assert.ok(html.includes('v2.9.7'));
+  assert.ok(html.includes('v2.9.8'));
   assert.ok(html.includes('deadline.js'));
   assert.ok(html.includes('license.js'));
   assert.ok(html.includes('farm-scale.js'));
@@ -348,6 +348,24 @@ check('cab chrome: Home, Spray Log, Products, Fields, and More', () => {
     'Home Inspector packet jumps to the Reports packet button');
   assert.ok(app.includes("$('#dash-inspect-packet').hidden = !(data.applications && data.applications.length)"),
     'Inspector packet hides until a spray exists');
+});
+
+check('header Check for updates slides status and asks the service worker', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  const i18n = require(path.join(root, 'i18n.js'));
+  assert.ok(html.includes('id="header-check-update"'), 'header button');
+  assert.ok(html.includes('id="header-update-status"'), 'slide-in status');
+  assert.ok(html.includes('class="header-sub-row"'), 'version + button share a row');
+  assert.ok(app.includes("$('#header-check-update')?.addEventListener('click', checkForAppUpdate)"));
+  assert.ok(app.includes('function setUpdateStatus'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.8'"));
+  assert.ok(app.includes('reg.update()'));
+  assert.ok(css.includes('.header-update-status.is-open'));
+  assert.strictEqual(i18n.ES['Check for updates'], 'Buscar actualizaciones');
+  assert.strictEqual(i18n.FR['This is the latest on this device.'], 'C’est la plus récente sur cet appareil.');
+  assert.notStrictEqual(i18n.t('pt-BR', "You're offline. Updates need a connection."), "You're offline. Updates need a connection.");
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {

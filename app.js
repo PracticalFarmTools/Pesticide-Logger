@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.7 — Practical Farm Tools
+/* Pesticide Logger v2.9.8 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -3486,7 +3486,7 @@
       : '';
     $('#print-area').innerHTML = `
       <h1>Tank Mix Worksheet</h1>
-      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.9.7 (Practical Farm Tools)</p>
+      <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger v2.9.8 (Practical Farm Tools)</p>
       <table>
         <tr><th>Area treated</th><td>${fmtNum(c.area)} ${c.areaUnit === 'sqft' ? 'sq ft' : c.areaUnit === '1000sqft' ? '× 1,000 sq ft' : 'acres'} (${fmtNum(c.acres, 3)} ac)</td>
             <th>Spray volume</th><td>${fmtNum(c.gpa)} ${c.gpaUnit === 'gal_acre' ? 'gal/acre' : 'gal/1,000 sq ft'}</td></tr>
@@ -3834,7 +3834,7 @@
       format: 'pesticide-logger-state-pack',
       version: 5,
       generatedAt: new Date().toISOString(),
-      app: 'Pesticide Logger v2.9.7 — Practical Farm Tools',
+      app: 'Pesticide Logger v2.9.8 — Practical Farm Tools',
       disclaimer: 'Completion means required fields are filled for this context — not a legal determination. Does not replace WPS duties or e-filing programs.',
       farm: {
         name: s.farmName || '',
@@ -6417,6 +6417,7 @@
     sync();
 
     $('#update-banner-reload')?.addEventListener('click', () => location.reload());
+    $('#header-check-update')?.addEventListener('click', checkForAppUpdate);
 
     if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       navigator.serviceWorker.register('sw.js')
@@ -6429,6 +6430,7 @@
               // app the browser already had open, not the very first install.
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                 showUpdateBanner();
+                setUpdateStatus(tr('A new version of Pesticide Logger is ready.'));
               }
             });
           });
@@ -6475,23 +6477,76 @@
     el.hidden = false;
   }
 
+  const APP_VERSION = 'v2.9.8';
+  let updateStatusHideTimer = 0;
+
+  function setUpdateStatus(msg, opts) {
+    const text = msg == null ? '' : String(msg);
+    const settingsOut = $('#state-laws-update-out');
+    if (settingsOut) settingsOut.textContent = text;
+    const status = $('#header-update-status');
+    if (status) {
+      status.textContent = text;
+      if (text) {
+        status.hidden = false;
+        requestAnimationFrame(() => status.classList.add('is-open'));
+      } else {
+        status.classList.remove('is-open');
+        setTimeout(() => {
+          if (status.classList.contains('is-open')) return;
+          status.hidden = true;
+        }, 240);
+      }
+    }
+    clearTimeout(updateStatusHideTimer);
+    if (text && opts && opts.autoHide) {
+      updateStatusHideTimer = setTimeout(() => setUpdateStatus(''), 5000);
+    }
+  }
+
   function checkForAppUpdate() {
-    const out = $('#state-laws-update-out');
-    const set = (msg) => { if (out) out.textContent = msg; };
-    if (!('serviceWorker' in navigator) || location.protocol === 'file:') {
-      set('Open this app over http:// to check for updates.');
+    const btn = $('#header-check-update');
+    const done = () => { if (btn) btn.disabled = false; };
+    if (btn) btn.disabled = true;
+
+    if (location.protocol === 'file:') {
+      setUpdateStatus(tr('Open this app over http:// to check for updates.'));
+      done();
       return;
     }
-    set('Checking for a newer edition…');
+    if (typeof navigator.onLine === 'boolean' && !navigator.onLine) {
+      setUpdateStatus(tr("You're offline. Updates need a connection.") + ' (' + APP_VERSION + ')');
+      done();
+      return;
+    }
+    if (!('serviceWorker' in navigator)) {
+      setUpdateStatus(tr('No service worker on this visit.'));
+      done();
+      return;
+    }
+
+    setUpdateStatus(tr('Checking for updates…'));
     navigator.serviceWorker.getRegistration().then((reg) => {
       if (!reg) {
-        set('No service worker on this visit.');
+        setUpdateStatus(tr('No service worker on this visit.'));
+        return;
+      }
+      if (reg.waiting && navigator.serviceWorker.controller) {
+        showUpdateBanner();
+        setUpdateStatus(tr('A new version of Pesticide Logger is ready.'));
         return;
       }
       return reg.update().then(() => {
-        set('If a newer edition is waiting, the Reload banner will appear. Source status does not change because a calendar moved.');
+        if (reg.waiting && navigator.serviceWorker.controller) {
+          showUpdateBanner();
+          setUpdateStatus(tr('A new version of Pesticide Logger is ready.'));
+          return;
+        }
+        setUpdateStatus(tr('This is the latest on this device.') + ' (' + APP_VERSION + ')', { autoHide: true });
       });
-    }).catch(() => set('Could not check for an update.'));
+    }).catch(() => {
+      setUpdateStatus(tr('Could not check for an update.'));
+    }).then(done, done);
   }
 
   // -------------------------------------------------------------- boot

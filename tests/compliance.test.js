@@ -777,6 +777,7 @@ check('lane-edge takes: mix label link, optional duration, last spray, customer 
   assert.ok(html.includes('id="app-show-duration"') && html.includes('id="app-duration-hint"'));
   assert.ok(!/id="app-show-duration"[^>]*checked/.test(html), 'duration stays off until asked');
   assert.ok(app.includes("SHOW_DURATION_KEY = 'pesticide-logger.showDuration'"));
+  assert.ok(app.includes('function applyDurationVisibility'));
   assert.ok(app.includes('never a ticking timer'));
   assert.ok(!/setInterval\([^)]*duration|setInterval\([^)]*Duration/.test(app));
   assert.ok(html.includes('list="customer-name-list"') && html.includes('id="customer-name-list"'));

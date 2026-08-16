@@ -1050,6 +1050,7 @@
     }
     syncMixStateChrome();
     updateLogSectionCollapse();
+    applyDurationVisibility();
   }
 
   function lawFreshness(law) {
@@ -3297,6 +3298,7 @@
     box.checked = showDurationPref();
     box.addEventListener('change', () => {
       persistShowDuration(box.checked);
+      reshapeAppFormForState();
       updateDurationHint();
     });
     updateDurationHint();
@@ -3304,6 +3306,7 @@
 
   // Hint from start/end only — never a ticking timer.
   function updateDurationHint() {
+    applyDurationVisibility();
     const hint = $('#app-duration-hint');
     const box = $('#app-show-duration');
     if (!hint) return;
@@ -3327,6 +3330,19 @@
       hint.hidden = true;
       hint.textContent = '';
     }
+  }
+
+  function applyDurationVisibility() {
+    const box = $('#app-show-duration');
+    const wrap = $('#app-show-duration-wrap');
+    if (wrap) wrap.hidden = false;
+    if (!box || !box.checked) return;
+    const endLabel = document.querySelector('#app-form [data-log-field="end_time"]');
+    if (!endLabel) return;
+    endLabel.hidden = false;
+    endLabel.querySelectorAll('input').forEach((el) => { el.disabled = false; });
+    const row = endLabel.closest('.form-row');
+    if (row) row.hidden = false;
   }
 
   function renderRecentProducts() {

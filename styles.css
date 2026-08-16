@@ -620,7 +620,7 @@ input:hover, select:hover, textarea:hover { border-color: var(--border-color-hov
   min-width: 1.35rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 .app-product-row .apr-label-link {
   font-size: 0.78rem;

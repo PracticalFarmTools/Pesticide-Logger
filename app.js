@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.17 — Practical Farm Tools
+/* Pesticide Logger v2.9.18 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -569,7 +569,10 @@
     }
     if (name === 'reports') renderReportFilters();
     if (name === 'calculator') refreshCalcProductOptions();
-    if (name === 'fields') initFieldMap();
+    if (name === 'fields') {
+      renderFields();
+      initFieldMap();
+    }
   }
 
   $$('.tab-btn[data-tab]').forEach(b => b.addEventListener('click', () => {
@@ -2231,6 +2234,7 @@
       const v = sel.value;
       fillSelect(sel, mixOpts, getProduct(v) ? v : '', $('#app-product-filter'));
     });
+    numberMixRows();
   }
 
   function renderFieldOptions() {
@@ -2925,6 +2929,8 @@
     resetAppForm();
     renderAppList();
     renderDashboard();
+    renderFields();
+    fillCustomerDatalist();
     updateStorageUsage();
     renderRecentProducts();
     if (asDraft || !result.complete) {
@@ -3067,6 +3073,8 @@
     save();
     renderAppList();
     renderDashboard();
+    renderFields();
+    fillCustomerDatalist();
     toast('Record moved to deleted (recoverable)');
   }
 
@@ -3079,6 +3087,8 @@
     save();
     renderAppList();
     renderDashboard();
+    renderFields();
+    fillCustomerDatalist();
     toast('Record restored');
   }
 
@@ -4486,21 +4496,22 @@
 
   function fillCrewDatalist() {
     const list = $('#crew-applicator-list');
-    if (!list) return;
-    const names = [];
-    const seen = new Set();
-    const crew = (typeof FarmFile !== 'undefined' && FarmFile.crewList)
-      ? FarmFile.crewList(data)
-      : (data.crew || []);
-    crew.forEach((c) => {
-      const n = (c.name || '').trim();
-      if (!n || seen.has(n.toLowerCase())) return;
-      seen.add(n.toLowerCase());
-      names.push(n);
-    });
-    const def = (data.settings && data.settings.applicatorName || '').trim();
-    if (def && !seen.has(def.toLowerCase())) names.unshift(def);
-    list.innerHTML = names.map((n) => `<option value="${esc(n)}"></option>`).join('');
+    if (list) {
+      const names = [];
+      const seen = new Set();
+      const crew = (typeof FarmFile !== 'undefined' && FarmFile.crewList)
+        ? FarmFile.crewList(data)
+        : (data.crew || []);
+      crew.forEach((c) => {
+        const n = (c.name || '').trim();
+        if (!n || seen.has(n.toLowerCase())) return;
+        seen.add(n.toLowerCase());
+        names.push(n);
+      });
+      const def = (data.settings && data.settings.applicatorName || '').trim();
+      if (def && !seen.has(def.toLowerCase())) names.unshift(def);
+      list.innerHTML = names.map((n) => `<option value="${esc(n)}"></option>`).join('');
+    }
     fillCustomerDatalist();
   }
 
@@ -7076,7 +7087,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.17';
+  const APP_VERSION = 'v2.9.18';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {

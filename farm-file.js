@@ -688,8 +688,8 @@
     const rows = (payload.records || []).map((a) => {
       const st = statusLabel(a);
       const stClass = st === 'Complete' ? '' : ' incomplete';
-      const products = (a.products || []).map((p) =>
-        esc(p.productName) + (p.rup ? ' <strong>(RUP)</strong>' : '') +
+      const products = (a.products || []).map((p, i) =>
+        esc(numberedMixName(p, i) || p.productName || '—') + (p.rup ? ' <strong>(RUP)</strong>' : '') +
         (p.epaRegNo ? ' — ' + esc(p.epaRegNo) : '') +
         (p.activeIngredient ? '<br><em>' + esc(p.activeIngredient) + '</em>' : '') +
         (p.lotNumber ? '<br><span class="hint">lot ' + esc(p.lotNumber) + '</span>' : '')
@@ -732,8 +732,10 @@
             esc([a.loggedBy ? ('logged by ' + a.loggedBy) : '', a.deviceLabel].filter(Boolean).join(' · ')) +
             '</span>'
           : '');
+      const dur = durationPhrase(a.startTime, a.endTime);
       const time = a.startTime
-        ? esc(a.startTime) + (a.endTime ? '–' + esc(a.endTime) : '')
+        ? esc(a.startTime) + (a.endTime ? '–' + esc(a.endTime) : '') +
+          (dur ? ' (' + esc(dur) + ')' : '')
         : '';
       return '<tr>' +
         '<td>' + esc(a.date) + (time ? '<br>' + time : '') +
@@ -919,6 +921,61 @@
     return list[0] || null;
   }
 
+  // Mix order is how the grower added products — not a chemistry recommendation.
+  function numberedMixName(p, index) {
+    const name = (p && (p.productName || p.name)) || '';
+    const n = Number(index);
+    if (!name) return '';
+    if (!Number.isFinite(n) || n < 0) return name;
+    return (n + 1) + '. ' + name;
+  }
+
+  function parseClockMinutes(raw) {
+    const s = String(raw || '').trim();
+    const m = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+    if (!m) return null;
+    const hh = Number(m[1]);
+    const mm = Number(m[2]);
+    if (hh > 23 || mm > 59) return null;
+    return hh * 60 + mm;
+  }
+
+  // Same-day start/end. If end is earlier, treat as overnight.
+  function durationMinutes(start, end) {
+    const a = parseClockMinutes(start);
+    const b = parseClockMinutes(end);
+    if (a == null || b == null) return null;
+    let d = b - a;
+    if (d < 0) d += 24 * 60;
+    return d;
+  }
+
+  function durationPhrase(start, end) {
+    const d = durationMinutes(start, end);
+    if (d == null) return '';
+    const h = Math.floor(d / 60);
+    const min = d % 60;
+    if (h && min) return h + ' h ' + min + ' min';
+    if (h) return h + ' h';
+    return min + ' min';
+  }
+
+  function distinctCustomerNames(apps) {
+    const names = [];
+    const seen = new Set();
+    (apps || []).forEach((a) => {
+      if (!a || a.deletedAt) return;
+      const n = String(a.customerName || '').trim();
+      if (!n) return;
+      const k = n.toLowerCase();
+      if (seen.has(k)) return;
+      seen.add(k);
+      names.push(n);
+    });
+    names.sort((x, y) => x.localeCompare(y));
+    return names;
+  }
+
   function fieldOutlineItems(fields) {
     return (fields || []).filter((f) => f && Array.isArray(f.boundary) && f.boundary.length >= 3).map((f) => ({
       name: f.name || 'Field',
@@ -1049,6 +1106,10 @@
     recordIsIncomplete,
     lastOnField,
     latestOnField,
+    numberedMixName,
+    durationMinutes,
+    durationPhrase,
+    distinctCustomerNames,
     fieldOutlineItems,
     fieldOutlinesHtml,
     shouldShowGatherHint,

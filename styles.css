@@ -606,6 +606,40 @@ input:hover, select:hover, textarea:hover { border-color: var(--border-color-hov
 
 .app-product-row { align-items: end; }
 .app-product-row .apr-remove { align-self: end; height: 38px; }
+.apr-chrome {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.45rem;
+}
+.apr-chrome-spacer { flex: 1; }
+.app-product-row .apr-order {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+.app-product-row .apr-label-link {
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+.app-product-row .apr-up,
+.app-product-row .apr-down {
+  min-width: 2.2rem;
+  padding-inline: 0.35rem;
+}
+.app-product-row .apr-up[hidden],
+.app-product-row .apr-down[hidden],
+.app-product-row .apr-label-link[hidden],
+#app-duration-hint[hidden],
+#app-mix-order-hint[hidden] {
+  display: none;
+}
+.field-last-spray { white-space: nowrap; }
+.field-last-spray .badge-pill { margin-left: 0.35rem; }
 #app-add-product, #calc-add-product {
   margin-top: 0.35rem;
   width: 100%;

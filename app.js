@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.15 — Practical Farm Tools
+/* Pesticide Logger v2.9.16 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -395,6 +395,7 @@
   }
 
   let toastTimer;
+  let backupNudgeTimer;
   function toast(msg) {
     const el = $('#toast');
     el.textContent = tr(msg);
@@ -969,6 +970,7 @@
     if (openBtn) openBtn.hidden = !law;
     $$('#app-products .app-product-row').forEach(syncMixRowTags);
     updateMixEmptyHint();
+    numberMixRows();
   }
 
   function applyStateRequiredTags() {
@@ -1861,18 +1863,32 @@
           <td>${f.size != null ? `${fmtNum(f.size)} ${f.sizeUnit === 'sqft' ? 'sq ft' : 'acres'}` : '—'}</td>
           <td>${esc(f.crop || '—')}</td>
           <td>${esc(f.location || '—')}</td>
+          <td class="field-last-spray">${fieldLastSprayHtml(f)}</td>
           <td class="row-actions">
             <button class="icon-btn" data-edit-field="${f.id}">Edit</button>
             <button class="icon-btn danger" data-del-field="${f.id}">Delete</button>
           </td>
         </tr>`).join('');
     host.innerHTML = `<div class="table-wrap"><table class="record-table">
-      <thead><tr><th>Field</th><th>Size</th><th>Usual crop</th><th>Location</th><th></th></tr></thead>
+      <thead><tr><th>Field</th><th>Size</th><th>Usual crop</th><th>Location</th><th>Last spray</th><th></th></tr></thead>
       <tbody>${rows}</tbody></table></div>`;
     host.querySelectorAll('[data-edit-field]').forEach(b =>
       b.addEventListener('click', () => editField(b.dataset.editField)));
     host.querySelectorAll('[data-del-field]').forEach(b =>
       b.addEventListener('click', () => deleteField(b.dataset.delField)));
+  }
+
+  function fieldLastSprayHtml(f) {
+    const last = (typeof FarmFile !== 'undefined' && FarmFile.latestOnField)
+      ? FarmFile.latestOnField(data.applications, f && f.id)
+      : null;
+    if (!last || !last.date) return '—';
+    let badge = '';
+    const rei = Compliance.reiExpiry(last);
+    if (rei && hoursLeft(rei) > 0) {
+      badge = ` <span class="badge-pill badge-rei">REI ${esc(fmtCountdown(hoursLeft(rei)))}</span>`;
+    }
+    return `${esc(last.date)}${badge}`;
   }
 
   // -------------------------------------------------------------- app form
@@ -2051,7 +2067,10 @@
     ['#app-area', '#app-area-unit', '#app-carrier']
       .forEach(sel => $(sel).addEventListener('input', computeMixTotals));
     ['#app-date', '#app-start', '#app-end']
-      .forEach(sel => $(sel).addEventListener('input', updateIntervalPreview));
+      .forEach(sel => $(sel).addEventListener('input', () => {
+        updateIntervalPreview();
+        updateDurationHint();
+      }));
 
     $('#app-add-product').addEventListener('click', () => {
       const row = addAppProductRow();
@@ -2124,6 +2143,7 @@
         renderDueBanner();
       });
     }
+    bindDurationToggle();
 
     addAppProductRow();
     renderAppList();
@@ -2233,6 +2253,13 @@
     const row = document.createElement('div');
     row.className = 'app-product-row';
     row.innerHTML = `
+      <div class="apr-chrome">
+        <span class="apr-order" aria-hidden="true">1</span>
+        <a class="epa-label-link apr-label-link" hidden target="_blank" rel="noopener">Official label ↗</a>
+        <span class="apr-chrome-spacer"></span>
+        <button type="button" class="icon-btn apr-up" hidden aria-label="Move product up">Up</button>
+        <button type="button" class="icon-btn apr-down" hidden aria-label="Move product down">Down</button>
+      </div>
       <div class="form-row form-row-4">
         <label>Product <span class="req-star">*</span><span class="apr-tag-product"></span>
           <select class="apr-product">${productOptionsHtml()}</select>
@@ -2278,9 +2305,12 @@
         updateCompliancePreview();
       });
     });
+    row.querySelector('.apr-up').addEventListener('click', () => moveMixRow(row, -1));
+    row.querySelector('.apr-down').addEventListener('click', () => moveMixRow(row, 1));
     row.querySelector('.apr-remove').addEventListener('click', () => {
       row.remove();
       if (!$('#app-products').children.length) addAppProductRow();
+      numberMixRows();
       updateMixInfo();
       updateIntervalPreview();
       updateCompliancePreview();
@@ -2304,8 +2334,57 @@
       // leave empty
     }
     syncMixRowTags(row);
+    numberMixRows();
     updateMixEmptyHint();
     return row;
+  }
+
+  function mixRows() {
+    return Array.from($$('#app-products .app-product-row'));
+  }
+
+  function numberMixRows() {
+    const rows = mixRows();
+    const many = rows.length > 1;
+    rows.forEach((row, i) => {
+      const order = row.querySelector('.apr-order');
+      if (order) order.textContent = String(i + 1);
+      const up = row.querySelector('.apr-up');
+      const down = row.querySelector('.apr-down');
+      if (up) up.hidden = !many || i === 0;
+      if (down) down.hidden = !many || i === rows.length - 1;
+      syncMixRowLabelLink(row);
+    });
+    const hint = $('#app-mix-order-hint');
+    if (hint) hint.hidden = rows.length < 2;
+  }
+
+  function syncMixRowLabelLink(row) {
+    const a = row.querySelector('.apr-label-link');
+    if (!a) return;
+    const sel = row.querySelector('.apr-product');
+    const p = getProduct(sel && sel.value);
+    const url = p && safeUrl(p.epaLabelUrl);
+    if (url) {
+      a.href = url;
+      a.hidden = false;
+    } else {
+      a.removeAttribute('href');
+      a.hidden = true;
+    }
+  }
+
+  function moveMixRow(row, dir) {
+    const host = $('#app-products');
+    if (!host) return;
+    const rows = mixRows();
+    const i = rows.indexOf(row);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= rows.length) return;
+    const other = rows[j];
+    if (dir < 0) host.insertBefore(row, other);
+    else host.insertBefore(other, row);
+    numberMixRows();
   }
 
   // Quick-add a product without leaving the spray log — same rationale as
@@ -2401,6 +2480,7 @@
     updateIntervalPreview();
     updateCompliancePreview();
     updateMixEmptyHint();
+    numberMixRows();
   }
 
   // Total for one mix row: label rate × area, or × carrier for water-based rates.
@@ -2850,6 +2930,7 @@
       toast('Saved — fields filled, but review warnings remain (intervals or dataset confidence)');
     } else {
       toast(idx >= 0 ? 'Record updated (required fields filled)' : 'Record saved (required fields filled)');
+      if (idx < 0 && backupDue()) nudgeShopBackup();
     }
   }
 
@@ -2875,6 +2956,7 @@
     if ($('#app-ground-speed')) $('#app-ground-speed').value = '';
     if ($('#app-buffer-distance')) $('#app-buffer-distance').value = '';
     if ($('#app-sensitive-sites')) $('#app-sensitive-sites').value = '';
+    restoreDurationPref();
     appFormPhotoIds = [];
     renderPhotoThumbs(appFormPhotoIds, $('#app-photo-thumbs'));
     $('#app-products').innerHTML = '';
@@ -2892,6 +2974,7 @@
     renderDueBanner();
     syncTempC();
     updateLastOnFieldHint();
+    updateDurationHint();
   }
 
   function editApp(id) {
@@ -2964,6 +3047,8 @@
     logForceExpand = true;
     setLogMode('new');
     updateLogSectionCollapse();
+    restoreDurationPref();
+    updateDurationHint();
     showTab('log');
     $('#app-form').scrollIntoView({ behavior: 'smooth' });
   }
@@ -3163,6 +3248,7 @@
     $('#app-start').value = `${hh}:${mm}`;
     showTab('log');
     $('#app-field').focus();
+    updateDurationHint();
     toast('Spray-now mode — date and start time set. Pick field and products.');
   }
 
@@ -3183,7 +3269,64 @@
     $('#app-save-btn').textContent = 'Save complete record';
     $('#app-cancel-btn').hidden = false;
     updateCompliancePreview();
+    updateDurationHint();
     toast('Duplicated last spray — update date/time, totals, and weather before saving');
+  }
+
+  const SHOW_DURATION_KEY = 'pesticide-logger.showDuration';
+
+  function showDurationPref() {
+    try { return localStorage.getItem(SHOW_DURATION_KEY) === '1'; }
+    catch (e) { return false; }
+  }
+
+  function persistShowDuration(on) {
+    try { localStorage.setItem(SHOW_DURATION_KEY, on ? '1' : '0'); }
+    catch (e) { /* ignore */ }
+  }
+
+  function restoreDurationPref() {
+    const box = $('#app-show-duration');
+    if (box) box.checked = showDurationPref();
+  }
+
+  function bindDurationToggle() {
+    const box = $('#app-show-duration');
+    if (!box || box.dataset.bound) return;
+    box.dataset.bound = '1';
+    box.checked = showDurationPref();
+    box.addEventListener('change', () => {
+      persistShowDuration(box.checked);
+      updateDurationHint();
+    });
+    updateDurationHint();
+  }
+
+  // Hint from start/end only — never a ticking timer.
+  function updateDurationHint() {
+    const hint = $('#app-duration-hint');
+    const box = $('#app-show-duration');
+    if (!hint) return;
+    if (!box || !box.checked) {
+      hint.hidden = true;
+      hint.textContent = '';
+      return;
+    }
+    const start = $('#app-start') ? $('#app-start').value : '';
+    const end = $('#app-end') ? $('#app-end').value : '';
+    const phrase = (typeof FarmFile !== 'undefined' && FarmFile.durationPhrase)
+      ? FarmFile.durationPhrase(start, end)
+      : '';
+    if (phrase) {
+      hint.hidden = false;
+      hint.textContent = tr('Duration: ') + phrase;
+    } else if (start) {
+      hint.hidden = false;
+      hint.textContent = tr('Start is set. Fill end when you finish.');
+    } else {
+      hint.hidden = true;
+      hint.textContent = '';
+    }
   }
 
   function renderRecentProducts() {
@@ -4340,6 +4483,16 @@
     const def = (data.settings && data.settings.applicatorName || '').trim();
     if (def && !seen.has(def.toLowerCase())) names.unshift(def);
     list.innerHTML = names.map((n) => `<option value="${esc(n)}"></option>`).join('');
+    fillCustomerDatalist();
+  }
+
+  function fillCustomerDatalist() {
+    const list = $('#customer-name-list');
+    if (!list) return;
+    const names = (typeof FarmFile !== 'undefined' && FarmFile.distinctCustomerNames)
+      ? FarmFile.distinctCustomerNames(data.applications)
+      : [];
+    list.innerHTML = names.map((n) => `<option value="${esc(n)}"></option>`).join('');
   }
 
   function renderCrew() {
@@ -4656,6 +4809,13 @@
     if (!m.lastBackupAt) return data.applications.length >= 3;
     return data.applications.some(a => (a.createdAt || '') > m.lastBackupAt) &&
       (Date.now() - new Date(m.lastBackupAt).getTime()) > 14 * 86400000;
+  }
+
+  function nudgeShopBackup() {
+    clearTimeout(backupNudgeTimer);
+    backupNudgeTimer = setTimeout(() => {
+      toast("Download a backup when you're back in the shop.");
+    }, 3400);
   }
 
   function renderBackupBanner() {
@@ -6898,7 +7058,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.15';
+  const APP_VERSION = 'v2.9.16';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {

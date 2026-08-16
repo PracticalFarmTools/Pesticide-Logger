@@ -374,6 +374,7 @@
           <legend>Products applied (tank mix) <span class="req-star">*</span></legend>
           <p class="card-hint" id="app-mix-state-req" hidden></p>
           <p class="card-hint" id="app-mix-empty-hint">Scan the jug, or add from your library.</p>
+          <p class="card-hint" id="app-mix-order-hint" hidden>This is the order you added them. Follow the label for W-A-L-E.</p>
           <div id="app-mix-req-tags" hidden>
             <span id="req-brand_name" class="state-req-tag" hidden>state</span>
             <span id="req-epa_reg_no" class="state-req-tag" hidden>state</span>
@@ -409,6 +410,11 @@
               <input type="time" id="app-end">
             </label>
           </div>
+          <label class="checkbox-label cab-toggle" id="app-show-duration-wrap">
+            <input type="checkbox" id="app-show-duration">
+            Show duration
+          </label>
+          <p class="card-hint" id="app-duration-hint" hidden></p>
         </fieldset>
 
         <fieldset data-log-section="volume">
@@ -547,7 +553,7 @@
           </div>
           <div class="form-row form-row-3">
             <label data-log-field="customer_name">Customer / for whom applied <span id="req-customer_name" class="state-req-tag" hidden>state</span>
-              <input type="text" id="app-customer" placeholder="Own farm or customer name">
+              <input type="text" id="app-customer" placeholder="Own farm or customer name" list="customer-name-list" autocomplete="off">
             </label>
             <label data-log-field="customer_address">Customer address <span id="req-customer_address" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-customer-address">
@@ -1356,7 +1362,8 @@
 </dialog>
 
 <input type="file" id="photo-attach-input" class="visually-hidden-file" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true">
-<datalist id="crew-applicator-list"></datalist>
+      <datalist id="crew-applicator-list"></datalist>
+      <datalist id="customer-name-list"></datalist>
 
 <dialog id="gather-dialog" class="app-dialog gather-dialog-box">
   <h3 id="gather-dialog-title">Logs brought in</h3>

@@ -520,6 +520,46 @@ await check('inspector packet draws named rings as SVG, not live tiles', async (
   assert.strictEqual(last.id, 'new');
 });
 
+await check('mix order, duration phrase, and customer names stay memory-only', () => {
+  assert.strictEqual(FarmFile.numberedMixName({ productName: 'Entrust' }, 0), '1. Entrust');
+  assert.strictEqual(FarmFile.numberedMixName({ name: 'Kocide' }, 1), '2. Kocide');
+  assert.strictEqual(FarmFile.durationPhrase('06:00', '07:12'), '1 h 12 min');
+  assert.strictEqual(FarmFile.durationPhrase('22:00', '01:30'), '3 h 30 min');
+  assert.strictEqual(FarmFile.durationPhrase('06:00', ''), '');
+  assert.deepStrictEqual(
+    FarmFile.distinctCustomerNames([
+      { customerName: 'Oak Farm' },
+      { customerName: 'oak farm' },
+      { customerName: '  ' },
+      { customerName: 'North', deletedAt: '2026-08-01T00:00:00.000Z' },
+      { customerName: 'West' }
+    ]),
+    ['Oak Farm', 'West']
+  );
+});
+
+await check('inspector packet numbers mix order and shows elapsed time, not live label URLs', async () => {
+  const rec = iaApp({
+    startTime: '06:00',
+    endTime: '07:12',
+    products: [
+      { productName: 'Entrust', epaRegNo: '62719-621', epaLabelUrl: 'https://www3.epa.gov/pesticides/chem_search/ppls/fake.pdf' },
+      { productName: 'Kocide', epaRegNo: '91411-7' }
+    ]
+  });
+  const payload = await FarmFile.buildInspectPayload({
+    farm: farm({ settings: { farmName: 'Oak', state: 'IA' } }),
+    records: [rec],
+    photos: [],
+    ...packetOpts
+  });
+  const html = FarmFile.inspectPacketInnerHtml(payload, { showVerify: false });
+  assert.ok(html.includes('1. Entrust'));
+  assert.ok(html.includes('2. Kocide'));
+  assert.ok(html.includes('1 h 12 min'));
+  assert.ok(!html.includes('epa.gov'), 'packet does not embed live EPA label URLs');
+});
+
 if (failed) {
   console.error(`\n${failed} farm-file check(s) failed.`);
   process.exit(1);

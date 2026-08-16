@@ -242,14 +242,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.15 + deadline/license wiring', () => {
+check('source files advertise v2.9.16 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.15'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.15'));
+  assert.ok(app.includes('v2.9.16'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.16'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-14'"));
-  assert.ok(!html.includes('v2.9.15'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.16'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for updates lives in the header');
@@ -414,8 +414,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.15'"));
-  assert.ok(!html.includes('v2.9.15'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.16'"));
+  assert.ok(!html.includes('v2.9.16'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -762,6 +762,32 @@ check('gather, inspector packet, crew, and kiosk stay optional and editable', ()
   assert.ok(app.includes('Keep both'), 'join defaults to keep both');
   assert.ok(farmFile.includes('the live log stays editable') || farmFile.includes('live log can still be edited') || farmFile.includes('still be edited'));
   assert.ok(!app.includes('Object.freeze'), 'records are not frozen');
+});
+
+check('lane-edge takes: mix label link, optional duration, last spray, customer memory, backup nudge', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const i18n = require(path.join(root, 'i18n.js'));
+  assert.ok(html.includes('id="app-mix-order-hint"'));
+  assert.ok(html.includes('Follow the label for W-A-L-E'));
+  assert.ok(app.includes('function numberMixRows') && app.includes('function syncMixRowLabelLink'));
+  assert.ok(app.includes('safeUrl(p.epaLabelUrl)'), 'mix-row label uses the library URL, not an invented match');
+  assert.ok(!/syncMixRowLabelLink[\s\S]{0,400}reiHours/.test(app.split('function syncMixRowLabelLink')[1].slice(0, 500)),
+    'clicking Official label does not fill REI');
+  assert.ok(html.includes('id="app-show-duration"') && html.includes('id="app-duration-hint"'));
+  assert.ok(!/id="app-show-duration"[^>]*checked/.test(html), 'duration stays off until asked');
+  assert.ok(app.includes("SHOW_DURATION_KEY = 'pesticide-logger.showDuration'"));
+  assert.ok(app.includes('never a ticking timer'));
+  assert.ok(!/setInterval\([^)]*duration|setInterval\([^)]*Duration/.test(app));
+  assert.ok(html.includes('list="customer-name-list"') && html.includes('id="customer-name-list"'));
+  assert.ok(app.includes('function fillCustomerDatalist'));
+  assert.ok(app.includes('function fieldLastSprayHtml'));
+  assert.ok(app.includes('<th>Last spray</th>'));
+  assert.ok(app.includes('function nudgeShopBackup'));
+  assert.ok(app.includes("Download a backup when you're back in the shop."));
+  assert.ok(app.includes('if (idx < 0 && backupDue())'));
+  assert.strictEqual(i18n.ES['Show duration'], 'Mostrar duración');
+  assert.strictEqual(i18n.FR['Official label ↗'], 'Étiquette officielle ↗');
 });
 
 check('Celsius echo and tank-mix metric are display-only; records stay US', () => {

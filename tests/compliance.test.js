@@ -242,14 +242,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.16 + deadline/license wiring', () => {
+check('source files advertise v2.9.17 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.16'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.16'));
+  assert.ok(app.includes('v2.9.17'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.17'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-14'"));
-  assert.ok(!html.includes('v2.9.16'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.17'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for updates lives in the header');
@@ -414,8 +414,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.16'"));
-  assert.ok(!html.includes('v2.9.16'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.17'"));
+  assert.ok(!html.includes('v2.9.17'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {

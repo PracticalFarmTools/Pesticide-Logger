@@ -980,18 +980,10 @@
 
     <div class="card" id="csv-import-card">
       <h3 class="card-title">Bring last season in</h3>
-      <p class="card-hint">Already have last season in a spreadsheet or another recordkeeping app? Export a CSV yourself, then pick that file here. Names on the buttons only identify a file you already have. Those products belong to their owners — Practical Farm Tools is not affiliated with, endorsed by, or a substitute for them. We do not log into their software. The file is read on this device and is not uploaded. Match columns once. Rows import as drafts you finish against your state. Unknown products and fields are created automatically. Imports never invent REI, PHI, or rates, and never look complete.</p>
-      <div class="switch-kit-row" id="csv-switch-kits">
-        <label class="btn btn-secondary file-btn">Your CSV (Excel / Sheets)
-          <input type="file" accept=".csv,text/csv" hidden data-import-kit="spreadsheet">
-        </label>
-        <label class="btn btn-secondary file-btn">Your CSV (from SprayLedger)
-          <input type="file" accept=".csv,text/csv" hidden data-import-kit="sprayledger">
-        </label>
-        <label class="btn btn-secondary file-btn">Your CSV (from Farm Spray Pro or AgriXP)
-          <input type="file" accept=".csv,text/csv" hidden data-import-kit="farmspraypro">
-        </label>
-      </div>
+      <p class="card-hint">Already have last season in a spreadsheet or another spray-log app? Export a CSV yourself, then choose that file here. The file is read on this device and is not uploaded. Match columns once. Rows import as drafts you finish against your state. Unknown products and fields are created automatically. Imports never invent REI, PHI, or rates, and never look complete. We are not affiliated with the software you exported from.</p>
+      <label class="btn btn-secondary file-btn">Choose a CSV you already have
+        <input type="file" id="csv-import-file" accept=".csv,text/csv" hidden>
+      </label>
     </div>
   </section>
 
@@ -1256,13 +1248,13 @@
 
 <dialog id="import-dialog" class="app-dialog import-dialog-box">
       <h3>Match your spreadsheet columns</h3>
-      <p class="card-hint" id="import-kit-label" hidden></p>
+      <p class="card-hint" id="import-mapped-columns" hidden></p>
       <p class="card-hint" id="import-summary"></p>
   <div id="import-preview" class="table-wrap"></div>
   <div id="import-mapping" class="import-mapping"></div>
   <p class="card-hint">Rows import as <strong>drafts</strong> — the compliance checker will show what each
     record still needs for your state. Date and product name are required per row.</p>
-  <p class="card-hint">This file stays on this device. We are not affiliated with the app you exported from.</p>
+  <p class="card-hint">This file stays on this device. We are not affiliated with the software you exported from.</p>
   <div class="form-actions">
     <button type="button" class="btn btn-primary" id="import-run">Import records</button>
     <button type="button" class="btn btn-secondary" id="import-cancel">Cancel</button>

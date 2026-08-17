@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.21 — Practical Farm Tools
+/* Pesticide Logger v2.9.22 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -4799,13 +4799,12 @@
   // -------------------------------------------------------------- CSV import
 
   let importCsvRows = null;
-  let importKitHint = 'spreadsheet';
 
   function initCsvImport() {
-    $$('#csv-switch-kits input[data-import-kit]').forEach((input) => {
+    const input = $('#csv-import-file');
+    if (input) {
       input.addEventListener('change', () => {
         const file = input.files && input.files[0];
-        const hint = input.getAttribute('data-import-kit') || 'spreadsheet';
         input.value = '';
         if (!file) return;
         const reader = new FileReader();
@@ -4813,30 +4812,23 @@
           const rows = CsvImport.parseCsv(String(reader.result || ''));
           if (rows.length < 2) { toast('That CSV needs a header row plus at least one record'); return; }
           importCsvRows = rows;
-          importKitHint = hint;
           openImportDialog();
         };
         reader.readAsText(file);
       });
-    });
+    }
     if ($('#import-cancel')) $('#import-cancel').addEventListener('click', () => $('#import-dialog').close());
     if ($('#import-run')) $('#import-run').addEventListener('click', runCsvImport);
   }
 
   function openImportDialog() {
     const header = importCsvRows[0];
-    const kit = typeof CsvImport.detectKit === 'function'
-      ? CsvImport.detectKit(header, importKitHint)
-      : null;
-    const kitEl = $('#import-kit-label');
-    if (kitEl) {
-      if (kit && kit.hint) {
-        kitEl.hidden = false;
-        kitEl.textContent = kit.label + ' — ' + kit.hint +
-          (CsvImport.THIRD_PARTY_FILE_NOTE ? ' ' + CsvImport.THIRD_PARTY_FILE_NOTE : '');
-      } else {
-        kitEl.hidden = true;
-      }
+    const mappedEl = $('#import-mapped-columns');
+    if (mappedEl && typeof CsvImport.describeMappedColumns === 'function') {
+      mappedEl.hidden = false;
+      mappedEl.textContent = CsvImport.describeMappedColumns(header);
+    } else if (mappedEl) {
+      mappedEl.hidden = true;
     }
     $('#import-summary').textContent =
       `${importCsvRows.length - 1} data row(s), ${header.length} column(s). Match each app field to a column (or leave unmapped).`;
@@ -7156,7 +7148,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.21';
+  const APP_VERSION = 'v2.9.22';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {

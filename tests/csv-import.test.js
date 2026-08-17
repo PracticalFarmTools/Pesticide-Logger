@@ -94,23 +94,33 @@ check('without a compliance function the row still cannot look complete', () => 
   assert.strictEqual(result.applications[0].complianceStatus, 'incomplete');
 });
 
-check('SprayLedger-like headers detect as that kit and map client + site', () => {
+check('client-site headers detect that profile and map client + site', () => {
   const header = ['Date', 'Client', 'Site', 'Product', 'EPA No.', 'Area', 'Rate'];
   const kit = CsvImport.detectKit(header, 'spreadsheet');
-  assert.strictEqual(kit.id, 'sprayledger');
+  assert.strictEqual(kit.id, 'client-site');
   const dateIdx = CsvImport.guessColumnIndex(header, CsvImport.FIELDS.find((f) => f.key === 'date'));
   const clientIdx = CsvImport.guessColumnIndex(header, CsvImport.FIELDS.find((f) => f.key === 'customerName'));
   const siteIdx = CsvImport.guessColumnIndex(header, CsvImport.FIELDS.find((f) => f.key === 'fieldName'));
   assert.strictEqual(dateIdx, 0);
   assert.strictEqual(clientIdx, 1);
   assert.strictEqual(siteIdx, 2);
+  const described = CsvImport.describeMappedColumns(header);
+  assert.ok(/Customer \/ client/.test(described));
+  assert.ok(/Field \/ site name/.test(described));
+  assert.ok(/were mapped from this file/.test(described));
+  assert.ok(/Rows are drafts/.test(described));
+  assert.ok(/stays on this device/.test(described));
+  assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(described));
 });
 
-check('Farm Spray Pro chemical column maps to product name', () => {
+check('chemical-column headers map to product name without naming a vendor', () => {
   const header = ['Applied', 'Chemical', 'EPA #', 'Field', 'Acres'];
-  assert.strictEqual(CsvImport.detectKit(header).id, 'farmspraypro');
+  assert.strictEqual(CsvImport.detectKit(header).id, 'chemical-field');
   const nameIdx = CsvImport.guessColumnIndex(header, CsvImport.FIELDS.find((f) => f.key === 'productName'));
   assert.strictEqual(nameIdx, 1);
+  const described = CsvImport.describeMappedColumns(header);
+  assert.ok(/Product \/ brand name/.test(described));
+  assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(described));
 });
 
 check('imported client name lands on the draft and still invents no REI', () => {
@@ -124,11 +134,15 @@ check('imported client name lands on the draft and still invents no REI', () => 
   assert.strictEqual(result.applications[0].products[0].reiHours, null);
 });
 
-check('third-party file note is nominative and does not claim affiliation', () => {
+check('third-party file note is unaffiliated and kits do not name other products', () => {
   assert.ok(CsvImport.THIRD_PARTY_FILE_NOTE.includes('not affiliated'));
   assert.ok(CsvImport.THIRD_PARTY_FILE_NOTE.includes('not uploaded'));
-  assert.ok(/Your CSV \(from SprayLedger\)/.test(CsvImport.KITS.find((k) => k.id === 'sprayledger').label));
-  assert.ok(/not affiliated/i.test(CsvImport.KITS.find((k) => k.id === 'sprayledger').hint));
+  CsvImport.KITS.forEach((k) => {
+    assert.ok(!k.label);
+    assert.ok(!/sprayledger|farmspraypro|agrixp/i.test(k.id));
+  });
+  const empty = CsvImport.describeMappedColumns(['foo', 'bar']);
+  assert.ok(/No columns were guessed/.test(empty));
 });
 
 if (failed) process.exit(1);

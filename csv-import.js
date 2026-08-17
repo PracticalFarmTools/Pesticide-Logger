@@ -25,28 +25,15 @@
     { key: 'notes', label: 'Notes', guess: /note|comment|remark/i }
   ];
 
+  // Header-shape profiles only. Do not name other products in UI copy.
   const KITS = [
-    {
-      id: 'spreadsheet',
-      label: 'Your CSV (Excel / Sheets)',
-      hint: 'A spreadsheet CSV you already have. Match columns once. Rows land as drafts. The file is not uploaded.'
-    },
-    {
-      id: 'sprayledger',
-      label: 'Your CSV (from SprayLedger)',
-      hint: 'A CSV you exported yourself. Not affiliated with SprayLedger. Client/site/product columns map in. Rows land as drafts. The file is not uploaded.',
-      test: /client/i
-    },
-    {
-      id: 'farmspraypro',
-      label: 'Your CSV (from Farm Spray Pro or AgriXP)',
-      hint: 'A CSV you exported yourself. Not affiliated with Farm Spray Pro or AgriXP. Chemical/field/EPA columns map in. Rows land as drafts. The file is not uploaded.',
-      test: /chemical|activity/i
-    }
+    { id: 'spreadsheet' },
+    { id: 'client-site', test: /client/i },
+    { id: 'chemical-field', test: /chemical|activity/i }
   ];
 
   const THIRD_PARTY_FILE_NOTE =
-    'Names identify a file you already have. Those products belong to their owners. Practical Farm Tools is not affiliated with or endorsed by them. The file is read on this device and is not uploaded.';
+    'The file is read on this device and is not uploaded. Practical Farm Tools is not affiliated with or endorsed by the software you exported from.';
 
   function headerJoined(header) {
     return (header || []).map((h) => String(h || '')).join(' | ');
@@ -58,6 +45,31 @@
     if (hit) return hit;
     const hinted = KITS.find((k) => k.id === hintId);
     return hinted || KITS[0];
+  }
+
+  function joinLabels(labels) {
+    const list = (labels || []).filter(Boolean);
+    if (list.length === 0) return '';
+    if (list.length === 1) return list[0];
+    if (list.length === 2) return list[0] + ' and ' + list[1];
+    return list.slice(0, -1).join(', ') + ', and ' + list[list.length - 1];
+  }
+
+  function mappedFieldLabels(header, map) {
+    return FIELDS.filter((f) => {
+      const idx = map && map[f.key] != null
+        ? Number(map[f.key])
+        : guessColumnIndex(header, f);
+      return Number.isFinite(idx) && idx >= 0;
+    }).map((f) => f.label);
+  }
+
+  function describeMappedColumns(header, map) {
+    const labels = mappedFieldLabels(header, map);
+    if (!labels.length) {
+      return 'No columns were guessed. Match each app field to a column, or leave unmapped. Rows are drafts. This file stays on this device.';
+    }
+    return joinLabels(labels) + ' were mapped from this file. Confirm the matches. Rows are drafts. This file stays on this device.';
   }
 
   // Minimal RFC-4180-ish parser: quoted fields, embedded commas/newlines.
@@ -231,6 +243,9 @@
     parseNumber,
     guessColumnIndex,
     detectKit,
+    describeMappedColumns,
+    mappedFieldLabels,
+    joinLabels,
     headerJoined,
     cell,
     importRows

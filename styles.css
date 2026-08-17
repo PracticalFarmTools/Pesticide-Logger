@@ -1752,12 +1752,6 @@ body.public-page .app-header .btn-secondary {
   column-gap: 1.25rem;
 }
 .start-hole { color: var(--warn); }
-.switch-kit-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-.switch-kit-row .file-btn { margin: 0; }
 .first-run-import { margin-top: 0.75rem; }
 .public-footer {
   width: min(44rem, calc(100% - 1.5rem));

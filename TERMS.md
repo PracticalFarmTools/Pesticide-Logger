@@ -49,12 +49,10 @@ changes.
 ## 3. Files you bring from other software
 
 You may import a CSV or backup **you** exported from a spreadsheet or from
-another recordkeeping app. That file is your data. Import does not name
-those products on the file chooser. Where this site names another product
-(for example, to say who this logger is not for), that is nominative use
-only. Those names are trademarks of their owners. Practical Farm Tools is
-not affiliated with, sponsored by, or endorsed by those companies, and this
-software is not a substitute for theirs.
+another recordkeeping app. That file is your data. The chooser does not
+name other products. Practical Farm Tools is not affiliated with, sponsored
+by, or endorsed by other recordkeeping software, and this software is not
+a substitute for theirs.
 
 Import runs entirely on your device. The file is not uploaded to us. We do
 not log into other companies’ software, scrape their sites, or copy their

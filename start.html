@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Pesticide Logger — the spray book for small and mid-sized farms. State-shaped records, no account, hand it to the inspector.">
+  <meta name="theme-color" content="#0f2814">
+  <title>Pesticide Logger · Practical Farm Tools</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="public-page">
+
+<header class="app-header">
+  <div class="header-content">
+    <div class="logo-area">
+      <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 2v4"/><path d="M8 6h8l-1 4a3 3 0 0 1-6 0z"/>
+        <path d="M12 12v3"/><path d="M7 22c0-3 2.2-7 5-7s5 4 5 7"/>
+        <path d="M7 22h10"/>
+      </svg>
+      <div>
+        <h1>Pesticide Logger</h1>
+        <span class="header-sub">Practical Farm Tools</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <a class="btn btn-primary btn-sm" href="index.html">Open the logger</a>
+    </div>
+  </div>
+</header>
+
+<main class="public-main">
+  <section class="card public-hero">
+    <p class="public-kicker">Powerful and intuitive tools for small and mid-sized farms</p>
+    <h2>The spray book huge farms buy software for — on your phone, without an account.</h2>
+    <p>Log this spray in the cab. Hand the inspector a packet that opens on any laptop. Keep the book on the farm if you stop paying. Your state picks the boxes. The label is the law.</p>
+    <div class="form-actions public-cta">
+      <a class="btn btn-primary btn-xl" href="index.html">Open the logger</a>
+      <a class="btn btn-secondary btn-xl" href="inspector.html">For inspectors</a>
+    </div>
+    <p class="card-hint">30-day trial of the whole app. No card. Nothing leaves this device.</p>
+  </section>
+
+  <section class="card" id="your-state">
+    <h3 class="card-title">Your state is the form</h3>
+    <p class="card-hint">SprayLedger and a chemical encyclopedia will not reshape for Maine vs Iowa vs Alabama private. This log does. Pick a state and see what it asks.</p>
+    <div class="form-row form-row-2">
+      <label>Your state
+        <select id="start-state"><option value="">— Select state —</option></select>
+      </label>
+      <label>Applicator class
+        <select id="start-class">
+          <option value="private">Private / grower</option>
+          <option value="commercial">Commercial / for-hire</option>
+        </select>
+      </label>
+    </div>
+    <div id="start-state-out" class="start-state-out"></div>
+  </section>
+
+  <section class="card">
+    <h3 class="card-title">What you hand over</h3>
+    <p>The inspector packet is a snapshot HTML file. It opens without an account. Incomplete rows say incomplete. Rates, REI, and PHI were copied from the label — the label is the law. Saving a packet does not freeze the live log.</p>
+    <p class="card-hint">Forward these one-pagers to the person who has to trust it:</p>
+    <div class="form-actions">
+      <a class="btn btn-secondary" href="inspector.html">Inspector one-pager</a>
+      <a class="btn btn-secondary" href="extension.html">Extension / crop consultant</a>
+    </div>
+  </section>
+
+  <section class="card">
+    <h3 class="card-title">Who this is for</h3>
+    <p>If you keep <strong>your own book</strong> — two tunnels or a hundred named sites — this is the logger. Cab phone sends. Shop tablet is the book. No cloud seat.</p>
+    <p>If you spray <strong>other people’s farms for a living</strong> — clients, on-site signatures, a crew with roles — use a custom-applicator tool such as SprayLedger. We will not pretend to be that product.</p>
+  </section>
+
+  <section class="card">
+    <h3 class="card-title">Bring last season with you</h3>
+    <p>Switching is a CSV, not a new career. In the logger: More → Reports → bring last season from Excel / Google Sheets, a SprayLedger export, or Farm Spray Pro / AgriXP. Rows land as drafts. Your state checker shows what each row still needs. We never mark an import complete and we never invent REI or PHI.</p>
+  </section>
+
+  <section class="card">
+    <h3 class="card-title">If the phone dies</h3>
+    <p>There is no account, so there is no cloud copy of your book. That is the point. The shop tablet is the backup:</p>
+    <ol class="public-ol">
+      <li>Cab phones send logs.</li>
+      <li>The shop device brings them in. Newest edits win; the other version stays in History.</li>
+      <li>Also download a JSON file and keep it with the farm papers. Print the restore card from Reports.</li>
+    </ol>
+    <p class="card-hint">A second device is how you beat “backed up in the cloud” without giving the book away.</p>
+  </section>
+
+  <section class="card">
+    <h3 class="card-title">Put it on the home screen</h3>
+    <p>This is the app. There is not a second binary in a store. Android Chrome: menu → <strong>Install app</strong>. iPhone Safari: Share → <strong>Add to Home Screen</strong>. After the first load it works offline in the cab.</p>
+    <p class="card-hint">A Play Store wrapping of this same page can point at this origin later. Do not download a look-alike.</p>
+  </section>
+</main>
+
+<footer class="public-footer">
+  <p>Practical Farm Tools · Pesticide Logger · Not legal advice · Always follow the label</p>
+  <p><a href="index.html">Logger</a> · <a href="inspector.html">Inspectors</a> · <a href="extension.html">Extension</a></p>
+</footer>
+
+<script src="state_pesticide_laws.js"></script>
+<script src="start.js"></script>
+</body>
+</html>

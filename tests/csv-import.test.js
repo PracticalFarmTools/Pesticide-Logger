@@ -94,5 +94,35 @@ check('without a compliance function the row still cannot look complete', () => 
   assert.strictEqual(result.applications[0].complianceStatus, 'incomplete');
 });
 
+check('SprayLedger-like headers detect as that kit and map client + site', () => {
+  const header = ['Date', 'Client', 'Site', 'Product', 'EPA No.', 'Area', 'Rate'];
+  const kit = CsvImport.detectKit(header, 'spreadsheet');
+  assert.strictEqual(kit.id, 'sprayledger');
+  const dateIdx = CsvImport.guessColumnIndex(header, CsvImport.FIELDS.find((f) => f.key === 'date'));
+  const clientIdx = CsvImport.guessColumnIndex(header, CsvImport.FIELDS.find((f) => f.key === 'customerName'));
+  const siteIdx = CsvImport.guessColumnIndex(header, CsvImport.FIELDS.find((f) => f.key === 'fieldName'));
+  assert.strictEqual(dateIdx, 0);
+  assert.strictEqual(clientIdx, 1);
+  assert.strictEqual(siteIdx, 2);
+});
+
+check('Farm Spray Pro chemical column maps to product name', () => {
+  const header = ['Applied', 'Chemical', 'EPA #', 'Field', 'Acres'];
+  assert.strictEqual(CsvImport.detectKit(header).id, 'farmspraypro');
+  const nameIdx = CsvImport.guessColumnIndex(header, CsvImport.FIELDS.find((f) => f.key === 'productName'));
+  assert.strictEqual(nameIdx, 1);
+});
+
+check('imported client name lands on the draft and still invents no REI', () => {
+  const result = CsvImport.importRows(
+    [['2026-06-01', 'Entrust SC', 'Neighbor Farm']],
+    { date: 0, productName: 1, customerName: 2 },
+    { uid: () => 'c1', evaluateCompliance: () => ({ complete: false, status: 'incomplete', missing: [] }) }
+  );
+  assert.strictEqual(result.applications[0].customerName, 'Neighbor Farm');
+  assert.strictEqual(result.applications[0].draft, true);
+  assert.strictEqual(result.applications[0].products[0].reiHours, null);
+});
+
 if (failed) process.exit(1);
 console.log('\nAll csv-import checks passed.');

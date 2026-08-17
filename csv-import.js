@@ -9,20 +9,53 @@
   'use strict';
 
   const FIELDS = [
-    { key: 'date', label: 'Application date', required: true, guess: /date|applied/i },
-    { key: 'productName', label: 'Product / brand name', required: true, guess: /product|chemical|brand|material/i },
-    { key: 'epaRegNo', label: 'EPA registration #', guess: /epa|reg/i },
-    { key: 'fieldName', label: 'Field / site name', guess: /field|block|site|location/i },
-    { key: 'crop', label: 'Crop / commodity', guess: /crop|commodity/i },
-    { key: 'area', label: 'Area treated (acres)', guess: /acre|area/i },
-    { key: 'rate', label: 'Rate', guess: /rate/i },
+    { key: 'date', label: 'Application date', required: true, guess: /date|applied|job\s*date/i },
+    { key: 'productName', label: 'Product / brand name', required: true, guess: /product|chemical|brand|material|pesticide|trade/i },
+    { key: 'epaRegNo', label: 'EPA registration #', guess: /epa|reg(?:istration)?/i },
+    { key: 'fieldName', label: 'Field / site name', guess: /field|block|site|location|paddock/i },
+    { key: 'crop', label: 'Crop / commodity', guess: /crop|commodity|variety/i },
+    { key: 'area', label: 'Area treated (acres)', guess: /acre|area|treated/i },
+    { key: 'rate', label: 'Rate', guess: /rate|gpa|oz\/ac/i },
     { key: 'total', label: 'Total applied', guess: /total|amount|qty|quantity/i },
-    { key: 'applicatorName', label: 'Applicator', guess: /applicator|operator|sprayer/i },
+    { key: 'applicatorName', label: 'Applicator', guess: /applicator|operator|sprayer|who\s*applied/i },
     { key: 'certNumber', label: 'Certification #', guess: /cert|license/i },
     { key: 'targetPest', label: 'Target pest', guess: /pest|target|weed|insect/i },
-    { key: 'startTime', label: 'Start time', guess: /start|time/i },
+    { key: 'startTime', label: 'Start time', guess: /start|time|timer/i },
+    { key: 'customerName', label: 'Customer / client', guess: /client|customer|grower\s*name/i },
     { key: 'notes', label: 'Notes', guess: /note|comment|remark/i }
   ];
+
+  const KITS = [
+    {
+      id: 'spreadsheet',
+      label: 'Excel / Google Sheets',
+      hint: 'Export CSV from Excel or Google Sheets. Match columns once. Rows land as drafts.'
+    },
+    {
+      id: 'sprayledger',
+      label: 'SprayLedger',
+      hint: 'Export CSV from SprayLedger (past records). Client/site/product map in. Rows land as drafts — finish your state’s boxes.',
+      test: /client/i
+    },
+    {
+      id: 'farmspraypro',
+      label: 'Farm Spray Pro / AgriXP',
+      hint: 'Export CSV from Farm Spray Pro or AgriXP. Chemical/field/EPA map in. Rows land as drafts.',
+      test: /chemical|activity/i
+    }
+  ];
+
+  function headerJoined(header) {
+    return (header || []).map((h) => String(h || '')).join(' | ');
+  }
+
+  function detectKit(header, hintId) {
+    const joined = headerJoined(header);
+    const hit = KITS.find((k) => k.test && k.test.test(joined));
+    if (hit) return hit;
+    const hinted = KITS.find((k) => k.id === hintId);
+    return hinted || KITS[0];
+  }
 
   // Minimal RFC-4180-ish parser: quoted fields, embedded commas/newlines.
   function parseCsv(text) {
@@ -158,7 +191,7 @@
         applicatorName: cell(row, map, 'applicatorName') || settings.applicatorName || '',
         certNumber: cell(row, map, 'certNumber') || '',
         supervisorName: '', usedNoncertified: false, noncertifiedApplicatorName: '',
-        ownerOperatorName: settings.farmName || '', customerName: '', customerAddress: '', customerPhone: '',
+        ownerOperatorName: settings.farmName || '', customerName: cell(row, map, 'customerName'), customerAddress: '', customerPhone: '',
         businessNameAddress: '', companyLicense: '', pesticideSupplier: '', disposalMethod: '',
         notes: notesCell ? notesCell + ' [imported]' : '[imported from spreadsheet]',
         boomHeight: '', groundSpeed: '', bufferDistance: '', sensitiveSites: '',
@@ -188,10 +221,13 @@
 
   const api = {
     FIELDS,
+    KITS,
     parseCsv,
     parseDate,
     parseNumber,
     guessColumnIndex,
+    detectKit,
+    headerJoined,
     cell,
     importRows
   };

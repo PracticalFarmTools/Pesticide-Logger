@@ -560,6 +560,20 @@ await check('inspector packet numbers mix order and shows elapsed time, not live
   assert.ok(!html.includes('epa.gov'), 'packet does not embed live EPA label URLs');
 });
 
+await check('restore card names the shop tablet and has no account', async () => {
+  const html = FarmFile.restoreCardHtml({
+    farmName: 'Spear Farm',
+    stateName: 'Maine',
+    origin: 'http://localhost:8000'
+  });
+  assert.ok(html.includes('Spear Farm'));
+  assert.ok(html.includes('Maine'));
+  assert.ok(html.includes('shop tablet'));
+  assert.ok(html.includes('no cloud copy'));
+  assert.ok(html.includes('http://localhost:8000/index.html'));
+  assert.ok(!/account|sync server/i.test(html) || html.includes('no account'));
+});
+
 if (failed) {
   console.error(`\n${failed} farm-file check(s) failed.`);
   process.exit(1);

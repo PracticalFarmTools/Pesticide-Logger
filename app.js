@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.19 — Practical Farm Tools
+/* Pesticide Logger v2.9.20 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -3991,6 +3991,7 @@
     if ($('#report-certifier')) $('#report-certifier').addEventListener('click', printCertifierPacket);
     if ($('#report-inspect-html')) $('#report-inspect-html').addEventListener('click', downloadInspectPacket);
     $('#backup-download').addEventListener('click', downloadBackup);
+    if ($('#backup-restore-card')) $('#backup-restore-card').addEventListener('click', printRestoreCard);
     if ($('#settings-download-backup')) $('#settings-download-backup').addEventListener('click', downloadBackup);
     $('#backup-restore').addEventListener('change', restoreBackup);
     $('#data-clear').addEventListener('click', clearAllData);
@@ -4002,6 +4003,9 @@
       shareBtn.addEventListener('click', shareBackup);
     }
     $('#backup-banner-download').addEventListener('click', downloadBackup);
+    if ($('#backup-banner-restore-card')) {
+      $('#backup-banner-restore-card').addEventListener('click', printRestoreCard);
+    }
     $('#backup-banner-snooze').addEventListener('click', () => {
       data.meta.backupSnoozeUntil = Date.now() + 7 * 86400000;
       save();
@@ -4329,6 +4333,20 @@
 
   function backupFilename() {
     return `pesticide-logger-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  }
+
+  function printRestoreCard() {
+    if (typeof FarmFile === 'undefined' || !FarmFile.restoreCardHtml) {
+      toast('Restore card is not available in this build');
+      return;
+    }
+    const origin = (typeof location !== 'undefined' && location.origin) ? location.origin : '';
+    $('#print-area').innerHTML = FarmFile.restoreCardHtml({
+      farmName: data.settings.farmName || '',
+      stateName: STATE_NAMES[data.settings.state] || data.settings.state || '',
+      origin: origin
+    });
+    window.print();
   }
 
   function markSentAt() {
@@ -4781,29 +4799,44 @@
   // -------------------------------------------------------------- CSV import
 
   let importCsvRows = null;
+  let importKitHint = 'spreadsheet';
 
   function initCsvImport() {
-    const input = $('#csv-import-file');
-    if (!input) return;
-    input.addEventListener('change', () => {
-      const file = input.files && input.files[0];
-      input.value = '';
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        const rows = CsvImport.parseCsv(String(reader.result || ''));
-        if (rows.length < 2) { toast('That CSV needs a header row plus at least one record'); return; }
-        importCsvRows = rows;
-        openImportDialog();
-      };
-      reader.readAsText(file);
+    $$('#csv-switch-kits input[data-import-kit]').forEach((input) => {
+      input.addEventListener('change', () => {
+        const file = input.files && input.files[0];
+        const hint = input.getAttribute('data-import-kit') || 'spreadsheet';
+        input.value = '';
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          const rows = CsvImport.parseCsv(String(reader.result || ''));
+          if (rows.length < 2) { toast('That CSV needs a header row plus at least one record'); return; }
+          importCsvRows = rows;
+          importKitHint = hint;
+          openImportDialog();
+        };
+        reader.readAsText(file);
+      });
     });
-    $('#import-cancel').addEventListener('click', () => $('#import-dialog').close());
-    $('#import-run').addEventListener('click', runCsvImport);
+    if ($('#import-cancel')) $('#import-cancel').addEventListener('click', () => $('#import-dialog').close());
+    if ($('#import-run')) $('#import-run').addEventListener('click', runCsvImport);
   }
 
   function openImportDialog() {
     const header = importCsvRows[0];
+    const kit = typeof CsvImport.detectKit === 'function'
+      ? CsvImport.detectKit(header, importKitHint)
+      : null;
+    const kitEl = $('#import-kit-label');
+    if (kitEl) {
+      if (kit && kit.hint) {
+        kitEl.hidden = false;
+        kitEl.textContent = kit.label + ' — ' + kit.hint;
+      } else {
+        kitEl.hidden = true;
+      }
+    }
     $('#import-summary').textContent =
       `${importCsvRows.length - 1} data row(s), ${header.length} column(s). Match each app field to a column (or leave unmapped).`;
     const preview = importCsvRows.slice(0, 4);
@@ -4877,8 +4910,8 @@
     el.hidden = !backupDue();
     if (!el.hidden) {
       $('#backup-banner-msg').textContent = data.meta.lastBackupAt
-        ? `Your last backup was ${fmtDate(data.meta.lastBackupAt.slice(0, 10))} and you have newer records. Regulators expect records kept for years — don't trust a single browser with them.`
-        : `You have ${data.applications.length} spray records that exist only in this browser. Download a backup and keep it with your farm files.`;
+        ? `Your last backup was ${fmtDate(data.meta.lastBackupAt.slice(0, 10))} and you have newer records. The shop tablet is the book — send logs or download a backup. Don't trust a single browser.`
+        : `You have ${data.applications.length} spray records that exist only in this browser. The shop tablet is the book. Download a backup and print the restore card.`;
     }
   }
 
@@ -7122,7 +7155,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.19';
+  const APP_VERSION = 'v2.9.20';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {

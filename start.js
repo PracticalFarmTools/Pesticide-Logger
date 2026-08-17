@@ -1,0 +1,168 @@
+/* Public start page: state picker + honest job copy.
+ * Loaded by start.html. Require()-able under Node for tests.
+ * Does not register a service worker and does not read farm records.
+ */
+(function (root) {
+  'use strict';
+
+  const STATE_NAMES = {
+    AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California', CO: 'Colorado',
+    CT: 'Connecticut', DE: 'Delaware', FL: 'Florida', GA: 'Georgia', HI: 'Hawaii', ID: 'Idaho',
+    IL: 'Illinois', IN: 'Indiana', IA: 'Iowa', KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana',
+    ME: 'Maine', MD: 'Maryland', MA: 'Massachusetts', MI: 'Michigan', MN: 'Minnesota',
+    MS: 'Mississippi', MO: 'Missouri', MT: 'Montana', NE: 'Nebraska', NV: 'Nevada',
+    NH: 'New Hampshire', NJ: 'New Jersey', NM: 'New Mexico', NY: 'New York', NC: 'North Carolina',
+    ND: 'North Dakota', OH: 'Ohio', OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania',
+    RI: 'Rhode Island', SC: 'South Carolina', SD: 'South Dakota', TN: 'Tennessee', TX: 'Texas',
+    UT: 'Utah', VT: 'Vermont', VA: 'Virginia', WA: 'Washington', WV: 'West Virginia',
+    WI: 'Wisconsin', WY: 'Wyoming'
+  };
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function codeFromLocation(search, hash) {
+    const q = String(search || '');
+    const h = String(hash || '').replace(/^#/, '');
+    let m = /[?&]state=([A-Za-z]{2})/.exec(q);
+    if (m) return m[1].toUpperCase();
+    if (/^[A-Za-z]{2}$/.test(h)) return h.toUpperCase();
+    return '';
+  }
+
+  function privateDutyNote(law, applicatorClass) {
+    const duty = (law && law.privateDuty) || 'required';
+    const cls = applicatorClass || 'private';
+    if (cls === 'private' && duty === 'none') {
+      return 'This state does not encode a private-applicator record duty. The log stays quiet on those boxes. Confirm with the agency.';
+    }
+    if (duty === 'uncertain' && cls === 'private') {
+      return 'Private-applicator duty is not verified here. Confirm with the agency before you treat the log as complete.';
+    }
+    return '';
+  }
+
+  function summarizeLaw(law, applicatorClass, code) {
+    const cls = applicatorClass || 'private';
+    const duty = (law && law.privateDuty) || 'required';
+    const quiet = cls === 'private' && duty === 'none';
+    const fields = (law && law.fields) || [];
+    const labels = quiet
+      ? []
+      : fields.filter((f) => f && f.required).map((f) => f.label).filter(Boolean);
+    const ver = (law && law.verification) || '';
+    const holes = [];
+    if (ver === 'uncertain') holes.push('Field list is uncertain — confirm with the agency.');
+    const dutyNote = privateDutyNote(law, cls);
+    if (dutyNote) holes.push(dutyNote);
+    return {
+      code: code || '',
+      name: STATE_NAMES[code] || code || '',
+      agency: (law && law.agency) || '',
+      citationRef: law && law.citation && law.citation.reference ? law.citation.reference : '',
+      citationUrl: law && law.citation && law.citation.url ? law.citation.url : '',
+      retentionYears: law && law.retentionYears != null ? law.retentionYears : null,
+      verification: ver,
+      privateDuty: duty,
+      quiet: !!quiet,
+      requiredLabels: labels,
+      holes: holes
+    };
+  }
+
+  function renderSummary(el, summary) {
+    if (!el) return;
+    if (!summary || !summary.agency) {
+      el.innerHTML = '<p class="card-hint">Pick your state. The log reshapes to that state’s boxes — not a generic federal form.</p>';
+      return;
+    }
+    const holeHtml = (summary.holes || []).map((h) =>
+      `<p class="card-hint start-hole">${esc(h)}</p>`).join('');
+    const labels = summary.quiet
+      ? '<p class="card-hint">No private-applicator field list is applied.</p>'
+      : (summary.requiredLabels.length
+        ? `<ul class="start-fields">${summary.requiredLabels.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`
+        : '<p class="card-hint">Required boxes load in the logger after you pick this state.</p>');
+    const cite = summary.citationUrl
+      ? `<a href="${esc(summary.citationUrl)}" rel="noopener noreferrer">${esc(summary.citationRef || 'Open citation')}</a>`
+      : esc(summary.citationRef);
+    const retain = summary.retentionYears != null
+      ? `Keep records ${esc(summary.retentionYears)} year(s).`
+      : '';
+    el.innerHTML = `
+      <h3 class="card-title">${esc(summary.name)} pesticide application records</h3>
+      <p>${esc(summary.agency)}</p>
+      <p class="card-hint">${cite}${retain ? ' · ' + retain : ''} · ${esc(summary.verification || 'status unknown')}</p>
+      ${holeHtml}
+      <p class="card-hint">What the log asks. Completion means fields are filled — not a legal determination. The label is the law.</p>
+      ${labels}
+      <p class="form-actions"><a class="btn btn-primary" href="index.html">Open the logger in ${esc(summary.name)}</a></p>`;
+  }
+
+  function fillStateSelect(sel, selected) {
+    if (!sel) return;
+    const keep = sel.querySelector('option[value=""]');
+    sel.innerHTML = '';
+    if (keep) sel.appendChild(keep);
+    Object.keys(STATE_NAMES).sort((a, b) => STATE_NAMES[a].localeCompare(STATE_NAMES[b]))
+      .forEach((code) => {
+        const o = document.createElement('option');
+        o.value = code;
+        o.textContent = STATE_NAMES[code];
+        sel.appendChild(o);
+      });
+    if (selected && STATE_NAMES[selected]) sel.value = selected;
+  }
+
+  function bindStartPage(doc, laws) {
+    const documentRef = doc || (typeof document !== 'undefined' ? document : null);
+    const matrix = laws || (typeof STATE_LAWS !== 'undefined' ? STATE_LAWS : {});
+    if (!documentRef) return;
+    const sel = documentRef.getElementById('start-state');
+    const clsSel = documentRef.getElementById('start-class');
+    const out = documentRef.getElementById('start-state-out');
+    const initial = codeFromLocation(
+      typeof location !== 'undefined' ? location.search : '',
+      typeof location !== 'undefined' ? location.hash : ''
+    );
+    fillStateSelect(sel, initial);
+    function paint() {
+      const code = sel && sel.value;
+      const cls = (clsSel && clsSel.value) || 'private';
+      const law = code && matrix[code];
+      const summary = law ? summarizeLaw(law, cls, code) : null;
+      renderSummary(out, summary);
+      if (typeof history !== 'undefined' && history.replaceState && code) {
+        history.replaceState(null, '', '?state=' + encodeURIComponent(code));
+      }
+    }
+    if (sel) sel.addEventListener('change', paint);
+    if (clsSel) clsSel.addEventListener('change', paint);
+    if (initial) paint();
+    else renderSummary(out, null);
+  }
+
+  const api = {
+    STATE_NAMES,
+    codeFromLocation,
+    privateDutyNote,
+    summarizeLaw,
+    fillStateSelect,
+    renderSummary,
+    bindStartPage
+  };
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.StartPage = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+if (typeof document !== 'undefined') {
+  function startPageGo() {
+    if (typeof StartPage !== 'undefined') StartPage.bindStartPage(document);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startPageGo);
+  else startPageGo();
+}

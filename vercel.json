@@ -1,4 +1,7 @@
 {
+  "rewrites": [
+    { "source": "/", "destination": "/start.html" }
+  ],
   "headers": [
     {
       "source": "/sw.js",

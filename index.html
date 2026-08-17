@@ -89,6 +89,7 @@
     <div class="card" id="dash-first-run" hidden>
       <h3 class="card-title">Get set up to log</h3>
       <p class="card-hint">Your state picks the boxes. Then you can log. Nothing leaves this device. A 30-day trial is already running — no card.</p>
+      <p class="card-hint"><a href="start.html">What this is</a> · <a href="inspector.html">For inspectors</a> · <a href="extension.html">For extension</a></p>
       <form id="first-run-farm" class="form-grid first-run-farm" hidden>
         <div class="form-row">
           <label>Interface language
@@ -120,16 +121,21 @@
         </div>
       </form>
       <div class="interval-list" id="dash-setup-steps"></div>
+      <div id="dash-first-run-import" class="first-run-import">
+        <p class="card-hint">Already have last season in a spreadsheet?</p>
+        <button type="button" class="btn btn-secondary" data-goto="reports" data-scroll-to="csv-import-card">Bring last season in</button>
+      </div>
     </div>
 
     <div id="dash-working">
     <div id="backup-banner" class="setup-banner backup-banner" hidden>
       <div>
         <strong>Back up your records.</strong>
-        <p id="backup-banner-msg">Your spray records live only in this browser. Download a backup and keep it with your farm files.</p>
+        <p id="backup-banner-msg">Your spray records live only in this browser. The shop tablet is the book. Download a backup and print the restore card.</p>
       </div>
       <div class="banner-actions">
         <button class="btn btn-primary" id="backup-banner-download">Download backup</button>
+        <button class="btn btn-secondary" id="backup-banner-restore-card">Print restore card</button>
         <button class="btn btn-secondary" id="backup-banner-snooze">Remind me later</button>
       </div>
     </div>
@@ -952,7 +958,7 @@
 
     <div class="card" id="gather-card">
       <h3 class="card-title">Shop gathers / cab sends</h3>
-      <p class="card-hint">Your records live only in this browser. Cab phones send a backup; this shop tablet brings them in. Newest edits win; the other version stays in that spray’s History so you can still change it. A full backup is one JSON file with the farm file and attached photos. Older backups from before photos were packed still restore records; you will be told if photos are missing.</p>
+      <p class="card-hint">Your records live only in this browser. The shop tablet is the book of record. Cab phones send a backup; this shop tablet brings them in. Newest edits win; the other version stays in that spray’s History so you can still change it. A full backup is one JSON file with the farm file and attached photos. Older backups from before photos were packed still restore records; you will be told if photos are missing. Print the restore card and tape it in the shop in case a phone dies.</p>
       <div class="auto-backup-box">
         <p class="card-hint" id="auto-backup-status"></p>
         <div class="form-actions">
@@ -963,6 +969,7 @@
       </div>
       <div class="form-actions">
         <button class="btn btn-primary" id="backup-download">Download full backup (.json)</button>
+        <button type="button" class="btn btn-secondary" id="backup-restore-card">Print restore card</button>
         <button class="btn btn-secondary" id="backup-share" hidden>Send logs to another device</button>
         <label class="btn btn-secondary file-btn">
           Bring in logs from another device
@@ -971,13 +978,18 @@
       </div>
     </div>
 
-    <div class="card">
-      <h3 class="card-title">Import from a spreadsheet</h3>
-      <p class="card-hint">Already keeping records in Excel or Google Sheets? Export them as CSV and bring your history in — match your columns once, and rows import as drafts you can finish and verify. Unknown products and fields are created automatically.</p>
-      <div class="form-actions">
-        <label class="btn btn-secondary file-btn">
-          Choose CSV file…
-          <input type="file" id="csv-import-file" accept=".csv,text/csv" hidden>
+    <div class="card" id="csv-import-card">
+      <h3 class="card-title">Bring last season in</h3>
+      <p class="card-hint">Already keeping records in Excel, SprayLedger, Farm Spray Pro, or AgriXP? Export CSV and bring the history in. Match columns once. Rows import as drafts you finish against your state. Unknown products and fields are created automatically. Imports never invent REI, PHI, or rates, and never look complete.</p>
+      <div class="switch-kit-row" id="csv-switch-kits">
+        <label class="btn btn-secondary file-btn">Excel / Google Sheets
+          <input type="file" accept=".csv,text/csv" hidden data-import-kit="spreadsheet">
+        </label>
+        <label class="btn btn-secondary file-btn">SprayLedger export
+          <input type="file" accept=".csv,text/csv" hidden data-import-kit="sprayledger">
+        </label>
+        <label class="btn btn-secondary file-btn">Farm Spray Pro / AgriXP
+          <input type="file" accept=".csv,text/csv" hidden data-import-kit="farmspraypro">
         </label>
       </div>
     </div>
@@ -1146,6 +1158,7 @@
     <div class="card about-card">
       <h3 class="card-title">About</h3>
       <p>Pesticide Logger — part of the <strong>Practical Farm Tools</strong> suite. A licensed, offline-first tool built for farms of every size; your farm records stay on this device.</p>
+      <p class="card-hint"><a href="start.html">What this is</a> · <a href="inspector.html">For inspectors</a> · <a href="extension.html">For extension</a></p>
       <p class="card-hint">This tool provides 50-state application <em>recordkeeping field coverage</em> with audit history, lot tracking, and in-cab workflows. It is not legal advice, does not replace WPS employer duties, and does not file California PUR, New York PRL, or other electronic reports for you. Always follow the product label and confirm requirements with your state pesticide agency.</p>
       <div class="form-actions">
         <button type="button" class="btn btn-secondary" id="header-check-update">Check for app updates</button>
@@ -1242,8 +1255,9 @@
 </dialog>
 
 <dialog id="import-dialog" class="app-dialog import-dialog-box">
-  <h3>Match your spreadsheet columns</h3>
-  <p class="card-hint" id="import-summary"></p>
+      <h3>Match your spreadsheet columns</h3>
+      <p class="card-hint" id="import-kit-label" hidden></p>
+      <p class="card-hint" id="import-summary"></p>
   <div id="import-preview" class="table-wrap"></div>
   <div id="import-mapping" class="import-mapping"></div>
   <p class="card-hint">Rows import as <strong>drafts</strong> — the compliance checker will show what each

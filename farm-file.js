@@ -866,6 +866,26 @@
       '<p class="print-footer">Pesticide Logger — Practical Farm Tools. Hang in the shop. Live log can still be edited.</p>';
   }
 
+  function restoreCardHtml(opts) {
+    opts = opts || {};
+    const farmName = opts.farmName || 'This farm';
+    const stateName = opts.stateName || '';
+    const origin = String(opts.origin || '').replace(/\/$/, '');
+    const loggerUrl = origin ? origin + '/index.html' : 'the logger on this farm’s shop tablet';
+    const where = stateName ? farmName + ' · ' + stateName : farmName;
+    return '<h1>If this phone dies</h1>' +
+      '<p class="print-meta">' + esc(where) + '</p>' +
+      '<p>There is no account and no cloud copy. A second device is the backup.</p>' +
+      '<ol>' +
+      '<li>The <strong>shop tablet</strong> is the book of record.</li>' +
+      '<li>Cab phones: More → Reports → <strong>Send logs to another device</strong>.</li>' +
+      '<li>Shop tablet: <strong>Bring in logs from another device</strong>. Newest edits win; the other version stays in History.</li>' +
+      '<li>Also keep a JSON file with the farm papers: <code>pesticide-logger-backup-YYYY-MM-DD.json</code></li>' +
+      '<li>Open the logger: ' + esc(loggerUrl) + '</li>' +
+      '</ol>' +
+      '<p class="print-footer">Pesticide Logger — Practical Farm Tools. Tape this in the shop. The live log can still be edited.</p>';
+  }
+
   function searchTokens(q) {
     return String(q == null ? '' : q)
       .toLowerCase()
@@ -1115,6 +1135,7 @@
     shouldShowGatherHint,
     shouldShowSendNag,
     reiBoardHtml,
+    restoreCardHtml,
     receiptSummary,
     pickFarmSign
   };

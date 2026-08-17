@@ -21,6 +21,7 @@ const storejs = fs.readFileSync(path.join(root, 'store.js'), 'utf8');
 const farmScale = fs.readFileSync(path.join(root, 'farm-scale.js'), 'utf8');
 const sprayWindow = fs.readFileSync(path.join(root, 'spray-window.js'), 'utf8');
 const farmFile = fs.readFileSync(path.join(root, 'farm-file.js'), 'utf8');
+const csvImport = fs.readFileSync(path.join(root, 'csv-import.js'), 'utf8');
 const laws = fs.readFileSync(path.join(root, 'state_pesticide_laws.js'), 'utf8');
 const i18n = require(path.join(root, 'i18n.js'));
 
@@ -49,7 +50,7 @@ while ((m = tagRe.exec(html))) {
 const attrRe = /(?:placeholder|aria-label)="([^"]*)"/g;
 while ((m = attrRe.exec(html))) uiTexts.add(decodeEntities(m[1]).trim());
 
-const combinedSource = decodeEntities(html + '\n' + appjs + '\n' + storejs + '\n' + farmScale + '\n' + sprayWindow + '\n' + farmFile + '\n' + laws);
+const combinedSource = decodeEntities(html + '\n' + appjs + '\n' + storejs + '\n' + farmScale + '\n' + sprayWindow + '\n' + farmFile + '\n' + csvImport + '\n' + laws);
 
 const stale = keys.filter((k) => !uiTexts.has(k) && !combinedSource.includes(k));
 

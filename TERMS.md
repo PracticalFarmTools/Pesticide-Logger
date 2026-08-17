@@ -1,10 +1,12 @@
 # Pesticide Logger — Terms of Use, License & Privacy
 
-_Last updated: 2026-08-13. Plain-English summary first; farmers are busy._
+_Last updated: 2026-08-17. Plain-English summary first; farmers are busy._
 
 ## The short version
 
 - Your farm records belong to you and stay on your device. We never see them.
+- A CSV you exported from a spreadsheet or another app is still your file.
+  We do not upload it and we are not those other companies.
 - This is paid software: a 30-day trial, then a license is required to
   keep logging new applications. Spray logs already saved stay on your
   device. You can review any year and export them after a trial or
@@ -44,7 +46,21 @@ changes.
   Use the backup tools. Losing your device without a backup means losing
   your records.
 
-## 3. License and trial
+## 3. Files you bring from other software
+
+You may import a CSV or backup **you** exported from a spreadsheet or from
+another recordkeeping app. That file is your data. We use third-party product
+names only to help you pick the file you already have (nominative use). Those
+names are trademarks of their owners. Practical Farm Tools is not affiliated
+with, sponsored by, or endorsed by those companies, and this software is not
+a substitute for theirs.
+
+Import runs entirely on your device. The file is not uploaded to us. We do
+not log into other companies’ software, scrape their sites, or copy their
+databases, reports, or user interfaces. Imported rows are **drafts**. The
+app does not mark them complete and does not invent rates, REI, or PHI.
+
+## 4. License and trial
 
 - Pesticide Logger is paid software. A 30-day trial unlocks the entire
   app with no card required; after the trial ends, a valid license key is
@@ -60,7 +76,7 @@ changes.
   valid license restores the ability to log new sprays.
 - Refunds are handled by the payment processor per its policy.
 
-## 4. Disclaimer of warranty & liability
+## 5. Disclaimer of warranty & liability
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING FITNESS FOR A PARTICULAR PURPOSE. TO THE MAXIMUM EXTENT
@@ -70,7 +86,7 @@ RELIANCE ON ITS COMPLIANCE FIELDS, DEADLINES, OR INTERVAL CALCULATIONS.
 Recordkeeping obligations are yours. Verify requirements with your state
 agency and always follow the product label.
 
-## 5. Open source
+## 6. Open source
 
 The application source code is MIT-licensed. The paid license applies to
 the *service of issued keys* that unlock use of the hosted app, not the

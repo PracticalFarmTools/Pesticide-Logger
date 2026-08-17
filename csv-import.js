@@ -28,22 +28,25 @@
   const KITS = [
     {
       id: 'spreadsheet',
-      label: 'Excel / Google Sheets',
-      hint: 'Export CSV from Excel or Google Sheets. Match columns once. Rows land as drafts.'
+      label: 'Your CSV (Excel / Sheets)',
+      hint: 'A spreadsheet CSV you already have. Match columns once. Rows land as drafts. The file is not uploaded.'
     },
     {
       id: 'sprayledger',
-      label: 'SprayLedger',
-      hint: 'Export CSV from SprayLedger (past records). Client/site/product map in. Rows land as drafts — finish your state’s boxes.',
+      label: 'Your CSV (from SprayLedger)',
+      hint: 'A CSV you exported yourself. Not affiliated with SprayLedger. Client/site/product columns map in. Rows land as drafts. The file is not uploaded.',
       test: /client/i
     },
     {
       id: 'farmspraypro',
-      label: 'Farm Spray Pro / AgriXP',
-      hint: 'Export CSV from Farm Spray Pro or AgriXP. Chemical/field/EPA map in. Rows land as drafts.',
+      label: 'Your CSV (from Farm Spray Pro or AgriXP)',
+      hint: 'A CSV you exported yourself. Not affiliated with Farm Spray Pro or AgriXP. Chemical/field/EPA columns map in. Rows land as drafts. The file is not uploaded.',
       test: /chemical|activity/i
     }
   ];
+
+  const THIRD_PARTY_FILE_NOTE =
+    'Names identify a file you already have. Those products belong to their owners. Practical Farm Tools is not affiliated with or endorsed by them. The file is read on this device and is not uploaded.';
 
   function headerJoined(header) {
     return (header || []).map((h) => String(h || '')).join(' | ');
@@ -222,6 +225,7 @@
   const api = {
     FIELDS,
     KITS,
+    THIRD_PARTY_FILE_NOTE,
     parseCsv,
     parseDate,
     parseNumber,

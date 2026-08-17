@@ -242,14 +242,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.20 + deadline/license wiring', () => {
+check('source files advertise v2.9.21 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.20'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.20'));
+  assert.ok(app.includes('v2.9.21'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.21'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-14'"));
-  assert.ok(!html.includes('v2.9.20'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.21'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -414,8 +414,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.20'"));
-  assert.ok(!html.includes('v2.9.20'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.21'"));
+  assert.ok(!html.includes('v2.9.21'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -854,12 +854,17 @@ check('share plays: public page, switch kits, restore card, one-pagers', () => {
   const vercel = fs.readFileSync(path.join(root, 'vercel.json'), 'utf8');
   const i18n = require(path.join(root, 'i18n.js'));
   assert.ok(start.includes('Open the logger') && start.includes('id="start-state"'));
+  assert.ok(start.includes('Try the logger — 30 days, no card'));
   assert.ok(start.includes('If you spray') && start.includes('SprayLedger'));
-  assert.ok(!start.includes('v2.9.20'), 'public page keeps version out of copy');
+  assert.ok(start.includes('not affiliated'));
+  assert.ok(!/SprayLedger will not reshape/i.test(start));
+  assert.ok(!start.includes('v2.9.21'), 'public page keeps version out of copy');
   assert.ok(inspector.includes('opens without an account') || inspector.includes('without an account'));
   assert.ok(inspector.includes('The label is the law'));
   assert.ok(extension.includes('State-shaped log') && extension.includes('Label is the law'));
   assert.ok(html.includes('id="csv-import-card"') && html.includes('data-import-kit="sprayledger"'));
+  assert.ok(html.includes('Your CSV (from SprayLedger)'));
+  assert.ok(html.includes('not affiliated') && html.includes('is not uploaded'));
   assert.ok(html.includes('id="backup-restore-card"') && html.includes('Print restore card'));
   assert.ok(html.includes('href="start.html"') && html.includes('href="inspector.html"'));
   assert.ok(app.includes('function printRestoreCard') && app.includes('detectKit'));
@@ -867,6 +872,12 @@ check('share plays: public page, switch kits, restore card, one-pagers', () => {
   assert.ok(vercel.includes('"/start.html"'));
   assert.strictEqual(i18n.ES['Bring last season in'], 'Traer la temporada pasada');
   assert.strictEqual(i18n.FR['Print restore card'], 'Imprimer la fiche de restauration');
+  const terms = fs.readFileSync(path.join(root, 'TERMS.md'), 'utf8');
+  assert.ok(terms.includes('## 3. Files you bring from other software'));
+  assert.ok(terms.includes('not uploaded to us'));
+  const csv = require(path.join(root, 'csv-import.js'));
+  assert.ok(csv.THIRD_PARTY_FILE_NOTE.includes('not affiliated'));
+  assert.ok(csv.THIRD_PARTY_FILE_NOTE.includes('not uploaded'));
 });
 
 check('schema default version is 5', () => {

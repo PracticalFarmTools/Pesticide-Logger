@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.20 — Practical Farm Tools
+/* Pesticide Logger v2.9.21 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -4832,7 +4832,8 @@
     if (kitEl) {
       if (kit && kit.hint) {
         kitEl.hidden = false;
-        kitEl.textContent = kit.label + ' — ' + kit.hint;
+        kitEl.textContent = kit.label + ' — ' + kit.hint +
+          (CsvImport.THIRD_PARTY_FILE_NOTE ? ' ' + CsvImport.THIRD_PARTY_FILE_NOTE : '');
       } else {
         kitEl.hidden = true;
       }
@@ -7155,7 +7156,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.20';
+  const APP_VERSION = 'v2.9.21';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {

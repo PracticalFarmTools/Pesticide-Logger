@@ -124,5 +124,12 @@ check('imported client name lands on the draft and still invents no REI', () => 
   assert.strictEqual(result.applications[0].products[0].reiHours, null);
 });
 
+check('third-party file note is nominative and does not claim affiliation', () => {
+  assert.ok(CsvImport.THIRD_PARTY_FILE_NOTE.includes('not affiliated'));
+  assert.ok(CsvImport.THIRD_PARTY_FILE_NOTE.includes('not uploaded'));
+  assert.ok(/Your CSV \(from SprayLedger\)/.test(CsvImport.KITS.find((k) => k.id === 'sprayledger').label));
+  assert.ok(/not affiliated/i.test(CsvImport.KITS.find((k) => k.id === 'sprayledger').hint));
+});
+
 if (failed) process.exit(1);
 console.log('\nAll csv-import checks passed.');

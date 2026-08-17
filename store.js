@@ -284,6 +284,11 @@
       || (farm && farm.applications && farm.applications.length));
   }
 
+  function stillFirstRun(farm) {
+    if (farm && farm.applications && farm.applications.length) return false;
+    return firstRunSteps(farm).some((s) => !s.done);
+  }
+
   function firstRunSteps(farm) {
     const settings = (farm && farm.settings) || {};
     const fields = (farm && farm.fields) || [];
@@ -354,6 +359,7 @@
     recordWeight,
     purgeExpiredSoftDeletes,
     isEmptyHome,
+    stillFirstRun,
     firstRunSteps,
     hydrateFromCacheRaw
   };

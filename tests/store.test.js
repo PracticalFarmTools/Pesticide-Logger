@@ -131,6 +131,20 @@ check('isEmptyHome is fields AND applications, not products', () => {
   assert.strictEqual(FarmStore.isEmptyHome(farm2), false);
 });
 
+check('first-run stays until farm, field, and product exist', () => {
+  const farm = FarmStore.defaultData();
+  assert.strictEqual(FarmStore.stillFirstRun(farm), true);
+  farm.settings.farmName = 'Oak Hill';
+  farm.settings.state = 'IA';
+  farm.fields = [{ id: 'f' }];
+  assert.strictEqual(FarmStore.stillFirstRun(farm), true, 'product still missing');
+  farm.products = [{ id: 'p' }];
+  assert.strictEqual(FarmStore.stillFirstRun(farm), false);
+  farm.products = [];
+  farm.applications = [{ id: 'a' }];
+  assert.strictEqual(FarmStore.stillFirstRun(farm), false, 'a log skips first-run');
+});
+
 check('first-run steps mark farm/field/product independently', () => {
   const farm = FarmStore.defaultData();
   let steps = FarmStore.firstRunSteps(farm);

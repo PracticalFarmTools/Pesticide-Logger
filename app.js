@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.18 — Practical Farm Tools
+/* Pesticide Logger v2.9.19 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -778,7 +778,9 @@
 
   function applySettings() {
     const s = data.settings;
-    $('#farm-name-display').textContent = s.farmName || '';
+    const title = $('#header-title');
+    if (title) title.textContent = s.farmName || 'Pesticide Logger';
+    if ($('#farm-name-display')) $('#farm-name-display').textContent = s.farmName || '';
     if (!$('#app-applicator').value) $('#app-applicator').value = s.applicatorName;
     if (!$('#app-cert').value) $('#app-cert').value = s.certNumber;
     if (!$('#app-county').value) $('#app-county').value = s.county || '';
@@ -1983,6 +1985,7 @@
   }
 
   function updateLogSectionCollapse() {
+    let parkedVisible = 0;
     $$('#app-form fieldset[data-log-section]').forEach((fs) => {
       const name = fs.dataset.logSection;
       const expand = !!(logForceExpand
@@ -1992,11 +1995,15 @@
       fs.classList.toggle('log-section-parked', !expand);
       const chip = document.querySelector(`.log-section-nav-item[data-jump-section="${name}"]`);
       if (chip) {
-        chip.hidden = !!fs.hidden;
+        const hideChip = !!fs.hidden || !expand;
+        chip.hidden = hideChip;
         chip.classList.toggle('is-open', expand && !fs.hidden);
         chip.classList.toggle('is-parked', !expand && !fs.hidden);
+        if (!expand && !fs.hidden) parkedVisible += 1;
       }
     });
+    const more = $('#log-more-record');
+    if (more) more.hidden = parkedVisible === 0 || logForceExpand;
   }
 
   function revealLogSection(name) {
@@ -2011,12 +2018,20 @@
     const nav = $('#log-section-nav');
     if (!nav) return;
     const setNavOffset = () => {
-      const tabNav = $('.tab-nav');
-      document.documentElement.style.setProperty('--tab-nav-h', (tabNav ? tabNav.offsetHeight : 56) + 'px');
+      const wrap = $('.tab-nav-wrap');
+      document.documentElement.style.setProperty('--tab-nav-h', (wrap ? wrap.offsetHeight : 70) + 'px');
     };
     setNavOffset();
     window.addEventListener('resize', setNavOffset);
     nav.addEventListener('click', (e) => {
+      const more = e.target.closest('#log-more-record');
+      if (more) {
+        $$('#app-form fieldset[data-log-section]').forEach((fs) => {
+          if (!fs.hidden) logPinnedSections.add(fs.dataset.logSection);
+        });
+        updateLogSectionCollapse();
+        return;
+      }
       const btn = e.target.closest('[data-jump-section]');
       if (!btn) return;
       const name = btn.dataset.jumpSection;
@@ -3502,12 +3517,14 @@
   }
 
   function renderDashboard() {
-    const empty = isEmptyHome();
+    const empty = (typeof FarmStore !== 'undefined' && FarmStore.stillFirstRun)
+      ? FarmStore.stillFirstRun(data)
+      : isEmptyHome();
     if ($('#dash-first-run')) $('#dash-first-run').hidden = !empty;
     if ($('#dash-working')) $('#dash-working').hidden = empty;
     if ($('#dash-inspect-packet')) {
       const hasLogs = !!(data.applications && data.applications.length);
-      $('#dash-inspect-packet').hidden = !hasLogs || isQuietHome();
+      $('#dash-inspect-packet').hidden = !hasLogs;
     }
     renderInstallBanner();
     if (empty) {
@@ -3517,6 +3534,7 @@
     renderBackupBanner();
     renderGatherHint();
     renderSendNagBanner();
+    queueHomeMessages();
     renderForecastFieldOptions();
     const apps = sortedApps();
     const seasonStart = new Date(now().getFullYear(), 0, 1);
@@ -3598,7 +3616,7 @@
             </div>
             <div class="when">${fmtDate(a.date)}</div>
           </div>`).join('')}</div>`
-      : `<p class="empty-note">Nothing logged yet — hit “Log application” after your next spray.</p>`;
+      : `<p class="empty-note">Nothing logged yet — Log this spray after your next pass.</p>`;
 
     // Compliance card — small farms keep the honesty line + Settings jump.
     const law = stateLaw();
@@ -4609,6 +4627,12 @@
         toast('Inspector view on — Exit anytime. Sprays are not locked.');
       });
     }
+    if ($('#dash-inspect-packet')) {
+      $('#dash-inspect-packet').addEventListener('click', () => {
+        setInspectorView(true);
+        toast('Inspector view on — Exit anytime. Sprays are not locked.');
+      });
+    }
     if ($('#inspector-clear-pin')) {
       $('#inspector-clear-pin').addEventListener('click', () => {
         data.settings.inspectorPin = '';
@@ -4910,6 +4934,17 @@
       }
     } catch (e) { /* */ }
     el.hidden = false;
+  }
+
+  function queueHomeMessages() {
+    const order = ['backup-banner', 'send-nag-banner', 'gather-hint', 'install-banner'];
+    let shown = false;
+    order.forEach((id) => {
+      const el = $('#' + id);
+      if (!el || el.hidden) return;
+      if (shown) el.hidden = true;
+      else shown = true;
+    });
   }
 
   function clearAllData() {
@@ -7087,7 +7122,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.18';
+  const APP_VERSION = 'v2.9.19';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {
@@ -7159,6 +7194,24 @@
     }).then(done, done);
   }
 
+  const CAB_GLARE_KEY = 'pesticide-logger.cabGlare';
+
+  function applyCabGlare(on) {
+    document.body.classList.toggle('cab-glare', !!on);
+    try { localStorage.setItem(CAB_GLARE_KEY, on ? '1' : '0'); } catch (e) { /* */ }
+    const box = $('#set-cab-glare');
+    if (box) box.checked = !!on;
+  }
+
+  function initCabGlare() {
+    let on = false;
+    try { on = localStorage.getItem(CAB_GLARE_KEY) === '1'; } catch (e) { /* */ }
+    applyCabGlare(on);
+    if ($('#set-cab-glare')) {
+      $('#set-cab-glare').addEventListener('change', () => applyCabGlare($('#set-cab-glare').checked));
+    }
+  }
+
   // -------------------------------------------------------------- boot
 
   function startFarmUi() {
@@ -7176,6 +7229,7 @@
     initFirstRun();
     initSprayForecast();
     initReminders();
+    initCabGlare();
     initCsvImport();
     initCrew();
     initInspectorView();

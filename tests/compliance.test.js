@@ -242,17 +242,17 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.18 + deadline/license wiring', () => {
+check('source files advertise v2.9.19 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.18'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.18'));
+  assert.ok(app.includes('v2.9.19'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.19'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-14'"));
-  assert.ok(!html.includes('v2.9.18'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.19'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
-  assert.ok(html.includes('id="header-check-update"'), 'Check for updates lives in the header');
+  assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
   assert.ok(html.includes('id="header-update-status"'));
   assert.ok(html.includes('id="map-add-corners"'));
   assert.ok(html.includes('id="map-offline-note"'));
@@ -358,10 +358,10 @@ check('cab chrome: Home, Spray Log, Products, Fields, and More', () => {
     'Tank Mix is a spray-log jump, not a primary tab');
   assert.ok(/id="app-open-tank-mix"[^>]*data-goto="calculator"|data-goto="calculator"[^>]*id="app-open-tank-mix"/.test(html),
     'Tank Mix jump targets the calculator');
-  assert.ok(html.includes('id="dash-inspect-packet"') && html.includes('data-scroll-to="report-inspect-html"'),
-    'Home Inspector packet jumps to the Reports packet button');
-  assert.ok(app.includes('isQuietHome()') && app.includes("dash-inspect-packet"),
-    'Inspector packet hides until a spray exists and on a quiet Home');
+  assert.ok(html.includes('id="dash-inspect-packet"') && html.includes('Hand to inspector'),
+    'Home Hand to inspector is a primary action');
+  assert.ok(app.includes("setInspectorView(true)") && app.includes("dash-inspect-packet"),
+    'Hand to inspector opens inspector view');
 });
 
 check('cab UX: compact spray log, library-first lists, quieter home, calc copy, map default', () => {
@@ -414,8 +414,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.18'"));
-  assert.ok(!html.includes('v2.9.18'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.19'"));
+  assert.ok(!html.includes('v2.9.19'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -462,6 +462,7 @@ check('empty first-run home hides zeros until a field or log exists', () => {
   assert.strictEqual(FarmStore.isEmptyHome(empty), false);
   assert.ok(app.includes('FarmStore.isEmptyHome'));
   assert.ok(app.includes('FarmStore.firstRunSteps'));
+  assert.ok(app.includes('FarmStore.stillFirstRun'));
   assert.ok(app.includes("$('#dash-working').hidden = empty"));
   assert.ok(app.includes("$('#dash-first-run').hidden = !empty"));
   const steps = FarmStore.firstRunSteps({
@@ -814,6 +815,33 @@ check('Celsius echo and tank-mix metric are display-only; records stay US', () =
   assert.ok(app.includes('mixMetricCaption'), 'tank mix metric strip');
   assert.ok(html.includes('US label units. After Calculate'), 'calculator hint');
   assert.ok(!html.includes('id="set-units"') && !html.includes('id="set-metric"'), 'no global unit toggle');
+});
+
+check('frontier UI: thumb tabs, inspector handoff, one home message, cab glare', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  const i18n = require(path.join(root, 'i18n.js'));
+  assert.ok(/\.tab-nav-wrap \{[\s\S]*?position:\s*fixed/.test(css), 'tabs sit at the thumb');
+  assert.ok(css.indexOf('.tab-nav-wrap') < css.indexOf('main {') || css.includes('bottom: 0'), 'thumb bar is docked');
+  assert.ok(html.includes('id="dash-home-actions"') && html.includes('id="dash-log-spray"'));
+  assert.ok(html.includes('Hand to inspector'));
+  assert.ok(!html.includes('id="header-check-update"') || html.includes('Check for app updates'),
+    'app update check is not a header chip');
+  assert.ok(html.includes('id="set-cab-glare"') && app.includes('CAB_GLARE_KEY'));
+  assert.ok(app.includes('function queueHomeMessages'));
+  assert.ok(app.includes("['backup-banner', 'send-nag-banner', 'gather-hint', 'install-banner']"));
+  assert.ok(html.includes('id="log-more-record"') && html.includes('More for the record'));
+  assert.ok(css.includes('body.cab-glare'));
+  assert.ok(css.includes('body.inspector-view'));
+  assert.ok(!css.includes('radial-gradient(circle at 10%'), 'no decorative page wash');
+  assert.ok(i18n.ES['Hand to inspector'] === 'Entregar al inspector');
+  assert.ok(i18n.FR['Log'] === 'Registre');
+  const printAt = css.indexOf('@media print');
+  const printClose = css.indexOf('\n}', css.indexOf('.posting-sheet th'));
+  const inspectorAt = css.indexOf('.inspector-bar {');
+  assert.ok(printAt > 0 && printClose > printAt && inspectorAt > printClose,
+    'inspector paper styles are not trapped in print');
 });
 
 check('schema default version is 5', () => {

@@ -26,18 +26,14 @@
         <path d="M7 22h10"/>
       </svg>
       <div>
-        <h1>Pesticide Logger</h1>
-        <div class="header-sub-row">
-          <span class="header-sub">Practical Farm Tools</span>
-          <button type="button" class="header-update-btn" id="header-check-update">Check for updates</button>
-        </div>
-        <span class="header-update-status" id="header-update-status" role="status" aria-live="polite" hidden></span>
+        <h1 id="header-title">Pesticide Logger</h1>
+        <span class="header-sub">Practical Farm Tools</span>
       </div>
     </div>
     <div class="header-right">
-      <span id="offline-badge" class="offline-badge" hidden>Offline — records save locally</span>
+      <span id="offline-badge" class="offline-badge" hidden>Offline</span>
       <span id="license-badge" class="license-badge" hidden></span>
-      <span id="farm-name-display" class="farm-name-display"></span>
+      <span id="farm-name-display" class="farm-name-display" hidden></span>
     </div>
   </div>
 </header>
@@ -82,56 +78,17 @@
 <div id="inspector-bar" class="inspector-bar" hidden>
   <div>
     <strong>Inspector view</strong>
-    <p>Editing is hidden so you can hand this tablet over. The live spray log is not locked — Exit anytime.</p>
+    <p>This tablet is for looking. The live log is not locked — Exit anytime.</p>
   </div>
-  <button type="button" class="btn btn-secondary" id="inspector-exit">Exit inspector view</button>
+  <button type="button" class="btn btn-secondary" id="inspector-exit">Exit</button>
 </div>
-<div class="tab-nav-wrap">
-<nav class="tab-nav" role="tablist" aria-label="Main navigation">
-  <button class="tab-btn tab-btn-home active" data-tab="dashboard" role="tab" aria-selected="true" aria-label="Home">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10.5V20h4.5v-5.5h3V20H18v-9.5"/></svg>
-    <span class="tab-home-label">Home</span>
-  </button>
-  <button class="tab-btn" data-tab="log" role="tab" aria-selected="false">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
-    <span>Spray Log</span>
-  </button>
-  <button class="tab-btn" data-tab="products" role="tab" aria-selected="false">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4"/><path d="M9 2v3l-3 4v11a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9l-3-4V2"/><line x1="6" y1="13" x2="18" y2="13"/></svg>
-    <span>Products</span>
-  </button>
-  <button class="tab-btn" data-tab="fields" role="tab" aria-selected="false">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-    <span>Fields</span>
-  </button>
-  <button type="button" class="tab-btn" id="tab-more" aria-haspopup="menu" aria-expanded="false" aria-controls="tab-more-menu">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
-    <span>More</span>
-  </button>
-</nav>
-<div id="tab-more-menu" class="tab-more-menu" role="menu" aria-label="More" hidden>
-  <button type="button" class="tab-more-item" role="menuitem" data-tab="calculator">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="11" x2="8" y2="11.01"/><line x1="12" y1="11" x2="12" y2="11.01"/><line x1="16" y1="11" x2="16" y2="11.01"/><line x1="8" y1="15" x2="8" y2="15.01"/><line x1="12" y1="15" x2="12" y2="15.01"/><line x1="16" y1="15" x2="16" y2="15.01"/><line x1="8" y1="19" x2="8" y2="19.01"/><line x1="12" y1="19" x2="12" y2="19.01"/><line x1="16" y1="19" x2="16" y2="19.01"/></svg>
-    Tank Mix
-  </button>
-  <button type="button" class="tab-more-item" role="menuitem" data-tab="reports">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-    Reports
-  </button>
-  <button type="button" class="tab-more-item" role="menuitem" data-tab="settings">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    Settings
-  </button>
-</div>
-</div>
-
 <main id="main">
 
   <!-- ============ DASHBOARD ============ -->
   <section id="tab-dashboard" class="tab-panel active" role="tabpanel">
     <div class="card" id="dash-first-run" hidden>
       <h3 class="card-title">Get set up to log</h3>
-      <p class="card-hint">Three steps on this screen. Then Home shows spray windows, REI, and recent applications — not empty zeros. Nothing is uploaded anywhere. A 30-day trial is already running; no card required.</p>
+      <p class="card-hint">Your state picks the boxes. Then you can log. Nothing leaves this device. A 30-day trial is already running — no card.</p>
       <form id="first-run-farm" class="form-grid first-run-farm" hidden>
         <div class="form-row">
           <label>Interface language
@@ -207,6 +164,11 @@
       </div>
     </div>
 
+    <div class="home-actions" id="dash-home-actions">
+      <button type="button" class="btn btn-primary btn-xl" data-goto="log" id="dash-log-spray">Log this spray</button>
+      <button type="button" class="btn btn-secondary btn-xl" id="dash-inspect-packet">Hand to inspector</button>
+    </div>
+
     <div class="stat-grid">
       <button type="button" class="stat-card" data-goto="log" data-scroll-to="app-history-card">
         <span class="stat-value" id="stat-season-apps">0</span>
@@ -278,7 +240,6 @@
       <div class="card-title-row">
         <h3 class="card-title">Recent applications</h3>
         <button class="btn btn-primary btn-sm" data-goto="log" id="dash-new-app">+ Log application</button>
-        <button type="button" class="btn btn-secondary btn-sm" data-goto="reports" data-scroll-to="report-inspect-html" id="dash-inspect-packet">Inspector packet</button>
       </div>
       <div id="recent-apps"></div>
     </div>
@@ -326,6 +287,7 @@
         <button type="button" class="log-section-nav-item" data-jump-section="equipment">Equipment</button>
         <button type="button" class="log-section-nav-item" data-jump-section="who">Who</button>
         <button type="button" class="log-section-nav-item" data-jump-section="notes">Notes</button>
+        <button type="button" class="log-more-record" id="log-more-record" hidden>More for the record</button>
       </nav>
       <div id="app-due-banner" class="due-banner" hidden></div>
       <div id="app-compliance-status" class="compliance-status" hidden></div>
@@ -1149,6 +1111,10 @@
       </label>
       <p class="card-hint" id="reminders-hint">Notifications fire while the app is open — there is no server,
         so nothing runs when it's closed. The dashboard clocks are always authoritative.</p>
+      <label class="checkbox-label">
+        <input type="checkbox" id="set-cab-glare">
+        Cab glare — larger type for sun and the tractor
+      </label>
     </div>
 
     <div class="card" id="license-card">
@@ -1181,6 +1147,10 @@
       <h3 class="card-title">About</h3>
       <p>Pesticide Logger — part of the <strong>Practical Farm Tools</strong> suite. A licensed, offline-first tool built for farms of every size; your farm records stay on this device.</p>
       <p class="card-hint">This tool provides 50-state application <em>recordkeeping field coverage</em> with audit history, lot tracking, and in-cab workflows. It is not legal advice, does not replace WPS employer duties, and does not file California PUR, New York PRL, or other electronic reports for you. Always follow the product label and confirm requirements with your state pesticide agency.</p>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" id="header-check-update">Check for app updates</button>
+      </div>
+      <p class="card-hint" id="header-update-status" role="status" hidden></p>
       <details class="legal-details">
         <summary>Terms of use, license &amp; privacy</summary>
         <div class="legal-body">
@@ -1208,6 +1178,45 @@
   </section>
 
 </main>
+
+<div class="tab-nav-wrap">
+<nav class="tab-nav" role="tablist" aria-label="Main navigation">
+  <button class="tab-btn tab-btn-home active" data-tab="dashboard" role="tab" aria-selected="true" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10.5V20h4.5v-5.5h3V20H18v-9.5"/></svg>
+    <span>Home</span>
+  </button>
+  <button class="tab-btn" data-tab="log" role="tab" aria-selected="false" aria-label="Spray Log">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+    <span>Log</span>
+  </button>
+  <button class="tab-btn" data-tab="products" role="tab" aria-selected="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2h4"/><path d="M9 2v3l-3 4v11a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9l-3-4V2"/><line x1="6" y1="13" x2="18" y2="13"/></svg>
+    <span>Products</span>
+  </button>
+  <button class="tab-btn" data-tab="fields" role="tab" aria-selected="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    <span>Fields</span>
+  </button>
+  <button type="button" class="tab-btn" id="tab-more" aria-haspopup="menu" aria-expanded="false" aria-controls="tab-more-menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+    <span>More</span>
+  </button>
+</nav>
+<div id="tab-more-menu" class="tab-more-menu" role="menu" aria-label="More" hidden>
+  <button type="button" class="tab-more-item" role="menuitem" data-tab="calculator">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="11" x2="8" y2="11.01"/><line x1="12" y1="11" x2="12" y2="11.01"/><line x1="16" y1="11" x2="16" y2="11.01"/><line x1="8" y1="15" x2="8" y2="15.01"/><line x1="12" y1="15" x2="12" y2="15.01"/><line x1="16" y1="15" x2="16" y2="15.01"/><line x1="8" y1="19" x2="8" y2="19.01"/><line x1="12" y1="19" x2="12" y2="19.01"/><line x1="16" y1="19" x2="16" y2="19.01"/></svg>
+    Tank Mix
+  </button>
+  <button type="button" class="tab-more-item" role="menuitem" data-tab="reports">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Reports
+  </button>
+  <button type="button" class="tab-more-item" role="menuitem" data-tab="settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Settings
+  </button>
+</div>
+</div>
 
 </div>
 <!-- /#app-shell -->

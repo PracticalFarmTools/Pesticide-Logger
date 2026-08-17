@@ -12,18 +12,17 @@ Job to be done: a grower keeps **U.S. state pesticide application records** on
 their own device, hands an inspector a file that opens without an account, and
 never puts the book in someone else’s cloud.
 
-This is **not** a farm OS. The comparison with paper, FieldView, Bushel Farm,
-Croptracker, Agworld, and Agrian/TELUS is the constraint: steal the *job they
-win* when it overlaps ours; do not steal their platform.
+This is **not** a farm OS. Steal the *job* when it overlaps ours; do not
+steal the platform.
 
-| Competitor wins on | We take | We refuse |
+| They win on | We take | We refuse |
 |---|---|---|
 | Paper / state PDFs — inspector familiarity | Packet that *reads* like a log sheet | 50 official PDF templates, e-file |
-| Croptracker — hand the tablet over | Inspector view + signed HTML | GAP / GlobalG.A.P. / FSMA binders, live crew seats |
-| Bushel — records after you stop paying | Shop = book of record; USB/JSON gather | P&L, grain, live accounts |
-| FieldView — I can see my fields | Polygons + optional site / FSA numbers | As-applied rasters, machine files, account sharing |
-| Agworld — plan vs applied honesty | Already have planned vs applied | Recs, inventory, shared season plans |
-| Agrian — product identity | EPA identity import; label-entered REI/PHI/rate | Indemnified label DB, auto-fill, e-file |
+| Hand the tablet over | Inspector view + signed HTML | GAP / GlobalG.A.P. / FSMA binders, live crew seats |
+| Records after you stop paying | Shop = book of record; USB/JSON gather | P&L, grain, live accounts |
+| I can see my fields | Polygons + optional site / FSA numbers | As-applied rasters, machine files, account sharing |
+| Plan vs applied honesty | Already have planned vs applied | Recs, inventory, shared season plans |
+| Product identity | EPA identity import; label-entered REI/PHI/rate | Indemnified label DB, auto-fill, e-file |
 
 **Thesis:** keep being the grower-owned spray book an inspector can open without
 an account. Next gains come from making that book look like the form they
@@ -167,7 +166,7 @@ on any phone or laptop — no app, no account. Snapshot only.*
 
 ### 2. Gather — how seats work without accounts
 
-Shop device = book of record. Cab phones send a file. That is the Bushel
+Shop device = book of record. Cab phones send a file. That is the
 “you still have the book” story without live seats.
 
 **Keep the merge rules.** Newest `updatedAt` wins; loser snapshot in History;
@@ -233,7 +232,7 @@ on a new spray, a one-line hint under the mix: *Last on this field: 12 Jun
 Missing history: no hint (tiny-farm quiet). This is Duplicate last spray’s
 cousin, scoped to field × product, not a recommendation engine.
 
-### 5. Field identity without FieldView
+### 5. Field identity without a farm OS map
 
 Keep polygons, geodesic acres, Fit all, weather pin. Add optional identity
 inspectors already ask for:
@@ -282,7 +281,7 @@ export after trial. Out of this blueprint’s code phases.
 
 ## What this is not
 
-- Not as-applied maps, machine files, FieldView / John Deere import, NDVI.
+- Not as-applied maps, machine files, tractor / telematics import, NDVI.
 - Not grain, P&L, chemical inventory, agronomist recs, shared season plans.
 - Not GlobalG.A.P., FSMA, or harvest-lot binder automation (certifier
   packet already formats the *same spray records* for a buyer — leave it).

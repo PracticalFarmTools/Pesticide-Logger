@@ -37,15 +37,10 @@ the ability to log new sprays.
 
 ## Competitive position
 
-| Product | Typical price | Notes |
-|---|---|---|
-| Agrian / Telus Agronomy | $1,000+/yr | Enterprise, reps, label DB |
-| Agworld | $1,500+/yr | Full farm management |
-| Croptracker | ~$540+/yr | Per-module pricing |
-| Climate FieldView | $99+/yr | Agronomy focus, data sharing concerns |
-| Bushel Farm (FarmLogs) | ~$300+/yr | General farm records |
-| Paper + state PDF forms | $0 | No clocks, no search, no backup |
-| **Pesticide Logger** | Paid license | Recordkeeping-only, offline, private |
+Comparable farm platforms charge hundreds to thousands per year for agronomy
+maps, crew seats, or a full farm OS. Those list prices move, and we do not
+keep a named table of them. This is a single-farm spray book: paid license,
+offline, private. Paper is $0 and has no clocks, search, or backup.
 
 ## How selling works with $0 infrastructure
 

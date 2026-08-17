@@ -888,6 +888,11 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(csv.THIRD_PARTY_FILE_NOTE.includes('not affiliated'));
   assert.ok(csv.THIRD_PARTY_FILE_NOTE.includes('not uploaded'));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(csvSrc), 'csv-import does not name other products');
+  const pricing = fs.readFileSync(path.join(root, 'PRICING.md'), 'utf8');
+  const lane = fs.readFileSync(path.join(root, 'docs', 'stay-in-lane-blueprint.md'), 'utf8');
+  const named = /SprayLedger|Farm Spray Pro|AgriXP|FieldView|FarmLogs|Bushel Farm|Agrian|Agworld|Croptracker|John Deere/;
+  assert.ok(!named.test(pricing), 'PRICING.md does not keep a named competitor table');
+  assert.ok(!named.test(lane), 'stay-in-lane does not name other products');
 });
 
 check('schema default version is 5', () => {

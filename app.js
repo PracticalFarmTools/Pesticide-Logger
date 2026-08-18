@@ -1143,7 +1143,12 @@
         : 'No state selected · core fields only';
     }
     const title = $('#app-form-title');
-    if (title && !title.textContent.startsWith('Edit record')) {
+    const keepTitle = title && (
+      title.textContent.startsWith('Edit record') ||
+      title.textContent.startsWith('Duplicate of') ||
+      title.textContent.startsWith('Same mix')
+    );
+    if (title && !keepTitle) {
       title.textContent = stateName ? `Log an application — ${stateName}` : 'Log an application';
     }
     syncMixStateChrome();
@@ -3591,9 +3596,9 @@
     logForceExpand = false;
     logPinnedSections.clear();
     setMixCompact(true);
-    if ($('#app-form-title')) $('#app-form-title').textContent = tr('Same mix — next field');
     if ($('#app-save-btn')) $('#app-save-btn').textContent = tr('Save this spray');
     applyStateRequiredTags();
+    if ($('#app-form-title')) $('#app-form-title').textContent = tr('Same mix — next field');
     updateMixInfo();
     numberMixRows();
     updateCompliancePreview();

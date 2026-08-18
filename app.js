@@ -1055,7 +1055,8 @@
       const extra = [
         ver && ver !== 'researched' ? ver : '',
         fresh.reviewBy ? 'check by ' + fresh.reviewBy : '',
-        honesty && ver === 'researched' ? 'duty unverified' : ''
+        honesty && ver === 'researched' && cls === 'private' && (law.privateDuty || 'required') === 'uncertain'
+          ? 'duty unverified' : ''
       ].filter(Boolean).join(' · ');
       summary.textContent = stateName
         ? `${stateName} · ${cls} · ${shown} fields · retain ${(law && law.retentionYears) || '—'} yr${extra ? ' · ' + extra : ''}`
@@ -5161,15 +5162,17 @@
   function renderInstallBanner() {
     const el = $('#install-banner');
     if (!el) return;
-    if (isStandaloneDisplay()) { el.hidden = true; return; }
-    if (typeof isEmptyHome === 'function' ? isEmptyHome() : false) { el.hidden = true; return; }
+    if (isStandaloneDisplay()) { el.hidden = true; queueHomeMessages(); return; }
+    if (typeof isEmptyHome === 'function' ? isEmptyHome() : false) { el.hidden = true; queueHomeMessages(); return; }
     try {
       if (localStorage.getItem('pesticide-logger.installHintDismissed')) {
         el.hidden = true;
+        queueHomeMessages();
         return;
       }
     } catch (e) { /* */ }
     el.hidden = false;
+    queueHomeMessages();
   }
 
   function queueHomeMessages() {

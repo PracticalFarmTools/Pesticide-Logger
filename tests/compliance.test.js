@@ -857,6 +857,10 @@ check('frontier UI: thumb tabs, inspector handoff, one home message, cab glare',
   assert.ok(html.includes('id="set-cab-glare"') && app.includes('CAB_GLARE_KEY'));
   assert.ok(app.includes('function queueHomeMessages'));
   assert.ok(app.includes("['dash-keep-book', 'backup-banner', 'send-nag-banner', 'gather-hint', 'install-banner']"));
+  assert.ok(app.includes('el.hidden = false;\n    queueHomeMessages();'),
+    'install banner re-queues so Keep this book stays the one Home message');
+  assert.ok(app.includes("=== 'uncertain'\n          ? 'duty unverified'"),
+    'researched privateDuty none must not show duty unverified');
   assert.ok(html.includes('id="log-more-record"') && html.includes('More for the record'));
   assert.ok(css.includes('body.cab-glare'));
   assert.ok(css.includes('body.inspector-view'));

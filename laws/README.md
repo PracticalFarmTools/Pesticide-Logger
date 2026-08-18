@@ -40,7 +40,8 @@ node tools/bundle-state-laws.js --oldest 13  # list only; not a quarterly duty
 node tools/bundle-state-laws.js --stale
 node tools/bundle-state-laws.js --show MS    # citation URL + field names
 node tools/bundle-state-laws.js --status
-node tools/bundle-state-laws.js --watch-list # citation URLs for an external monitor (no fetch)
+node tools/bundle-state-laws.js --watch-list # citation URLs (no fetch)
+node tools/watch-citations.js               # $0 hasher; snapshots in watch-cache/
 ```
 
 What to do next, in order: `docs/state-maintainer-playbook.md`

@@ -1729,6 +1729,18 @@ body.cab-glare .card-hint { color: #2a3a30; }
 body.public-page {
   padding-bottom: 2rem;
 }
+body.public-page .public-lang {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.75rem;
+  color: inherit;
+  margin: 0;
+}
+body.public-page .public-lang select {
+  min-height: 2.25rem;
+  min-width: 8.5rem;
+}
 body.public-page .app-header .btn-primary {
   background: #fff;
   color: var(--primary-green-dark);

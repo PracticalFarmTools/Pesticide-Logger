@@ -240,14 +240,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.27 + deadline/license wiring', () => {
+check('source files advertise v2.9.28 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.27'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.27'));
+  assert.ok(app.includes('v2.9.28'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.28'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-18'"));
-  assert.ok(!html.includes('v2.9.27'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.28'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -415,8 +415,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.27'"));
-  assert.ok(!html.includes('v2.9.27'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.28'"));
+  assert.ok(!html.includes('v2.9.28'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -887,11 +887,22 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(start.includes('grower’s book') || start.includes("grower's book"));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(start), 'public page does not name other products');
   assert.ok(!start.includes('Names on those buttons'));
-  assert.ok(!start.includes('v2.9.27'), 'public page keeps version out of copy');
+  assert.ok(!start.includes('v2.9.28'), 'public page keeps version out of copy');
   assert.ok(start.includes('id="start-copy-link"'));
+  assert.ok(start.includes('mailto:kylespear88@gmail.com') && inspector.includes('mailto:kylespear88@gmail.com') &&
+    extension.includes('mailto:kylespear88@gmail.com'), 'public human on all three pages');
+  assert.ok(start.includes('id="public-lang"') && start.includes('src="i18n.js"'));
+  assert.ok(start.includes('USB and GitHub Pages have no lookup') || start.includes('Type the jug number'));
+  assert.ok(extension.includes('start.html?state=IA') && extension.includes('start.html?state=ME'));
+  assert.ok(html.includes('id="dash-clerk"') && html.includes('id="report-season-binder"'));
+  const licSrc = fs.readFileSync(path.join(root, 'license.js'), 'utf8');
+  assert.ok(/const LICENSE_PUBLIC_KEY_SPKI_B64 = '[A-Za-z0-9_-]{40,}'/.test(licSrc),
+    'shipped public key can honor a signed license');
+  assert.ok(fs.existsSync(path.join(root, 'tools/watch-citations.js')));
   assert.ok(html.includes('id="dash-keep-book"') && html.includes('Keep this book'));
   assert.ok(html.includes('id="import-honesty"') && html.includes('never invent REI, PHI, or rates'));
-  assert.ok(html.includes('id="dash-keep-book"') && html.indexOf('id="dash-keep-book"') > html.indexOf('id="dash-working"'));
+  assert.ok(html.includes('id="dash-keep-book"') && html.indexOf('id="dash-keep-book"') < html.indexOf('id="dash-working"'),
+    'keep-book sits above working Home so the restore card is the fourth beat');
   assert.ok(inspector.includes('opens without an account') || inspector.includes('without an account'));
   assert.ok(inspector.includes('The label is the law'));
   assert.ok(extension.includes('State-shaped log') && extension.includes('Label is the law'));

@@ -89,5 +89,9 @@ check('Maine commercial lists required boxes and the agency', () => {
   assert.ok(s.citationUrl);
 });
 
+check('public page exposes a support mailbox, not a recovery cloud', () => {
+  assert.strictEqual(StartPage.SUPPORT_EMAIL, 'kylespear88@gmail.com');
+});
+
 if (failed) process.exit(1);
 console.log('\nAll start-page checks passed.');

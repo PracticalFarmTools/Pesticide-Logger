@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.27 — Practical Farm Tools
+/* Pesticide Logger v2.9.28 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -400,7 +400,8 @@
   }
 
   function uiLang() {
-    return (data.settings && data.settings.language) || '';
+    return (data.settings && data.settings.language) ||
+      (typeof I18n !== 'undefined' && I18n.readStoredLang && I18n.readStoredLang()) || '';
   }
 
   function tr(msg) {
@@ -420,6 +421,7 @@
   let i18nObserver = null;
   function applyUiLanguage() {
     const lang = uiLang();
+    if (lang && typeof I18n !== 'undefined' && I18n.writeStoredLang) I18n.writeStoredLang(lang);
     if (i18nObserver || typeof I18n === 'undefined' || !I18n.dictFor) return;
     if (!I18n.dictFor(lang)) return;
     i18nObserver = I18n.applyLanguage(lang);
@@ -437,6 +439,7 @@
     const next = lang || '';
     if (uiLang() === next) return;
     data.settings.language = next;
+    if (typeof I18n !== 'undefined' && I18n.writeStoredLang) I18n.writeStoredLang(next);
     await persistFarmThenReload();
   }
 
@@ -3727,11 +3730,13 @@
       $('#dash-inspect-packet').hidden = !hasLogs;
     }
     renderInstallBanner();
+    renderKeepBook();
     if (empty) {
       renderFirstRun();
+      queueHomeMessages();
       return;
     }
-    renderKeepBook();
+    renderClerk();
     renderBackupBanner();
     renderGatherHint();
     renderSendNagBanner();
@@ -4191,6 +4196,8 @@
     if ($('#report-state-pack')) $('#report-state-pack').addEventListener('click', downloadStatePack);
     if ($('#report-certifier')) $('#report-certifier').addEventListener('click', printCertifierPacket);
     if ($('#report-inspect-html')) $('#report-inspect-html').addEventListener('click', downloadInspectPacket);
+    if ($('#report-season-binder')) $('#report-season-binder').addEventListener('click', printSeasonBinder);
+    if ($('#dash-clerk-binder')) $('#dash-clerk-binder').addEventListener('click', printSeasonBinder);
     $('#backup-download').addEventListener('click', downloadBackup);
     if ($('#backup-restore-card')) $('#backup-restore-card').addEventListener('click', printRestoreCard);
     if ($('#settings-download-backup')) $('#settings-download-backup').addEventListener('click', downloadBackup);
@@ -4553,6 +4560,49 @@
     renderKeepBook();
     renderBackupBanner();
     queueHomeMessages();
+  }
+
+  function currentClerkSnapshot(year) {
+    if (typeof FarmFile === 'undefined' || !FarmFile.clerkSnapshot) return null;
+    const law = stateLaw();
+    const d = now();
+    const y = year || String(d.getFullYear());
+    return FarmFile.clerkSnapshot(data.applications, data.settings, law, {
+      evaluateCompliance: evaluateCompliance,
+      nowMs: d.getTime(),
+      year: y
+    });
+  }
+
+  function renderClerk() {
+    const el = $('#dash-clerk');
+    const body = $('#dash-clerk-body');
+    if (!el) return;
+    const snap = currentClerkSnapshot();
+    const show = !!(typeof FarmFile !== 'undefined' && FarmFile.shouldShowClerkCard &&
+      FarmFile.shouldShowClerkCard(snap));
+    el.hidden = !show;
+    if (!show || !body || !snap) return;
+    const bits = [];
+    if (snap.keepUntil) {
+      bits.push('Keep ' + (snap.year || '') + ' sprays on file through ' + snap.keepUntil +
+        (snap.retentionYears ? ' (' + snap.retentionYears + '-year retention from the oldest spray this year).' : '.'));
+    }
+    bits.push(snap.incomplete + ' incomplete. ' + snap.overdue + ' past the completion clock.');
+    bits.push('Print a season binder cover for the shop notebook — not the agency’s form.');
+    body.textContent = bits.join(' ');
+    const inc = $('#dash-clerk-incomplete');
+    if (inc) inc.hidden = snap.incomplete === 0;
+  }
+
+  function printSeasonBinder() {
+    if (typeof FarmFile === 'undefined' || !FarmFile.seasonBinderHtml) {
+      toast('Season binder is not available in this build');
+      return;
+    }
+    const snap = currentClerkSnapshot();
+    $('#print-area').innerHTML = FarmFile.seasonBinderHtml(snap || {});
+    window.print();
   }
 
   function markSentAt() {
@@ -7381,7 +7431,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.27';
+  const APP_VERSION = 'v2.9.28';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {

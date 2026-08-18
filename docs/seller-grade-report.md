@@ -2,6 +2,8 @@
 
 _Audited 2026-08-18 against this checkout (`cursor/close-state-holes-907d` @ `3327ef3`). App **v2.9.27**. Laws edition **2026-08-18**. `--holes` is two rows: Arkansas and South Dakota private duty._
 
+**Follow-up (v2.9.28):** the P0–P3 items in this file are implemented on the product — license public key, public human, public-page languages, CSV honesty line, keep-book above Home, cab volume parked unless required, $0 citation hasher, Iowa/Maine beachhead, EPA host copy, clerk/season binder. Arkansas and South Dakota private duty stay frozen holes. Checkout URL is still owner-handled.
+
 This is a product-quality grade, not a storefront review. **Public site URLs and payment / checkout / merchant / sale price are out of scope** (owner-handled; `BUY_URL` empty is expected). The question is: if a grower already has the logger in front of them, is this a legitimate product they would pay to keep, and can it take share from paper and from farm platforms without becoming one?
 
 ---

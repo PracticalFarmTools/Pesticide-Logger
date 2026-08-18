@@ -68,9 +68,9 @@
   function describeMappedColumns(header, map) {
     const labels = mappedFieldLabels(header, map);
     if (!labels.length) {
-      return 'No columns were guessed. Match each app field to a column, or leave unmapped. Rows are drafts. This file stays on this device.';
+      return 'No columns were guessed. Match each app field to a column, or leave unmapped. Rows land as drafts. We never invent REI, PHI, or rates — incomplete is expected. This file stays on this device.';
     }
-    return joinLabels(labels) + ' were mapped from this file. Confirm the matches. Rows are drafts. This file stays on this device.';
+    return joinLabels(labels) + ' were mapped from this file. Confirm the matches. Rows land as drafts. We never invent REI, PHI, or rates — incomplete is expected. This file stays on this device.';
   }
 
   // Minimal RFC-4180-ish parser: quoted fields, embedded commas/newlines.

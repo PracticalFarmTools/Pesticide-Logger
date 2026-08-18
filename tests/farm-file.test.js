@@ -577,6 +577,31 @@ await check('restore card names the shop tablet and has no account', async () =>
   assert.ok(!/account|sync server/i.test(html) || html.includes('no account'));
 });
 
+await check('clerk snapshot counts incomplete, overdue, and keep-until year', () => {
+  const law = { retentionYears: 2, agency: 'Test', citation: { reference: 'Test §1' } };
+  const apps = [
+    { date: '2026-06-01', draft: true, recordDueAt: '2026-06-02T00:00:00.000Z' },
+    { date: '2026-07-01', draft: false, recordDueAt: '2027-01-01T00:00:00.000Z' }
+  ];
+  const evaluate = (a) => ({ complete: !a.draft, intervalsOk: true, status: a.draft ? 'incomplete' : 'fields_complete' });
+  const snap = FarmFile.clerkSnapshot(apps, { farmName: 'Oak', state: 'IA' }, law, {
+    evaluateCompliance: evaluate,
+    nowMs: Date.parse('2026-08-18T00:00:00.000Z'),
+    year: '2026'
+  });
+  assert.strictEqual(snap.n, 2);
+  assert.strictEqual(snap.incomplete, 1);
+  assert.strictEqual(snap.overdue, 1);
+  assert.strictEqual(snap.keepUntil, '2028');
+  assert.ok(FarmFile.shouldShowClerkCard(snap));
+  assert.ok(!FarmFile.shouldShowClerkCard({ n: 0 }));
+  const html = FarmFile.seasonBinderHtml(snap);
+  assert.ok(html.includes('Season binder'));
+  assert.ok(html.includes('not the agency'));
+  assert.ok(html.includes('2028'));
+  assert.ok(html.includes('Oak'));
+});
+
 if (failed) {
   console.error(`\n${failed} farm-file check(s) failed.`);
   process.exit(1);

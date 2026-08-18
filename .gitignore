@@ -1,4 +1,6 @@
 # License signing private key — NEVER commit. Back it up offline.
 keys/
+# Citation hasher snapshots (playbook Track 2). Bodies stay out of git.
+watch-cache/
 node_modules/
 .DS_Store

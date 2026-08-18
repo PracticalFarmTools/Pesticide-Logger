@@ -651,9 +651,27 @@
     ["Imported rows are drafts. We never invent REI, PHI, or rates, and we never mark a row complete. Empty boxes after import are the point — your state checker lists what each spray still needs.", "Las filas importadas son borradores. Nunca inventamos REI, PHI ni dosis, y nunca marcamos una fila como completa. Las casillas vacías después de importar son el punto — el verificador estatal lista lo que cada aspersión aún necesita.", "Les lignes importées sont des brouillons. Nous n’inventons jamais REI, PHI ni doses, et nous ne marquons jamais une ligne comme complète. Les cases vides après import sont le but — le vérificateur d’État liste ce que chaque pulvérisation manque encore.", "As linhas importadas são rascunhos. Nunca inventamos REI, PHI nem doses, e nunca marcamos uma linha como completa. Caixas vazias após a importação são o ponto — o verificador estadual lista o que cada pulverização ainda precisa."],
     ["This file stays on this device. We are not affiliated with the software you exported from.", "Este archivo se queda en este dispositivo. No estamos afiliados al software del que lo exportó.", "Ce fichier reste sur cet appareil. Nous ne sommes pas affiliés au logiciel d’où vous l’avez exporté.", "Este arquivo fica neste aparelho. Não somos afiliados ao software de onde você o exportou."],
     ["The file is read on this device and is not uploaded. Practical Farm Tools is not affiliated with or endorsed by the software you exported from.", "El archivo se lee en este dispositivo y no se sube. Practical Farm Tools no está afiliado ni respaldado por el software del que lo exportó.", "Le fichier est lu sur cet appareil et n’est pas envoyé. Practical Farm Tools n’est pas affilié ni cautionné par le logiciel d’où vous l’avez exporté.", "O arquivo é lido neste aparelho e não é enviado. Practical Farm Tools não é afiliado nem endossado pelo software de onde você o exportou."],
-    ["No columns were guessed. Match each app field to a column, or leave unmapped. Rows are drafts. This file stays on this device.", "No se adivinó ninguna columna. Relacione cada campo de la app con una columna, o déjelo sin asignar. Las filas son borradores. Este archivo se queda en este dispositivo.", "Aucune colonne n’a été devinée. Faites correspondre chaque champ de l’appli à une colonne, ou laissez-le non associé. Les lignes sont des brouillons. Ce fichier reste sur cet appareil.", "Nenhuma coluna foi adivinhada. Relacione cada campo do app a uma coluna, ou deixe sem mapear. As linhas são rascunhos. Este arquivo fica neste aparelho."],
+    ["No columns were guessed. Match each app field to a column, or leave unmapped. Rows land as drafts. We never invent REI, PHI, or rates — incomplete is expected. This file stays on this device.", "No se adivinó ninguna columna. Relacione cada campo de la app con una columna, o déjelo sin asignar. Las filas entran como borradores. Nunca inventamos REI, PHI ni dosis — lo incompleto es lo esperado. Este archivo se queda en este dispositivo.", "Aucune colonne n’a été devinée. Faites correspondre chaque champ de l’appli à une colonne, ou laissez-le non associé. Les lignes arrivent en brouillon. Nous n’inventons jamais REI, PHI ni doses — l’incomplet est voulu. Ce fichier reste sur cet appareil.", "Nenhuma coluna foi adivinhada. Relacione cada campo do app a uma coluna, ou deixe sem mapear. As linhas entram como rascunho. Nunca inventamos REI, PHI nem doses — incompleto é o esperado. Este arquivo fica neste aparelho."],
     ["Customer / client", "Cliente", "Client", "Cliente"],
-    ["Opens on any phone or laptop — no app, no account. Snapshot only. Signing shows the file was not changed after you saved it. You can keep editing the live log. How inspectors read this file: rates, REI, and PHI were copied from the product label — the label is the law. Incomplete rows are marked. This is not the agency’s form and is not a filing.", "Se abre en cualquier teléfono o portátil — sin app ni cuenta. Solo instantánea. La firma muestra que el archivo no cambió después de guardarlo. Puede seguir editando el registro. Cómo lo lee un inspector: dosis, REI y PHI se copiaron de la etiqueta — la etiqueta es la ley. Las filas incompletas van marcadas. No es el formulario de la agencia ni una presentación.", "S’ouvre sur n’importe quel téléphone ou ordinateur — sans appli ni compte. Instantané seulement. La signature montre que le fichier n’a pas changé après l’enregistrement. Vous pouvez continuer à modifier le registre. Lecture inspecteur : doses, REI et PHI viennent de l’étiquette — l’étiquette est la loi. Les lignes incomplètes sont marquées. Ce n’est pas le formulaire de l’agence ni un dépôt.", "Abre em qualquer celular ou notebook — sem app nem conta. Só instantânea. A assinatura mostra que o arquivo não mudou depois de salvar. Você pode continuar editando o registro. Como o fiscal lê: doses, REI e PHI vieram do rótulo — o rótulo é a lei. Linhas incompletas vêm marcadas. Não é o formulário do órgão nem um protocolo."]
+    ["Opens on any phone or laptop — no app, no account. Snapshot only. Signing shows the file was not changed after you saved it. You can keep editing the live log. How inspectors read this file: rates, REI, and PHI were copied from the product label — the label is the law. Incomplete rows are marked. This is not the agency’s form and is not a filing.", "Se abre en cualquier teléfono o portátil — sin app ni cuenta. Solo instantánea. La firma muestra que el archivo no cambió después de guardarlo. Puede seguir editando el registro. Cómo lo lee un inspector: dosis, REI y PHI se copiaron de la etiqueta — la etiqueta es la ley. Las filas incompletas van marcadas. No es el formulario de la agencia ni una presentación.", "S’ouvre sur n’importe quel téléphone ou ordinateur — sans appli ni compte. Instantané seulement. La signature montre que le fichier n’a pas changé après l’enregistrement. Vous pouvez continuer à modifier le registre. Lecture inspecteur : doses, REI et PHI viennent de l’étiquette — l’étiquette est la loi. Les lignes incomplètes sont marquées. Ce n’est pas le formulaire de l’agence ni un dépôt.", "Abre em qualquer celular ou notebook — sem app nem conta. Só instantânea. A assinatura mostra que o arquivo não mudou depois de salvar. Você pode continuar editando o registro. Como o fiscal lê: doses, REI e PHI vieram do rótulo — o rótulo é a lei. Linhas incompletas vêm marcadas. Não é o formulário do órgão nem um protocolo."],
+    ["The book paper cannot keep", "El libro que el papel no puede llevar", "Le livre que le papier ne peut pas tenir", "O livro que o papel não consegue guardar"],
+    ["Print season binder", "Imprimir portada de temporada", "Imprimer la couverture de saison", "Imprimir capa da safra"],
+    ["Finish incomplete", "Terminar incompletos", "Terminer les incomplets", "Terminar incompletos"],
+    ["Try the logger — 30 days, no card", "Probar el registro — 30 días, sin tarjeta", "Essayer le registre — 30 jours, sans carte", "Testar o registro — 30 dias, sem cartão"],
+    ["Open the logger", "Abrir el registro", "Ouvrir le registre", "Abrir o registro"],
+    ["For inspectors", "Para inspectores", "Pour les inspecteurs", "Para fiscais"],
+    ["For extension", "Para extensionistas", "Pour la vulgarisation", "Para a extensão"],
+    ["What this is", "Qué es esto", "De quoi il s’agit", "O que é isto"],
+    ["Your state is the form", "Su estado es el formulario", "Votre État est le formulaire", "Seu estado é o formulário"],
+    ["What you hand over", "Lo que entrega", "Ce que vous remettez", "O que você entrega"],
+    ["Who this is for", "Para quién es", "À qui cela s’adresse", "Para quem é"],
+    ["Bring last season with you", "Traiga la temporada pasada", "Apportez la saison dernière", "Traga a safra passada"],
+    ["If the phone dies", "Si el teléfono se pierde", "Si le téléphone est perdu", "Se o celular se perder"],
+    ["Put it on the home screen", "Póngalo en la pantalla de inicio", "Mettez-le sur l’écran d’accueil", "Coloque na tela inicial"],
+    ["Inspector one-pager", "Hoja para inspectores", "Fiche inspecteur", "Folha para fiscais"],
+    ["Extension / crop consultant", "Extensión / asesor", "Vulgarisation / conseiller", "Extensão / consultor"],
+    ["Copy link to this state’s page", "Copiar enlace de este estado", "Copier le lien de cet État", "Copiar link deste estado"],
+    ["Language", "Idioma", "Langue", "Idioma"]
   ];
 
   function toDict(col) {
@@ -718,7 +736,43 @@
     return observer;
   }
 
-  const api = { ES, FR, PT_BR, DICTS, ROWS, dictFor, applyLanguage, makeTranslator, t, normalizeKey };
+  const LANG_STORAGE_KEY = 'pft-ui-lang';
+
+  function readStoredLang() {
+    try {
+      if (typeof localStorage === 'undefined') return '';
+      const v = localStorage.getItem(LANG_STORAGE_KEY) || '';
+      return dictFor(v) ? v : '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function writeStoredLang(lang) {
+    try {
+      if (typeof localStorage === 'undefined') return;
+      if (!lang) localStorage.removeItem(LANG_STORAGE_KEY);
+      else localStorage.setItem(LANG_STORAGE_KEY, lang);
+    } catch (e) { /* private mode */ }
+  }
+
+  function bindPublicLanguage(doc) {
+    const documentRef = doc || (typeof document !== 'undefined' ? document : null);
+    if (!documentRef) return;
+    const sel = documentRef.getElementById('public-lang');
+    const stored = readStoredLang();
+    if (sel && stored) sel.value = stored;
+    if (stored) applyLanguage(stored);
+    if (sel && !sel.dataset.bound) {
+      sel.dataset.bound = '1';
+      sel.addEventListener('change', function () {
+        writeStoredLang(sel.value);
+        if (typeof location !== 'undefined') location.reload();
+      });
+    }
+  }
+
+  const api = { ES, FR, PT_BR, DICTS, ROWS, dictFor, applyLanguage, makeTranslator, t, normalizeKey, LANG_STORAGE_KEY, readStoredLang, writeStoredLang, bindPublicLanguage };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.I18n = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

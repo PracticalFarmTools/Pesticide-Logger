@@ -50,6 +50,8 @@ offline, private. Paper is $0 and has no clocks, search, or backup.
 2. **List the product** on a merchant-of-record checkout (Gumroad,
    Lemon Squeezy, or a Stripe Payment Link). They handle cards, receipts,
    and sales tax. No monthly fee; they take ~5–10% per sale.
+   The license **public** key is already in `license.js`. Keep
+   `keys/license-signing-key.json` offline — never commit it.
 3. **Issue keys:** for each order, run
    `node tools/sign-license.js --name "Jane Farmer" --email jane@example.com`
    and paste the key into the order-delivery email. (Both Gumroad and

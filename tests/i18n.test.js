@@ -93,6 +93,21 @@ check('curly-apostrophe toasts used by app.js are translated', () => {
   assert.notStrictEqual(i18n.t('pt-BR', couldnt), couldnt);
 });
 
+check('cab A+ restage, stamp weather, and send-now chrome are translated', () => {
+  assert.strictEqual(i18n.t('es', 'Stamp weather'), 'Sellar clima');
+  assert.strictEqual(i18n.t('fr', 'Save this spray'), 'Enregistrer cette pulvérisation');
+  assert.strictEqual(i18n.t('pt-BR', 'This is the cab phone'), 'Este é o celular da cabine');
+  assert.notStrictEqual(i18n.t('es', 'Same mix, time is now. Confirm field and Save.'), 'Same mix, time is now. Confirm field and Save.');
+  assert.notStrictEqual(
+    i18n.t('fr', 'Saved. Same mix — pick the next field and Save.'),
+    'Saved. Same mix — pick the next field and Save.'
+  );
+  assert.notStrictEqual(
+    i18n.t('pt-BR', 'There is no cloud copy. One tap sends a file to the shop, or Chrome can connect a folder you already share. We never store it. Tape the restore card in the shop.'),
+    'There is no cloud copy. One tap sends a file to the shop, or Chrome can connect a folder you already share. We never store it. Tape the restore card in the shop.'
+  );
+});
+
 check('how-to and catch-up chrome are translated', () => {
   assert.strictEqual(i18n.t('es', 'How-to'), 'Cómo');
   assert.strictEqual(i18n.t('fr', 'Send a file to the shop'), 'Envoyer un fichier à l’atelier');

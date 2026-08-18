@@ -1230,7 +1230,9 @@ label.state-required-field {
   margin-bottom: 0.75rem;
   background: var(--bg-white);
 }
-#app-products .apr-remove { margin-top: 0.35rem; height: auto; min-height: 2.5rem; }
+.app-product-row.is-compact .apr-main { display: none; }
+.app-product-row.is-compact .apr-compact-line { display: inline; font-weight: 600; }
+.apr-compact-line { font-size: 0.95rem; }
 @media (max-width: 720px) {
   .cab-toolbar { flex-direction: column; align-items: stretch; }
   .cab-toggle { margin-left: 0; }

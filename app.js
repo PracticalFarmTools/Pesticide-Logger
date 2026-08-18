@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.29 — Practical Farm Tools
+/* Pesticide Logger v2.9.30 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -335,6 +335,7 @@
     autoBackupBusy = true;
     try {
       data.meta.lastBackupAt = new Date().toISOString();
+      data.meta.lastSendAt = data.meta.lastBackupAt;
       await persistFarm({ quiet: true });
       const exportData = await buildBackupObject();
       const writable = await autoBackupHandle.createWritable();
@@ -803,6 +804,7 @@
     if ($('#set-language')) $('#set-language').value = s.language || '';
     if ($('#set-device-label')) $('#set-device-label').value = s.deviceLabel || '';
     if ($('#set-device-user')) $('#set-device-user').value = s.deviceUser || '';
+    if ($('#set-device-role')) $('#set-device-role').value = s.deviceRole || '';
     if ($('#inspector-pin-hint')) {
       $('#inspector-pin-hint').hidden = !s.inspectorPin;
     }
@@ -825,6 +827,7 @@
         language: ($('#set-language') && $('#set-language').value) || '',
         deviceLabel: ($('#set-device-label') && $('#set-device-label').value.trim()) || '',
         deviceUser: ($('#set-device-user') && $('#set-device-user').value.trim()) || '',
+        deviceRole: ($('#set-device-role') && $('#set-device-role').value) || data.settings.deviceRole || '',
         inspectorPin: ($('#set-inspector-pin') && $('#set-inspector-pin').value.trim())
           ? $('#set-inspector-pin').value.trim()
           : (data.settings.inspectorPin || '')
@@ -2261,6 +2264,7 @@
       if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
     $('#app-weather').addEventListener('click', fetchWeather);
+    if ($('#app-stamp-weather')) $('#app-stamp-weather').addEventListener('click', fetchWeather);
     if ($('#app-temp')) {
       $('#app-temp').addEventListener('input', syncTempC);
       $('#app-temp').addEventListener('change', syncTempC);
@@ -2484,43 +2488,47 @@
     row.innerHTML = `
       <div class="apr-chrome">
         <span class="apr-order" aria-hidden="true">1</span>
+        <span class="apr-compact-line" hidden></span>
         <a class="epa-label-link apr-label-link" hidden target="_blank" rel="noopener">Official label ↗</a>
         <span class="apr-chrome-spacer"></span>
+        <button type="button" class="text-btn apr-show-details" hidden>Mix details</button>
         <button type="button" class="icon-btn apr-up" hidden aria-label="Move product up">Up</button>
         <button type="button" class="icon-btn apr-down" hidden aria-label="Move product down">Down</button>
       </div>
-      <div class="form-row form-row-4">
-        <label>Product <span class="req-star">*</span><span class="apr-tag-product"></span>
-          <select class="apr-product">${productOptionsHtml()}</select>
-        </label>
-        <label>Lot / batch #
-          <input type="text" class="apr-lot" placeholder="Jug / batch lot">
-        </label>
-        <label>Rate<span class="apr-tag-rate"></span>
-          <div class="input-pair">
-            <input type="number" class="apr-rate" step="any" min="0">
-            <select class="apr-rate-unit">${UNIT_OPTS}</select>
-          </div>
-        </label>
-        <label>Total applied <span class="req-star">*</span><span class="apr-tag-total"></span>
-          <div class="input-pair">
-            <input type="number" class="apr-total" step="any" min="0">
-            <select class="apr-total-unit">${UNIT_OPTS}</select>
-          </div>
-        </label>
-      </div>
-      <div class="form-row form-row-4">
-        <label>REI hours (label / override)<span class="apr-tag-rei"></span>
-          <input type="number" class="apr-rei" step="any" min="0" placeholder="From product">
-        </label>
-        <label>PHI days (label / override)<span class="apr-tag-phi"></span>
-          <input type="number" class="apr-phi" step="any" min="0" placeholder="Crop-specific if needed">
-        </label>
-        <label class="checkbox-label apr-omri-wrap">
-          <input type="checkbox" class="apr-omri" disabled>
-          OMRI / organic input
-        </label>
-        <button type="button" class="btn btn-secondary apr-remove">Remove product</button>
+      <div class="apr-main">
+        <div class="form-row form-row-4">
+          <label>Product <span class="req-star">*</span><span class="apr-tag-product"></span>
+            <select class="apr-product">${productOptionsHtml()}</select>
+          </label>
+          <label>Lot / batch #
+            <input type="text" class="apr-lot" placeholder="Jug / batch lot">
+          </label>
+          <label>Rate<span class="apr-tag-rate"></span>
+            <div class="input-pair">
+              <input type="number" class="apr-rate" step="any" min="0">
+              <select class="apr-rate-unit">${UNIT_OPTS}</select>
+            </div>
+          </label>
+          <label>Total applied <span class="req-star">*</span><span class="apr-tag-total"></span>
+            <div class="input-pair">
+              <input type="number" class="apr-total" step="any" min="0">
+              <select class="apr-total-unit">${UNIT_OPTS}</select>
+            </div>
+          </label>
+        </div>
+        <div class="form-row form-row-4 apr-extra">
+          <label>REI hours (label / override)<span class="apr-tag-rei"></span>
+            <input type="number" class="apr-rei" step="any" min="0" placeholder="From product">
+          </label>
+          <label>PHI days (label / override)<span class="apr-tag-phi"></span>
+            <input type="number" class="apr-phi" step="any" min="0" placeholder="Crop-specific if needed">
+          </label>
+          <label class="checkbox-label apr-omri-wrap">
+            <input type="checkbox" class="apr-omri" disabled>
+            OMRI / organic input
+          </label>
+          <button type="button" class="btn btn-secondary apr-remove">Remove product</button>
+        </div>
       </div>`;
     $('#app-products').appendChild(row);
 
@@ -2545,6 +2553,15 @@
       updateCompliancePreview();
       updateMixEmptyHint();
     });
+    const detailsBtn = row.querySelector('.apr-show-details');
+    if (detailsBtn) {
+      detailsBtn.addEventListener('click', () => {
+        row.classList.remove('is-compact');
+        detailsBtn.hidden = true;
+        const line = row.querySelector('.apr-compact-line');
+        if (line) line.hidden = true;
+      });
+    }
 
     if (pre) {
       row.querySelector('.apr-product').value = pre.productId || '';
@@ -2711,6 +2728,7 @@
     updateCompliancePreview();
     updateMixEmptyHint();
     numberMixRows();
+    if ($('#app-form') && $('#app-form').classList.contains('is-cab-run')) setMixCompact(true);
   }
 
   // Total for one mix row: label rate × area, or × carrier for water-based rates.
@@ -2747,6 +2765,7 @@
 
   function computeMixTotals() {
     $$('#app-products .app-product-row').forEach(computeRowTotal);
+    if ($('#app-form') && $('#app-form').classList.contains('is-cab-run')) setMixCompact(true);
   }
 
   // Effective product intervals from mix rows (overrides beat library defaults).
@@ -2926,9 +2945,12 @@
   }
 
   async function fetchWeather() {
-    const btn = $('#app-weather');
-    btn.disabled = true;
-    btn.textContent = 'Fetching…';
+    const btns = ['#app-weather', '#app-stamp-weather'].map((sel) => $(sel)).filter(Boolean);
+    const stamp = $('#app-stamp-weather');
+    const legend = $('#app-weather');
+    btns.forEach((b) => { b.disabled = true; });
+    if (stamp) stamp.textContent = 'Stamping…';
+    if (legend) legend.textContent = 'Fetching…';
     try {
       const c = await appCoords();
       if (!c) { toast('Select a mapped field or allow location access to fetch weather'); return; }
@@ -2942,12 +2964,13 @@
       $('#app-temp').value = Math.round(cur.temperature_2m);
       syncTempC();
       $('#app-sky').value = `${skyDesc(cur.weather_code)}, ${cur.relative_humidity_2m}% RH`;
-      toast('Current weather filled in — adjust if conditions at the sprayer differ');
+      toast('Weather stamped — change it if the boom differs');
     } catch (e) {
       toast('Could not fetch weather — check your connection');
     } finally {
-      btn.disabled = false;
-      btn.textContent = 'Fetch current weather';
+      btns.forEach((b) => { b.disabled = false; });
+      if (stamp) stamp.textContent = 'Stamp weather';
+      if (legend) legend.textContent = 'Fetch current weather';
     }
   }
 
@@ -3175,7 +3198,10 @@
       data.applications.push(app);
     }
     save();
+    const restageMix = (!asDraft && !editingId && mix.length && canLogNewSpray()) ? mix : null;
+    const restageCrop = restageMix ? (($('#app-crop') && $('#app-crop').value.trim()) || '') : '';
     resetAppForm();
+    if (restageMix) restageCabMix(restageMix, restageCrop);
     renderAppList();
     renderDashboard();
     renderFields();
@@ -3186,6 +3212,11 @@
       toast(`Draft saved — still missing: ${result.missing.slice(0, 4).join('; ')}${result.missing.length > 4 ? '…' : ''}`);
     } else if (result.status === 'needs_review') {
       toast('Saved — fields filled, but review warnings remain (intervals or dataset confidence)');
+    } else if (restageMix) {
+      toast(autoBackupState === 'on'
+        ? 'Saved to the shop file. Same mix — pick the next field and Save.'
+        : 'Saved. Same mix — pick the next field and Save.');
+      if (idx < 0) afterCabSaveCatchUp();
     } else {
       toast(idx >= 0 ? 'Record updated (required fields filled)' : 'Record saved (required fields filled)');
       if (idx < 0 && backupDue()) nudgeShopBackup();
@@ -3227,6 +3258,7 @@
     $('#app-cancel-btn').hidden = true;
     logForceExpand = false;
     logPinnedSections.clear();
+    setMixCompact(false);
     applyStateRequiredTags();
     updateCompliancePreview();
     renderDueBanner();
@@ -3306,6 +3338,7 @@
     $('#app-cancel-btn').hidden = false;
     updateLastOnFieldHint();
     logForceExpand = true;
+    setMixCompact(false);
     setLogMode('new');
     updateLogSectionCollapse();
     restoreDurationPref();
@@ -3504,6 +3537,90 @@
     dlg.showModal();
   }
 
+  function stampSprayNowClock() {
+    const d = new Date();
+    if ($('#app-date')) $('#app-date').value = todayISO();
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    if ($('#app-start')) $('#app-start').value = `${hh}:${mm}`;
+    if ($('#app-end')) $('#app-end').value = '';
+  }
+
+  function clearCopiedConditions() {
+    ['#app-wind', '#app-temp', '#app-sky'].forEach((sel) => { if ($(sel)) $(sel).value = ''; });
+    if ($('#app-wind-dir')) $('#app-wind-dir').value = '';
+    syncTempC();
+  }
+
+  function setMixCompact(on) {
+    const form = $('#app-form');
+    if (form) form.classList.toggle('is-cab-run', !!on);
+    mixRows().forEach((row) => {
+      const sel = row.querySelector('.apr-product');
+      const filled = !!(sel && sel.value);
+      const total = row.querySelector('.apr-total');
+      const compact = !!(on && filled && total && String(total.value).trim());
+      row.classList.toggle('is-compact', compact);
+      const line = row.querySelector('.apr-compact-line');
+      const details = row.querySelector('.apr-show-details');
+      if (line) {
+        const name = sel && sel.selectedOptions[0] ? sel.selectedOptions[0].textContent : '';
+        const total = row.querySelector('.apr-total');
+        const unit = row.querySelector('.apr-total-unit');
+        const bits = [name];
+        if (total && total.value) bits.push(total.value + (unit && unit.value ? ' ' + unit.value : ''));
+        line.textContent = bits.filter(Boolean).join(' · ');
+        line.hidden = !compact;
+      }
+      if (details) details.hidden = !compact;
+    });
+  }
+
+  function restageCabMix(savedMix, crop) {
+    if (!savedMix || !savedMix.length) return;
+    $('#app-products').innerHTML = '';
+    savedMix.forEach((pr) => addAppProductRow(pr));
+    stampSprayNowClock();
+    if ($('#app-field')) $('#app-field').value = '';
+    if ($('#app-area')) $('#app-area').value = '';
+    if ($('#app-crop')) $('#app-crop').value = crop || '';
+    if ($('#app-applicator') && !$('#app-applicator').value.trim() && data.settings.applicatorName) {
+      $('#app-applicator').value = data.settings.applicatorName;
+    }
+    clearCopiedConditions();
+    logForceExpand = false;
+    logPinnedSections.clear();
+    setMixCompact(true);
+    if ($('#app-form-title')) $('#app-form-title').textContent = tr('Same mix — next field');
+    if ($('#app-save-btn')) $('#app-save-btn').textContent = tr('Save this spray');
+    applyStateRequiredTags();
+    updateMixInfo();
+    numberMixRows();
+    updateCompliancePreview();
+    updateDurationHint();
+    updateLogSectionCollapse();
+    updateCabToolbar();
+    if ($('#app-field')) $('#app-field').focus();
+    const toolbar = $('.cab-toolbar');
+    if (toolbar && toolbar.scrollIntoView) toolbar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function setDeviceRole(role) {
+    const next = role === 'cab' || role === 'shop' || role === 'solo' ? role : '';
+    data.settings.deviceRole = next;
+    if ($('#set-device-role')) $('#set-device-role').value = next;
+    save();
+    renderKeepBook();
+    renderSendNagBanner();
+    renderGatherHint();
+    queueHomeMessages();
+  }
+
+  function canShareBackupFile() {
+    const btn = $('#backup-share');
+    return !!(btn && !btn.hidden);
+  }
+
   function sprayNow() {
     if (!canLogNewSpray()) {
       toast('A license is required to log a new spray. You can still review, print, finish drafts, and download a backup.');
@@ -3511,14 +3628,11 @@
     }
     setLogMode('new');
     resetAppForm();
-    const d = new Date();
-    $('#app-date').value = todayISO();
-    const hh = String(d.getHours()).padStart(2, '0');
-    const mm = String(d.getMinutes()).padStart(2, '0');
-    $('#app-start').value = `${hh}:${mm}`;
+    stampSprayNowClock();
     if ($('#app-applicator') && !$('#app-applicator').value.trim() && data.settings.applicatorName) {
       $('#app-applicator').value = data.settings.applicatorName;
     }
+    setMixCompact(false);
     showTab('log');
     $('#app-field').focus();
     updateDurationHint();
@@ -3552,24 +3666,26 @@
     if (!last) { toast('No previous spray to duplicate'); return; }
     editApp(last.id);
     $('#app-id').value = '';
-    const d = new Date();
-    $('#app-date').value = todayISO();
-    const hh = String(d.getHours()).padStart(2, '0');
-    const mm = String(d.getMinutes()).padStart(2, '0');
-    $('#app-start').value = `${hh}:${mm}`;
-    $('#app-end').value = '';
+    stampSprayNowClock();
     if ($('#app-customer-copy')) $('#app-customer-copy').checked = false;
     if ($('#app-customer-copy-date')) $('#app-customer-copy-date').value = '';
+    clearCopiedConditions();
+    logForceExpand = false;
+    logPinnedSections.clear();
     appFormPhotoIds = await clonePhotoIds(appFormPhotoIds);
     renderPhotoThumbs(appFormPhotoIds, $('#app-photo-thumbs'));
     $('#app-form-title').textContent = `Duplicate of ${appProductsLabel(last)} — new record`;
-    $('#app-save-btn').textContent = 'Save — required boxes filled';
+    $('#app-save-btn').textContent = tr('Save this spray');
     $('#app-cancel-btn').hidden = false;
+    setMixCompact(true);
     updateCompliancePreview();
     updateDurationHint();
     updateLogSectionCollapse();
     updateCabToolbar();
-    toast('Duplicated last spray — date and start moved to now; field and mix copied. Rates, REI, and PHI are still what you typed last time.');
+    if ($('#app-field')) $('#app-field').focus();
+    const toolbar = $('.cab-toolbar');
+    if (toolbar && toolbar.scrollIntoView) toolbar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    toast('Same mix, time is now. Confirm field and Save.');
   }
 
   const SHOW_DURATION_KEY = 'pesticide-logger.showDuration';
@@ -3757,6 +3873,33 @@
       ? FarmStore.keepBookPending(data)
       : false;
     el.hidden = !pending;
+    if (pending) renderKeepBookActions();
+  }
+
+  function renderKeepBookActions() {
+    const role = (data.settings && data.settings.deviceRole) || '';
+    const roleBox = $('#keep-book-role');
+    if (roleBox) roleBox.hidden = !!role;
+    const send = $('#keep-book-send');
+    const connect = $('#keep-book-connect');
+    const download = $('#keep-book-download');
+    const shareOk = canShareBackupFile();
+    const chromium = autoBackupSupported() && autoBackupState !== 'on';
+    if (send) {
+      send.hidden = role === 'shop' || role === 'solo' || !shareOk;
+      send.classList.toggle('btn-primary', shareOk && role !== 'shop');
+      send.classList.toggle('btn-secondary', !shareOk);
+    }
+    if (connect) {
+      connect.hidden = !chromium || role === 'solo';
+      connect.classList.toggle('btn-primary', chromium && !shareOk);
+      connect.classList.toggle('btn-secondary', !!(shareOk || role === 'shop'));
+    }
+    if (download) {
+      const primary = !shareOk && !chromium;
+      download.classList.toggle('btn-primary', primary || role === 'solo');
+      download.classList.toggle('btn-secondary', !primary && role !== 'solo');
+    }
   }
 
   function initKeepBook() {
@@ -3766,6 +3909,28 @@
     if ($('#keep-book-restore-card')) {
       $('#keep-book-restore-card').addEventListener('click', printRestoreCard);
     }
+    if ($('#keep-book-send')) {
+      $('#keep-book-send').addEventListener('click', () => {
+        if (!data.settings.deviceRole) setDeviceRole('cab');
+        if (canShareBackupFile()) shareBackup();
+        else downloadBackup({ sent: true });
+      });
+    }
+    if ($('#keep-book-connect')) {
+      $('#keep-book-connect').addEventListener('click', () => connectAutoBackup());
+    }
+    ['keep-book-role-cab', 'keep-book-role-shop', 'keep-book-role-solo'].forEach((id) => {
+      const btn = $('#' + id);
+      if (!btn) return;
+      btn.addEventListener('click', () => {
+        setDeviceRole(btn.dataset.deviceRole);
+        toast(btn.dataset.deviceRole === 'cab'
+          ? 'This phone sends a file to the shop after you save.'
+          : btn.dataset.deviceRole === 'shop'
+            ? 'This tablet is the book. Bring files in, or connect the shop file.'
+            : 'Only this device — download a backup and print the restore card.');
+      });
+    });
     if ($('#keep-book-defer')) {
       $('#keep-book-defer').addEventListener('click', () => {
         data.meta.keepBookDeferred = true;
@@ -4337,6 +4502,7 @@
       renderBackupBanner();
     });
     if ($('#send-nag-send')) $('#send-nag-send').addEventListener('click', () => {
+      if (!data.settings.deviceRole) setDeviceRole('cab');
       if ($('#backup-share') && !$('#backup-share').hidden) shareBackup();
       else downloadBackup({ sent: true });
     });
@@ -4344,6 +4510,10 @@
       data.meta.sendNagSnoozeUntil = Date.now() + 7 * 86400000;
       save();
       renderSendNagBanner();
+    });
+    if ($('#send-nag-solo')) $('#send-nag-solo').addEventListener('click', () => {
+      setDeviceRole('solo');
+      toast('Only this device — download a backup and print the restore card.');
     });
 
     if ($('#auto-backup-connect')) {
@@ -5324,7 +5494,8 @@
     if (!el || typeof FarmFile === 'undefined' || !FarmFile.shouldShowGatherHint) return;
     const show = FarmFile.shouldShowGatherHint({
       deviceLabel: data.settings.deviceLabel,
-      lastGatherAt: data.meta.lastGatherAt
+      lastGatherAt: data.meta.lastGatherAt,
+      deviceRole: data.settings.deviceRole
     });
     el.hidden = !show;
   }
@@ -5341,10 +5512,20 @@
       ? FarmFile.shouldShowSendNag({
         lastSendAt: m.lastSendAt,
         hasNewerSprays: hasNewerSpraysSince(m.lastSendAt),
-        now: Date.now()
+        hasSprays: !!(data.applications && data.applications.some((a) => !a.deletedAt)),
+        autoBackupOn: autoBackupState === 'on',
+        deviceRole: data.settings.deviceRole
       })
       : false;
     el.hidden = !show;
+  }
+
+  function afterCabSaveCatchUp() {
+    if (autoBackupState === 'on') return;
+    renderSendNagBanner();
+    queueHomeMessages();
+    if (canShareBackupFile() && (data.settings.deviceRole === 'cab' || !data.settings.deviceRole)) return;
+    if (backupDue()) nudgeShopBackup();
   }
 
   function isStandaloneDisplay() {
@@ -7593,7 +7774,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.29';
+  const APP_VERSION = 'v2.9.30';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {

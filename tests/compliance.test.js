@@ -240,14 +240,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.29 + deadline/license wiring', () => {
+check('source files advertise v2.9.30 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.29'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.29'));
+  assert.ok(app.includes('v2.9.30'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.30'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-18'"));
-  assert.ok(!html.includes('v2.9.29'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.30'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -415,8 +415,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.29'"));
-  assert.ok(!html.includes('v2.9.29'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.30'"));
+  assert.ok(!html.includes('v2.9.30'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -887,7 +887,7 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(start.includes('grower’s book') || start.includes("grower's book"));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(start), 'public page does not name other products');
   assert.ok(!start.includes('Names on those buttons'));
-  assert.ok(!start.includes('v2.9.29'), 'public page keeps version out of copy');
+  assert.ok(!start.includes('v2.9.30'), 'public page keeps version out of copy');
   assert.ok(start.includes('id="start-copy-link"'));
   assert.ok(start.includes('mailto:practicalfarmtools@gmail.com') && inspector.includes('mailto:practicalfarmtools@gmail.com') &&
     extension.includes('mailto:practicalfarmtools@gmail.com'), 'public human on all three pages');
@@ -939,15 +939,39 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(!named.test(lane), 'stay-in-lane does not name other products');
 });
 
-check('v2.9.29: how-to page, cab default, file catch-up, hasher summary', () => {
+check('v2.9.30: cab A+ restage, compact mix, send-now, device role', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  const farmFile = fs.readFileSync(path.join(root, 'farm-file.js'), 'utf8');
+  const store = fs.readFileSync(path.join(root, 'store.js'), 'utf8');
+  const how = fs.readFileSync(path.join(root, 'how.html'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');
-  const how = fs.readFileSync(path.join(root, 'how.html'), 'utf8');
   const listing = fs.readFileSync(path.join(root, 'docs', 'suite-listing.md'), 'utf8');
   const hasher = fs.readFileSync(path.join(root, 'tools', 'watch-citations.js'), 'utf8');
   const manifest = fs.readFileSync(path.join(root, 'manifest.json'), 'utf8');
+  assert.ok(app.includes('function restageCabMix'));
+  assert.ok(app.includes('function afterCabSaveCatchUp'));
+  assert.ok(app.includes('function setMixCompact'));
+  assert.ok(app.includes('function stampSprayNowClock'));
+  assert.ok(app.includes('function clearCopiedConditions'));
+  assert.ok(/async function duplicateLastSpray[\s\S]*logForceExpand = false/.test(app),
+    'Duplicate last parks extra boxes');
+  assert.ok(/async function duplicateLastSpray[\s\S]*clearCopiedConditions/.test(app),
+    'Duplicate last does not copy stale weather');
+  assert.ok(html.includes('id="app-stamp-weather"') && html.includes('Stamp weather'));
+  assert.ok(html.includes('id="set-device-role"') && html.includes('id="keep-book-send"'));
+  assert.ok(html.includes('id="keep-book-connect"') && html.includes('id="keep-book-role-cab"'));
+  assert.ok(html.includes('id="send-nag-solo"'));
+  assert.ok(css.includes('.app-product-row.is-compact .apr-main'));
+  assert.ok(store.includes("deviceRole: ''"));
+  assert.ok(farmFile.includes('if (opts.autoBackupOn) return false'));
+  assert.ok(farmFile.includes("if (role === 'shop' || role === 'solo') return false"));
+  assert.ok(app.includes("data.meta.lastSendAt = data.meta.lastBackupAt"));
+  assert.ok(how.includes('one tap') || how.includes('one JSON file'));
+  assert.ok(!app.includes('WebRTC'));
+  assert.ok(!html.includes('syncs to our cloud'));
   assert.ok(how.includes('id="public-lang"') && how.includes('src="i18n.js"'));
   assert.ok(how.includes('mailto:practicalfarmtools@gmail.com'));
   assert.ok(!how.includes('serviceWorker') && !how.includes('sw.js'), 'how.html has no service worker');

@@ -426,14 +426,25 @@ await check('signature still verifies after inspect-v2 payload', async () => {
   assert.strictEqual(bad.ok, false);
 });
 
-await check('gather hint is quiet for one-device farms; send nag needs lastSendAt', () => {
+await check('gather hint respects device role; send nag is now, not 14 days', () => {
   assert.strictEqual(FarmFile.shouldShowGatherHint({ deviceLabel: '', lastGatherAt: '' }), false);
-  assert.strictEqual(FarmFile.shouldShowGatherHint({ deviceLabel: 'Cab iPhone' }), true);
+  assert.strictEqual(FarmFile.shouldShowGatherHint({ deviceLabel: 'Cab iPhone' }), true,
+    'unlabeled role still shows gather when the nickname looks like a cab');
   assert.strictEqual(FarmFile.shouldShowGatherHint({ lastGatherAt: '2026-08-01T00:00:00.000Z' }), true);
+  assert.strictEqual(FarmFile.shouldShowGatherHint({ deviceRole: 'cab', deviceLabel: 'Cab iPhone' }), false);
+  assert.strictEqual(FarmFile.shouldShowGatherHint({ deviceRole: 'solo' }), false);
+  assert.strictEqual(FarmFile.shouldShowGatherHint({ deviceRole: 'shop' }), true);
   const now = Date.parse('2026-08-20T00:00:00.000Z');
   assert.strictEqual(FarmFile.shouldShowSendNag({
     lastSendAt: '',
     hasNewerSprays: true,
+    hasSprays: true,
+    now
+  }), true, 'never-sent phone with sprays nags immediately');
+  assert.strictEqual(FarmFile.shouldShowSendNag({
+    lastSendAt: '',
+    hasSprays: false,
+    hasNewerSprays: false,
     now
   }), false);
   assert.strictEqual(FarmFile.shouldShowSendNag({
@@ -446,6 +457,30 @@ await check('gather hint is quiet for one-device farms; send nag needs lastSendA
     hasNewerSprays: false,
     now
   }), false);
+  assert.strictEqual(FarmFile.shouldShowSendNag({
+    lastSendAt: '',
+    hasSprays: true,
+    autoBackupOn: true,
+    now
+  }), false, 'connected shop file is the send');
+  assert.strictEqual(FarmFile.shouldShowSendNag({
+    lastSendAt: '',
+    hasSprays: true,
+    deviceRole: 'solo',
+    now
+  }), false);
+  assert.strictEqual(FarmFile.shouldShowSendNag({
+    lastSendAt: '',
+    hasSprays: true,
+    deviceRole: 'shop',
+    now
+  }), false);
+  assert.strictEqual(FarmFile.shouldShowSendNag({
+    lastSendAt: '',
+    hasSprays: true,
+    deviceRole: 'cab',
+    now
+  }), true);
 });
 
 await check('AND-token search matches EPA × field and misses the other field', () => {

@@ -31,6 +31,7 @@
         strictCompliance: true,
         deviceLabel: '',
         deviceUser: '',
+        deviceRole: '',
         inspectorPin: ''
       },
       products: [],
@@ -76,6 +77,7 @@
     if (d.settings.language == null) d.settings.language = '';
     if (d.settings.deviceLabel == null) d.settings.deviceLabel = '';
     if (d.settings.deviceUser == null) d.settings.deviceUser = '';
+    if (d.settings.deviceRole == null) d.settings.deviceRole = '';
     if (d.settings.inspectorPin == null) d.settings.inspectorPin = '';
     d.crew = Array.isArray(d.crew) ? d.crew : [];
     d.crew.forEach((c) => {

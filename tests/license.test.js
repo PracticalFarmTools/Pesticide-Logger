@@ -66,6 +66,14 @@ async function check(name, fn) {
     }
   });
 
+  await check('shipped public key is present and does not accept a foreign signature', async () => {
+    assert.ok(lic.LICENSE_PUBLIC_KEY_SPKI_B64 && lic.LICENSE_PUBLIC_KEY_SPKI_B64.length > 40);
+    const key = await lic.makeLicenseKey(pair.privateKeyPkcs8B64, { n: 'J', e: 'j@x.com' });
+    const res = await lic.verifyLicenseKey(key);
+    assert.strictEqual(res.valid, false);
+    assert.ok(res.reason === 'signature' || res.reason === 'unconfigured');
+  });
+
   await check('trial math: active, countdown, expiry', () => {
     const start = Date.UTC(2026, 6, 1); // Jul 1
     const day = 86400000;

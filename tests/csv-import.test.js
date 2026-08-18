@@ -127,7 +127,8 @@ check('client-site headers detect that profile and map client + site', () => {
   assert.ok(/Customer \/ client/.test(described));
   assert.ok(/Field \/ site name/.test(described));
   assert.ok(/were mapped from this file/.test(described));
-  assert.ok(/Rows are drafts/.test(described));
+  assert.ok(/Rows land as drafts/.test(described));
+  assert.ok(/never invent REI, PHI, or rates/.test(described));
   assert.ok(/stays on this device/.test(described));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(described));
 });
@@ -162,6 +163,8 @@ check('third-party file note is unaffiliated and kits do not name other products
   });
   const empty = CsvImport.describeMappedColumns(['foo', 'bar']);
   assert.ok(/No columns were guessed/.test(empty));
+  assert.ok(/never invent REI, PHI, or rates/.test(empty));
+  assert.ok(/incomplete is expected/.test(empty));
 });
 
 if (failed) process.exit(1);

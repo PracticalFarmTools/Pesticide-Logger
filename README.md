@@ -1,4 +1,4 @@
-# Pesticide Logger v2.9.27
+# Pesticide Logger v2.9.28
 
 **Offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite. Licensed software with
@@ -45,7 +45,8 @@ application at the repository root.
 | **OCR label scanning** | Photograph a product label to read its EPA registration number and signal word on-device (Tesseract.js). Works on iPhone and Android via the native camera. A ~7MB text reader downloads in the background after first visit, then scans work offline. The match is verified through the same live EPA lookup as manual search before anything is saved. |
 | **REI posting & reminders** | Bilingual DO NOT ENTER / NO ENTRE posting sheet from any active REI, plus opt-in browser notifications when REI clears or PHI dates arrive. |
 | **CSV import** | Bring a CSV **you** already have from a spreadsheet or another spray-log app. One chooser; columns are mapped from headers. Rows land as drafts on this device — nothing is uploaded. Imports never invent REI, PHI, or rates. We are not affiliated with the software you exported from. |
-| **Spanish, French & Brazilian Portuguese** | Language control on first-run and Settings covering menus, buttons, and toasts. Printed REI posting stays English/Spanish (DO NOT ENTER / NO ENTRE). |
+| **Spanish, French & Brazilian Portuguese** | Language control on the public pages (`start.html`, inspector, extension), first-run, and Settings. Same stored language for the trial wall and the logger. Printed REI posting stays English/Spanish (DO NOT ENTER / NO ENTRE). |
+| **Clerk tools paper cannot keep** | Home names keep-until year, incomplete, and overdue. Reports prints a **season binder** (not an agency form). CSV import says drafts are incomplete on purpose. |
 | **Celsius & metric reference** | Spray records stay US customary. The log shows °C next to stored °F; tank-mix results add a conversion reference (ha, L, L/ha, mL). CSV and inspector packs still use Fahrenheit and gallons. |
 | **Smarter backup merge** | Newest `updatedAt` wins; audit histories union; trial start and license key merge conservatively (earliest trial wins, local key kept). Device nicknames stay per-device. A full backup is one JSON file with the farm file **and** attached JPEG photos. Older record-only backups still restore; the app says so if photos are missing. |
 | **Offline-first PWA** | Installable; core logging works with no connectivity after first load. |
@@ -64,6 +65,8 @@ this edition has none.
 To update one state's rule after a legal change, edit only `laws/XX.json`
 and run `node tools/bundle-state-laws.js`. See `laws/README.md`. What to
 work on next (citation hygiene, hasher, holes): `docs/state-maintainer-playbook.md`.
+`node tools/watch-citations.js` hashes `--watch-list` URLs on this machine
+($0, no GitHub Action, no scrape-to-JSON). A human still `--stamp`s.
 Do not change `app.js` or `compliance.js` for a citation or field-list edit.
 
 **It does:**

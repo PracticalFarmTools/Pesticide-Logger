@@ -5,7 +5,7 @@
 `laws/README.md`. This playbook is the **order of work** and the
 **ongoing cadence** so maintenance is not a quarterly research program.
 
-Matrix edition is **2026-08-18**. App version **v2.9.27**. The log,
+Matrix edition is **2026-08-18**. App version **v2.9.28**. The log,
 badges, packet freeze, and `laws/XX.json` isolation are already shipped.
 
 ## Proposal
@@ -14,7 +14,7 @@ badges, packet freeze, and `laws/XX.json` isolation are already shipped.
 |---|---|---|
 | **0. Stop** | No `app.js` / `compliance.js` / `index.html` / `sw.js` logic for laws. No in-app scrape, no live statute API, no GitHub Action yet. | Already done. More cab code does not make the matrix more current. |
 | **1. Citation hygiene** | One-state JSON: put `citation.url` on the **official** HTML/PDF. Cornell, `elaws.us`, `public.law`, CDN paths, and guidance pages (HI RUP, NY PRL, Purdue handout) are not the watch target. | Hashing a mirror is wasted time. Hash-stable confirmation is only honest on an official URL. |
-| **2. One hasher** | Point Changedetection (or similar) at `node tools/bundle-state-laws.js --watch-list`. Alert on body/ETag change or 404. Snapshots stay **outside** this repo. | Detection without you opening 50 tabs. |
+| **2. One hasher** | `node tools/watch-citations.js` hashes `--watch-list` URLs into gitignored `watch-cache/`. Alert on body/ETag change or 404. A human still `--stamp`s. | Detection without you opening 50 tabs. $0. |
 | **3. Holes when you want completeness** | Batches A–E done 2026-08-14. 2026-08-18 hole-close: MS Chapter 09 researched/`required`; MN, MI, VA, SC, KS `privateDuty: none` from exclusive who-clauses. Remaining `--holes`: AR and SD (`researched`/`uncertain`). Promote only from a primary source. Freeze until that URL’s hash changes. | Unfinished research is not maintenance. Re-reading AR/SD every quarter is how this stays expensive. |
 | **4. Event-driven forever** | Touch a state only on hash change, dead link, or an annual hash-stable `--stamp` for `researched` rows with official URLs. Drop the quarterly `--oldest 13` duty. | These rules rarely move. Rereading 13 statutes on a calendar is the time sink. |
 
@@ -83,18 +83,20 @@ rows above are gone or explained in `notes`.
 
 After 1a is mostly done (researched Cornell swapped):
 
-1. Run `--watch-list`, import the URL column into Changedetection.io
-   (or any page monitor you will actually look at).
-2. Weekly is enough. Identify the crawler; one GET per URL; honor
-   robots.txt.
-3. One notification per change/404 — not 50 emails and not LegiScan
-   plus RSS plus the hasher.
-4. On alert: `--show XX` → open the **new** official text → same
+1. Run `node tools/watch-citations.js` (or `--dry-run`). It GETs each
+   `--watch-list` URL, SHA-256 hashes the body, and compares to
+   `watch-cache/hashes.json` (gitignored). Changed / 404 / error print as
+   a TSV. It does **not** write `laws/XX.json`.
+2. Weekly is enough. The User-Agent identifies the crawler; one GET per URL;
+   ~1.5s between requests.
+3. On changed or dead: `--show XX` → open the **new** official text → same
    fields → `--stamp XX`. Changed fields → edit `laws/XX.json` like
    any other legal change, then stamp.
-5. Optional: paste old vs new snapshot into an AI and ask whether the
+4. Optional: paste old vs new into an AI and ask whether the
    **recordkeeping elements** changed. Do not paste its field list into
    JSON unedited.
+5. Changedetection.io remains optional if you already use it. This repo’s
+   hasher is the $0 default so Track 2 is actually on.
 
 Do **not** add `.github/workflows` until you are triaging those issues
 the same week they open. An unread firehose is worse than no hasher.
@@ -163,6 +165,7 @@ None of that is required to start Track 1 tomorrow.
 
 ```bash
 node tools/bundle-state-laws.js --watch-list   # hasher feed (no fetch)
+node tools/watch-citations.js                  # Track 2: fetch + hash (watch-cache/)
 node tools/bundle-state-laws.js --holes        # Track 3 queue
 node tools/bundle-state-laws.js --show KS      # citation + fields
 node tools/bundle-state-laws.js --stamp KS     # confirmation or after a JSON edit

@@ -1,6 +1,6 @@
 # Pesticide Logger — Terms of Use, License & Privacy
 
-_Last updated: 2026-08-17. Plain-English summary first; farmers are busy._
+_Last updated: 2026-08-18. Plain-English summary first; farmers are busy._
 
 ## The short version
 
@@ -45,6 +45,12 @@ changes.
 - Because we hold no copy of your data, **we cannot recover it for you.**
   Use the backup tools. Losing your device without a backup means losing
   your records.
+
+## 2a. Support (not data recovery)
+
+Questions about restore, gather, or Add to Home Screen:
+[practicalfarmtools@gmail.com](mailto:practicalfarmtools@gmail.com).
+We still cannot recover your book. That email is how-to, not a cloud restore.
 
 ## 3. Files you bring from other software
 

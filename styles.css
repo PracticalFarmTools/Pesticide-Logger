@@ -1729,6 +1729,30 @@ body.cab-glare .card-hint { color: #2a3a30; }
 body.public-page {
   padding-bottom: 2rem;
 }
+body.public-page .header-content {
+  flex-wrap: wrap;
+  row-gap: 0.45rem;
+}
+body.public-page .header-right {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+body.public-page .public-lang {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: #c5ddc5;
+  margin: 0;
+}
+body.public-page .public-lang select {
+  min-height: 2.25rem;
+  min-width: 8.5rem;
+  background: rgba(255, 255, 255, 0.12);
+  color: #e8f0e9;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+}
 body.public-page .app-header .btn-primary {
   background: #fff;
   color: var(--primary-green-dark);

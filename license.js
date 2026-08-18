@@ -16,9 +16,8 @@
 (function (root) {
   'use strict';
 
-  // Set by tools/generate-signing-keys.js. Until then, only the built-in
-  // trial works — no fake "valid" licenses.
-  const LICENSE_PUBLIC_KEY_SPKI_B64 = '';
+  // Set by tools/generate-signing-keys.js. Private key stays in keys/ (gitignored).
+  const LICENSE_PUBLIC_KEY_SPKI_B64 = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAESDVYLSsYnwH1BCrI_UyFrsxITRG0wh_pDknozGI4d6dowLEj7m6f0UgZLc8f_h5GI74ffGSTUW2mKniDZVidBQ';
 
   const TRIAL_DAYS = 30;
 

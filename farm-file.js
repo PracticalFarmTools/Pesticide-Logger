@@ -1100,6 +1100,82 @@
     return 'Brought in' + from + ': ' + parts.join(', ') + '. You can still edit any spray.';
   }
 
+  function yearOfDate(iso) {
+    const s = String(iso || '');
+    return /^\d{4}/.test(s) ? s.slice(0, 4) : '';
+  }
+
+  function addYearsToIsoDate(iso, years) {
+    const s = String(iso || '');
+    if (!/^\d{4}-\d{2}-\d{2}/.test(s)) return '';
+    const y = Number(s.slice(0, 4)) + Number(years);
+    if (!Number.isFinite(y) || y < 1900) return '';
+    return String(y);
+  }
+
+  function liveApps(apps) {
+    return (apps || []).filter((a) => a && !a.deletedAt);
+  }
+
+  function clerkSnapshot(apps, settings, law, opts) {
+    opts = opts || {};
+    const evaluate = opts.evaluateCompliance;
+    const nowMs = opts.nowMs != null ? opts.nowMs : Date.now();
+    const year = opts.year ? String(opts.year) : '';
+    let rows = liveApps(apps);
+    if (year) rows = rows.filter((a) => yearOfDate(a.date) === year);
+    let incomplete = 0;
+    let overdue = 0;
+    rows.forEach((a) => {
+      const result = evaluate ? evaluate(a) : null;
+      const missing = recordIsIncomplete(a, result);
+      if (missing) incomplete += 1;
+      const dueMs = a.recordDueAt ? Date.parse(a.recordDueAt) : NaN;
+      if (missing && Number.isFinite(dueMs) && dueMs < nowMs) overdue += 1;
+    });
+    const years = law && law.retentionYears != null ? Number(law.retentionYears) : null;
+    const dates = rows.map((a) => a.date).filter((d) => /^\d{4}-\d{2}-\d{2}/.test(d)).sort();
+    const keepUntil = (years && dates.length) ? addYearsToIsoDate(dates[0], years) : '';
+    return {
+      n: rows.length,
+      incomplete: incomplete,
+      overdue: overdue,
+      keepUntil: keepUntil,
+      retentionYears: Number.isFinite(years) ? years : null,
+      state: (settings && settings.state) || '',
+      farmName: (settings && settings.farmName) || '',
+      year: year,
+      agency: (law && law.agency) || '',
+      citationRef: law && law.citation && law.citation.reference ? law.citation.reference : ''
+    };
+  }
+
+  function shouldShowClerkCard(snap) {
+    return !!(snap && snap.n > 0);
+  }
+
+  function seasonBinderHtml(snap) {
+    snap = snap || {};
+    const where = [snap.farmName, snap.state].filter(Boolean).join(' · ') || 'This farm';
+    const year = snap.year || '';
+    const keep = snap.keepUntil
+      ? ('Keep these records through ' + esc(snap.keepUntil) +
+        (snap.retentionYears ? ' (' + esc(snap.retentionYears) + ' year retention from the oldest spray in this packet).' : '.'))
+      : 'Retention years are on Settings for your state.';
+    const cite = snap.citationRef ? esc(snap.citationRef) : '';
+    return '<h1>Season binder</h1>' +
+      '<p class="print-meta">' + esc(where) + (year ? ' · ' + esc(year) : '') + '</p>' +
+      '<p>This is the shop copy of the spray book for the binder — not the agency’s form and not a filing. Completion means boxes were filled, not a legal determination. The label is the law.</p>' +
+      '<ul>' +
+      '<li>' + esc(String(snap.n || 0)) + ' spray(s) in this packet</li>' +
+      '<li>' + esc(String(snap.incomplete || 0)) + ' incomplete / needs review</li>' +
+      '<li>' + esc(String(snap.overdue || 0)) + ' past the completion clock (still editable)</li>' +
+      '</ul>' +
+      '<p>' + keep + (cite ? ' Citation: ' + cite + '.' : '') + '</p>' +
+      '<p>Hand the inspector the signed HTML packet from Reports. Tape the restore card in the shop. The live log can still be edited.</p>' +
+      '<p class="print-footer">Pesticide Logger — Practical Farm Tools. Snapshot of counts only.</p>';
+  }
+
   const api = {
     INSPECT_FORMAT,
     INSPECT_FORMAT_V1,
@@ -1147,6 +1223,10 @@
     shouldShowSendNag,
     reiBoardHtml,
     restoreCardHtml,
+    clerkSnapshot,
+    shouldShowClerkCard,
+    seasonBinderHtml,
+    yearOfDate,
     receiptSummary,
     pickFarmSign
   };

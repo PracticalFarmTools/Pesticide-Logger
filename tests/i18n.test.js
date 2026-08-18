@@ -136,6 +136,11 @@ check('app.js applies any dictionary language, not only Spanish', () => {
   assert.ok(html.includes('id="set-language"') && html.includes('id="first-run-language"'),
     'language stays on first-run and Settings');
   assert.ok(app.includes('NO ENTRE'), 'posting stays bilingual EN/ES');
+  assert.ok(typeof i18n.bindPublicLanguage === 'function');
+  assert.ok(typeof i18n.readStoredLang === 'function');
+  assert.strictEqual(i18n.readStoredLang(), '');
+  const start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');
+  assert.ok(start.includes('id="public-lang"'));
 });
 
 if (failed) {

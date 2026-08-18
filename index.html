@@ -136,7 +136,6 @@
       </div>
     </div>
 
-    <div id="dash-working">
     <div id="dash-keep-book" class="card keep-book-card" hidden>
       <h3 class="card-title">Keep this book</h3>
       <p>There is no cloud copy. Download a backup and print the restore card before you rely on this phone. Tape the card in the shop. iPhone: Share → Add to Home Screen. Android: Install when the browser offers it.</p>
@@ -146,6 +145,8 @@
         <button type="button" class="text-btn" id="keep-book-defer">I’ll log first</button>
       </div>
     </div>
+
+    <div id="dash-working">
     <div id="backup-banner" class="setup-banner backup-banner" hidden>
       <div>
         <strong>Back up your records.</strong>
@@ -191,6 +192,15 @@
     <div class="home-actions" id="dash-home-actions">
       <button type="button" class="btn btn-primary btn-xl" data-goto="log" id="dash-log-spray">Log this spray</button>
       <button type="button" class="btn btn-secondary btn-xl" id="dash-inspect-packet">Hand to inspector</button>
+    </div>
+
+    <div id="dash-clerk" class="card" hidden>
+      <h3 class="card-title">The book paper cannot keep</h3>
+      <p id="dash-clerk-body"></p>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" id="dash-clerk-incomplete" data-goto="log" data-scroll-to="app-history-card" data-incomplete-filter="1">Finish incomplete</button>
+        <button type="button" class="btn btn-secondary" id="dash-clerk-binder">Print season binder</button>
+      </div>
     </div>
 
     <div class="stat-grid">
@@ -347,12 +357,22 @@
               <input type="text" id="app-purpose" placeholder="e.g. Insect control, weed control">
             </label>
           </div>
-          <div class="form-row form-row-2">
+          <div class="form-row form-row-4">
             <label data-log-field="permit_number">Permit / operator ID <span id="req-permit_number" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-permit" placeholder="Required in CA, AZ, and similar programs">
             </label>
             <label data-log-field="location_note">Location description override
               <input type="text" id="app-location-note" placeholder="Optional detail if field location needs clarifying">
+            </label>
+            <label data-log-field="area_treated">Area treated <span class="req-star">*</span> <span id="req-area_treated" class="state-req-tag" hidden>state</span>
+              <input type="number" id="app-area" step="any" min="0" required>
+            </label>
+            <label data-log-field="area_unit">Area unit <span id="req-area_unit" class="state-req-tag" hidden>state</span>
+              <select id="app-area-unit">
+                <option value="acres">acres</option>
+                <option value="sqft">sq ft</option>
+                <option value="1000sqft">1,000 sq ft</option>
+              </select>
             </label>
           </div>
         </fieldset>
@@ -406,17 +426,7 @@
 
         <fieldset data-log-section="volume">
           <legend>Area &amp; spray volume</legend>
-          <div class="form-row form-row-4">
-            <label data-log-field="area_treated">Area treated <span class="req-star">*</span> <span id="req-area_treated" class="state-req-tag" hidden>state</span>
-              <input type="number" id="app-area" step="any" min="0" required>
-            </label>
-            <label data-log-field="area_unit">Area unit <span id="req-area_unit" class="state-req-tag" hidden>state</span>
-              <select id="app-area-unit">
-                <option value="acres">acres</option>
-                <option value="sqft">sq ft</option>
-                <option value="1000sqft">1,000 sq ft</option>
-              </select>
-            </label>
+          <div class="form-row form-row-2">
             <label data-log-field="carrier_volume">Carrier / finished spray <span id="req-carrier_volume" class="state-req-tag" hidden>state</span> <span id="req-total_mix_applied" class="state-req-tag" hidden>state</span>
               <div class="input-pair">
                 <input type="number" id="app-carrier" step="any" min="0">
@@ -968,6 +978,7 @@
         <p class="report-action-group-label">For your records</p>
         <div class="form-actions report-actions">
           <button class="btn btn-secondary btn-lg" id="report-csv">Download CSV</button>
+          <button type="button" class="btn btn-secondary btn-lg" id="report-season-binder">Print season binder</button>
         </div>
       </div>
       <div class="report-action-group">
@@ -1176,6 +1187,7 @@
       <h3 class="card-title">About</h3>
       <p>Pesticide Logger — part of the <strong>Practical Farm Tools</strong> suite. A licensed, offline-first tool built for farms of every size; your farm records stay on this device.</p>
       <p class="card-hint"><a href="start.html">What this is</a> · <a href="inspector.html">For inspectors</a> · <a href="extension.html">For extension</a></p>
+      <p class="card-hint">Questions about restore, gather, or Add to Home Screen: <a href="mailto:practicalfarmtools@gmail.com">practicalfarmtools@gmail.com</a> — we cannot recover your book.</p>
       <p class="card-hint">This tool provides 50-state application <em>recordkeeping field coverage</em> with audit history, lot tracking, and in-cab workflows. It is not legal advice, does not replace WPS employer duties, and does not file California PUR, New York PRL, or other electronic reports for you. Always follow the product label and confirm requirements with your state pesticide agency.</p>
       <div class="form-actions">
         <button type="button" class="btn btn-secondary" id="header-check-update">Check for app updates</button>

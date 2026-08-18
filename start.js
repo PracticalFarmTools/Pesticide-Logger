@@ -202,9 +202,12 @@
     else renderSummary(out, null);
   }
 
+  const SUPPORT_EMAIL = 'practicalfarmtools@gmail.com';
+
   const api = {
     STATE_NAMES,
     COMMERCIAL_ONLY_FIELDS,
+    SUPPORT_EMAIL,
     codeFromLocation,
     classFromLocation,
     loggerHandoffHref,
@@ -222,6 +225,7 @@
 
 if (typeof document !== 'undefined') {
   function startPageGo() {
+    if (typeof I18n !== 'undefined' && I18n.bindPublicLanguage) I18n.bindPublicLanguage(document);
     if (typeof StartPage !== 'undefined') StartPage.bindStartPage(document);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startPageGo);

@@ -1,15 +1,15 @@
 {
   "code": "AR",
-  "reviewedAt": "2026-08-14",
+  "reviewedAt": "2026-08-18",
   "agency": "Arkansas Department of Agriculture, State Plant Board",
   "citation": {
     "reference": "Ark. Code Ann. §20-20-215",
     "url": "https://media.ark.org/agri/Pesticide-Use-and-Application-Law-and-Rules.pdf"
   },
   "retentionYears": 2,
-  "appliesTo": "Commercial and noncommercial applicator licensees: routine operational records of pesticide applications (kinds, amounts, uses, dates, and places). Private applicator application-record fields are not named in §20-20-215.",
+  "appliesTo": "Commercial and noncommercial applicator licensees: routine operational records of pesticide applications (kinds, amounts, uses, dates, and places). Private applicator application-record fields are not named in §20-20-215. Class E/F (auxin / new-technology) private records in 2 CAR § 70 are a special-class list, not every private spray.",
   "verification": "researched",
-  "notes": "§20-20-215 (read 2026-08-14 in the Plant Board compilation): commercial and noncommercial licensees keep kinds, amounts, uses, dates, and places of application for two years. That is the agricultural matrix. Do not paste Arkansas Pest Control Law / structural lists (customer, EPA number, certified vs noncertified names) onto a field-crop spray. Private post-Part 110 duty is still not in this section. No customer-copy day count and no completion clock in §20-20-215 (24-hour fallback is operational).",
+  "notes": "§20-20-215 (read 2026-08-18 in the Plant Board compilation): commercial and noncommercial licensees keep kinds, amounts, uses, dates, and places of application for two years. That is the agricultural matrix. Do not paste Arkansas Pest Control Law / structural lists (customer, EPA number, certified vs noncertified names) onto a field-crop spray. 2 CAR § 70 (https://webftp.blr.arkansas.gov/Home/FTPDocument?path=CAR%2FParts%2F2CARpt70.pdf; Class E at codeofarrules.arkansas.gov 2 CAR § 70-110) requires private applicators to keep records of Class E and Class F products for three years (person in control, location, date/start/end, wind, brand + EPA number, acres + crop, equipment, nearby susceptible crops). That is not a general private GUP list — do not paste Class F weather/GPS extras onto every private spray. Private duty stays uncertain until a general private application-record who-clause is named. No customer-copy day count and no completion clock in §20-20-215 (24-hour fallback is operational).",
   "fields": [
     {
       "name": "brand_name",

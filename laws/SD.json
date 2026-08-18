@@ -1,15 +1,15 @@
 {
   "code": "SD",
-  "reviewedAt": "2026-08-14",
+  "reviewedAt": "2026-08-18",
   "agency": "South Dakota Department of Agriculture and Natural Resources",
   "citation": {
     "reference": "ARSD 12:56:07:01 and 12:56:07:03",
     "url": "https://sdlegislature.gov/Rules/Administrative/12:56:07:01"
   },
   "retentionYears": 3,
-  "appliesTo": "Commercial applicators; records for each pesticide application. Private applicator exact state duty not verified.",
+  "appliesTo": "ARSD 12:56:07:01 says each applicator shall keep records of each pesticide application. Whether certified private applicators are in that definition is not verified. Commercial-style field list is encoded on this row.",
   "verification": "researched",
-  "notes": "ARSD 12:56:07:01–:03 (official rule URL on sdlegislature.gov, read 2026-08-14) lists commercial-style application records due by close of business, kept three years. Weather excludes bait stations and applications in or next to structures. SDSU Extension still describes private RUP records as the old federal Farm Bill list, not this chapter. Until DANR writes that 12:56:07 includes certified private applicators, private duty stays uncertain.",
+  "notes": "ARSD 12:56:07:01–:03 (official rule URL on sdlegislature.gov, read 2026-08-18) lists commercial-style application records due by close of business, kept three years. Weather excludes bait stations and applications in or next to structures. The opening sentence is “Each applicator shall keep records…” DANR’s 2024 fillable form header describes records for GUP, RUP, and 25(b); SDSU Extension still splits private RUP as the old federal Farm Bill list and commercial as 12:56:07:01. Until the chapter’s definition of applicator is read as including or excluding certified private applicators, private duty stays uncertain. Do not promote on the 2020 SDSU PDF. Do not paste 12:56:07 customer/weather boxes onto a private spray while this is uncertain.",
   "fields": [
     {
       "name": "customer_name",

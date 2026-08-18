@@ -182,9 +182,14 @@ check('Home and Settings surface check-again dates; maintainer queue lists holes
   assert.ok(!holes.stdout.includes('MS\t'), 'Mississippi Chapter 09 names private RUP and other certified RUP records');
   assert.ok(!holes.stdout.includes('AL\t'), 'Alabama commercial list is researched; privateDuty none is not a hole');
   assert.ok(!holes.stdout.includes('IA\t'), 'Iowa 45.26 names commercial/retail only; privateDuty none is not a hole');
+  assert.ok(!holes.stdout.includes('MN\t'), 'Minnesota 18B.37 names commercial/noncommercial only');
+  assert.ok(!holes.stdout.includes('MI\t'), 'Michigan MCL 324.8311 names commercial application records only');
+  assert.ok(!holes.stdout.includes('VA\t'), 'Virginia 2VAC5-680/-685 recordkeeping names businesses and not-for-hire commercial');
+  assert.ok(!holes.stdout.includes('SC\t'), 'South Carolina 27-1083(C) names companies/commercial/noncommercial employers');
+  assert.ok(!holes.stdout.includes('KS\t'), 'Kansas 2-2455 names businesses, agencies, and commercial not-for-a-business');
   assert.ok(!holes.stdout.includes('RI\t'), 'Rhode Island 2.6(C) names private RUP/SLU records');
-  assert.ok(holes.stdout.includes('VA\tresearched\tuncertain'));
   assert.ok(holes.stdout.includes('AR\tresearched\tuncertain'));
+  assert.ok(holes.stdout.includes('SD\tresearched\tuncertain'));
   const show = spawnSync(process.execPath, [path.join(root, 'tools', 'bundle-state-laws.js'), '--show', 'MS'], {
     encoding: 'utf8', cwd: root
   });
@@ -269,12 +274,15 @@ check('each state keeps its own citation URL and field list; no mixed matrices',
   });
   assert.deepStrictEqual(ver.partial, []);
   assert.deepStrictEqual(ver.uncertain, []);
-  assert.deepStrictEqual(duty.none, ['AL', 'IA']);
-  assert.deepStrictEqual(duty.uncertain, ['AR', 'KS', 'MI', 'MN', 'SC', 'SD', 'VA']);
+  assert.deepStrictEqual(duty.none, ['AL', 'IA', 'KS', 'MI', 'MN', 'SC', 'VA']);
+  assert.deepStrictEqual(duty.uncertain, ['AR', 'SD']);
   assert.strictEqual(states.AL.verification, 'researched');
   assert.strictEqual(states.AL.privateDuty, 'none');
   assert.strictEqual(states.MS.verification, 'researched');
   assert.strictEqual(states.MS.privateDuty, 'required');
+  assert.strictEqual(states.MN.privateDuty, 'none');
+  assert.strictEqual(states.AR.privateDuty, 'uncertain');
+  assert.strictEqual(states.SD.privateDuty, 'uncertain');
   assert.strictEqual(states.HI.customerCopyDays, null, 'HI employer copy is before application, not a 30-day clock');
   assert.strictEqual(states.KS.customerCopyDays, 30);
   assert.strictEqual(states.IN.customerCopyDays, null, 'voided 355 IAC 4-4 is not a copy clock');

@@ -65,6 +65,17 @@ check('all fifty names are present', () => {
   assert.strictEqual(StartPage.STATE_NAMES.IA, 'Iowa');
 });
 
+check('Minnesota private is quiet; commercial keeps 18B.37 extras', () => {
+  const priv = StartPage.summarizeLaw(STATE_LAWS.MN, 'private', 'MN');
+  const comm = StartPage.summarizeLaw(STATE_LAWS.MN, 'commercial', 'MN');
+  assert.strictEqual(priv.quiet, true);
+  assert.deepStrictEqual(priv.requiredLabels, []);
+  assert.ok(priv.holes.some((h) => /private-applicator record duty/i.test(h)));
+  assert.ok(comm.requiredLabels.includes('Temperature'));
+  assert.ok(comm.requiredLabels.includes('Customer address'));
+  assert.ok(!priv.requiredLabels.includes('Customer address'));
+});
+
 check('Iowa private is quiet; commercial lists 1/1/2026 office-record extras', () => {
   const priv = StartPage.summarizeLaw(STATE_LAWS.IA, 'private', 'IA');
   const comm = StartPage.summarizeLaw(STATE_LAWS.IA, 'commercial', 'IA');

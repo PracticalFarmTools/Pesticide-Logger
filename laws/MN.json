@@ -1,15 +1,15 @@
 {
   "code": "MN",
-  "reviewedAt": "2026-08-14",
+  "reviewedAt": "2026-08-18",
   "agency": "Minnesota Department of Agriculture",
   "citation": {
     "reference": "Minn. Stat. §18B.37, subd. 2",
     "url": "https://www.revisor.mn.gov/statutes/cite/18B.37"
   },
   "retentionYears": 5,
-  "appliesTo": "Commercial applicators record pesticides used on each site; noncommercial applicators record restricted-use pesticides. Private agricultural applicator state record fields not verified in this section.",
+  "appliesTo": "Commercial applicators record pesticides used on each site; noncommercial applicators record restricted-use pesticides. Certified private applicators are not named in §18B.37; follow the label.",
   "verification": "researched",
-  "notes": "Minn. Stat. §18B.37 (read 2026-08-14 on revisor.mn.gov): subd. 2 is commercial and noncommercial only (noncommercial = RUP). Record within five days; retain five years; commercial applicators must give a copy to the customer (no day count). Subd. 3 is structural pest control — not this ag log. There is no private-applicator subdivision in §18B.37; private duty stays uncertain.",
+  "notes": "Minn. Stat. §18B.37 (read 2026-08-18 on revisor.mn.gov): subd. 2 is titled Commercial and noncommercial applicators only (noncommercial = RUP). Record within five days; retain five years; commercial applicators must give a copy to the customer (no day count). Subd. 3 is structural pest control — not this ag log. Subd. 5 inspection names a commercial, noncommercial, or structural pest control applicator's business. Minn. Stat. §18B.36 is private applicator certification with no application-record list. §18B.34 excepts certified private applicators from the noncommercial license. Private applicators are not in the who-clause — privateDuty none; still follow the label. Do not paste subd. 2 weather/customer boxes onto a private spray.",
   "fields": [
     {
       "name": "date",
@@ -104,7 +104,7 @@
   ],
   "recordWithinHours": 120,
   "customerCopyDays": null,
-  "privateDuty": "uncertain",
+  "privateDuty": "none",
   "recordDeadline": {
     "count": 120,
     "unit": "hours"

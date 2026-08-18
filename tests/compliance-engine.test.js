@@ -111,6 +111,33 @@ check('MS Chapter 09 private RUP list can be fields_complete; no customer box', 
   assert.strictEqual(ok.verification, 'researched');
 });
 
+check('MN privateDuty none still requires the operational core, not weather or customer', () => {
+  assert.strictEqual(STATE_LAWS.MN.privateDuty, 'none');
+  const missingDate = evaluate(
+    coreApp({ date: '', complianceState: 'MN', complianceApplicatorClass: 'private' }),
+    { state: 'MN', applicatorClass: 'private' }
+  );
+  assert.strictEqual(missingDate.complete, false);
+  assert.ok(missingDate.warnings.some(w => /no private-applicator recordkeeping duty/i.test(w)));
+  assert.ok(!missingDate.missingFields.some(f => f.name === 'customer_address'));
+  assert.ok(!missingDate.missingFields.some(f => f.name === 'temperature'));
+
+  const ok = evaluate(
+    coreApp({ complianceState: 'MN', complianceApplicatorClass: 'private' }),
+    { state: 'MN', applicatorClass: 'private' }
+  );
+  assert.strictEqual(ok.complete, true);
+  assert.strictEqual(ok.status, 'fields_complete');
+
+  const comm = evaluate(
+    coreApp({ complianceState: 'MN', complianceApplicatorClass: 'commercial' }),
+    { state: 'MN', applicatorClass: 'commercial' }
+  );
+  assert.strictEqual(comm.complete, false);
+  assert.ok(comm.missingFields.some(f => f.name === 'customer_address'));
+  assert.ok(comm.missingFields.some(f => f.name === 'temperature'));
+});
+
 check('IA privateDuty none still requires the operational core, not customer address', () => {
   assert.strictEqual(STATE_LAWS.IA.privateDuty, 'none');
   const missingDate = evaluate(

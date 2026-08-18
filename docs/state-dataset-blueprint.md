@@ -21,7 +21,8 @@ citation URL, a retention period, a field list, `privateDuty`, and a
 `recordDeadline`. What is not done is **confidence**. A Mississippi private
 grower and an Iowa private grower both get a log; Iowa’s commercial list is
 marked `researched` from 45.26, and Iowa private stays quiet because that
-rule does not name private applicators. Completeness still means
+rule does not name private applicators. Mississippi private now has a named
+Chapter 09 §104 RUP list. Completeness still means
 “required fields were filled,” never a legal determination.
 
 This is **not** 50 official PDF templates, not CA PUR / NY PRL / HI annual
@@ -55,12 +56,12 @@ Research date in the file header: **2026-08-18**.
 
 | Bucket | Count | Codes |
 |---|---|---|
-| `verification: researched` | 49 | All except MS |
+| `verification: researched` | 50 | All |
 | `verification: partial` | 0 | — |
-| `verification: uncertain` | 1 | MS |
-| `privateDuty: required` | 40 | Default (RI private RUP/SLU is named in 250-RICR-40-15-2.6(C)) |
-| `privateDuty: none` | 2 | AL, IA |
-| `privateDuty: uncertain` | 8 | AR, KS, MI, MN, MS, SC, SD, VA |
+| `verification: uncertain` | 0 | — |
+| `privateDuty: required` | 41 | Default (RI private RUP/SLU is named in 250-RICR-40-15-2.6(C); MS private RUP is named in Chapter 09 §104) |
+| `privateDuty: none` | 7 | AL, IA, KS, MI, MN, SC, VA |
+| `privateDuty: uncertain` | 2 | AR, SD |
 | Customer-copy days encoded | 6 | FL, KS, ND, NM, PA, WA (commercial; KS is the 30-day statute; HI employer copy is before application; IN 30-day copy was in voided 355 IAC 4-4) |
 | Citation host = Cornell LII | 9 | AZ, CA, IL, MA, MI, NE, TN, UT, WY (official host 403/404/redirect on 2026-08-14) |
 
@@ -69,10 +70,10 @@ pass:
 
 - `partial` / `uncertain` → warning; status cannot be `fields_complete`
   (`datasetOk` is false). Badge is **Needs review**.
-- `privateDuty: none` (AL or IA private) → skip the state matrix; operational core
+- `privateDuty: none` (AL, IA, KS, MI, MN, SC, or VA private) → skip the state matrix; operational core
   still required (date, crop, location, applicator, product amount).
 - `privateDuty: uncertain` + private class → extra warning; same `datasetOk`
-  block. A private spray in Virginia with every box filled is **Needs review**,
+  block. A private spray in Arkansas or South Dakota with every box filled is **Needs review**,
   not Complete.
 
 That is the correct product behavior. The remaining work is to **narrow** how
@@ -85,8 +86,11 @@ without ever flipping a state to Complete by inventing fields.
 |---|---|---|
 | Iowa (`researched` / `none`) | No 45.26 matrix; operational core still required; **Fields complete** is possible | 45.26(3) commercial office-record matrix; Complete is possible |
 | Alabama (`researched` / `none`) | No Alabama matrix; operational core still required; **Fields complete** is possible | Commercial r. 80-1-13-.14 matrix; Complete is possible |
-| Virginia (`researched` / `uncertain`) | Commercial field list shown; Needs review because private duty is unverified | Complete is possible |
-| Mississippi (`uncertain` / `uncertain`) | Short generic farm row only (no WDI PSI/nozzles); Needs review; ag rule not verified | Same warning |
+| Minnesota (`researched` / `none`) | No 18B.37 matrix; operational core still required; **Fields complete** is possible | §18B.37 subd. 2 commercial/noncommercial matrix; Complete is possible |
+| Virginia (`researched` / `none`) | No 2VAC5-680 matrix; operational core still required; **Fields complete** is possible | Business / not-for-hire commercial matrix; Complete is possible |
+| Mississippi (`researched` / `required`) | Chapter 09 §104 RUP list (no §206 customer extras); Complete is possible | Same §104 agricultural list; §206 customer/time/cert extras stay in notes |
+| Arkansas (`researched` / `uncertain`) | Commercial §20-20-215 list shown; Needs review because general private duty is unverified (Class E/F is a special class) | Complete is possible |
+| South Dakota (`researched` / `uncertain`) | Commercial-style 12:56:07 list shown; Needs review until “applicator” includes or excludes private | Complete is possible |
 
 A grower in a `partial` state can still save drafts, save complete-looking
 rows (strict mode uses the same engine), print, and export. They cannot get
@@ -634,7 +638,7 @@ Same extract-and-run pattern as `tests/compliance.test.js`. Do not grep
 - No note treats 7 CFR Part 110 as an active federal duty.
 - `customerCopyDays` only where researched (handful, not 50).
 - AL `privateDuty: none` still requires the operational core
-  (`tests/compliance-engine.test.js`).
+  (`tests/compliance-engine.test.js`). Same for IA, MN, and other exclusive-who `none` states.
 - Every `fields[].name` has a `complianceValuePresent` case (add this
   assertion if missing).
 - Related fields still not aliases (dilution ≠ rate, etc.).

@@ -242,14 +242,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.24 + deadline/license wiring', () => {
+check('source files advertise v2.9.25 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.24'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.24'));
+  assert.ok(app.includes('v2.9.25'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.25'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-14'"));
-  assert.ok(!html.includes('v2.9.24'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.25'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -414,8 +414,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.24'"));
-  assert.ok(!html.includes('v2.9.24'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.25'"));
+  assert.ok(!html.includes('v2.9.25'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -767,6 +767,21 @@ check('gather, inspector packet, crew, and kiosk stay optional and editable', ()
   assert.ok(/function collectAppFromForm[\s\S]*FarmFile\.stampOnSave[\s\S]*return app/.test(app),
     'stampOnSave runs before collectAppFromForm returns');
   assert.ok(app.includes('function todayISO'), 'spray dates use the local calendar day');
+  assert.ok(app.includes('function persistFarmThenReload'), 'replace-restore waits for IndexedDB before reload');
+  assert.ok(/tx\.oncomplete = \(\) => resolve\(true\)/.test(app), 'IDB farm put waits for transaction complete');
+  assert.ok(app.includes('function clonePhotoIds'), 'duplicate last clones photo blobs');
+  assert.ok(/async function duplicateLastSpray[\s\S]*clonePhotoIds/.test(app),
+    'duplicate last does not share photoIds with the source spray');
+  assert.ok(html.includes('Save — required boxes filled'), 'save button does not claim legal completeness');
+  assert.ok(app.includes('Update — required boxes filled'));
+  assert.ok(!/\$\('#app-customer'\)\.value = s\.farmName/.test(app),
+    'customer field is not prefilled with the farm name');
+  assert.ok(app.includes('operational fallback — confirm with your agency'),
+    '24-hour record deadline is labeled as an operational fallback');
+  assert.ok(/function renderLockRecords[\s\S]{0,500}deletedAt/.test(app),
+    'lock record list hides soft-deleted sprays');
+  assert.ok(app.includes('boot cache is a stub, not the book'),
+    'storage usage reports farm records, not the localStorage stub');
   assert.ok(app.includes('Keep both'), 'join defaults to keep both');
   assert.ok(farmFile.includes('the live log stays editable') || farmFile.includes('live log can still be edited') || farmFile.includes('still be edited'));
   assert.ok(!app.includes('Object.freeze'), 'records are not frozen');
@@ -867,7 +882,7 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(start.includes('grower’s book') || start.includes("grower's book"));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(start), 'public page does not name other products');
   assert.ok(!start.includes('Names on those buttons'));
-  assert.ok(!start.includes('v2.9.24'), 'public page keeps version out of copy');
+  assert.ok(!start.includes('v2.9.25'), 'public page keeps version out of copy');
   assert.ok(inspector.includes('opens without an account') || inspector.includes('without an account'));
   assert.ok(inspector.includes('The label is the law'));
   assert.ok(extension.includes('State-shaped log') && extension.includes('Label is the law'));

@@ -155,6 +155,60 @@ check('RUP without cert number is missing even when the matrix is skipped', () =
   assert.ok(r.missingFields.some(f => f.name === 'applicator_license'));
 });
 
+check('core location accepts fieldLocation like the matrix helper', () => {
+  const r = evaluate(
+    coreApp({
+      fieldName: '',
+      fieldLocation: 'NW 40',
+      complianceState: 'AL',
+      complianceApplicatorClass: 'private'
+    }),
+    { state: 'AL', applicatorClass: 'private' }
+  );
+  assert.strictEqual(r.complete, true, r.missingFields.map(f => f.name).join(','));
+});
+
+check('RUP on a mix product requires a cert even when app.rup is false', () => {
+  const r = evaluate(
+    coreApp({
+      complianceState: 'AL',
+      complianceApplicatorClass: 'private',
+      rup: false,
+      certNumber: '',
+      products: [{ productName: 'Paraquat', total: 1, rup: true, reiHours: 12, phiDays: 14 }]
+    }),
+    { state: 'AL', applicatorClass: 'private' }
+  );
+  assert.strictEqual(r.complete, false);
+  assert.strictEqual(r.missingFields.filter(f => f.name === 'applicator_license').length, 1);
+});
+
+check('RUP license gap does not duplicate a matrix applicator_license row', () => {
+  const r = evaluate(
+    coreApp({
+      complianceState: 'FL',
+      complianceApplicatorClass: 'commercial',
+      rup: true,
+      certNumber: '',
+      area: 2,
+      areaUnit: 'acres'
+    }),
+    { state: 'FL', applicatorClass: 'commercial' }
+  );
+  assert.strictEqual(r.missingFields.filter(f => f.name === 'applicator_license').length, 1);
+});
+
+check('phiDate keeps fractional days instead of truncating', () => {
+  const half = Compliance.phiDate({ date: '2026-07-01', phiDays: 0.5, products: [{ phiDays: 0.5 }] });
+  assert.ok(half);
+  assert.strictEqual(half.getHours(), 12);
+  const whole = Compliance.phiDate({ date: '2026-07-01', phiDays: 14, products: [{ phiDays: 14 }] });
+  assert.ok(whole);
+  assert.strictEqual(whole.getFullYear(), 2026);
+  assert.strictEqual(whole.getMonth(), 6);
+  assert.strictEqual(whole.getDate(), 15);
+});
+
 if (failed) {
   console.error(`\n${failed} compliance-engine check(s) failed.`);
   process.exit(1);

@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.24 — Practical Farm Tools
+/* Pesticide Logger v2.9.25 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -68,19 +68,26 @@
   }
 
   function writeFarmToIdb(json) {
-    if (!idbDb) return false;
-    try {
-      const store = idbDb.transaction('kv', 'readwrite').objectStore('kv');
-      store.put(json, FarmStore.FARM_IDB_KEY);
-      try { store.delete(FarmStore.LEGACY_IDB_KEY); } catch (ignored) { /* older key may be absent */ }
-      return true;
-    } catch (e) {
-      console.error('[save] IndexedDB write failed', e);
-      return false;
-    }
+    return new Promise((resolve) => {
+      if (!idbDb) { resolve(false); return; }
+      try {
+        const tx = idbDb.transaction('kv', 'readwrite');
+        const store = tx.objectStore('kv');
+        store.put(json, FarmStore.FARM_IDB_KEY);
+        try { store.delete(FarmStore.LEGACY_IDB_KEY); } catch (ignored) { /* older key may be absent */ }
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => {
+          console.error('[save] IndexedDB write failed', tx.error);
+          resolve(false);
+        };
+      } catch (e) {
+        console.error('[save] IndexedDB write failed', e);
+        resolve(false);
+      }
+    });
   }
 
-  function persistFarm(opts) {
+  async function persistFarm(opts) {
     opts = opts || {};
     persistForecastStore();
     FarmStore.touchSaved(data);
@@ -105,7 +112,7 @@
       delete data.meta.forecastCache;
     }
     pendingFarmJson = json;
-    const durable = writeFarmToIdb(json);
+    const durable = await writeFarmToIdb(json);
     if (durable) pendingFarmJson = null;
     const cached = writeBootCacheBestEffort(payload, json);
     if (!opts.quiet) scheduleAutoBackup();
@@ -116,7 +123,13 @@
   }
 
   function save() {
-    persistFarm();
+    return persistFarm();
+  }
+
+  async function persistFarmThenReload() {
+    try { await persistFarm(); }
+    catch (e) { console.error('[save] persist before reload failed', e); }
+    location.reload();
   }
 
   function idbGet(key) {
@@ -304,7 +317,7 @@
     if (!autoBackupHandle) return;
     try {
       data.meta.lastBackupAt = new Date().toISOString();
-      persistFarm({ quiet: true });
+      await persistFarm({ quiet: true });
       const exportData = await buildBackupObject();
       const writable = await autoBackupHandle.createWritable();
       await writable.write(JSON.stringify(exportData, null, 2));
@@ -420,12 +433,11 @@
     });
   }
 
-  function setUiLanguage(lang) {
+  async function setUiLanguage(lang) {
     const next = lang || '';
     if (uiLang() === next) return;
     data.settings.language = next;
-    save();
-    location.reload();
+    await persistFarmThenReload();
   }
 
   function initLanguageControls() {
@@ -718,7 +730,7 @@
       $('#inspector-pin-hint').hidden = !s.inspectorPin;
     }
 
-    $('#settings-form').addEventListener('submit', (e) => {
+    $('#settings-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const langBefore = data.settings.language || '';
       data.settings = {
@@ -741,14 +753,15 @@
           : (data.settings.inspectorPin || '')
       };
       if ($('#set-inspector-pin')) $('#set-inspector-pin').value = '';
+      if ((data.settings.language || '') !== langBefore) {
+        // Reload so the translator applies (or reverts) to a clean DOM.
+        // Await the IndexedDB put so the language choice is not lost.
+        await persistFarmThenReload();
+        return;
+      }
       save();
       applySettings();
       if ($('#inspector-pin-hint')) $('#inspector-pin-hint').hidden = !data.settings.inspectorPin;
-      if ((data.settings.language || '') !== langBefore) {
-        // Reload so the translator applies (or reverts) to a clean DOM.
-        location.reload();
-        return;
-      }
       toast('Settings saved');
     });
 
@@ -788,7 +801,6 @@
     if (!$('#app-business').value) $('#app-business').value = s.businessNameAddress || '';
     if (!$('#app-company-license').value) $('#app-company-license').value = s.companyLicense || '';
     if (!$('#app-owner').value) $('#app-owner').value = s.farmName || '';
-    if (!$('#app-customer').value) $('#app-customer').value = s.farmName || '';
     fillCrewDatalist();
     renderStateInfo();
     applyStateRequiredTags();
@@ -1102,9 +1114,7 @@
         <p><strong>Retain records ${esc(String(law.retentionYears))} year(s)</strong> from application date.</p>
         <p class="card-hint">Applies to: ${esc(law.appliesTo || 'See state agency guidance')}</p>
         <p class="card-hint">Private-applicator duty: ${esc(law.privateDuty || 'required')} ·
-          Record deadline: ${law.recordDeadline
-            ? esc(String(law.recordDeadline.count)) + ' ' + esc(law.recordDeadline.unit)
-            : (law.recordWithinHours != null ? esc(String(law.recordWithinHours)) + ' hours' : '—')} ·
+          Record deadline: ${recordDeadlineDisplay(law)} ·
           Customer-copy window: ${law.customerCopyDays != null ? esc(String(law.customerCopyDays)) + ' day(s)' : 'not encoded (no invented duty)'}</p>
         <p class="card-hint">Source status: ${esc(verLabel)}</p>
         <p class="card-hint"><span>This state's rules last checked:</span> <strong>${esc(law.reviewedAt || '—')}</strong>
@@ -1121,6 +1131,25 @@
         <p class="card-hint">Completion means required fields are filled for this context — not a legal determination.
         This app does not file electronic reports (CA PUR, NY PRL, etc.) and does not replace WPS employer duties.</p>
       </div>`;
+  }
+
+  function recordDeadlineDisplay(law) {
+    if (!law) return '—';
+    let count = null;
+    let unit = null;
+    if (law.recordDeadline && law.recordDeadline.count != null) {
+      count = law.recordDeadline.count;
+      unit = law.recordDeadline.unit;
+    } else if (law.recordWithinHours != null) {
+      count = law.recordWithinHours;
+      unit = 'hours';
+    }
+    if (count == null) return '—';
+    const base = esc(String(count)) + ' ' + esc(String(unit));
+    if (String(unit) === 'hours' && Number(count) === 24) {
+      return base + ' (operational fallback — confirm with your agency)';
+    }
+    return base;
   }
 
   // -------- 50-state compliance engine --------
@@ -1257,11 +1286,24 @@
 
 
   function updateStorageUsage() {
+    const el = $('#storage-usage');
+    if (!el) return;
     try {
-      const bytes = (localStorage.getItem(STORE_KEY) || '').length;
-      $('#storage-usage').textContent = bytes < 1024
-        ? `${bytes} bytes used`
-        : `${fmtNum(bytes / 1024, 1)} KB used`;
+      const farmBytes = (typeof FarmScale !== 'undefined' && FarmScale.jsonBytes)
+        ? FarmScale.jsonBytes(data)
+        : JSON.stringify(data || {}).length;
+      let cacheIsStub = true;
+      try {
+        const raw = localStorage.getItem(STORE_KEY);
+        cacheIsStub = !raw || FarmStore.isBootStub(JSON.parse(raw));
+      } catch (e) { cacheIsStub = true; }
+      const size = farmBytes < 1024
+        ? `${farmBytes} bytes of farm records`
+        : `${fmtNum(farmBytes / 1024, 1)} KB of farm records`;
+      const photos = referencedPhotoIds().size;
+      const photoBit = photos ? `; ${photos} photo(s) in IndexedDB` : '';
+      const stubBit = cacheIsStub ? '; boot cache is a stub, not the book' : '';
+      el.textContent = size + photoBit + stubBit;
     } catch (e) { /* ignore */ }
   }
 
@@ -3050,7 +3092,7 @@
     $('#app-business').value = s.businessNameAddress || '';
     $('#app-company-license').value = s.companyLicense || '';
     $('#app-owner').value = s.farmName || '';
-    $('#app-customer').value = s.farmName || '';
+    $('#app-customer').value = '';
     if ($('#app-type')) $('#app-type').value = 'ground';
     if ($('#app-used-trainee')) $('#app-used-trainee').checked = false;
     if ($('#app-inversion')) $('#app-inversion').checked = false;
@@ -3069,7 +3111,7 @@
     $('#app-total-note').hidden = true;
     $('#app-interval-preview').hidden = true;
     $('#app-form-title').textContent = 'Log an application';
-    $('#app-save-btn').textContent = 'Save complete record';
+    $('#app-save-btn').textContent = 'Save — required boxes filled';
     $('#app-cancel-btn').hidden = true;
     logForceExpand = false;
     logPinnedSections.clear();
@@ -3147,7 +3189,7 @@
     reshapeAppFormForState();
     updateCompliancePreview();
     $('#app-form-title').textContent = `Edit record — ${appProductsLabel(a)} on ${fmtDate(a.date)}`;
-    $('#app-save-btn').textContent = 'Update complete record';
+    $('#app-save-btn').textContent = 'Update — required boxes filled';
     $('#app-cancel-btn').hidden = false;
     updateLastOnFieldHint();
     logForceExpand = true;
@@ -3367,7 +3409,23 @@
     toast('Spray-now mode — date and start time set. Pick field and products.');
   }
 
-  function duplicateLastSpray() {
+  async function clonePhotoIds(ids) {
+    const next = [];
+    for (const id of ids || []) {
+      const photo = await idbPhotoGet(id);
+      if (!photo) continue;
+      const copy = Object.assign({}, photo, { id: uid(), createdAt: new Date().toISOString() });
+      try {
+        await idbPhotoPut(copy);
+        next.push(copy.id);
+      } catch (e) {
+        /* skip — never share the original id across two records */
+      }
+    }
+    return next;
+  }
+
+  async function duplicateLastSpray() {
     if (!canLogNewSpray()) {
       toast('A license is required to log a new spray. You can still review, print, finish drafts, and download a backup.');
       return;
@@ -3384,8 +3442,10 @@
     $('#app-end').value = '';
     if ($('#app-customer-copy')) $('#app-customer-copy').checked = false;
     if ($('#app-customer-copy-date')) $('#app-customer-copy-date').value = '';
+    appFormPhotoIds = await clonePhotoIds(appFormPhotoIds);
+    renderPhotoThumbs(appFormPhotoIds, $('#app-photo-thumbs'));
     $('#app-form-title').textContent = `Duplicate of ${appProductsLabel(last)} — new record`;
-    $('#app-save-btn').textContent = 'Save complete record';
+    $('#app-save-btn').textContent = 'Save — required boxes filled';
     $('#app-cancel-btn').hidden = false;
     updateCompliancePreview();
     updateDurationHint();
@@ -4610,8 +4670,7 @@
           }
           await idbPhotosClear();
           await idbPhotosPutAll(info.photos);
-          save();
-          location.reload();
+          await persistFarmThenReload();
         }
       } catch (err) {
         toast('That file is not a valid backup: ' + err.message);
@@ -7073,6 +7132,7 @@
     const status = $('#lock-records-status');
     if (!host) return;
     const all = (data.applications || []).slice()
+      .filter(a => !a.deletedAt)
       .sort((a, b) => (b.date + (b.startTime || '')).localeCompare(a.date + (a.startTime || '')));
     if (status) {
       status.textContent = all.length
@@ -7262,7 +7322,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.24';
+  const APP_VERSION = 'v2.9.25';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {

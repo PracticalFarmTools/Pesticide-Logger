@@ -81,7 +81,10 @@
     if (days == null) return null;
     const d = new Date(`${app.date}T00:00:00`);
     if (isNaN(d)) return null;
-    d.setDate(d.getDate() + days);
+    const whole = Math.trunc(days);
+    const frac = days - whole;
+    d.setDate(d.getDate() + whole);
+    if (frac) return new Date(d.getTime() + frac * 86400000);
     return d;
   }
 
@@ -249,14 +252,15 @@
       warnings.push('This state’s sources indicate no private-applicator recordkeeping duty — still follow the label and keep good farm records');
     }
 
-    if (app.rup && !hasText(app.certNumber)) {
+    const rup = !!(app.rup || (app.products || []).some(p => p.rup));
+    if (rup && !hasText(app.certNumber) && !missing.some(m => m.name === 'applicator_license')) {
       missing.push({ name: 'applicator_license', label: 'Certification / license # (required when mix includes RUP)' });
     }
 
     [
       ['date', 'Application date', hasText(app.date)],
       ['crop_treated', 'Crop / commodity / site treated', hasText(app.crop)],
-      ['location', 'Field / site', hasText(app.fieldName) || hasText(app.locationNote)],
+      ['location', 'Field / site', hasText(app.fieldName) || hasText(app.fieldLocation) || hasText(app.locationNote)],
       ['applicator_name', 'Applicator name', hasText(app.applicatorName)],
       ['products', 'At least one product with amount applied',
         productsOk(app, p => hasText(p.productName) && p.total != null && p.total !== '')]

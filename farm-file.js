@@ -1073,18 +1073,24 @@
 
   function shouldShowGatherHint(opts) {
     opts = opts || {};
+    const role = String(opts.deviceRole || '').toLowerCase();
+    if (role === 'cab' || role === 'solo') return false;
+    if (role === 'shop') return true;
     return !!(norm(opts.deviceLabel) || opts.lastGatherAt);
   }
 
+  // Ease of mind: if this phone has sprays the shop has not received, say so
+  // now — not after 14 days. A connected backup file is the send. Shop and
+  // solo devices do not nag to send.
   function shouldShowSendNag(opts) {
     opts = opts || {};
-    const lastSend = opts.lastSendAt;
-    if (!lastSend) return false;
-    if (!opts.hasNewerSprays) return false;
-    const now = opts.now != null ? Number(opts.now) : Date.now();
-    const t = Date.parse(lastSend);
-    if (!Number.isFinite(t)) return false;
-    return (now - t) > 14 * 86400000;
+    const role = String(opts.deviceRole || '').toLowerCase();
+    if (opts.autoBackupOn) return false;
+    if (role === 'shop' || role === 'solo') return false;
+    const hasSprays = !!(opts.hasSprays || opts.hasNewerSprays);
+    if (!hasSprays) return false;
+    if (!opts.lastSendAt) return true;
+    return !!opts.hasNewerSprays;
   }
 
   function receiptSummary(receipt) {

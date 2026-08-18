@@ -180,6 +180,18 @@ check('first-run steps mark farm/field/product independently', () => {
   assert.strictEqual(steps[2].goto, 'products');
 });
 
+check('default and migrate include empty deviceRole', () => {
+  const farm = FarmStore.defaultData();
+  assert.strictEqual(farm.settings.deviceRole, '');
+  const d = FarmStore.migrate({
+    settings: { farmName: 'Oak', state: 'IA' },
+    fields: [],
+    products: [],
+    applications: []
+  });
+  assert.strictEqual(d.settings.deviceRole, '');
+});
+
 check('hydrateFromCacheRaw recovers corrupt JSON as empty farm', () => {
   const d = FarmStore.hydrateFromCacheRaw('{not json');
   assert.strictEqual(d.version, 5);

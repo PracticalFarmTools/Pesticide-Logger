@@ -1,10 +1,11 @@
 # Blueprint — lift every remaining hole to A−
 
-**Status: implementing in v2.9.29** (app + paste-ready listing). Does **not**
-go live. Eventual origin: `https://pesticide.practicalfarmtools.com`. Do not
-attach DNS or mark the catalog card Active until the owner says so.
+**Status: Cab A+ and easy file catch-up implemented in v2.9.30.** Listing paste
+and how-to shipped in v2.9.29. Does **not** go live. Eventual origin:
+`https://pesticide.practicalfarmtools.com`. Do not attach DNS or mark the
+catalog card Active until the owner says so.
 
-App **v2.9.29**. Last full grade: `docs/seller-grade-report.md` (v2.9.28).
+App **v2.9.30**. Last full grade: `docs/seller-grade-report.md` (v2.9.28).
 Stay-in-lane: `docs/stay-in-lane-blueprint.md`. Hasher playbook:
 `docs/state-maintainer-playbook.md`. Listing copy (not published):
 `docs/suite-listing.md`.
@@ -342,8 +343,8 @@ Re-grade only these rows; leave A/A− rows alone unless a change broke them.
 | Seller-readiness | FSMA user reaches a trial spray the same day |
 | Keep-current | Monthly hasher run with a human stamp on changes |
 | Support | `how.html` covers restore / gather / A2HS without waiting for mail |
-| Cab | Second Iowa private spray is Duplicate last → Scan/chip → Save |
-| First-run | Beachhead → farm → field → jug → collapsed Spray now → keep-book |
+| Cab | Second Iowa private spray is Duplicate last → confirm field → Save; next field restages the mix |
+| First-run | Beachhead → farm → field → jug → collapsed Spray now → keep-book Send / Connect |
 
 If those six are A− and growers still ask for maps, inventory, e-file, or
 e-sign, that is a different product. Do not extend this one.
@@ -356,9 +357,10 @@ Yes — as **file catch-up**, not a record server. We never store the book.
 
 | Path | Who | What shipped |
 |---|---|---|
-| Share / AirDrop / Files | Cab iPhone (no File System Access) | **Send a file to the shop** |
+| Share / AirDrop / Files | Cab iPhone (no File System Access) | **Send a file to the shop** — Home keep-book and send nag, immediately after a spray exists (no 14-day wait) |
+| Device role | Optional `cab` / `shop` / `solo` | Keep-book three buttons + Settings. Solo skips send nag. Shop skips send nag and always shows gather. Connected backup file **is** the send (`lastSendAt`) |
 | Bring in logs | Shop tablet | Merge; History keeps the other version |
-| Connect automatic backup file | Chrome / Edge | USB stick or a folder *they* already sync (Syncthing, Files) |
+| Connect automatic backup file | Chrome / Edge | USB stick or a folder *they* already sync (Syncthing, Files). Keep-book **Connect the shop file** when Chromium can |
 | Read when newer | Shop (or any connected device) | On resume / tab-focus, if the file’s `lastModified` is newer than `meta.autoBackupReadAt`, merge and toast “Caught up from the connected backup file.” Own writes stamp `autoBackupReadAt` so we do not re-gather ourselves |
 | Open the backup | Files → this app (Chromium) | `manifest.json` `file_handlers` + `launchQueue` → same bring-in vs replace confirm |
 
@@ -373,22 +375,26 @@ Copy must never say “syncs to our cloud.” Catalog paste in
 
 ## Cab A− vs A vs A+
 
-**A− (this program, v2.9.29):** Duplicate last is the primary cab button when
+**A− (v2.9.29):** Duplicate last is the primary cab button when
 a last spray exists; Spray now stays for an empty book. Quiet-private first
 viewport is field + crop + area + Scan jug + Save. When parks after date and
 start are stamped; Applicator parks once the name is filled (other required
 boxes in that section still force it open). Scan jug is the first product
 control. After the first save, Keep this book returns even if they deferred.
 
-**A:** All of A−, plus a one-thumb second spray: Duplicate last → confirm
+**A (order):** All of A−, plus a one-thumb second spray: Duplicate last → confirm
 field → Save, without opening More. Fat save stays visible. Optional weather
-is one tap (already Open-Meteo). Stay on the log after save (already). The
-grower does not hunt Spray now when yesterday’s mix is the job.
+is one tap. Stay on the log after save. The grower does not hunt Spray now
+when yesterday’s mix is the job.
 
-**A+:** About a 15-second gloved path with mix unchanged — still no
-GPS-as-field, lock-after-save, voice-as-the-bet, or e-sign. A+ is **order and
-defaults**, not becoming a custom-applicator tool. Scan jug can add the next
-jug; identity still fails loud; rates/REI/PHI stay grower-entered.
+**A+ (v2.9.30):** Duplicate last collapses extra boxes, compacts filled mix
+rows, stamps date/start now, clears copied weather, focuses field. After a
+new complete save with a mix, the mix restages for the next field (clock
+now, field and area empty, compact mix, stay on log). **Stamp weather** is
+on the cab toolbar (GPS for weather only, not as a field). About a 15-second
+gloved path with mix unchanged — still no GPS-as-field, lock-after-save,
+voice-as-the-bet, or e-sign. Scan jug can add the next jug; identity still
+fails loud; rates/REI/PHI stay grower-entered.
 
 Do not spend A+ budget on LedgerRow lock, SprayLedger accounts, or AgTerra
 as-applied maps. Those delete the grower’s-book claim.

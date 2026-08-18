@@ -1,4 +1,4 @@
-# Pesticide Logger v2.9.29
+# Pesticide Logger v2.9.30
 
 **Offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite. Licensed software with
@@ -26,7 +26,7 @@ application at the repository root.
 |---|---|
 | **Dynamic per-state / class spray log** | The log reshapes by state **and** applicator class (private vs commercial). Private duty is scoped (`required` / `none` / `uncertain`) so commercial-only states do not invent private requirements. Conditional fields appear only when applicable. |
 | **Honest completion status** | Badges say “Fields complete / Needs review / Incomplete” — not a legal determination. Related fields are not treated as interchangeable. Missing REI/PHI fails loud. Edits preserve frozen compliance state/class. |
-| **In-cab workflow** | Compact Spray Log (log this spray vs past sprays), thumb tabs, Spray now, duplicate last spray, Tank Mix jump from the log (calculator stays under More), Scan jug on the mix, recent-product chips, sticky large save buttons, and touch-friendly targets for phone/tablet use in the tractor. Optional cab glare enlarges type in the sun. |
+| **In-cab workflow** | Compact Spray Log (log this spray vs past sprays), thumb tabs, Spray now, Duplicate last (same mix, time is now, compact rows), Stamp weather on the toolbar, restage after save for the next field, Tank Mix jump from the log (calculator stays under More), Scan jug on the mix, recent-product chips, sticky large save buttons, and touch-friendly targets for phone/tablet use in the tractor. Optional cab glare enlarges type in the sun. |
 | **Audit trail & soft-delete** | Edits keep snapshot history. Deletes are soft (recoverable) with retention-aware prompts. |
 | **Lot / batch + OMRI + PHI overrides** | Per-mix-row lot numbers, OMRI flags, and crop-specific REI/PHI overrides that beat library defaults. |
 | **Commercial clocks** | Record-completion deadlines use `recordDeadline` units (`hours` / `calendarDays` / `businessDays` / `sameDay`). Customer-copy clocks only for researched copy duties (never invented). |
@@ -39,7 +39,7 @@ application at the repository root.
 | **Farm scale** | Same app for two tunnels or 150 named sites. Search appears on Fields/Products at 8+ rows; long pickers get a type-filter; Spray Log can default to this season on a long history — **Show prior years** is there for every farm size that has older logs. Optional field groups only if you actually named two. |
 | **Weather auto-fill** | Open-Meteo fill for wind, temperature, sky/humidity at the field’s forecast pin (or GPS if you are logging on-site). |
 | **Inspection output** | Print/PDF, CSV, **state compliance pack** (JSON with citation, field matrix, due/copy status, audit history), a **signed inspector HTML packet** from Reports (Home keeps the jump on larger farms — a snapshot, not a lock on the live log), and a **certifier/buyer packet** for organic & GAP audits. Reports stay under More. |
-| **Crew & gather** | Optional crew list suggests names on the log (you can still type any name). Cab phones **send logs**; the shop tablet **brings them in**. Newest edits win; the other version stays in History. Same-named fields/products can be combined or kept both. |
+| **Crew & gather** | Optional crew list suggests names on the log (you can still type any name). Cab phones **send a file** as soon as this device has sprays the shop has not received (Share / AirDrop, or a connected shop file). The shop tablet **brings them in**. Newest edits win; the other version stays in History. Same-named fields/products can be combined or kept both. Optional device role (cab / shop / solo) so send nag and gather hint match the phone you are holding. |
 | **Inspector view & REI board** | Optional shop view hides editing so you can hand the tablet over — Exit anytime, optional PIN, farm name recovers a forgotten PIN. **Print today’s REI board** for the shop door (not the official WPS sign). |
 | **Spray window outlook** | Glance rows (Go / Wait / No) at each field’s map pin — not the phone’s GPS. Tap a field for the next 12 hours, then Details for the 48-hour chart. CONUS near-term uses NOAA HRRR; stale data is labeled and cannot be used as a go/no-go for a trip. Planning guidance — the label still rules. |
 | **Photos & barcode** | Attach label/lot/condition photos to records (device-local). Scan jug reads a UPC **and** the brand panel (EPA #) from one photo: live camera on Android Chrome, still photo on iPhone (ZXing + OCR). Review before the mix row changes. |

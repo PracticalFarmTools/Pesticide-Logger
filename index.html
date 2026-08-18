@@ -138,8 +138,15 @@
 
     <div id="dash-keep-book" class="card keep-book-card" hidden>
       <h3 class="card-title">Keep this book</h3>
-      <p>There is no cloud copy. Download a backup and print the restore card before you rely on this phone. Tape the card in the shop. iPhone: Share → Add to Home Screen. Android: Install when the browser offers it. <a href="how.html">How restore works</a>.</p>
+      <p>There is no cloud copy. One tap sends a file to the shop, or Chrome can connect a folder you already share. We never store it. Tape the restore card in the shop. <a href="how.html">How restore works</a>.</p>
+      <div class="form-actions" id="keep-book-role" hidden>
+        <button type="button" class="btn btn-primary" id="keep-book-role-cab" data-device-role="cab">This is the cab phone</button>
+        <button type="button" class="btn btn-secondary" id="keep-book-role-shop" data-device-role="shop">This is the shop tablet</button>
+        <button type="button" class="text-btn" id="keep-book-role-solo" data-device-role="solo">Only this device</button>
+      </div>
       <div class="form-actions">
+        <button type="button" class="btn btn-primary" id="keep-book-send" hidden>Send a file to the shop</button>
+        <button type="button" class="btn btn-primary" id="keep-book-connect" hidden>Connect the shop file</button>
         <button type="button" class="btn btn-primary" id="keep-book-download">Download backup</button>
         <button type="button" class="btn btn-secondary" id="keep-book-restore-card">Print restore card</button>
         <button type="button" class="text-btn" id="keep-book-defer">I’ll log first</button>
@@ -162,11 +169,12 @@
     <div id="send-nag-banner" class="setup-banner backup-banner" hidden>
       <div>
         <strong>Catch up the shop device.</strong>
-        <p id="send-nag-msg">Newer sprays on this phone have not been sent as a file. Share or save the backup — we do not store it.</p>
+        <p id="send-nag-msg">Sprays on this phone are not on the shop tablet yet. One file. We do not store it.</p>
       </div>
       <div class="banner-actions">
         <button class="btn btn-primary" id="send-nag-send">Send a file to the shop</button>
         <button class="btn btn-secondary" id="send-nag-snooze">Remind me later</button>
+        <button type="button" class="text-btn" id="send-nag-solo">Only this device</button>
       </div>
     </div>
 
@@ -302,6 +310,7 @@
       <div class="cab-toolbar">
         <button type="button" class="btn btn-primary btn-lg" id="app-spray-now">Spray now</button>
         <button type="button" class="btn btn-secondary btn-lg" id="app-duplicate-last">Duplicate last spray</button>
+        <button type="button" class="text-btn" id="app-stamp-weather">Stamp weather</button>
         <button type="button" class="text-btn" data-goto="calculator" id="app-open-tank-mix">Tank Mix</button>
         <label class="checkbox-label cab-toggle">
           <input type="checkbox" id="app-show-recommended">
@@ -1087,15 +1096,23 @@
           </label>
         </div>
         <p class="card-hint">Menus, buttons, and messages. The printed REI posting sheet stays English and Spanish (DO NOT ENTER / NO ENTRE).</p>
-        <div class="form-row form-row-2">
+        <div class="form-row form-row-3">
           <label>This device’s nickname
             <input type="text" id="set-device-label" placeholder="e.g. Cab iPhone" autocomplete="off">
           </label>
           <label>Who usually logs from here
             <input type="text" id="set-device-user" placeholder="Optional — defaults to applicator name" list="crew-applicator-list" autocomplete="off">
           </label>
+          <label>This device is
+            <select id="set-device-role">
+              <option value="">Not set yet</option>
+              <option value="cab">Cab phone — sends a file</option>
+              <option value="shop">Shop tablet — is the book</option>
+              <option value="solo">Only this device</option>
+            </select>
+          </label>
         </div>
-        <p class="card-hint">Stamped on sprays you save from this device. You can still edit those sprays anytime.</p>
+        <p class="card-hint">Stamped on sprays you save from this device. Cab phones send after each save. Shop tablets bring files in. You can still edit those sprays anytime.</p>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">Save settings</button>
         </div>

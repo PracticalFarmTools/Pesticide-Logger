@@ -64,17 +64,8 @@ check('customerCopyDays only set when researched (not invented for all states)',
   assert.ok(STATE_LAWS.FL.customerCopyDays != null);
 });
 
-check('AL and IA privateDuty is none; exclusive-who none states encoded; AR and SD stay uncertain', () => {
+check('privateDuty enum is encoded; which codes sit in each bucket is tests/state-laws.test.js', () => {
   assert.strictEqual(STATE_LAWS.AL.privateDuty, 'none');
-  assert.strictEqual(STATE_LAWS.IA.privateDuty, 'none');
-  ['KS', 'MI', 'MN', 'SC', 'VA'].forEach(code => {
-    assert.strictEqual(STATE_LAWS[code].privateDuty, 'none', code);
-    assert.strictEqual(STATE_LAWS[code].verification, 'researched', code);
-  });
-  ['AR', 'SD'].forEach(code => {
-    assert.strictEqual(STATE_LAWS[code].privateDuty, 'uncertain', code);
-  });
-  assert.strictEqual(STATE_LAWS.RI.privateDuty, 'required');
   assert.strictEqual(STATE_LAWS.MS.privateDuty, 'required');
   assert.strictEqual(STATE_LAWS.MS.verification, 'researched');
 });

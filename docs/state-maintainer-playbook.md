@@ -109,8 +109,10 @@ Order (one state per promotion; A–E already run):
 
 | Next | Codes | Why this order |
 |---|---|---|
-| Done | AL, IA, ME, CT, HI, AR (commercial), KS (commercial), MS, RI, MN, MI, VA, SC, KS (private) | Promoted or frozen from primary sources. Iowa 45.26 and Minnesota 18B.37 / Michigan 324.8311 / Virginia 2VAC5-680 / South Carolina 27-1083(C) / Kansas 2-2455 name who keeps records and exclude private → `privateDuty: none`. Mississippi Chapter 09 §104 names private RUP records → `required`. |
-| Remaining private duty | AR, SD | AR: §20-20-215 is commercial/noncommercial; 2 CAR § 70 Class E/F is a special-class private list, not every private spray. SD: 12:56:07:01 “each applicator” vs DANR form vs SDSU Farm Bill split is not reconciled. |
+| Done | AL, IA, ME, CT, HI, RI | Promoted from primary sources. Iowa 45.26 names commercial/retail only → `privateDuty: none`. |
+| Done | MS | Chapter 09 §104 names private RUP records → `researched` / `required`. Not professional-services Chapter 11. |
+| Done | MN, MI, VA, SC, KS | Exclusive who-clause: commercial (or business) record lists stay; privateDuty `none`. |
+| Remaining | AR, SD | AR: §20-20-215 is commercial/noncommercial; 2 CAR § 70 Class E/F is a special-class private list, not every private spray. SD: 12:56:07:01 “each applicator” vs DANR form vs SDSU Farm Bill split is not reconciled. |
 | Frozen | AR, SD | Opened the official source and still cannot name a general private field list (AR) or whether private is in “applicator” (SD). Stop putting them on a calendar. |
 
 How to research one state: `docs/state-dataset-blueprint.md` (How to

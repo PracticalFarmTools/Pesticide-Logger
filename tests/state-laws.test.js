@@ -161,7 +161,7 @@ check('reviewBy is 12 months after reviewedAt; freshness helper matches', () => 
   assert.strictEqual(stale.reviewBy, '2020-12-31');
 });
 
-check('Home and Settings surface check-again dates; maintainer queue lists holes', () => {
+check('Home and Settings surface check-again dates', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   assert.ok(html.includes('id="compliance-fresh"'));
@@ -175,21 +175,19 @@ check('Home and Settings surface check-again dates; maintainer queue lists holes
   assert.strictEqual(status.status, 0, status.stderr);
   assert.ok(status.stdout.includes('IA\tresearched\tnone\t2026-08-18\t2027-08-18\tno'));
   assert.ok(status.stdout.includes('0 stale'));
+});
+
+check('maintainer --holes queue is Arkansas and South Dakota only', () => {
   const holes = spawnSync(process.execPath, [path.join(root, 'tools', 'bundle-state-laws.js'), '--holes'], {
     encoding: 'utf8', cwd: root
   });
   assert.strictEqual(holes.status, 0, holes.stderr);
-  assert.ok(!holes.stdout.includes('MS\t'), 'Mississippi Chapter 09 names private RUP and other certified RUP records');
-  assert.ok(!holes.stdout.includes('AL\t'), 'Alabama commercial list is researched; privateDuty none is not a hole');
-  assert.ok(!holes.stdout.includes('IA\t'), 'Iowa 45.26 names commercial/retail only; privateDuty none is not a hole');
-  assert.ok(!holes.stdout.includes('MN\t'), 'Minnesota 18B.37 names commercial/noncommercial only');
-  assert.ok(!holes.stdout.includes('MI\t'), 'Michigan MCL 324.8311 names commercial application records only');
-  assert.ok(!holes.stdout.includes('VA\t'), 'Virginia 2VAC5-680/-685 recordkeeping names businesses and not-for-hire commercial');
-  assert.ok(!holes.stdout.includes('SC\t'), 'South Carolina 27-1083(C) names companies/commercial/noncommercial employers');
-  assert.ok(!holes.stdout.includes('KS\t'), 'Kansas 2-2455 names businesses, agencies, and commercial not-for-a-business');
-  assert.ok(!holes.stdout.includes('RI\t'), 'Rhode Island 2.6(C) names private RUP/SLU records');
+  assert.ok(holes.stdout.includes('2 row(s)'));
   assert.ok(holes.stdout.includes('AR\tresearched\tuncertain'));
   assert.ok(holes.stdout.includes('SD\tresearched\tuncertain'));
+  ['AL', 'IA', 'KS', 'MI', 'MN', 'MS', 'RI', 'SC', 'VA'].forEach((code) => {
+    assert.ok(!holes.stdout.includes(code + '\t'), code + ' is not a hole');
+  });
   const show = spawnSync(process.execPath, [path.join(root, 'tools', 'bundle-state-laws.js'), '--show', 'MS'], {
     encoding: 'utf8', cwd: root
   });
@@ -266,6 +264,15 @@ check('each state keeps its own citation URL and field list; no mixed matrices',
   assert.ok(!names('MS').includes('customer_name'), 'Mississippi farm row must not require §206 customer boxes for private');
   assert.ok(names('OK').includes('area_treated*'), 'Oklahoma 35:30-17-21 names size of area treated');
   assert.ok(!names('OK').includes('sprayer_pressure'), 'Oklahoma farm row must not require WDI PSI');
+  assert.strictEqual(states.HI.customerCopyDays, null, 'HI employer copy is before application, not a 30-day clock');
+  assert.strictEqual(states.KS.customerCopyDays, 30);
+  assert.strictEqual(states.IN.customerCopyDays, null, 'voided 355 IAC 4-4 is not a copy clock');
+  assert.strictEqual(states.OK.customerCopyDays, null);
+  assert.strictEqual(states.LA.customerCopyDays, null);
+});
+
+check('dataset census: verification and privateDuty buckets', () => {
+  const states = bundle.loadAllStates();
   const ver = { researched: [], partial: [], uncertain: [] };
   const duty = { required: [], none: [], uncertain: [] };
   bundle.US_STATES.forEach((code) => {
@@ -274,6 +281,7 @@ check('each state keeps its own citation URL and field list; no mixed matrices',
   });
   assert.deepStrictEqual(ver.partial, []);
   assert.deepStrictEqual(ver.uncertain, []);
+  assert.strictEqual(ver.researched.length, 50);
   assert.deepStrictEqual(duty.none, ['AL', 'IA', 'KS', 'MI', 'MN', 'SC', 'VA']);
   assert.deepStrictEqual(duty.uncertain, ['AR', 'SD']);
   assert.strictEqual(states.AL.verification, 'researched');
@@ -283,11 +291,6 @@ check('each state keeps its own citation URL and field list; no mixed matrices',
   assert.strictEqual(states.MN.privateDuty, 'none');
   assert.strictEqual(states.AR.privateDuty, 'uncertain');
   assert.strictEqual(states.SD.privateDuty, 'uncertain');
-  assert.strictEqual(states.HI.customerCopyDays, null, 'HI employer copy is before application, not a 30-day clock');
-  assert.strictEqual(states.KS.customerCopyDays, 30);
-  assert.strictEqual(states.IN.customerCopyDays, null, 'voided 355 IAC 4-4 is not a copy clock');
-  assert.strictEqual(states.OK.customerCopyDays, null);
-  assert.strictEqual(states.LA.customerCopyDays, null);
 });
 
 check('maintainer playbook is event-driven and refuses in-app scrape', () => {

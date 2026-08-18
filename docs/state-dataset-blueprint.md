@@ -1,13 +1,12 @@
 # Blueprint: 50-state pesticide recordkeeping research
 
 **Status: Batch H implemented** in v2.9.4; Home / log / maintainer queue
-freshness in **v2.9.5**. Playbook Tracks 1 and 3 for this pass landed
-**2026-08-14** (`docs/state-maintainer-playbook.md`): official citation
-URLs where a primary host answered; hole states researched or frozen
-from that state's source only. Dataset header / matrix edition is
-**2026-08-14**. Remaining work is leftover Cornell URLs that 403/404,
-private-duty holes, and the external hasher (Track 2) — not a new
-engine.
+freshness in **v2.9.5**. Playbook Tracks 1 and 3: official citation URLs
+where a primary host answered; hole states researched or frozen from that
+state's source only (`docs/state-maintainer-playbook.md`). Matrix edition
+is **2026-08-18**. Remaining work is leftover Cornell URLs that 403/404,
+Arkansas and South Dakota private duty, and the external hasher (Track 2)
+— not a new engine.
 
 Job to be done: a grower in **any of the 50 states** can pick that state in
 Settings and get a spray log, completeness badge, and inspector packet that
@@ -18,12 +17,10 @@ way they get any other app update (Reload).
 
 The app already **runs** in all 50 states. Every code has an agency, a
 citation URL, a retention period, a field list, `privateDuty`, and a
-`recordDeadline`. What is not done is **confidence**. A Mississippi private
-grower and an Iowa private grower both get a log; Iowa’s commercial list is
-marked `researched` from 45.26, and Iowa private stays quiet because that
-rule does not name private applicators. Mississippi private now has a named
-Chapter 09 §104 RUP list. Completeness still means
-“required fields were filled,” never a legal determination.
+`recordDeadline`. Completeness still means “required fields were filled,”
+never a legal determination. Iowa private stays quiet because 45.26 does
+not name private applicators. Mississippi private has a named Chapter 09
+§104 RUP list. Arkansas and South Dakota private duty stay `uncertain`.
 
 This is **not** 50 official PDF templates, not CA PUR / NY PRL / HI annual
 RUP e-file, and not WPS employer software.
@@ -85,9 +82,6 @@ without ever flipping a state to Complete by inventing fields.
 | Settings state | Private grower | Commercial grower |
 |---|---|---|
 | Iowa (`researched` / `none`) | No 45.26 matrix; operational core still required; **Fields complete** is possible | 45.26(3) commercial office-record matrix; Complete is possible |
-| Alabama (`researched` / `none`) | No Alabama matrix; operational core still required; **Fields complete** is possible | Commercial r. 80-1-13-.14 matrix; Complete is possible |
-| Minnesota (`researched` / `none`) | No 18B.37 matrix; operational core still required; **Fields complete** is possible | §18B.37 subd. 2 commercial/noncommercial matrix; Complete is possible |
-| Virginia (`researched` / `none`) | No 2VAC5-680 matrix; operational core still required; **Fields complete** is possible | Business / not-for-hire commercial matrix; Complete is possible |
 | Mississippi (`researched` / `required`) | Chapter 09 §104 RUP list (no §206 customer extras); Complete is possible | Same §104 agricultural list; §206 customer/time/cert extras stay in notes |
 | Arkansas (`researched` / `uncertain`) | Commercial §20-20-215 list shown; Needs review because general private duty is unverified (Class E/F is a special class) | Complete is possible |
 | South Dakota (`researched` / `uncertain`) | Commercial-style 12:56:07 list shown; Needs review until “applicator” includes or excludes private | Complete is possible |
@@ -100,8 +94,8 @@ an honest **Fields complete** badge until verification is `researched` *and*
 ### Researched states that still have a footnote
 
 These are `researched` but `appliesTo` / `notes` still say “partially
-verified” for **private scope** or a **second citation**. They are not in the
-7-state hole, but they are in this program:
+verified” for **private scope** or a **second citation**. They are not in
+`--holes`, but they are in this program:
 
 | Code | Footnote |
 |---|---|

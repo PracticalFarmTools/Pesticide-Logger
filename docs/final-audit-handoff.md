@@ -49,7 +49,7 @@ Static, offline-first PWA. No account, no farm-data server, no telemetry. Record
 
 **Stay in lane / do not take:** Mix Tank database, e-sign, client CRM, GAP binders, CLU import, cloud backup / seats, native rewrite, as-applied rasters, machine files, P&L / grain, indemnified label database.
 
-50-state matrix: `laws/XX.json`. Alabama private duty is `none`. Private-duty still `uncertain` for AR, KS, MI, MN, MS, SC, SD, VA. MS overall verification is still `uncertain`. Do not mix one state’s field list into another.
+50-state matrix: `laws/XX.json`. Do not mix one state’s field list into another. Hole census after this handoff lives in `docs/state-maintainer-playbook.md` Track 3 (as of the 2026-08-14 audit snapshot, MS verification was still `uncertain` and several private-duty rows were unverified).
 
 ---
 

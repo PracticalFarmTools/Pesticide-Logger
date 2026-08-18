@@ -49,7 +49,7 @@ changes.
 ## 2a. Support (not data recovery)
 
 Questions about restore, gather, or Add to Home Screen:
-[kylespear88@gmail.com](mailto:kylespear88@gmail.com).
+[practicalfarmtools@gmail.com](mailto:practicalfarmtools@gmail.com).
 We still cannot recover your book. That email is how-to, not a cloud restore.
 
 ## 3. Files you bring from other software

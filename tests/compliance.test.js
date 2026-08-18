@@ -889,8 +889,8 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(!start.includes('Names on those buttons'));
   assert.ok(!start.includes('v2.9.28'), 'public page keeps version out of copy');
   assert.ok(start.includes('id="start-copy-link"'));
-  assert.ok(start.includes('mailto:kylespear88@gmail.com') && inspector.includes('mailto:kylespear88@gmail.com') &&
-    extension.includes('mailto:kylespear88@gmail.com'), 'public human on all three pages');
+  assert.ok(start.includes('mailto:practicalfarmtools@gmail.com') && inspector.includes('mailto:practicalfarmtools@gmail.com') &&
+    extension.includes('mailto:practicalfarmtools@gmail.com'), 'public human on all three pages');
   assert.ok(start.includes('id="public-lang"') && start.includes('src="i18n.js"'));
   assert.ok(start.includes('USB and GitHub Pages have no lookup') || start.includes('Type the jug number'));
   assert.ok(extension.includes('start.html?state=IA') && extension.includes('start.html?state=ME'));

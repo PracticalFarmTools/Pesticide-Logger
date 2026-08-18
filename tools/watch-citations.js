@@ -21,7 +21,7 @@ const bundle = require('./bundle-state-laws.js');
 const root = path.join(__dirname, '..');
 const cacheDir = path.join(root, 'watch-cache');
 const hashesPath = path.join(cacheDir, 'hashes.json');
-const UA = 'PesticideLogger-citation-watch/1.0 (+mailto:kylespear88@gmail.com; hash only; no scrape-to-JSON)';
+const UA = 'PesticideLogger-citation-watch/1.0 (+mailto:practicalfarmtools@gmail.com; hash only; no scrape-to-JSON)';
 const GAP_MS = 1500;
 
 function sha256Hex(buf) {

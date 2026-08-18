@@ -202,7 +202,7 @@
     else renderSummary(out, null);
   }
 
-  const SUPPORT_EMAIL = 'kylespear88@gmail.com';
+  const SUPPORT_EMAIL = 'practicalfarmtools@gmail.com';
 
   const api = {
     STATE_NAMES,

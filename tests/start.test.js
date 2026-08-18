@@ -90,7 +90,7 @@ check('Maine commercial lists required boxes and the agency', () => {
 });
 
 check('public page exposes a support mailbox, not a recovery cloud', () => {
-  assert.strictEqual(StartPage.SUPPORT_EMAIL, 'kylespear88@gmail.com');
+  assert.strictEqual(StartPage.SUPPORT_EMAIL, 'practicalfarmtools@gmail.com');
 });
 
 if (failed) process.exit(1);

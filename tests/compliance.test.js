@@ -952,6 +952,7 @@ check('v2.9.30: cab A+ restage, compact mix, send-now, device role', () => {
   const hasher = fs.readFileSync(path.join(root, 'tools', 'watch-citations.js'), 'utf8');
   const manifest = fs.readFileSync(path.join(root, 'manifest.json'), 'utf8');
   assert.ok(app.includes('function restageCabMix'));
+  assert.ok(app.includes('restageApplicator'), 'next field keeps the applicator');
   assert.ok(app.includes("startsWith('Same mix')"), 'state reshape keeps the next-field title');
   assert.ok(app.includes('function afterCabSaveCatchUp'));
   assert.ok(app.includes('function setMixCompact'));

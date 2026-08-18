@@ -3205,8 +3205,10 @@
     save();
     const restageMix = (!asDraft && !editingId && mix.length && canLogNewSpray()) ? mix : null;
     const restageCrop = restageMix ? (($('#app-crop') && $('#app-crop').value.trim()) || '') : '';
+    const restageApplicator = restageMix ? (($('#app-applicator') && $('#app-applicator').value.trim()) || '') : '';
+    const restageCert = restageMix ? (($('#app-cert') && $('#app-cert').value.trim()) || '') : '';
     resetAppForm();
-    if (restageMix) restageCabMix(restageMix, restageCrop);
+    if (restageMix) restageCabMix(restageMix, restageCrop, restageApplicator, restageCert);
     renderAppList();
     renderDashboard();
     renderFields();
@@ -3581,7 +3583,7 @@
     });
   }
 
-  function restageCabMix(savedMix, crop) {
+  function restageCabMix(savedMix, crop, applicator, cert) {
     if (!savedMix || !savedMix.length) return;
     $('#app-products').innerHTML = '';
     savedMix.forEach((pr) => addAppProductRow(pr));
@@ -3589,8 +3591,11 @@
     if ($('#app-field')) $('#app-field').value = '';
     if ($('#app-area')) $('#app-area').value = '';
     if ($('#app-crop')) $('#app-crop').value = crop || '';
-    if ($('#app-applicator') && !$('#app-applicator').value.trim() && data.settings.applicatorName) {
-      $('#app-applicator').value = data.settings.applicatorName;
+    if ($('#app-applicator')) {
+      $('#app-applicator').value = applicator || data.settings.applicatorName || '';
+    }
+    if ($('#app-cert')) {
+      $('#app-cert').value = cert || data.settings.certNumber || '';
     }
     clearCopiedConditions();
     logForceExpand = false;

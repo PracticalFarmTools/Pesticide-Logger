@@ -364,6 +364,8 @@ main {
   align-items: center;
   margin: 0.35rem 0 0.65rem;
 }
+.mix-scan-row .btn-lg { flex: 1 1 11rem; }
+.mix-scan-row .camera-file-btn { text-align: center; justify-content: center; }
 #app-form fieldset { scroll-margin-top: 4.5rem; }
 
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }

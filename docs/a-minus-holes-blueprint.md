@@ -1,9 +1,13 @@
 # Blueprint — lift every remaining hole to A−
 
-**Status: proposal.** Does not implement cab, hasher cadence, how-to, or the
-suite homepage. App **v2.9.28**. Grade: `docs/seller-grade-report.md`.
+**Status: implementing in v2.9.29** (app + paste-ready listing). Does **not**
+go live. Eventual origin: `https://pesticide.practicalfarmtools.com`. Do not
+attach DNS or mark the catalog card Active until the owner says so.
+
+App **v2.9.29**. Last full grade: `docs/seller-grade-report.md` (v2.9.28).
 Stay-in-lane: `docs/stay-in-lane-blueprint.md`. Hasher playbook:
-`docs/state-maintainer-playbook.md`.
+`docs/state-maintainer-playbook.md`. Listing copy (not published):
+`docs/suite-listing.md`.
 
 Job: take every surface that is still below **A−** to **at least A−**,
 including the **website**, without becoming a farm OS or a custom-applicator
@@ -43,7 +47,7 @@ not save a grower who never leaves “Coming Soon.”
 | # | Proposal | Lifts | Effort | $0? |
 |---|---|---|---|---|
 | W1 | Rewrite the suite logger card + status Active | Listing D → A−, seller-readiness B → A− | Copy + CMS | Yes |
-| W2 | Subdomain host (`logger.` / `pesticide.`) matching `fsma.` | Listing A− holds; PWA origin is stable | DNS + static/Vercel | Yes |
+| W2 | Subdomain `pesticide.` matching `fsma.` — **not attached yet** | Listing A− holds; PWA origin is stable | DNS + static/Vercel | Yes |
 | W3 | EPA sentence matches the host you actually ship | Honesty stays A | One line on `start.html` when `/api/epa` is live | Yes (existing `api/epa.js`) |
 | S1 | Public `how.html` (restore / gather / A2HS) | Support B+ → A− | One static page, no SW | Yes |
 | K1 | Monthly hasher ritual + `--summary` you will look at | Keep-current B → A− | Calendar; optional one flag | Yes |
@@ -111,7 +115,9 @@ still two products, one brand.
 Same pattern as `fsma.practicalfarmtools.com`:
 
 - Catalog stays on `practicalfarmtools.com`.
-- Logger PWA lives on `logger.practicalfarmtools.com` (or `pesticide.`).
+- Logger PWA lives on `pesticide.practicalfarmtools.com` when the owner
+  goes live (same pattern as `fsma.practicalfarmtools.com`). **Not attached
+  yet.** Preview deploys from git are expected; do not point the subdomain.
 - `/` on the logger host is `start.html` (already true in `vercel.json`).
 - PWA `start_url` stays `index.html`.
 - No farm-data server. Optional `/api/epa` only.
@@ -341,3 +347,48 @@ Re-grade only these rows; leave A/A− rows alone unless a change broke them.
 
 If those six are A− and growers still ask for maps, inventory, e-file, or
 e-sign, that is a different product. Do not extend this one.
+
+---
+
+## Sync as a realization (no farm-data server)
+
+Yes — as **file catch-up**, not a record server. We never store the book.
+
+| Path | Who | What shipped |
+|---|---|---|
+| Share / AirDrop / Files | Cab iPhone (no File System Access) | **Send a file to the shop** |
+| Bring in logs | Shop tablet | Merge; History keeps the other version |
+| Connect automatic backup file | Chrome / Edge | USB stick or a folder *they* already sync (Syncthing, Files) |
+| Read when newer | Shop (or any connected device) | On resume / tab-focus, if the file’s `lastModified` is newer than `meta.autoBackupReadAt`, merge and toast “Caught up from the connected backup file.” Own writes stamp `autoBackupReadAt` so we do not re-gather ourselves |
+| Open the backup | Files → this app (Chromium) | `manifest.json` `file_handlers` + `launchQueue` → same bring-in vs replace confirm |
+
+That is the sync: devices exchange a file when they can see the same stick,
+folder, or share sheet. Do **not** add WebRTC, accounts, Background Sync to
+our origin, or a JSON inbox on Vercel. iPhone stays Share/AirDrop.
+
+Copy must never say “syncs to our cloud.” Catalog paste in
+`docs/suite-listing.md` says catch up by a file.
+
+---
+
+## Cab A− vs A vs A+
+
+**A− (this program, v2.9.29):** Duplicate last is the primary cab button when
+a last spray exists; Spray now stays for an empty book. Quiet-private first
+viewport is field + crop + area + Scan jug + Save. When parks after date and
+start are stamped; Applicator parks once the name is filled (other required
+boxes in that section still force it open). Scan jug is the first product
+control. After the first save, Keep this book returns even if they deferred.
+
+**A:** All of A−, plus a one-thumb second spray: Duplicate last → confirm
+field → Save, without opening More. Fat save stays visible. Optional weather
+is one tap (already Open-Meteo). Stay on the log after save (already). The
+grower does not hunt Spray now when yesterday’s mix is the job.
+
+**A+:** About a 15-second gloved path with mix unchanged — still no
+GPS-as-field, lock-after-save, voice-as-the-bet, or e-sign. A+ is **order and
+defaults**, not becoming a custom-applicator tool. Scan jug can add the next
+jug; identity still fails loud; rates/REI/PHI stay grower-entered.
+
+Do not spend A+ budget on LedgerRow lock, SprayLedger accounts, or AgTerra
+as-applied maps. Those delete the grower’s-book claim.

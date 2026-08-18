@@ -889,7 +889,7 @@
       '<p>There is no account and no cloud copy. A second device is the backup.</p>' +
       '<ol>' +
       '<li>The <strong>shop tablet</strong> is the book of record.</li>' +
-      '<li>Cab phones: More → Reports → <strong>Send logs to another device</strong>.</li>' +
+      '<li>Cab phones: More → Reports → <strong>Send a file to the shop</strong>.</li>' +
       '<li>Shop tablet: <strong>Bring in logs from another device</strong>. Newest edits win; the other version stays in History.</li>' +
       '<li>Also keep a JSON file with the farm papers: <code>pesticide-logger-backup-YYYY-MM-DD.json</code></li>' +
       '<li>Open the logger: ' + esc(loggerUrl) + '</li>' +

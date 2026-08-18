@@ -71,6 +71,27 @@ function check(name, fn) {
     assert.ok(/hash only/.test(Watch.UA));
   });
 
+  await check('--summary prints counts without the TSV header', () => {
+    const logs = [];
+    const orig = console.log;
+    console.log = (...a) => logs.push(a.join(' '));
+    try {
+      Watch.printSummary({
+        counts: { stable: 48, changed: 1, new: 0, dead: 0, error: 1, status: 0 }
+      });
+    } finally {
+      console.log = orig;
+    }
+    const line = logs.join('\n');
+    assert.ok(/stable 48/.test(line));
+    assert.ok(/changed 1/.test(line));
+    assert.ok(/error 1/.test(line));
+    assert.ok(!/verdict/.test(line), 'summary skips the TSV header');
+    const src = fs.readFileSync(path.join(__dirname, '..', 'tools/watch-citations.js'), 'utf8');
+    assert.ok(src.includes('--summary'));
+    assert.ok(src.includes('summaryOnly'));
+  });
+
   if (failed) process.exit(1);
   console.log('\nAll watch-citations checks passed.');
 })();

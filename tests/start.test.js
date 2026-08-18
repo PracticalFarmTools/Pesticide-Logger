@@ -93,5 +93,13 @@ check('public page exposes a support mailbox, not a recovery cloud', () => {
   assert.strictEqual(StartPage.SUPPORT_EMAIL, 'practicalfarmtools@gmail.com');
 });
 
+check('how.html exists as a public how-to with no service worker', () => {
+  const how = fs.readFileSync(path.join(__dirname, '..', 'how.html'), 'utf8');
+  assert.ok(how.includes('id="public-lang"'));
+  assert.ok(how.includes('mailto:practicalfarmtools@gmail.com'));
+  assert.ok(!how.includes('sw.js'));
+  assert.ok(how.includes('Add to Home Screen'));
+});
+
 if (failed) process.exit(1);
 console.log('\nAll start-page checks passed.');

@@ -33,6 +33,23 @@
     return '';
   }
 
+  function classFromLocation(search) {
+    const m = /[?&](?:class|applicatorClass)=(private|commercial|both)\b/i.exec(String(search || ''));
+    return m ? m[1].toLowerCase() : '';
+  }
+
+  function loggerHandoffHref(code, applicatorClass) {
+    const cls = applicatorClass || 'private';
+    if (!code) return 'index.html';
+    return 'index.html?state=' + encodeURIComponent(code) + '&class=' + encodeURIComponent(cls);
+  }
+
+  function sharePath(code, applicatorClass) {
+    const cls = applicatorClass || 'private';
+    if (!code) return '?';
+    return '?state=' + encodeURIComponent(code) + '&class=' + encodeURIComponent(cls);
+  }
+
   function privateDutyNote(law, applicatorClass) {
     const duty = (law && law.privateDuty) || 'required';
     const cls = applicatorClass || 'private';
@@ -78,7 +95,8 @@
       privateDuty: duty,
       quiet: !!quiet,
       requiredLabels: labels,
-      holes: holes
+      holes: holes,
+      applicatorClass: cls
     };
   }
 
@@ -108,7 +126,7 @@
       ${holeHtml}
       <p class="card-hint">What the log asks. Completion means fields are filled — not a legal determination. The label is the law.</p>
       ${labels}
-      <p class="form-actions"><a class="btn btn-primary" href="index.html">Open the logger in ${esc(summary.name)}</a></p>`;
+      <p class="form-actions"><a class="btn btn-primary" href="${esc(loggerHandoffHref(summary.code, summary.applicatorClass))}">Open the logger in ${esc(summary.name)}</a></p>`;
   }
 
   function fillStateSelect(sel, selected) {
@@ -137,16 +155,46 @@
       typeof location !== 'undefined' ? location.search : '',
       typeof location !== 'undefined' ? location.hash : ''
     );
+    const initialClass = classFromLocation(
+      typeof location !== 'undefined' ? location.search : ''
+    );
     fillStateSelect(sel, initial);
+    if (clsSel && (initialClass === 'private' || initialClass === 'commercial')) {
+      clsSel.value = initialClass;
+    }
+    function syncHandoffLinks(code, cls) {
+      const href = loggerHandoffHref(code, cls);
+      const header = documentRef.getElementById('start-open-header');
+      const tryBtn = documentRef.getElementById('start-try');
+      if (header) header.setAttribute('href', href);
+      if (tryBtn) tryBtn.setAttribute('href', href);
+      const copyBtn = documentRef.getElementById('start-copy-link');
+      if (copyBtn) copyBtn.hidden = !code;
+    }
     function paint() {
       const code = sel && sel.value;
       const cls = (clsSel && clsSel.value) || 'private';
       const law = code && matrix[code];
       const summary = law ? summarizeLaw(law, cls, code) : null;
       renderSummary(out, summary);
+      syncHandoffLinks(code, cls);
       if (typeof history !== 'undefined' && history.replaceState && code) {
-        history.replaceState(null, '', '?state=' + encodeURIComponent(code));
+        history.replaceState(null, '', sharePath(code, cls));
       }
+    }
+    const copyBtn = documentRef.getElementById('start-copy-link');
+    if (copyBtn && !copyBtn.dataset.bound) {
+      copyBtn.dataset.bound = '1';
+      copyBtn.addEventListener('click', () => {
+        const code = sel && sel.value;
+        const cls = (clsSel && clsSel.value) || 'private';
+        if (!code) return;
+        const url = (typeof location !== 'undefined' ? location.origin + location.pathname : '') + sharePath(code, cls);
+        const done = () => { copyBtn.textContent = 'Copied — send this to a neighbor'; };
+        if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(done).catch(() => {});
+        }
+      });
     }
     if (sel) sel.addEventListener('change', paint);
     if (clsSel) clsSel.addEventListener('change', paint);
@@ -158,6 +206,9 @@
     STATE_NAMES,
     COMMERCIAL_ONLY_FIELDS,
     codeFromLocation,
+    classFromLocation,
+    loggerHandoffHref,
+    sharePath,
     privateDutyNote,
     summarizeLaw,
     fillStateSelect,

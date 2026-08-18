@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.25 — Practical Farm Tools
+/* Pesticide Logger v2.9.26 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -1047,7 +1047,7 @@
         ? ' Rules last checked more than 12 months ago — confirm with the citation. Source status does not change because a calendar moved.'
         : '';
       hint.innerHTML = stateName
-        ? `Showing the <strong>${esc(stateName)}</strong> / <strong>${esc(cls)}</strong> spray log: core fields + ${required.size} applicable required field(s)${$('#app-show-recommended') && $('#app-show-recommended').checked ? ' + extra boxes' : ''}.${verNote}${staleNote}`
+        ? `Showing the <strong>${esc(stateName)}</strong> / <strong>${esc(cls)}</strong> spray log: core fields + ${required.size} applicable required field(s)${$('#app-show-recommended') && $('#app-show-recommended').checked ? ' + extra boxes' : ''}. Extra boxes stay under More for the record.${verNote}${staleNote}`
         : 'Select your state in Settings — the spray log will reshape to that state’s required record fields instead of using one national form.';
     }
     if (summary) {
@@ -1951,7 +1951,7 @@
   // open/park that fieldset (core and visible-required sections stay open);
   // each chip's dot flips amber when that section still has an unresolved
   // required field (see updateLogSectionNavDots()).
-  const LOG_CORE_SECTIONS = new Set(['where', 'products', 'when']);
+  const LOG_CORE_SECTIONS = new Set(['where', 'products', 'when', 'applicator']);
   let logMode = 'new';
   let logPinnedSections = new Set();
   let logForceExpand = false;
@@ -3610,7 +3610,55 @@
     if ($('#first-run-class')) $('#first-run-class').value = data.settings.applicatorClass || 'private';
   }
 
+  function consumeStartHandoff() {
+    if (typeof location === 'undefined' || typeof URLSearchParams === 'undefined') return;
+    let params;
+    try { params = new URLSearchParams(location.search); }
+    catch (e) { return; }
+    const state = String(params.get('state') || '').toUpperCase();
+    const cls = String(params.get('class') || params.get('applicatorClass') || '').toLowerCase();
+    const knownClass = cls === 'private' || cls === 'commercial' || cls === 'both';
+    if (STATE_NAMES[state] && !data.settings.state) {
+      data.settings.state = state;
+      if ($('#first-run-state')) $('#first-run-state').value = state;
+      if ($('#set-state')) $('#set-state').value = state;
+    }
+    if (knownClass && !data.settings.farmName) {
+      data.settings.applicatorClass = cls;
+      if ($('#first-run-class')) $('#first-run-class').value = cls;
+      if ($('#set-applicator-class')) $('#set-applicator-class').value = cls;
+    }
+  }
+
+  function renderKeepBook() {
+    const el = $('#dash-keep-book');
+    if (!el) return;
+    const pending = typeof FarmStore !== 'undefined' && FarmStore.keepBookPending
+      ? FarmStore.keepBookPending(data)
+      : false;
+    el.hidden = !pending;
+  }
+
+  function initKeepBook() {
+    if ($('#keep-book-download')) {
+      $('#keep-book-download').addEventListener('click', () => downloadBackup());
+    }
+    if ($('#keep-book-restore-card')) {
+      $('#keep-book-restore-card').addEventListener('click', printRestoreCard);
+    }
+    if ($('#keep-book-defer')) {
+      $('#keep-book-defer').addEventListener('click', () => {
+        data.meta.keepBookDeferred = true;
+        save();
+        renderKeepBook();
+        queueHomeMessages();
+        toast('Log this spray, then come back to Home for the backup.');
+      });
+    }
+  }
+
   function initFirstRun() {
+    consumeStartHandoff();
     const form = $('#first-run-farm');
     if (!form) return;
     fillStateSelect($('#first-run-state'), data.settings.state);
@@ -3682,6 +3730,7 @@
       renderFirstRun();
       return;
     }
+    renderKeepBook();
     renderBackupBanner();
     renderGatherHint();
     renderSendNagBanner();
@@ -4498,6 +4547,11 @@
       origin: origin
     });
     window.print();
+    data.meta.restoreCardPrintedAt = new Date().toISOString();
+    save();
+    renderKeepBook();
+    renderBackupBanner();
+    queueHomeMessages();
   }
 
   function markSentAt() {
@@ -4515,7 +4569,9 @@
   function markBackedUp() {
     data.meta.lastBackupAt = new Date().toISOString();
     save();
+    renderKeepBook();
     renderBackupBanner();
+    queueHomeMessages();
   }
 
   async function buildBackupObject() {
@@ -5039,7 +5095,7 @@
     const m = data.meta;
     if (!data.applications.length) return false;
     if (m.backupSnoozeUntil && Date.now() < m.backupSnoozeUntil) return false;
-    if (!m.lastBackupAt) return data.applications.length >= 3;
+    if (!m.lastBackupAt) return data.applications.length >= 1;
     return data.applications.some(a => (a.createdAt || '') > m.lastBackupAt) &&
       (Date.now() - new Date(m.lastBackupAt).getTime()) > 14 * 86400000;
   }
@@ -5117,7 +5173,7 @@
   }
 
   function queueHomeMessages() {
-    const order = ['backup-banner', 'send-nag-banner', 'gather-hint', 'install-banner'];
+    const order = ['dash-keep-book', 'backup-banner', 'send-nag-banner', 'gather-hint', 'install-banner'];
     let shown = false;
     order.forEach((id) => {
       const el = $('#' + id);
@@ -7322,7 +7378,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.25';
+  const APP_VERSION = 'v2.9.26';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {
@@ -7427,6 +7483,7 @@
     initOffline();
     initLicense();
     initFirstRun();
+    initKeepBook();
     initSprayForecast();
     initReminders();
     initCabGlare();

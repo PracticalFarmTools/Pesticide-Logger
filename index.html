@@ -137,6 +137,15 @@
     </div>
 
     <div id="dash-working">
+    <div id="dash-keep-book" class="card keep-book-card" hidden>
+      <h3 class="card-title">Keep this book</h3>
+      <p>There is no cloud copy. Download a backup and print the restore card before you rely on this phone. Tape the card in the shop. iPhone: Share → Add to Home Screen. Android: Install when the browser offers it.</p>
+      <div class="form-actions">
+        <button type="button" class="btn btn-primary" id="keep-book-download">Download backup</button>
+        <button type="button" class="btn btn-secondary" id="keep-book-restore-card">Print restore card</button>
+        <button type="button" class="text-btn" id="keep-book-defer">I’ll log first</button>
+      </div>
+    </div>
     <div id="backup-banner" class="setup-banner backup-banner" hidden>
       <div>
         <strong>Back up your records.</strong>
@@ -279,7 +288,7 @@
     <div id="log-new-pane">
     <div class="card">
       <h3 class="card-title" id="app-form-title">Log an application</h3>
-      <p class="card-hint" id="app-form-hint">This spray log reshapes for your selected state and applicator class. Completion means required fields are filled — not a legal determination.</p>
+      <p class="card-hint" id="app-form-hint">This spray log reshapes for your selected state and applicator class. Completion means required fields are filled — not a legal determination. Extra boxes stay under More for the record.</p>
       <div class="cab-toolbar">
         <button type="button" class="btn btn-primary btn-lg" id="app-spray-now">Spray now</button>
         <button type="button" class="btn btn-secondary btn-lg" id="app-duplicate-last">Duplicate last spray</button>
@@ -297,10 +306,11 @@
         <button type="button" class="log-section-nav-item" data-jump-section="where">Where</button>
         <button type="button" class="log-section-nav-item" data-jump-section="products">Products</button>
         <button type="button" class="log-section-nav-item" data-jump-section="when">When</button>
+        <button type="button" class="log-section-nav-item" data-jump-section="applicator">Applicator</button>
         <button type="button" class="log-section-nav-item" data-jump-section="volume">Volume</button>
         <button type="button" class="log-section-nav-item" data-jump-section="conditions">Conditions</button>
         <button type="button" class="log-section-nav-item" data-jump-section="equipment">Equipment</button>
-        <button type="button" class="log-section-nav-item" data-jump-section="who">Who</button>
+        <button type="button" class="log-section-nav-item" data-jump-section="who">Customer / business</button>
         <button type="button" class="log-section-nav-item" data-jump-section="notes">Notes</button>
         <button type="button" class="log-more-record" id="log-more-record" hidden>More for the record</button>
       </nav>
@@ -503,8 +513,8 @@
           </div>
         </fieldset>
 
-        <fieldset data-log-section="who">
-          <legend>Who</legend>
+        <fieldset data-log-section="applicator">
+          <legend>Applicator</legend>
           <div class="form-row form-row-3">
             <label data-log-field="applicator_name">Applicator name <span class="req-star">*</span> <span id="req-applicator_name" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-applicator" required list="crew-applicator-list">
@@ -524,6 +534,12 @@
             <label data-log-field="noncertified_applicator_name">Noncertified / trainee name <span id="req-noncertified_applicator_name" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-noncertified" placeholder="Required when trainee participated">
             </label>
+          </div>
+        </fieldset>
+
+        <fieldset data-log-section="who">
+          <legend>Customer / business</legend>
+          <div class="form-row">
             <label data-log-field="owner_operator_name">Owner / operator name <span id="req-owner_operator_name" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-owner" placeholder="Defaults to farm name">
             </label>
@@ -1257,6 +1273,7 @@
 
 <dialog id="import-dialog" class="app-dialog import-dialog-box">
       <h3>Match your spreadsheet columns</h3>
+      <p class="import-honesty" id="import-honesty">Imported rows are drafts. We never invent REI, PHI, or rates, and we never mark a row complete. Empty boxes after import are the point — your state checker lists what each spray still needs.</p>
       <p class="card-hint" id="import-mapped-columns" hidden></p>
       <p class="card-hint" id="import-summary"></p>
   <div id="import-preview" class="table-wrap"></div>

@@ -145,6 +145,25 @@ check('first-run stays until farm, field, and product exist', () => {
   assert.strictEqual(FarmStore.stillFirstRun(farm), false, 'a log skips first-run');
 });
 
+check('keep-book waits until setup, yields to I’ll log first, then returns after a spray', () => {
+  const farm = FarmStore.defaultData();
+  assert.strictEqual(FarmStore.keepBookPending(farm), false);
+  farm.settings.farmName = 'Oak Hill';
+  farm.settings.state = 'IA';
+  farm.fields = [{ id: 'f' }];
+  farm.products = [{ id: 'p' }];
+  assert.strictEqual(FarmStore.keepBookPending(farm), true, 'setup done, no copy yet');
+  farm.meta.keepBookDeferred = true;
+  assert.strictEqual(FarmStore.keepBookPending(farm), false, 'defer until a spray exists');
+  farm.applications = [{ id: 'a' }];
+  assert.strictEqual(FarmStore.keepBookPending(farm), true, 'first spray brings it back');
+  farm.meta.lastBackupAt = '2026-08-18T12:00:00Z';
+  assert.strictEqual(FarmStore.keepBookPending(farm), false, 'download clears it');
+  farm.meta.lastBackupAt = '';
+  farm.meta.restoreCardPrintedAt = '2026-08-18T12:05:00Z';
+  assert.strictEqual(FarmStore.keepBookPending(farm), false, 'restore card also counts as keeping the book');
+});
+
 check('first-run steps mark farm/field/product independently', () => {
   const farm = FarmStore.defaultData();
   let steps = FarmStore.firstRunSteps(farm);

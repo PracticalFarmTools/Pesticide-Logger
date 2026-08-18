@@ -389,6 +389,21 @@ main {
 
 .backup-banner { background: var(--accent-sage-dark); }
 .banner-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.keep-book-card {
+  border-color: var(--primary-green);
+  box-shadow: var(--shadow-md);
+  background: linear-gradient(180deg, #f3f8f4 0%, var(--bg-card) 42%);
+}
+.keep-book-card p { color: var(--text-muted); margin-bottom: 1rem; max-width: 40rem; }
+.import-honesty {
+  background: var(--warn-bg);
+  border: 1px solid rgba(138, 98, 7, 0.28);
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+  color: var(--text-dark);
+  font-size: 0.9rem;
+  margin: 0 0 1rem;
+}
 .backup-banner .btn-secondary { color: #e8f0e9; border-color: rgba(255, 255, 255, 0.35); }
 .gather-hint-card { margin-bottom: 1.25rem; }
 #log-filter-incomplete.active {

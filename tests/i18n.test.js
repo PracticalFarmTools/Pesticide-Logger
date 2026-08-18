@@ -93,6 +93,16 @@ check('curly-apostrophe toasts used by app.js are translated', () => {
   assert.notStrictEqual(i18n.t('pt-BR', couldnt), couldnt);
 });
 
+check('keep-book ritual and CSV honesty are translated', () => {
+  assert.strictEqual(i18n.t('es', 'Keep this book'), 'Conserve este libro');
+  assert.notStrictEqual(i18n.t('fr', 'I’ll log first'), 'I’ll log first');
+  assert.notStrictEqual(i18n.t('pt-BR', 'Customer / business'), 'Customer / business');
+  assert.notStrictEqual(
+    i18n.t('es', 'Imported rows are drafts. We never invent REI, PHI, or rates, and we never mark a row complete. Empty boxes after import are the point — your state checker lists what each spray still needs.'),
+    'Imported rows are drafts. We never invent REI, PHI, or rates, and we never mark a row complete. Empty boxes after import are the point — your state checker lists what each spray still needs.'
+  );
+});
+
 check('first-run and reminder titles are translated', () => {
   assert.strictEqual(i18n.t('fr', 'Get set up to log'), 'Préparez-vous à enregistrer');
   assert.strictEqual(i18n.t('pt-BR', 'Get set up to log'), 'Prepare-se para registrar');

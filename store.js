@@ -289,6 +289,22 @@
     return firstRunSteps(farm).some((s) => !s.done);
   }
 
+  // After farm + field + product (or the first spray), Home asks them to
+  // keep a copy. Printing the restore card or downloading a backup clears
+  // it. "I'll log first" only hides it until a spray exists.
+  function keepBookPending(farm) {
+    const m = (farm && farm.meta) || {};
+    if (m.lastBackupAt || m.restoreCardPrintedAt) return false;
+    const apps = (farm && farm.applications) || [];
+    const fields = (farm && farm.fields) || [];
+    const products = (farm && farm.products) || [];
+    const settings = (farm && farm.settings) || {};
+    const setup = !!(settings.farmName && settings.state && fields.length && products.length);
+    if (!setup && !apps.length) return false;
+    if (m.keepBookDeferred && !apps.length) return false;
+    return true;
+  }
+
   function firstRunSteps(farm) {
     const settings = (farm && farm.settings) || {};
     const fields = (farm && farm.fields) || [];
@@ -361,6 +377,7 @@
     isEmptyHome,
     stillFirstRun,
     firstRunSteps,
+    keepBookPending,
     hydrateFromCacheRaw
   };
 

@@ -25,7 +25,7 @@
       </div>
     </div>
     <div class="header-right">
-      <a class="btn btn-primary btn-sm" href="index.html">Open the logger</a>
+      <a class="btn btn-primary btn-sm" id="start-open-header" href="index.html">Open the logger</a>
     </div>
   </div>
 </header>
@@ -41,7 +41,7 @@
       <li>Add a field, add one jug, log this spray.</li>
     </ol>
     <div class="form-actions public-cta">
-      <a class="btn btn-primary btn-xl" href="index.html">Try the logger — 30 days, no card</a>
+      <a class="btn btn-primary btn-xl" id="start-try" href="index.html">Try the logger — 30 days, no card</a>
       <a class="btn btn-secondary btn-xl" href="inspector.html">For inspectors</a>
     </div>
     <p class="card-hint">Nothing leaves this device. After the trial, a license is for logging new sprays — the book stays yours.</p>
@@ -61,6 +61,9 @@
         </select>
       </label>
     </div>
+    <p class="form-actions">
+      <button type="button" class="btn btn-secondary" id="start-copy-link" hidden>Copy link to this state’s page</button>
+    </p>
     <div id="start-state-out" class="start-state-out"></div>
   </section>
 

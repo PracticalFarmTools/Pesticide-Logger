@@ -242,14 +242,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.25 + deadline/license wiring', () => {
+check('source files advertise v2.9.26 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.25'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.25'));
+  assert.ok(app.includes('v2.9.26'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.26'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-14'"));
-  assert.ok(!html.includes('v2.9.25'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.26'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -372,6 +372,9 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(html.includes('id="log-new-pane"') && html.includes('id="log-history-pane"'));
   assert.ok(html.includes('Show extra boxes'));
   assert.ok(!html.includes('Show recommended extras'));
+  assert.ok(html.includes('data-log-section="applicator"'), 'cab Who split: applicator is core');
+  assert.ok(html.includes('data-jump-section="who">Customer / business</button>'));
+  assert.ok(html.includes('Extra boxes stay under More for the record.'));
   const logTab = html.split('id="tab-log"')[1].split('id="tab-calculator"')[0];
   const scanAt = logTab.indexOf('id="app-scan-jug"');
   const productsAt = logTab.indexOf('data-log-section="products"');
@@ -414,8 +417,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.25'"));
-  assert.ok(!html.includes('v2.9.25'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.26'"));
+  assert.ok(!html.includes('v2.9.26'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -852,7 +855,7 @@ check('frontier UI: thumb tabs, inspector handoff, one home message, cab glare',
     'app update check is not a header chip');
   assert.ok(html.includes('id="set-cab-glare"') && app.includes('CAB_GLARE_KEY'));
   assert.ok(app.includes('function queueHomeMessages'));
-  assert.ok(app.includes("['backup-banner', 'send-nag-banner', 'gather-hint', 'install-banner']"));
+  assert.ok(app.includes("['dash-keep-book', 'backup-banner', 'send-nag-banner', 'gather-hint', 'install-banner']"));
   assert.ok(html.includes('id="log-more-record"') && html.includes('More for the record'));
   assert.ok(css.includes('body.cab-glare'));
   assert.ok(css.includes('body.inspector-view'));
@@ -882,7 +885,11 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(start.includes('grower’s book') || start.includes("grower's book"));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(start), 'public page does not name other products');
   assert.ok(!start.includes('Names on those buttons'));
-  assert.ok(!start.includes('v2.9.25'), 'public page keeps version out of copy');
+  assert.ok(!start.includes('v2.9.26'), 'public page keeps version out of copy');
+  assert.ok(start.includes('id="start-copy-link"'));
+  assert.ok(html.includes('id="dash-keep-book"') && html.includes('Keep this book'));
+  assert.ok(html.includes('id="import-honesty"') && html.includes('never invent REI, PHI, or rates'));
+  assert.ok(html.includes('id="dash-keep-book"') && html.indexOf('id="dash-keep-book"') > html.indexOf('id="dash-working"'));
   assert.ok(inspector.includes('opens without an account') || inspector.includes('without an account'));
   assert.ok(inspector.includes('The label is the law'));
   assert.ok(extension.includes('State-shaped log') && extension.includes('Label is the law'));

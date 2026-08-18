@@ -27,6 +27,13 @@ check('query and hash both pick a state code', () => {
   assert.strictEqual(StartPage.codeFromLocation('', ''), '');
 });
 
+check('public page hands the logger a state and class', () => {
+  assert.strictEqual(StartPage.classFromLocation('?state=IA&class=commercial'), 'commercial');
+  assert.strictEqual(StartPage.classFromLocation('?state=IA'), '');
+  assert.strictEqual(StartPage.loggerHandoffHref('IA', 'private'), 'index.html?state=IA&class=private');
+  assert.strictEqual(StartPage.sharePath('ME', 'commercial'), '?state=ME&class=commercial');
+});
+
 check('Alabama private stays quiet; does not invent a field list', () => {
   const s = StartPage.summarizeLaw(STATE_LAWS.AL, 'private', 'AL');
   assert.strictEqual(s.quiet, true);

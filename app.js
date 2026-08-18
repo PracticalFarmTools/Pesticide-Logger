@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.23 — Practical Farm Tools
+/* Pesticide Logger v2.9.24 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -2068,8 +2068,18 @@
       btn.classList.toggle('incomplete', incomplete.has(btn.dataset.jumpSection)));
   }
 
+  function todayISO() {
+    if (typeof FarmScale !== 'undefined' && FarmScale.localDateISO) {
+      return FarmScale.localDateISO(new Date());
+    }
+    const d = new Date();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return d.getFullYear() + '-' + m + '-' + day;
+  }
+
   function initAppForm() {
-    $('#app-date').value = new Date().toISOString().slice(0, 10);
+    $('#app-date').value = todayISO();
     initLogSectionNav();
     if ($('#log-mode-new')) $('#log-mode-new').addEventListener('click', () => setLogMode('new'));
     if ($('#log-mode-history')) $('#log-mode-history').addEventListener('click', () => setLogMode('history'));
@@ -2158,7 +2168,7 @@
     if ($('#app-customer-copy')) {
       $('#app-customer-copy').addEventListener('change', () => {
         if ($('#app-customer-copy').checked && $('#app-customer-copy-date') && !$('#app-customer-copy-date').value) {
-          $('#app-customer-copy-date').value = new Date().toISOString().slice(0, 10);
+          $('#app-customer-copy-date').value = todayISO();
         }
         updateCompliancePreview();
         renderDueBanner();
@@ -2195,6 +2205,45 @@
       sel.appendChild(o);
     });
     if (keepValue && [...sel.options].some((o) => o.value === keepValue)) sel.value = keepValue;
+  }
+
+  function parseDatasetJson(raw) {
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch (e) { return null; }
+  }
+
+  function keptFieldSnapshot(sel) {
+    return parseDatasetJson(sel && sel.selectedOptions[0] && sel.selectedOptions[0].dataset.fieldSnapshot);
+  }
+
+  function ensureKeptProductOption(sel, pre) {
+    if (!sel || !pre || !pre.productId || getProduct(pre.productId)) return;
+    let opt = [...sel.options].find((o) => o.value === pre.productId);
+    if (!opt) {
+      opt = document.createElement('option');
+      opt.value = pre.productId;
+      sel.appendChild(opt);
+    }
+    opt.textContent = (pre.productName || 'Product') + ' (kept from this spray)';
+    opt.dataset.mixSnapshot = JSON.stringify(pre);
+    sel.value = pre.productId;
+  }
+
+  function ensureKeptFieldOption(sel, rec) {
+    if (!sel || !rec || !rec.fieldId || getField(rec.fieldId)) return;
+    let opt = [...sel.options].find((o) => o.value === rec.fieldId);
+    if (!opt) {
+      opt = document.createElement('option');
+      opt.value = rec.fieldId;
+      sel.appendChild(opt);
+    }
+    opt.textContent = (rec.fieldName || 'Field') + ' (kept from this spray)';
+    opt.dataset.fieldSnapshot = JSON.stringify({
+      id: rec.fieldId,
+      name: rec.fieldName || '',
+      location: rec.fieldLocation || ''
+    });
+    sel.value = rec.fieldId;
   }
 
   function fieldPickerOptions(includeAddNew, emptyLabel) {
@@ -2247,7 +2296,9 @@
     }
     $$('#app-products .apr-product').forEach((sel) => {
       const v = sel.value;
+      const kept = parseDatasetJson(sel.selectedOptions[0] && sel.selectedOptions[0].dataset.mixSnapshot);
       fillSelect(sel, mixOpts, getProduct(v) ? v : '', $('#app-product-filter'));
+      if (kept) ensureKeptProductOption(sel, kept);
     });
     numberMixRows();
   }
@@ -2258,8 +2309,10 @@
     const appSel = $('#app-field');
     const reportSel = $('#report-field');
     if (appSel) {
+      const kept = keptFieldSnapshot(appSel);
       setSelectFilterVisible($('#app-field-filter'), logOpts.length);
-      fillSelect(appSel, logOpts, appSel.value, $('#app-field-filter'));
+      fillSelect(appSel, logOpts, getField(appSel.value) ? appSel.value : '', $('#app-field-filter'));
+      if (kept) ensureKeptFieldOption(appSel, { fieldId: kept.id, fieldName: kept.name, fieldLocation: kept.location });
     }
     if (reportSel) {
       setSelectFilterVisible($('#report-field-filter'), reportOpts.length);
@@ -2341,6 +2394,7 @@
 
     if (pre) {
       row.querySelector('.apr-product').value = pre.productId || '';
+      ensureKeptProductOption(row.querySelector('.apr-product'), pre);
       row.querySelector('.apr-lot').value = pre.lotNumber || '';
       row.querySelector('.apr-rate').value = pre.rate ?? '';
       row.querySelector('.apr-rate-unit').value = pre.rateUnit || 'fl oz';
@@ -2748,9 +2802,30 @@
   function collectMixRows() {
     const out = [];
     $$('#app-products .app-product-row').forEach(row => {
-      const p = getProduct(row.querySelector('.apr-product').value);
-      if (!p) return;
-      out.push(MixCalc.snapshotMixProduct(p, {
+      const sel = row.querySelector('.apr-product');
+      const p = getProduct(sel && sel.value);
+      const kept = !p && sel && sel.selectedOptions[0] && sel.selectedOptions[0].dataset.mixSnapshot
+        ? (() => { try { return JSON.parse(sel.selectedOptions[0].dataset.mixSnapshot); } catch (e) { return null; } })()
+        : null;
+      const lib = p || (kept ? {
+        id: kept.productId || sel.value,
+        name: kept.productName || '',
+        epaRegNo: kept.epaRegNo || '',
+        activeIngredient: kept.activeIngredient || '',
+        rup: !!kept.rup,
+        type: kept.type || '',
+        signalWord: kept.signalWord || '',
+        omri: !!kept.omri,
+        epaStatus: kept.epaStatus || null,
+        epaCheckedAt: kept.epaCheckedAt || null,
+        epaLabelUrl: kept.epaLabelUrl || null,
+        epaCompany: kept.epaCompany || '',
+        stateRegNo: kept.stateRegNo || '',
+        reiHours: kept.reiHours,
+        phiDays: kept.phiDays
+      } : null);
+      if (!lib) return;
+      out.push(MixCalc.snapshotMixProduct(lib, {
         reiHours: row.querySelector('.apr-rei').value,
         phiDays: row.querySelector('.apr-phi').value,
         omri: row.querySelector('.apr-omri') && row.querySelector('.apr-omri').checked,
@@ -2770,10 +2845,11 @@
 
   function collectAppFromForm(allowIncomplete) {
     const f = getField($('#app-field').value);
+    const fieldSnap = !f ? keptFieldSnapshot($('#app-field')) : null;
     const mix = collectMixRows();
     const s = data.settings;
     const id = $('#app-id').value || uid();
-    return {
+    const app = {
       id,
       date: $('#app-date').value,
       startTime: $('#app-start').value,
@@ -2782,9 +2858,9 @@
       reiHours: MixCalc.maxOrNull(mix.map(p => p.reiHours)),
       phiDays: MixCalc.maxOrNull(mix.map(p => p.phiDays)),
       rup: mix.some(p => p.rup),
-      fieldId: f ? f.id : '',
-      fieldName: f ? f.name : '',
-      fieldLocation: f ? f.location : '',
+      fieldId: f ? f.id : (fieldSnap ? fieldSnap.id : ''),
+      fieldName: f ? f.name : (fieldSnap ? fieldSnap.name : ''),
+      fieldLocation: f ? f.location : (fieldSnap ? fieldSnap.location : ''),
       locationNote: ($('#app-location-note') && $('#app-location-note').value.trim()) || '',
       county: ($('#app-county') && $('#app-county').value.trim()) || s.county || '',
       siteId: ($('#app-site-id') && $('#app-site-id').value.trim()) || (f && f.siteId) || '',
@@ -2879,9 +2955,13 @@
 
   function onAppSubmit(e, asDraft) {
     if (e && e.preventDefault) e.preventDefault();
-    const mix = collectMixRows();
     const editingId = $('#app-id').value;
     const prev = editingId ? data.applications.find(a => a.id === editingId) : null;
+    if (!prev && !canLogNewSpray()) {
+      toast('A license is required to log a new spray. You can still review, print, finish drafts, and download a backup.');
+      return;
+    }
+    const mix = collectMixRows();
 
     if (!asDraft) {
       if (!mix.length) { toast('Pick at least one product (add products in the Products tab first)'); return; }
@@ -2891,7 +2971,7 @@
         return;
       }
     } else if (!$('#app-date').value) {
-      $('#app-date').value = new Date().toISOString().slice(0, 10);
+      $('#app-date').value = todayISO();
     }
 
     const app = collectAppFromForm(!!asDraft);
@@ -2962,7 +3042,7 @@
     const s = data.settings;
     $('#app-form').reset();
     $('#app-id').value = '';
-    $('#app-date').value = new Date().toISOString().slice(0, 10);
+    $('#app-date').value = todayISO();
     $('#app-applicator').value = s.applicatorName;
     $('#app-cert').value = s.certNumber;
     $('#app-county').value = s.county || '';
@@ -2999,6 +3079,7 @@
     syncTempC();
     updateLastOnFieldHint();
     updateDurationHint();
+    syncNewLogChrome();
   }
 
   function editApp(id) {
@@ -3009,6 +3090,7 @@
     (a.products && a.products.length ? a.products : [null]).forEach(pr => addAppProductRow(pr || undefined));
     updateMixInfo();
     $('#app-field').value = a.fieldId;
+    ensureKeptFieldOption($('#app-field'), a);
     $('#app-county').value = a.county || data.settings.county || '';
     $('#app-site-id').value = a.siteId || '';
     $('#app-permit').value = a.permitNumber || '';
@@ -3074,6 +3156,7 @@
     restoreDurationPref();
     updateDurationHint();
     showTab('log');
+    syncNewLogChrome();
     $('#app-form').scrollIntoView({ behavior: 'smooth' });
   }
 
@@ -3267,10 +3350,14 @@
   }
 
   function sprayNow() {
+    if (!canLogNewSpray()) {
+      toast('A license is required to log a new spray. You can still review, print, finish drafts, and download a backup.');
+      return;
+    }
     setLogMode('new');
     resetAppForm();
     const d = new Date();
-    $('#app-date').value = d.toISOString().slice(0, 10);
+    $('#app-date').value = todayISO();
     const hh = String(d.getHours()).padStart(2, '0');
     const mm = String(d.getMinutes()).padStart(2, '0');
     $('#app-start').value = `${hh}:${mm}`;
@@ -3281,12 +3368,16 @@
   }
 
   function duplicateLastSpray() {
+    if (!canLogNewSpray()) {
+      toast('A license is required to log a new spray. You can still review, print, finish drafts, and download a backup.');
+      return;
+    }
     const last = sortedApps()[0];
     if (!last) { toast('No previous spray to duplicate'); return; }
     editApp(last.id);
     $('#app-id').value = '';
     const d = new Date();
-    $('#app-date').value = d.toISOString().slice(0, 10);
+    $('#app-date').value = todayISO();
     const hh = String(d.getHours()).padStart(2, '0');
     const mm = String(d.getMinutes()).padStart(2, '0');
     $('#app-start').value = `${hh}:${mm}`;
@@ -4807,6 +4898,10 @@
         const file = input.files && input.files[0];
         input.value = '';
         if (!file) return;
+        if (!canLogNewSpray()) {
+          toast('A license is required to log a new spray. You can still review, print, finish drafts, and download a backup.');
+          return;
+        }
         const reader = new FileReader();
         reader.onload = () => {
           const rows = CsvImport.parseCsv(String(reader.result || ''));
@@ -6883,8 +6978,11 @@
 
   function isPro() { return licenseState.pro; }
 
-  // Paid-only: there is no per-feature Pro gate. Whole-app access is decided
-  // once, here, from licenseState — see applyLicenseGate().
+  function canLogNewSpray() { return isPro(); }
+
+  // Paid-only: there is no per-feature Pro gate. After the trial, the shell
+  // stays up so the book, print, REI, and draft edits still work. Only new
+  // spray logging is blocked — see applyLicenseGate() / canLogNewSpray().
   async function refreshLicenseState() {
     let keyValid = false;
     let holder = '';
@@ -6941,17 +7039,33 @@
     }
   }
 
-  // Whole-app gate: shows either the app shell or the lock screen, decided
-  // once refreshLicenseState() has resolved (so it never flashes the wrong
-  // one). Re-run after every license-state change (activation, trial tick).
+  // After trial: keep the logger shell. A license is for new sprays, not for
+  // the book already on this device. The lock screen stays in the DOM so a
+  // key can still be pasted if the banner is missed; it no longer replaces
+  // review, print, or REI.
   function applyLicenseGate() {
     const checking = $('#license-checking');
     const shell = $('#app-shell');
     const lock = $('#license-lock-screen');
+    const banner = $('#license-lapse-banner');
     if (checking) checking.hidden = true;
-    if (shell) shell.hidden = !isPro();
-    if (lock) lock.hidden = isPro();
-    if (!isPro()) renderLockRecords();
+    if (shell) shell.hidden = false;
+    if (lock) lock.hidden = true;
+    if (banner) banner.hidden = isPro();
+    const sprayNowBtn = $('#app-spray-now');
+    const dupBtn = $('#app-duplicate-last');
+    if (sprayNowBtn) sprayNowBtn.disabled = !canLogNewSpray();
+    if (dupBtn) dupBtn.disabled = !canLogNewSpray();
+    syncNewLogChrome();
+  }
+
+  function syncNewLogChrome() {
+    const saveBtn = $('#app-save-btn');
+    const draftBtn = $('#app-save-draft-btn');
+    const editing = !!( $('#app-id') && $('#app-id').value );
+    const allow = canLogNewSpray() || editing;
+    if (saveBtn) saveBtn.disabled = !allow;
+    if (draftBtn) draftBtn.disabled = !allow;
   }
 
   function renderLockRecords() {
@@ -7148,7 +7262,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.23';
+  const APP_VERSION = 'v2.9.24';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {

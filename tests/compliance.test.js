@@ -242,14 +242,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.23 + deadline/license wiring', () => {
+check('source files advertise v2.9.24 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.23'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.23'));
+  assert.ok(app.includes('v2.9.24'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.24'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-14'"));
-  assert.ok(!html.includes('v2.9.23'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.24'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -414,8 +414,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.23'"));
-  assert.ok(!html.includes('v2.9.23'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.24'"));
+  assert.ok(!html.includes('v2.9.24'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -712,12 +712,16 @@ check('paid-only: whole app is gated by license/trial, no per-feature Pro gate',
   assert.ok(!app.includes('function requirePro'), 'requirePro() removed');
   assert.ok(!app.includes('requirePro('), 'no requirePro() call sites remain');
   assert.ok(!html.includes('upgrade-dialog'), 'per-feature upgrade dialog removed');
-  // Whole-app gate: a single check hides the app shell and shows a lock
-  // screen when the trial has ended and no valid key is stored.
+  // After trial a single check keeps the app shell up and blocks only new
+  // spray logging. The lock-screen markup stays for key paste / tests.
   assert.ok(app.includes('function applyLicenseGate'), 'applyLicenseGate exists');
   assert.ok(app.includes('function isPro'), 'isPro exists');
+  assert.ok(app.includes('function canLogNewSpray'), 'new sprays are gated separately from review');
   assert.ok(html.includes('id="app-shell"'), 'app-shell wrapper exists');
   assert.ok(html.includes('id="license-lock-screen"'), 'lock screen exists');
+  assert.ok(html.includes('id="license-lapse-banner"'), 'lapse banner keeps review in the shell');
+  assert.ok(app.includes('if (shell) shell.hidden = false'), 'expired trial does not hide the logger');
+  assert.ok(!/shell\.hidden = !isPro\(\)/.test(app), 'gate no longer hides the whole shell');
   assert.ok(html.includes('id="lock-key-input"') && html.includes('id="lock-activate"'),
     'lock screen can activate a key without navigating elsewhere');
   assert.ok(html.includes('id="lock-records"') && html.includes('id="lock-download-backup"'),
@@ -760,6 +764,9 @@ check('gather, inspector packet, crew, and kiosk stay optional and editable', ()
   assert.ok(html.includes('snapshot'), 'inspector packet is a snapshot');
   assert.ok(app.includes('FarmFile.mergeInto'), 'gather uses farm-file merge');
   assert.ok(app.includes('FarmFile.stampOnSave'), 'device stamp on save');
+  assert.ok(/function collectAppFromForm[\s\S]*FarmFile\.stampOnSave[\s\S]*return app/.test(app),
+    'stampOnSave runs before collectAppFromForm returns');
+  assert.ok(app.includes('function todayISO'), 'spray dates use the local calendar day');
   assert.ok(app.includes('Keep both'), 'join defaults to keep both');
   assert.ok(farmFile.includes('the live log stays editable') || farmFile.includes('live log can still be edited') || farmFile.includes('still be edited'));
   assert.ok(!app.includes('Object.freeze'), 'records are not frozen');
@@ -860,7 +867,7 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(start.includes('grower’s book') || start.includes("grower's book"));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(start), 'public page does not name other products');
   assert.ok(!start.includes('Names on those buttons'));
-  assert.ok(!start.includes('v2.9.23'), 'public page keeps version out of copy');
+  assert.ok(!start.includes('v2.9.24'), 'public page keeps version out of copy');
   assert.ok(inspector.includes('opens without an account') || inspector.includes('without an account'));
   assert.ok(inspector.includes('The label is the law'));
   assert.ok(extension.includes('State-shaped log') && extension.includes('Label is the law'));
@@ -875,6 +882,8 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(!app.includes('importKitHint'));
   assert.ok(sw.includes('./start.html') && sw.includes('./inspector.html') && sw.includes('./extension.html'));
   assert.ok(vercel.includes('"/start.html"'));
+  assert.ok(vercel.includes('"source": "/"') && vercel.includes('"redirects"'),
+    'live / redirects to the public page so index.html does not win');
   assert.strictEqual(i18n.ES['Bring last season in'], 'Traer la temporada pasada');
   assert.strictEqual(i18n.FR['Print restore card'], 'Imprimer la fiche de restauration');
   assert.strictEqual(i18n.ES['Choose a CSV you already have'], 'Elija un CSV que ya tenga');

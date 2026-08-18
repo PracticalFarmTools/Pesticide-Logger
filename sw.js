@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.23 — offline-first service worker.
+/* Pesticide Logger v2.9.24 — offline-first service worker.
  * Cache-first for the app shell; records live in IndexedDB (localStorage
  * is a boot cache) so the app is fully functional with zero connectivity
  * after first load.
@@ -7,11 +7,10 @@
  * A one-state legal edit must not require a new app version — only a new
  * edition string so growers Reload the updated matrix.
  */
-const APP_CACHE = 'pesticide-logger-v2.9.23';
+const APP_CACHE = 'pesticide-logger-v2.9.24';
 const LAWS_EDITION = '2026-08-14';
 const CACHE_NAME = APP_CACHE + '-laws-' + LAWS_EDITION;
 const APP_SHELL = [
-  './',
   './index.html',
   './start.html',
   './start.js',

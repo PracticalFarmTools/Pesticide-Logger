@@ -292,6 +292,17 @@
   // A license or trial ending must never delete or rewrite spray logs.
   // The lock screen may hide logging chrome; records stay on the device
   // and stay reviewable / exportable.
+
+  // Legal application date is the local calendar day, never the UTC day.
+  function localDateISO(d) {
+    const x = d instanceof Date ? d : new Date(d == null ? Date.now() : d);
+    if (isNaN(x.getTime())) return '';
+    const y = x.getFullYear();
+    const m = String(x.getMonth() + 1).padStart(2, '0');
+    const day = String(x.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+
   function licenseEndPreservesRecords(beforeFarm, afterFarm) {
     const a = (beforeFarm && beforeFarm.applications) || [];
     const b = (afterFarm && afterFarm.applications) || [];
@@ -339,7 +350,8 @@
     jsonBytes,
     shouldQuietHome,
     shouldHideLibraryStat,
-    licenseEndPreservesRecords
+    licenseEndPreservesRecords,
+    localDateISO
   };
 
   if (typeof module !== 'undefined' && module.exports) {

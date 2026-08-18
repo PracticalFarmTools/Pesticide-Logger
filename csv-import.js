@@ -15,7 +15,8 @@
     { key: 'fieldName', label: 'Field / site name', guess: /field|block|site|location|paddock/i },
     { key: 'crop', label: 'Crop / commodity', guess: /crop|commodity|variety/i },
     { key: 'area', label: 'Area treated (acres)', guess: /acre|area|treated/i },
-    { key: 'rate', label: 'Rate', guess: /rate|gpa|oz\/ac/i },
+    { key: 'rate', label: 'Rate', guess: /^(?!.*unit).*rate|gpa|oz\/ac/i },
+    { key: 'rateUnit', label: 'Rate unit', guess: /rate\s*unit|unit$/i },
     { key: 'total', label: 'Total applied', guess: /total|amount|qty|quantity/i },
     { key: 'applicatorName', label: 'Applicator', guess: /applicator|operator|sprayer|who\s*applied/i },
     { key: 'certNumber', label: 'Certification #', guess: /cert|license/i },
@@ -110,10 +111,34 @@
     if (m) {
       let y = Number(m[3]);
       if (y < 100) y += 2000;
-      return `${y}-${String(m[1]).padStart(2, '0')}-${String(m[2]).padStart(2, '0')}`;
+      const month = Number(m[1]);
+      const day = Number(m[2]);
+      if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+      return `${y}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     }
     const d = new Date(t);
     return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+  }
+
+  const RATE_UNITS = ['fl oz', 'pt', 'qt', 'gal', 'oz', 'lb', 'g', 'kg', 'mL', 'L'];
+
+  function parseRateUnit(v) {
+    const raw = String(v == null ? '' : v).trim();
+    if (!raw) return '';
+    const exact = RATE_UNITS.find((u) => u.toLowerCase() === raw.toLowerCase());
+    if (exact) return exact;
+    const t = raw.toLowerCase().replace(/per\s*(acre|ac|ha|gal).*$/i, '').trim();
+    if (/fl\s*oz|floz|fluid/.test(t)) return 'fl oz';
+    if (/\blbs?\b|pound/.test(t)) return 'lb';
+    if (/\bpt\b|pint/.test(t)) return 'pt';
+    if (/\bqt\b|quart/.test(t)) return 'qt';
+    if (/\bgals?\b|gallon|gpa/.test(t)) return 'gal';
+    if (/\bkg\b/.test(t)) return 'kg';
+    if (/\bml\b|millilit/.test(t)) return 'mL';
+    if (/^l$|\bliter/.test(t)) return 'L';
+    if (/\boz\b|ounce/.test(t)) return 'oz';
+    if (/^g$|\bgrams?\b/.test(t)) return 'g';
+    return '';
   }
 
   function parseNumber(v) {
@@ -191,7 +216,8 @@
           activeIngredient: '', rup: false, type: '', signalWord: '', omri: false,
           epaStatus: null, epaCheckedAt: null, epaLabelUrl: null, epaCompany: '', stateRegNo: '',
           lotNumber: '', reiHours: null, phiDays: null, reiOverride: null, phiOverride: null,
-          rate: parseNumber(cell(row, map, 'rate')), rateUnit: 'fl oz',
+          rate: parseNumber(cell(row, map, 'rate')),
+          rateUnit: parseRateUnit(cell(row, map, 'rateUnit')) || 'fl oz',
           total: parseNumber(cell(row, map, 'total')), totalUnit: 'fl oz'
         }],
         reiHours: null, phiDays: null, rup: false,
@@ -240,6 +266,7 @@
     THIRD_PARTY_FILE_NOTE,
     parseCsv,
     parseDate,
+    parseRateUnit,
     parseNumber,
     guessColumnIndex,
     detectKit,

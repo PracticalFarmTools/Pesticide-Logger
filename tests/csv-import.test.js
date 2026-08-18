@@ -24,6 +24,7 @@ check('ISO and US dates both become YYYY-MM-DD', () => {
   assert.strictEqual(CsvImport.parseDate('8/15/26'), '2026-08-15');
   assert.strictEqual(CsvImport.parseDate('08/15/2026'), '2026-08-15');
   assert.strictEqual(CsvImport.parseDate(''), null);
+  assert.strictEqual(CsvImport.parseDate('25/12/2024'), null, 'out-of-range month is not stored as 2024-25-12');
 });
 
 check('column guess prefers Date and Product headers', () => {
@@ -81,6 +82,24 @@ check('same product name on a later row reuses the library entry', () => {
   assert.strictEqual(result.products.length, 1);
   assert.strictEqual(result.applications.length, 2);
   assert.strictEqual(result.applications[0].products[0].productId, result.applications[1].products[0].productId);
+});
+
+check('rate unit column maps lb/ac instead of forcing fl oz', () => {
+  const header = ['Date', 'Product', 'Rate', 'Rate Unit'];
+  const rateIdx = CsvImport.guessColumnIndex(header, CsvImport.FIELDS.find((f) => f.key === 'rate'));
+  const unitIdx = CsvImport.guessColumnIndex(header, CsvImport.FIELDS.find((f) => f.key === 'rateUnit'));
+  assert.strictEqual(rateIdx, 2);
+  assert.strictEqual(unitIdx, 3);
+  assert.strictEqual(CsvImport.parseRateUnit('lb/ac'), 'lb');
+  assert.strictEqual(CsvImport.parseRateUnit('fl oz'), 'fl oz');
+  const result = CsvImport.importRows(
+    [['2025-06-14', 'Captan 80WDG', '2.5', 'lb/ac']],
+    { date: 0, productName: 1, rate: 2, rateUnit: 3 },
+    { uid: () => 'r1', evaluateCompliance: () => ({ complete: false, status: 'incomplete', missing: [] }) }
+  );
+  assert.strictEqual(result.applications[0].products[0].rate, 2.5);
+  assert.strictEqual(result.applications[0].products[0].rateUnit, 'lb');
+  assert.strictEqual(result.applications[0].products[0].reiHours, null);
 });
 
 check('without a compliance function the row still cannot look complete', () => {

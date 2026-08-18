@@ -45,6 +45,13 @@
     return '';
   }
 
+  // Same names as compliance.js COMMERCIAL_ONLY_FIELDS — start.html does not
+  // load the engine. Private growers should not see for-hire boxes here.
+  const COMMERCIAL_ONLY_FIELDS = [
+    'business_name_address', 'company_license',
+    'customer_copy_provided', 'customer_copy_date'
+  ];
+
   function summarizeLaw(law, applicatorClass, code) {
     const cls = applicatorClass || 'private';
     const duty = (law && law.privateDuty) || 'required';
@@ -52,7 +59,9 @@
     const fields = (law && law.fields) || [];
     const labels = quiet
       ? []
-      : fields.filter((f) => f && f.required).map((f) => f.label).filter(Boolean);
+      : fields.filter((f) => f && f.required &&
+        !(cls === 'private' && COMMERCIAL_ONLY_FIELDS.indexOf(f.name) >= 0))
+        .map((f) => f.label).filter(Boolean);
     const ver = (law && law.verification) || '';
     const holes = [];
     if (ver === 'uncertain') holes.push('Field list is uncertain — confirm with the agency.');
@@ -147,6 +156,7 @@
 
   const api = {
     STATE_NAMES,
+    COMMERCIAL_ONLY_FIELDS,
     codeFromLocation,
     privateDutyNote,
     summarizeLaw,

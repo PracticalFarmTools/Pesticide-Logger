@@ -252,6 +252,14 @@ check('slim history keeps application type and timestamps; drops nested history 
   assert.ok(existing.history.every((h) => h.snapshot && h.snapshot.history === undefined));
 });
 
+check('localDateISO is the local calendar day, not UTC', () => {
+  const evening = new Date(2026, 7, 18, 20, 30, 0);
+  assert.strictEqual(FS.localDateISO(evening), '2026-08-18');
+  const morning = new Date(2026, 7, 18, 0, 15, 0);
+  assert.strictEqual(FS.localDateISO(morning), '2026-08-18');
+  assert.strictEqual(FS.localDateISO('not a date'), '');
+});
+
 check('license / subscription end must not touch spray logs', () => {
   const farm = { applications: orchardApps, fields: orchardFields, products: [] };
   const locked = JSON.parse(JSON.stringify(farm));

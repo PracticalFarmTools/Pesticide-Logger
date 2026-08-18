@@ -52,5 +52,14 @@ check('all fifty names are present', () => {
   assert.strictEqual(StartPage.STATE_NAMES.IA, 'Iowa');
 });
 
+check('Iowa private does not list commercial-only boxes on the public page', () => {
+  const priv = StartPage.summarizeLaw(STATE_LAWS.IA, 'private', 'IA');
+  const comm = StartPage.summarizeLaw(STATE_LAWS.IA, 'commercial', 'IA');
+  assert.ok(!priv.requiredLabels.includes('Business / operator name & address'));
+  assert.ok(!priv.requiredLabels.includes('Company / business license #'));
+  assert.ok(comm.requiredLabels.includes('Company / business license #'));
+  assert.ok(priv.requiredLabels.includes('Location / field / site description'));
+});
+
 if (failed) process.exit(1);
 console.log('\nAll start-page checks passed.');

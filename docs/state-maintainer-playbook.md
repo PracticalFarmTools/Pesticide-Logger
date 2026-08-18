@@ -15,7 +15,7 @@ badges, packet freeze, and `laws/XX.json` isolation are already shipped.
 | **0. Stop** | No `app.js` / `compliance.js` / `index.html` / `sw.js` logic for laws. No in-app scrape, no live statute API, no GitHub Action yet. | Already done. More cab code does not make the matrix more current. |
 | **1. Citation hygiene** | One-state JSON: put `citation.url` on the **official** HTML/PDF. Cornell, `elaws.us`, `public.law`, CDN paths, and guidance pages (HI RUP, NY PRL, Purdue handout) are not the watch target. | Hashing a mirror is wasted time. Hash-stable confirmation is only honest on an official URL. |
 | **2. One hasher** | Point Changedetection (or similar) at `node tools/bundle-state-laws.js --watch-list`. Alert on body/ETag change or 404. Snapshots stay **outside** this repo. | Detection without you opening 50 tabs. |
-| **3. Holes when you want completeness** | Batches A–E done 2026-08-14. Remaining `--holes`: MS (`uncertain`/`uncertain`) plus private-duty-only AR, KS, MI, MN, SC, SD, VA. Promote only from a primary source. Freeze until that URL’s hash changes. | Unfinished research is not maintenance. Re-reading MS every quarter is how this stays expensive. |
+| **3. Holes when you want completeness** | Batches A–E done 2026-08-14. 2026-08-18 hole-close: MS Chapter 09 researched/`required`; MN, MI, VA, SC, KS `privateDuty: none` from exclusive who-clauses. Remaining `--holes`: AR and SD (`researched`/`uncertain`). Promote only from a primary source. Freeze until that URL’s hash changes. | Unfinished research is not maintenance. Re-reading AR/SD every quarter is how this stays expensive. |
 | **4. Event-driven forever** | Touch a state only on hash change, dead link, or an annual hash-stable `--stamp` for `researched` rows with official URLs. Drop the quarterly `--oldest 13` duty. | These rules rarely move. Rereading 13 statutes on a calendar is the time sink. |
 
 Do **not** auto-write `fields[]`, auto-promote `researched`, or let an AI
@@ -101,18 +101,19 @@ the same week they open. An unread firehose is worse than no hasher.
 
 ## Track 3 — holes (optional product completeness)
 
-`node tools/bundle-state-laws.js --holes` — **8 rows** after the 2026-08-14
-pass (MS verification + seven `privateDuty: uncertain` states). This is
-**research**, scheduled when you want fewer Needs review badges, not
-when the hasher is quiet.
+`node tools/bundle-state-laws.js --holes` — **2 rows** after the 2026-08-18
+hole-close (AR and SD private duty). This is **research**, scheduled when you
+want fewer Needs review badges, not when the hasher is quiet.
 
 Order (one state per promotion; A–E already run):
 
 | Next | Codes | Why this order |
 |---|---|---|
-| Done | AL, IA, ME, CT, HI, AR, KS, MS, RI | Promoted or frozen from primary sources. Iowa 45.26 (read 2026-08-18): commercial/retail only → `privateDuty: none`; 1/1/2026 commercial extras are on the matrix. |
-| Remaining private duty | MI, MN, SC, SD, VA (plus AR, KS still `uncertain` private) | Do not retouch commercial fields unless the same page contradicts them |
-| Frozen | MS | No ag field list found; do not paste professional-services WDI onto a farm row |
+| Done | AL, IA, ME, CT, HI, RI | Promoted from primary sources. Iowa 45.26 names commercial/retail only → `privateDuty: none`. |
+| Done | MS | Chapter 09 §104 names private RUP records → `researched` / `required`. Not professional-services Chapter 11. |
+| Done | MN, MI, VA, SC, KS | Exclusive who-clause: commercial (or business) record lists stay; privateDuty `none`. |
+| Remaining | AR, SD | AR: §20-20-215 is commercial/noncommercial; 2 CAR § 70 Class E/F is a special-class private list, not every private spray. SD: 12:56:07:01 “each applicator” vs DANR form vs SDSU Farm Bill split is not reconciled. |
+| Frozen | AR, SD | Opened the official source and still cannot name a general private field list (AR) or whether private is in “applicator” (SD). Stop putting them on a calendar. |
 
 How to research one state: `docs/state-dataset-blueprint.md` (How to
 research one state). Trust rules there still apply: no invented

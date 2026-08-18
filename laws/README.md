@@ -79,10 +79,10 @@ Do not mix a Kansas field-list change with an Iowa confirmation.
   "verification": "researched | partial | uncertain",
   "notes": "…",
   "fields": [{ "name": "date", "label": "Application date", "type": "date", "required": true }],
-  "privateDuty": "required | none | uncertain",
+  "recordWithinHours": 24,
   "customerCopyDays": null,
-  "recordDeadline": { "count": 14, "unit": "calendarDays" },
-  "recordWithinHours": 336
+  "privateDuty": "required | none | uncertain",
+  "recordDeadline": { "count": 14, "unit": "calendarDays" }
 }
 ```
 

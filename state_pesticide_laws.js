@@ -384,16 +384,16 @@ const STATE_LAWS = {
     }
   },
   "AR": {
-    "reviewedAt": "2026-08-14",
+    "reviewedAt": "2026-08-18",
     "agency": "Arkansas Department of Agriculture, State Plant Board",
     "citation": {
       "reference": "Ark. Code Ann. §20-20-215",
       "url": "https://media.ark.org/agri/Pesticide-Use-and-Application-Law-and-Rules.pdf"
     },
     "retentionYears": 2,
-    "appliesTo": "Commercial and noncommercial applicator licensees: routine operational records of pesticide applications (kinds, amounts, uses, dates, and places). Private applicator application-record fields are not named in §20-20-215.",
+    "appliesTo": "Commercial and noncommercial applicator licensees: routine operational records of pesticide applications (kinds, amounts, uses, dates, and places). Private applicator application-record fields are not named in §20-20-215. Class E/F (auxin / new-technology) private records in 2 CAR § 70 are a special-class list, not every private spray.",
     "verification": "researched",
-    "notes": "§20-20-215 (read 2026-08-14 in the Plant Board compilation): commercial and noncommercial licensees keep kinds, amounts, uses, dates, and places of application for two years. That is the agricultural matrix. Do not paste Arkansas Pest Control Law / structural lists (customer, EPA number, certified vs noncertified names) onto a field-crop spray. Private post-Part 110 duty is still not in this section. No customer-copy day count and no completion clock in §20-20-215 (24-hour fallback is operational).",
+    "notes": "§20-20-215 (read 2026-08-18 in the Plant Board compilation): commercial and noncommercial licensees keep kinds, amounts, uses, dates, and places of application for two years. That is the agricultural matrix. Do not paste Arkansas Pest Control Law / structural lists (customer, EPA number, certified vs noncertified names) onto a field-crop spray. 2 CAR § 70 (https://webftp.blr.arkansas.gov/Home/FTPDocument?path=CAR%2FParts%2F2CARpt70.pdf; Class E at codeofarrules.arkansas.gov 2 CAR § 70-110) requires private applicators to keep records of Class E and Class F products for three years (person in control, location, date/start/end, wind, brand + EPA number, acres + crop, equipment, nearby susceptible crops). That is not a general private GUP list — do not paste Class F weather/GPS extras onto every private spray. Private duty stays uncertain until a general private application-record who-clause is named. No customer-copy day count and no completion clock in §20-20-215 (24-hour fallback is operational).",
     "fields": [
       {
         "name": "brand_name",
@@ -1626,16 +1626,16 @@ const STATE_LAWS = {
     }
   },
   "KS": {
-    "reviewedAt": "2026-08-14",
+    "reviewedAt": "2026-08-18",
     "agency": "Kansas Department of Agriculture",
     "citation": {
       "reference": "K.S.A. 2-2455; K.A.R. 4-13-4a",
       "url": "https://www.ksrevisor.gov/statutes/chapters/ch02/002_024_0055.html"
     },
     "retentionYears": 3,
-    "appliesTo": "Pesticide businesses: statement of services or contract for each customer pest-control service involving pesticide application. Government agencies keep parallel application records. Certified commercial applicators not acting for a business keep records under K.A.R. 4-13-5. Private applicator application-record fields are not named in K.S.A. 2-2455.",
+    "appliesTo": "Pesticide businesses: statement of services or contract for each customer pest-control service involving pesticide application. Government agencies keep parallel application records. Certified commercial applicators not acting for a business keep records under K.A.R. 4-13-5. Private applicators are a KDA certification class not named in K.S.A. 2-2455; follow the label.",
     "verification": "researched",
-    "notes": "K.S.A. 2-2455 (read 2026-08-14 on ksrevisor.gov): business name/address/license number; customer name and address; pest; pesticide including quantity and total area; concentration or rate when applicable; date, location, start and end time; applicator signature and certification number; supervisor signature and number when applicable; wind direction and velocity when applicable; less-than-label-rate when applicable. K.A.R. 4-13-4a adds complete product name and EPA or Kansas registration number. Present the statement to the customer within 30 days (unless prepaid). Wood-destroying-pest diagrams and retreatments are structural extras — not required boxes on an ag spray. Private RUP records are not in this statute (KSU still points at the old federal Farm Bill list). No hours completion clock (24-hour fallback is operational).",
+    "notes": "K.S.A. 2-2455 (read 2026-08-18 on ksrevisor.gov): business name/address/license number; customer name and address; pest; pesticide including quantity and total area; concentration or rate when applicable; date, location, start and end time; applicator signature and certification number; supervisor signature and number when applicable; wind direction and velocity when applicable; less-than-label-rate when applicable. K.A.R. 4-13-4a adds complete product name and EPA or Kansas registration number. Present the statement to the customer within 30 days (unless prepaid). Wood-destroying-pest diagrams and retreatments are structural extras — not required boxes on an ag spray. 2-2455(a) names pesticide businesses, (e) government agencies, and (g) certified commercial applicators not acting for a business. Private applicators are not in that who-clause — privateDuty none; still follow the label. KSU MF531 still describes federal RUP records that are not in 2-2455; do not paste those boxes onto a private spray. No hours completion clock (24-hour fallback is operational).",
     "fields": [
       {
         "name": "business_name_address",
@@ -1754,7 +1754,7 @@ const STATE_LAWS = {
     ],
     "recordWithinHours": 24,
     "customerCopyDays": 30,
-    "privateDuty": "uncertain",
+    "privateDuty": "none",
     "recordDeadline": {
       "count": 24,
       "unit": "hours"
@@ -2394,16 +2394,16 @@ const STATE_LAWS = {
     }
   },
   "MI": {
-    "reviewedAt": "2026-08-14",
+    "reviewedAt": "2026-08-18",
     "agency": "Michigan Department of Agriculture and Rural Development",
     "citation": {
       "reference": "Mich. Admin. Code R 285.636.15; MCL 324.8311",
       "url": "https://www.law.cornell.edu/regulations/michigan/Mich-Admin-Code-R-285-636-15"
     },
     "retentionYears": 3,
-    "appliesTo": "Commercial applicators; RUP and general-use application records. Private-applicator state record fields not verified.",
+    "appliesTo": "Certified commercial applicators: RUP application records under MCL 324.8311(5)–(6) and R 285.636.15. Private applicators are not given an application-record list in those sections; at sale they identify the intended county of RUP application. Follow the label.",
     "verification": "researched",
-    "notes": "MCL 324.8311 (https://www.legislature.mi.gov/Laws/MCL?objectName=mcl-324-8311) names certified commercial applicator RUP records (3 years) and a commercial county summary due before March 1 — that summary is a report, not this log. R 285.636.15 is the commercial application-record list on this row. No private-applicator application-record list is in those sections; MSU E2342 still points at the old federal RUP chart. Private duty stays uncertain. Weather is not required in the cited commercial rule. LARA ARS download for R 285.636 did not return the rule PDF on 2026-08-14; Cornell LII remains the citation watch until a primary host is found.",
+    "notes": "MCL 324.8311 (https://www.legislature.mi.gov/Laws/MCL?objectName=mcl-324-8311, read 2026-08-18) names certified commercial applicator RUP records (3 years) and a commercial county summary due before March 1 — that summary is a report, not this log. Subsection (4) is a private-applicator duty at sale (identify intended county), not an application-record list. R 285.636.15 is the commercial application-record list on this row. Private applicators are not in the application-record who-clause — privateDuty none; still follow the label. MSU E2342 still points at the old federal RUP chart; do not paste that chart onto a private spray. Weather is not required in the cited commercial rule. LARA ARS download for R 285.636 did not return the rule PDF on 2026-08-14; Cornell LII remains the citation watch until a primary host is found.",
     "fields": [
       {
         "name": "brand_name",
@@ -2474,23 +2474,23 @@ const STATE_LAWS = {
     ],
     "recordWithinHours": 24,
     "customerCopyDays": null,
-    "privateDuty": "uncertain",
+    "privateDuty": "none",
     "recordDeadline": {
       "count": 24,
       "unit": "hours"
     }
   },
   "MN": {
-    "reviewedAt": "2026-08-14",
+    "reviewedAt": "2026-08-18",
     "agency": "Minnesota Department of Agriculture",
     "citation": {
       "reference": "Minn. Stat. §18B.37, subd. 2",
       "url": "https://www.revisor.mn.gov/statutes/cite/18B.37"
     },
     "retentionYears": 5,
-    "appliesTo": "Commercial applicators record pesticides used on each site; noncommercial applicators record restricted-use pesticides. Private agricultural applicator state record fields not verified in this section.",
+    "appliesTo": "Commercial applicators record pesticides used on each site; noncommercial applicators record restricted-use pesticides. Certified private applicators are not named in §18B.37; follow the label.",
     "verification": "researched",
-    "notes": "Minn. Stat. §18B.37 (read 2026-08-14 on revisor.mn.gov): subd. 2 is commercial and noncommercial only (noncommercial = RUP). Record within five days; retain five years; commercial applicators must give a copy to the customer (no day count). Subd. 3 is structural pest control — not this ag log. There is no private-applicator subdivision in §18B.37; private duty stays uncertain.",
+    "notes": "Minn. Stat. §18B.37 (read 2026-08-18 on revisor.mn.gov): subd. 2 is titled Commercial and noncommercial applicators only (noncommercial = RUP). Record within five days; retain five years; commercial applicators must give a copy to the customer (no day count). Subd. 3 is structural pest control — not this ag log. Subd. 5 inspection names a commercial, noncommercial, or structural pest control applicator's business. Minn. Stat. §18B.36 is private applicator certification with no application-record list. §18B.34 excepts certified private applicators from the noncommercial license. Private applicators are not in the who-clause — privateDuty none; still follow the label. Do not paste subd. 2 weather/customer boxes onto a private spray.",
     "fields": [
       {
         "name": "date",
@@ -2585,42 +2585,24 @@ const STATE_LAWS = {
     ],
     "recordWithinHours": 120,
     "customerCopyDays": null,
-    "privateDuty": "uncertain",
+    "privateDuty": "none",
     "recordDeadline": {
       "count": 120,
       "unit": "hours"
     }
   },
   "MS": {
-    "reviewedAt": "2026-08-14",
+    "reviewedAt": "2026-08-18",
     "agency": "Mississippi Department of Agriculture and Commerce, Bureau of Plant Industry",
     "citation": {
-      "reference": "Title 2, Part 1, Subpart 3, Chapter 11 §111.01 (professional services) — not an agricultural use-record rule",
-      "url": "https://agnet.mdac.ms.gov/agManage/uploads/1641.pdf"
+      "reference": "Title 2, Part 1, Subpart 3, Chapter 09 §104 (private RUP) and §206 (other certified RUP applicators)",
+      "url": "https://agnet.mdac.ms.gov/agManage/uploads/1639.pdf"
     },
     "retentionYears": 2,
-    "appliesTo": "The linked rule is professional-services (for-hire pest control / WDI / termiticide), not a farm use-record matrix. MDAC certifies private and commercial agricultural applicators and inspects restricted-use records, but no agricultural field list was found as of 2026-08-14.",
-    "verification": "uncertain",
-    "notes": "Read 2026-08-14: MDAC pesticide program pages describe private vs commercial certification and professional-services licensing, and say the Bureau inspects restricted-use application records, but they do not name agricultural record elements. §111.01 termiticide extras (PSI, nozzle, vehicle ID, volume/minute) must not appear as required farm boxes. This row stays uncertain until an ag use-record rule is cited. Private duty is also unverified (not copied from professional services). Operational core still applies.",
+    "appliesTo": "Certified private applicators using restricted-use pesticides to produce an agricultural commodity (Chapter 09 §104). Certified applicators under Subchapter 02 / §206 (RUP work not required by other Mississippi licensing to be licensed). Not professional-services Chapter 11.",
+    "verification": "researched",
+    "notes": "Official MDAC Chapter 09 PDF (uploads/1639.pdf, read 2026-08-18; source Miss. Code Ann. §69-23-109; amended Nov 2, 2024). Index: https://www.mdac.ms.gov/agency-info/laws-regulations/regulation-subpart-3/ item 09. §104 certified private applicators shall keep complete and accurate records of all work performed for at least two years: brand or product name; EPA registration number; total amount applied; size of the area treated; crop, commodity, stored product or site; date; location. That shared agricultural list is this row. §206 (Subchapter 02 certified applicators) adds name and address of the person for whom the RUP is applied; time as well as date; name and certification number of the certified applicator — do not treat those for-hire extras as required private boxes, and do not paste Chapter 11 professional-services WDI extras (PSI, nozzle, vehicle ID) onto a farm row. No completion clock in Chapter 09 (24-hour fallback is operational).",
     "fields": [
-      {
-        "name": "date",
-        "label": "Application date",
-        "type": "date",
-        "required": true
-      },
-      {
-        "name": "location",
-        "label": "Location / field / site description",
-        "type": "string",
-        "required": true
-      },
-      {
-        "name": "crop_treated",
-        "label": "Crop / commodity / site treated",
-        "type": "string",
-        "required": true
-      },
       {
         "name": "brand_name",
         "label": "Brand / product name",
@@ -2638,11 +2620,35 @@ const STATE_LAWS = {
         "label": "Total amount applied",
         "type": "string",
         "required": true
+      },
+      {
+        "name": "area_treated",
+        "label": "Area treated",
+        "type": "string",
+        "required": true
+      },
+      {
+        "name": "crop_treated",
+        "label": "Crop / commodity / site treated",
+        "type": "string",
+        "required": true
+      },
+      {
+        "name": "date",
+        "label": "Application date",
+        "type": "date",
+        "required": true
+      },
+      {
+        "name": "location",
+        "label": "Location / field / site description",
+        "type": "string",
+        "required": true
       }
     ],
     "recordWithinHours": 24,
     "customerCopyDays": null,
-    "privateDuty": "uncertain",
+    "privateDuty": "required",
     "recordDeadline": {
       "count": 24,
       "unit": "hours"
@@ -4458,16 +4464,16 @@ const STATE_LAWS = {
     }
   },
   "SC": {
-    "reviewedAt": "2026-08-14",
+    "reviewedAt": "2026-08-18",
     "agency": "Clemson University Department of Pesticide Regulation",
     "citation": {
       "reference": "S.C. Code Regs. 27-1083(C)",
       "url": "https://www.scstatehouse.gov/coderegs/Chapter%2027.pdf"
     },
     "retentionYears": 2,
-    "appliesTo": "Companies/firms employing licensed commercial or noncommercial applicators; self-employed commercial applicators; employers of noncommercial applicators. Private applicator record duty not verified.",
+    "appliesTo": "Companies/firms employing licensed commercial or noncommercial applicators; self-employed commercial applicators; employers of licensed noncommercial applicators. Private applicators are a Clemson license class not named in 27-1083(C)(1); follow the label.",
     "verification": "researched",
-    "notes": "S.C. Code Regs. 27-1083(C) (read 2026-08-14): records by companies/firms employing licensed commercial or noncommercial applicators, self-employed commercial applicators, and employers of licensed noncommercial applicators. Quantity, active ingredient if available, brand, EPA number, pest or purpose, date, and place. Two years except termiticides (five years or warranty). This section does not name private applicators; private duty stays uncertain. Weather is not required. Official compiler PDF: scstatehouse.gov Chapter 27.",
+    "notes": "S.C. Code Regs. 27-1083(C) (read 2026-08-18): records by companies/firms employing licensed commercial or noncommercial applicators, self-employed commercial applicators, and employers of licensed noncommercial applicators. Quantity, active ingredient if available, brand, EPA number, pest or purpose, date, and place. Two years except termiticides (five years or warranty). The who-clause does not include private applicators — privateDuty none; still follow the label. Do not paste 27-1083(C) company boxes onto a private spray. Fumigant competency extras stay off this matrix. Weather is not required. Official compiler PDF: scstatehouse.gov Chapter 27.",
     "fields": [
       {
         "name": "amount_applied",
@@ -4520,23 +4526,23 @@ const STATE_LAWS = {
     ],
     "recordWithinHours": 24,
     "customerCopyDays": null,
-    "privateDuty": "uncertain",
+    "privateDuty": "none",
     "recordDeadline": {
       "count": 24,
       "unit": "hours"
     }
   },
   "SD": {
-    "reviewedAt": "2026-08-14",
+    "reviewedAt": "2026-08-18",
     "agency": "South Dakota Department of Agriculture and Natural Resources",
     "citation": {
       "reference": "ARSD 12:56:07:01 and 12:56:07:03",
       "url": "https://sdlegislature.gov/Rules/Administrative/12:56:07:01"
     },
     "retentionYears": 3,
-    "appliesTo": "Commercial applicators; records for each pesticide application. Private applicator exact state duty not verified.",
+    "appliesTo": "ARSD 12:56:07:01 says each applicator shall keep records of each pesticide application. Whether certified private applicators are in that definition is not verified. Commercial-style field list is encoded on this row.",
     "verification": "researched",
-    "notes": "ARSD 12:56:07:01–:03 (official rule URL on sdlegislature.gov, read 2026-08-14) lists commercial-style application records due by close of business, kept three years. Weather excludes bait stations and applications in or next to structures. SDSU Extension still describes private RUP records as the old federal Farm Bill list, not this chapter. Until DANR writes that 12:56:07 includes certified private applicators, private duty stays uncertain.",
+    "notes": "ARSD 12:56:07:01–:03 (official rule URL on sdlegislature.gov, read 2026-08-18) lists commercial-style application records due by close of business, kept three years. Weather excludes bait stations and applications in or next to structures. The opening sentence is “Each applicator shall keep records…” DANR’s 2024 fillable form header describes records for GUP, RUP, and 25(b); SDSU Extension still splits private RUP as the old federal Farm Bill list and commercial as 12:56:07:01. Until the chapter’s definition of applicator is read as including or excluding certified private applicators, private duty stays uncertain. Do not promote on the 2020 SDSU PDF. Do not paste 12:56:07 customer/weather boxes onto a private spray while this is uncertain.",
     "fields": [
       {
         "name": "customer_name",
@@ -5142,16 +5148,16 @@ const STATE_LAWS = {
     }
   },
   "VA": {
-    "reviewedAt": "2026-08-14",
+    "reviewedAt": "2026-08-18",
     "agency": "Virginia Department of Agriculture and Consumer Services",
     "citation": {
       "reference": "2VAC5-680-50, 2VAC5-680-70; 2VAC5-685-200, -210",
       "url": "https://law.lis.virginia.gov/admincode/title2/agency5/chapter680/section70/"
     },
     "retentionYears": 2,
-    "appliesTo": "Pesticide businesses: each general-use and RUP application; commercial applicators not for hire and registered technicians not for hire: each pesticide application. Private applicator requirements not verified in these sections.",
+    "appliesTo": "Pesticide businesses: each general-use and RUP application (2VAC5-680-70). Commercial applicators not for hire and registered technicians not for hire: each pesticide application (2VAC5-685-200/-210). 2VAC5-685-40 is private certification with no application-record list. Private applicators are not named in these recordkeeping sections; follow the label.",
     "verification": "researched",
-    "notes": "2VAC5-680 (businesses) and 2VAC5-685-200/-210 (commercial applicators not for hire and registered technicians not for hire) were read 2026-08-14 on law.lis.virginia.gov. Those sections do not name certified private applicators. Private duty stays uncertain. Records not readily available must be submitted within 72 hours of written request. No wind/weather field in the cited rules.",
+    "notes": "2VAC5-680-70 (pesticide businesses) and 2VAC5-685-200/-210 (commercial applicators not for hire and registered technicians not for hire) were read 2026-08-18 on law.lis.virginia.gov. 2VAC5-685-40 is private-applicator certification (exam / literacy waiver) and does not name application records. Those who-clauses do not include certified private applicators — privateDuty none; still follow the label. WPS employer duties are not this log. Do not paste business/not-for-hire customer boxes onto a private spray. Records not readily available must be submitted within 72 hours of written request. No wind/weather field in the cited rules.",
     "fields": [
       {
         "name": "customer_name",
@@ -5246,7 +5252,7 @@ const STATE_LAWS = {
     ],
     "recordWithinHours": 24,
     "customerCopyDays": null,
-    "privateDuty": "uncertain",
+    "privateDuty": "none",
     "recordDeadline": {
       "count": 24,
       "unit": "hours"

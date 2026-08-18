@@ -1,15 +1,15 @@
 {
   "code": "SC",
-  "reviewedAt": "2026-08-14",
+  "reviewedAt": "2026-08-18",
   "agency": "Clemson University Department of Pesticide Regulation",
   "citation": {
     "reference": "S.C. Code Regs. 27-1083(C)",
     "url": "https://www.scstatehouse.gov/coderegs/Chapter%2027.pdf"
   },
   "retentionYears": 2,
-  "appliesTo": "Companies/firms employing licensed commercial or noncommercial applicators; self-employed commercial applicators; employers of noncommercial applicators. Private applicator record duty not verified.",
+  "appliesTo": "Companies/firms employing licensed commercial or noncommercial applicators; self-employed commercial applicators; employers of licensed noncommercial applicators. Private applicators are a Clemson license class not named in 27-1083(C)(1); follow the label.",
   "verification": "researched",
-  "notes": "S.C. Code Regs. 27-1083(C) (read 2026-08-14): records by companies/firms employing licensed commercial or noncommercial applicators, self-employed commercial applicators, and employers of licensed noncommercial applicators. Quantity, active ingredient if available, brand, EPA number, pest or purpose, date, and place. Two years except termiticides (five years or warranty). This section does not name private applicators; private duty stays uncertain. Weather is not required. Official compiler PDF: scstatehouse.gov Chapter 27.",
+  "notes": "S.C. Code Regs. 27-1083(C) (read 2026-08-18): records by companies/firms employing licensed commercial or noncommercial applicators, self-employed commercial applicators, and employers of licensed noncommercial applicators. Quantity, active ingredient if available, brand, EPA number, pest or purpose, date, and place. Two years except termiticides (five years or warranty). The who-clause does not include private applicators — privateDuty none; still follow the label. Do not paste 27-1083(C) company boxes onto a private spray. Fumigant competency extras stay off this matrix. Weather is not required. Official compiler PDF: scstatehouse.gov Chapter 27.",
   "fields": [
     {
       "name": "amount_applied",
@@ -62,7 +62,7 @@
   ],
   "recordWithinHours": 24,
   "customerCopyDays": null,
-  "privateDuty": "uncertain",
+  "privateDuty": "none",
   "recordDeadline": {
     "count": 24,
     "unit": "hours"

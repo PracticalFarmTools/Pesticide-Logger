@@ -93,6 +93,12 @@ check('curly-apostrophe toasts used by app.js are translated', () => {
   assert.notStrictEqual(i18n.t('pt-BR', couldnt), couldnt);
 });
 
+check('how-to and catch-up chrome are translated', () => {
+  assert.strictEqual(i18n.t('es', 'How-to'), 'Cómo');
+  assert.strictEqual(i18n.t('fr', 'Send a file to the shop'), 'Envoyer un fichier à l’atelier');
+  assert.notStrictEqual(i18n.t('pt-BR', 'Caught up from the connected backup file.'), 'Caught up from the connected backup file.');
+});
+
 check('keep-book ritual and CSV honesty are translated', () => {
   assert.strictEqual(i18n.t('es', 'Keep this book'), 'Conserve este libro');
   assert.notStrictEqual(i18n.t('fr', 'I’ll log first'), 'I’ll log first');
@@ -141,6 +147,8 @@ check('app.js applies any dictionary language, not only Spanish', () => {
   assert.strictEqual(i18n.readStoredLang(), '');
   const start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');
   assert.ok(start.includes('id="public-lang"'));
+  const how = fs.readFileSync(path.join(root, 'how.html'), 'utf8');
+  assert.ok(how.includes('id="public-lang"'));
 });
 
 if (failed) {

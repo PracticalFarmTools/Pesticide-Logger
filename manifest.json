@@ -9,6 +9,14 @@
   "background_color": "#e8efe9",
   "theme_color": "#0f2814",
   "categories": ["productivity", "utilities", "business"],
+  "file_handlers": [
+    {
+      "action": "./index.html",
+      "accept": {
+        "application/json": [".json"]
+      }
+    }
+  ],
   "icons": [
     {
       "src": "icon-192.png",

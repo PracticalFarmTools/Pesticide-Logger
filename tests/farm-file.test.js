@@ -573,6 +573,7 @@ await check('restore card names the shop tablet and has no account', async () =>
   assert.ok(html.includes('Maine'));
   assert.ok(html.includes('shop tablet'));
   assert.ok(html.includes('no cloud copy'));
+  assert.ok(html.includes('Send a file to the shop'));
   assert.ok(html.includes('http://localhost:8000/index.html'));
   assert.ok(!/account|sync server/i.test(html) || html.includes('no account'));
 });

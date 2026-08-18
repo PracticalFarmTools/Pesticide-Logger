@@ -3,6 +3,7 @@
  *
  *   node tools/watch-citations.js            fetch watch-list, compare, print
  *   node tools/watch-citations.js --dry-run  fetch + print; do not write cache
+ *   node tools/watch-citations.js --summary  counts only (no TSV); still exit 2
  *
  * Snapshots and hashes live in watch-cache/ (gitignored). This never writes
  * laws/XX.json. A human still --show XX, reads the new text, and --stamp or
@@ -139,24 +140,31 @@ async function runWatch(opts) {
   return { previous: prevDoc, current: nextDoc, results: out, counts: summarize(out) };
 }
 
+function printSummary(run) {
+  const c = (run && run.counts) || {};
+  console.log('stable ' + (c.stable || 0) + '; changed ' + (c.changed || 0) +
+    '; new ' + (c.new || 0) + '; dead ' + (c.dead || 0) +
+    '; error ' + (c.error || 0) + '; status ' + (c.status || 0) +
+    '. Does not write laws JSON. On changed/dead: node tools/bundle-state-laws.js --show XX');
+}
+
 function printReport(run) {
   console.log(['verdict', 'code', 'status', 'bytes', 'sha256', 'url'].join('\t'));
-  run.results.forEach((r) => {
+  (run.results || []).forEach((r) => {
     console.log([
       r.verdict, r.code, r.status, r.bytes, r.sha256.slice(0, 12), r.url
     ].join('\t'));
   });
-  const c = run.counts;
-  console.log('# stable ' + c.stable + '; changed ' + c.changed + '; new ' + c.new +
-    '; dead ' + c.dead + '; error ' + c.error + '; status ' + c.status +
-    '. Does not write laws JSON. On changed/dead: node tools/bundle-state-laws.js --show XX');
+  printSummary(run);
 }
 
 async function main(argv) {
   const args = argv.slice(2);
   const dryRun = args.includes('--dry-run');
+  const summaryOnly = args.includes('--summary');
   const run = await runWatch({ dryRun: dryRun });
-  printReport(run);
+  if (summaryOnly) printSummary(run);
+  else printReport(run);
   if (run.counts.changed || run.counts.dead || run.counts.error) process.exit(2);
 }
 
@@ -168,5 +176,6 @@ if (require.main === module) {
 }
 
 module.exports = {
-  UA, sha256Hex, loadHashes, saveHashes, compareRow, summarize, fetchOne, runWatch, printReport
+  UA, sha256Hex, loadHashes, saveHashes, compareRow, summarize, fetchOne, runWatch,
+  printReport, printSummary
 };

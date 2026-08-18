@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.28 — Practical Farm Tools
+/* Pesticide Logger v2.9.29 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -272,6 +272,8 @@
   let autoBackupHandle = null;
   let autoBackupState = 'off'; // off | on | needs_permission | unsupported
   let autoBackupTimer = null;
+  let autoBackupBusy = false;
+  const AUTO_BACKUP_READ_SLACK_MS = 4000;
 
   function autoBackupSupported() {
     return typeof window !== 'undefined' && 'showSaveFilePicker' in window;
@@ -302,6 +304,7 @@
           autoBackupState = 'needs_permission';
         }
         renderAutoBackupUI();
+        if (autoBackupState === 'on' && farmUiStarted) maybeReadAutoBackup();
       };
       get.onerror = () => { autoBackupState = 'off'; renderAutoBackupUI(); };
     } catch (e) { /* ignore */ }
@@ -313,8 +316,23 @@
     autoBackupTimer = setTimeout(writeAutoBackup, 1500);
   }
 
+  async function stampAutoBackupReadAt(file) {
+    const ms = file && file.lastModified ? file.lastModified : Date.now();
+    data.meta.autoBackupReadAt = new Date(ms).toISOString();
+  }
+
+  function gatherChanged(receipt) {
+    if (!receipt) return false;
+    const a = receipt.added || {};
+    const u = receipt.updated || {};
+    return !!(a.applications || a.fields || a.products || a.crew ||
+      u.applications || u.fields || u.products ||
+      (receipt.conflicts && receipt.conflicts.length));
+  }
+
   async function writeAutoBackup() {
-    if (!autoBackupHandle) return;
+    if (!autoBackupHandle || autoBackupBusy) return;
+    autoBackupBusy = true;
     try {
       data.meta.lastBackupAt = new Date().toISOString();
       await persistFarm({ quiet: true });
@@ -322,11 +340,67 @@
       const writable = await autoBackupHandle.createWritable();
       await writable.write(JSON.stringify(exportData, null, 2));
       await writable.close();
+      try {
+        const written = await autoBackupHandle.getFile();
+        stampAutoBackupReadAt(written);
+        await persistFarm({ quiet: true });
+      } catch (e) {
+        stampAutoBackupReadAt(null);
+        await persistFarm({ quiet: true });
+      }
       renderBackupBanner();
     } catch (e) {
       autoBackupState = 'needs_permission';
       renderAutoBackupUI();
+    } finally {
+      autoBackupBusy = false;
     }
+  }
+
+  async function maybeReadAutoBackup() {
+    if (autoBackupState !== 'on' || !autoBackupHandle || autoBackupBusy) return;
+    autoBackupBusy = true;
+    try {
+      const file = await autoBackupHandle.getFile();
+      if (!file) return;
+      const readAt = Date.parse((data.meta && data.meta.autoBackupReadAt) || '') || 0;
+      if (file.lastModified && file.lastModified <= readAt + AUTO_BACKUP_READ_SLACK_MS) return;
+      const info = await inspectBackupFile(file);
+      if (!info || !info.ok) {
+        stampAutoBackupReadAt(file);
+        await persistFarm({ quiet: true });
+        return;
+      }
+      const farmIn = info.farm;
+      if (farmIn.meta) {
+        delete farmIn.meta.forecastByField;
+        delete farmIn.meta.forecastCache;
+      }
+      const receipt = mergeData(migrate(Object.assign(defaultData(), farmIn)));
+      await idbPhotosPutAll(info.photos);
+      stampAutoBackupReadAt(file);
+      if (gatherChanged(receipt)) {
+        data.meta.lastGatherAt = new Date().toISOString();
+        await persistFarm();
+        refreshAfterGather();
+        toast('Caught up from the connected backup file.');
+      } else {
+        await persistFarm({ quiet: true });
+      }
+    } catch (e) {
+      /* file may be mid-write from another device — leave the book */
+    } finally {
+      autoBackupBusy = false;
+    }
+  }
+
+  function bindAutoBackupWatchers() {
+    if (typeof document === 'undefined' || document.documentElement.dataset.autoBackupWatch === '1') return;
+    document.documentElement.dataset.autoBackupWatch = '1';
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') maybeReadAutoBackup();
+    });
+    window.addEventListener('focus', () => maybeReadAutoBackup());
   }
 
   async function connectAutoBackup() {
@@ -380,9 +454,9 @@
     resumeBtn.hidden = autoBackupState !== 'needs_permission';
     stopBtn.hidden = autoBackupState === 'off';
     status.textContent =
-      autoBackupState === 'on' ? `Automatic backup is ON — ${autoBackupHandle && autoBackupHandle.name ? autoBackupHandle.name : 'backup file'} rewrites on every save.`
+      autoBackupState === 'on' ? `Automatic backup is ON — ${autoBackupHandle && autoBackupHandle.name ? autoBackupHandle.name : 'backup file'} rewrites on every save. This device also reads it when the file is newer (catch up from a USB stick or a folder you already sync).`
       : autoBackupState === 'needs_permission' ? 'Automatic backup is connected but needs permission again (browsers reset it between visits).'
-      : 'Connect a backup file (USB stick or synced folder) and every save writes to it automatically.';
+      : 'Connect a backup file on a USB stick or a folder you already sync. Every save rewrites it. This device can also read it when it is newer. We do not store the book.';
   }
 
   const uid = () => (crypto.randomUUID ? crypto.randomUUID()
@@ -1952,10 +2026,10 @@
   let appFormPhotoIds = [];
 
   // Sticky section-jump nav for the long spray-log form: click a chip to
-  // open/park that fieldset (core and visible-required sections stay open);
-  // each chip's dot flips amber when that section still has an unresolved
-  // required field (see updateLogSectionNavDots()).
-  const LOG_CORE_SECTIONS = new Set(['where', 'products', 'when', 'applicator']);
+  // open/park that fieldset (Where + Products stay open). When parks after
+  // date and start are stamped; Applicator parks once the name is filled
+  // unless another required box in that section is empty.
+  const LOG_CORE_SECTIONS = new Set(['where', 'products']);
   let logMode = 'new';
   let logPinnedSections = new Set();
   let logForceExpand = false;
@@ -2020,24 +2094,57 @@
     }
   }
 
+  function logFieldControlValue(label) {
+    const input = label && label.querySelector('input, select, textarea');
+    if (!input) return '';
+    if (input.type === 'checkbox') return input.checked ? '1' : '';
+    return String(input.value || '').trim();
+  }
+
+  function labelIsRequired(label) {
+    if (!label) return false;
+    if (label.classList.contains('state-required-field')) return true;
+    const star = label.querySelector('.req-star');
+    return !!(star && !star.hidden);
+  }
+
   function sectionHasVisibleRequired(fs) {
     if (!fs) return false;
     return [...fs.querySelectorAll('label[data-log-field]')].some((l) => {
       if (l.hidden) return false;
-      if (l.classList.contains('state-required-field')) return true;
-      const star = l.querySelector('.req-star');
-      return !!(star && !star.hidden);
+      return labelIsRequired(l);
     });
+  }
+
+  function sectionHasUnfilledRequired(fs) {
+    if (!fs) return false;
+    return [...fs.querySelectorAll('label[data-log-field]')].some((l) => {
+      if (l.hidden) return false;
+      if (!labelIsRequired(l)) return false;
+      return !logFieldControlValue(l);
+    });
+  }
+
+  function sectionShouldExpand(fs) {
+    if (!fs) return false;
+    const name = fs.dataset.logSection;
+    if (logForceExpand) return true;
+    if (LOG_CORE_SECTIONS.has(name)) return true;
+    if (logPinnedSections.has(name)) return true;
+    if (sectionHasUnfilledRequired(fs)) return true;
+    if (name === 'when') {
+      const dateFilled = !!( $('#app-date') && $('#app-date').value );
+      const startFilled = !!( $('#app-start') && $('#app-start').value );
+      return !(dateFilled && startFilled);
+    }
+    return false;
   }
 
   function updateLogSectionCollapse() {
     let parkedVisible = 0;
     $$('#app-form fieldset[data-log-section]').forEach((fs) => {
       const name = fs.dataset.logSection;
-      const expand = !!(logForceExpand
-        || LOG_CORE_SECTIONS.has(name)
-        || logPinnedSections.has(name)
-        || sectionHasVisibleRequired(fs));
+      const expand = sectionShouldExpand(fs);
       fs.classList.toggle('log-section-parked', !expand);
       const chip = document.querySelector(`.log-section-nav-item[data-jump-section="${name}"]`);
       if (chip) {
@@ -2085,7 +2192,7 @@
       if (!section || section.hidden) return;
       const parked = section.classList.contains('log-section-parked');
       if (parked) logPinnedSections.add(name);
-      else if (!LOG_CORE_SECTIONS.has(name) && !sectionHasVisibleRequired(section)) {
+      else if (!LOG_CORE_SECTIONS.has(name) && !sectionHasUnfilledRequired(section)) {
         logPinnedSections.delete(name);
       }
       updateLogSectionCollapse();
@@ -2228,6 +2335,7 @@
     renderDueBanner();
     reshapeAppFormForState();
     updateCompliancePreview();
+    updateCabToolbar();
   }
 
   function setSelectFilterVisible(filterEl, optionCount) {
@@ -3126,6 +3234,7 @@
     updateLastOnFieldHint();
     updateDurationHint();
     syncNewLogChrome();
+    updateCabToolbar();
   }
 
   function editApp(id) {
@@ -3407,9 +3516,14 @@
     const hh = String(d.getHours()).padStart(2, '0');
     const mm = String(d.getMinutes()).padStart(2, '0');
     $('#app-start').value = `${hh}:${mm}`;
+    if ($('#app-applicator') && !$('#app-applicator').value.trim() && data.settings.applicatorName) {
+      $('#app-applicator').value = data.settings.applicatorName;
+    }
     showTab('log');
     $('#app-field').focus();
     updateDurationHint();
+    updateLogSectionCollapse();
+    updateCabToolbar();
     toast('Spray-now mode — date and start time set. Pick field and products.');
   }
 
@@ -3453,7 +3567,9 @@
     $('#app-cancel-btn').hidden = false;
     updateCompliancePreview();
     updateDurationHint();
-    toast('Duplicated last spray — update date/time, totals, and weather before saving');
+    updateLogSectionCollapse();
+    updateCabToolbar();
+    toast('Duplicated last spray — date and start moved to now; field and mix copied. Rates, REI, and PHI are still what you typed last time.');
   }
 
   const SHOW_DURATION_KEY = 'pesticide-logger.showDuration';
@@ -3731,6 +3847,7 @@
     }
     renderInstallBanner();
     renderKeepBook();
+    updateCabToolbar();
     if (empty) {
       renderFirstRun();
       queueHomeMessages();
@@ -4726,65 +4843,93 @@
     if (!dlg.open) dlg.showModal();
   }
 
+  async function inspectBackupFile(file) {
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    const info = (typeof BackupPack !== 'undefined' && BackupPack.inspect)
+      ? BackupPack.inspect(parsed)
+      : {
+        ok: !!(parsed && Array.isArray(parsed.applications)),
+        farm: parsed,
+        photos: [],
+        isLegacy: true,
+        error: 'Not a Pesticide Logger backup'
+      };
+    if (!info.ok) throw new Error(info.error || 'Not a Pesticide Logger backup');
+    return info;
+  }
+
+  async function applyBackupFarm(info, mode) {
+    const farmIn = info.farm;
+    if (farmIn.meta) {
+      delete farmIn.meta.forecastByField;
+      delete farmIn.meta.forecastCache;
+    }
+    if (mode === 'merge') {
+      const receipt = mergeData(migrate(Object.assign(defaultData(), farmIn)));
+      await idbPhotosPutAll(info.photos);
+      markGatheredAt();
+      refreshAfterGather();
+      toast('Logs brought in — you can still edit any spray');
+      showGatherReceipt(receipt);
+      return;
+    }
+    const currentMeta = data.meta;
+    data = migrate(Object.assign(defaultData(), farmIn));
+    if (typeof BackupMerge !== 'undefined' && BackupMerge.mergeMetaReplace) {
+      data.meta = BackupMerge.mergeMetaReplace(currentMeta, data.meta);
+    } else if (typeof BackupMerge !== 'undefined' && BackupMerge.mergeMeta) {
+      data.meta = BackupMerge.mergeMeta(currentMeta, data.meta);
+    }
+    await idbPhotosClear();
+    await idbPhotosPutAll(info.photos);
+    await persistFarmThenReload();
+  }
+
+  async function ingestBackupFile(file) {
+    if (!file) return;
+    try {
+      const info = await inspectBackupFile(file);
+      const farmIn = info.farm;
+      const counts = (typeof BackupPack !== 'undefined' && BackupPack.summaryLine)
+        ? BackupPack.summaryLine(info)
+        : `${(farmIn.applications || []).length} records, ${(farmIn.products || []).length} products, ${(farmIn.fields || []).length} fields`;
+      let extra = '';
+      if (info.isLegacy && info.missingPhotoCount) {
+        extra = '\n\nThis older backup has no photos. Label photos stay on the device that took them.';
+      } else if (info.large) {
+        extra = '\n\nThis file is large because it includes photos.';
+      }
+      const merge = confirm(
+        `This file has ${counts}.${extra}\n\nOK = bring these logs into this device (keeps both sets — use this after a cab phone shares a file)\nCancel = replace everything on this device instead`);
+      if (merge) {
+        await applyBackupFarm(info, 'merge');
+      } else {
+        if (!confirm(`REPLACE everything on this device with the backup (${counts})? This cannot be undone.`)) return;
+        await applyBackupFarm(info, 'replace');
+      }
+    } catch (err) {
+      toast('That file is not a valid backup: ' + err.message);
+    }
+  }
+
   function restoreBackup(e) {
     const file = e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        const parsed = JSON.parse(reader.result);
-        const info = (typeof BackupPack !== 'undefined' && BackupPack.inspect)
-          ? BackupPack.inspect(parsed)
-          : {
-            ok: !!(parsed && Array.isArray(parsed.applications)),
-            farm: parsed,
-            photos: [],
-            isLegacy: true,
-            error: 'Not a Pesticide Logger backup'
-          };
-        if (!info.ok) throw new Error(info.error || 'Not a Pesticide Logger backup');
-        const farmIn = info.farm;
-        if (farmIn.meta) {
-          delete farmIn.meta.forecastByField;
-          delete farmIn.meta.forecastCache;
-        }
-        const counts = (typeof BackupPack !== 'undefined' && BackupPack.summaryLine)
-          ? BackupPack.summaryLine(info)
-          : `${(farmIn.applications || []).length} records, ${(farmIn.products || []).length} products, ${(farmIn.fields || []).length} fields`;
-        let extra = '';
-        if (info.isLegacy && info.missingPhotoCount) {
-          extra = '\n\nThis older backup has no photos. Label photos stay on the device that took them.';
-        } else if (info.large) {
-          extra = '\n\nThis file is large because it includes photos.';
-        }
-        const merge = confirm(
-          `This file has ${counts}.${extra}\n\nOK = bring these logs into this device (keeps both sets — use this after a cab phone shares a file)\nCancel = replace everything on this device instead`);
-        if (merge) {
-          const receipt = mergeData(migrate(Object.assign(defaultData(), farmIn)));
-          await idbPhotosPutAll(info.photos);
-          markGatheredAt();
-          refreshAfterGather();
-          toast('Logs brought in — you can still edit any spray');
-          showGatherReceipt(receipt);
-        } else {
-          if (!confirm(`REPLACE everything on this device with the backup (${counts})? This cannot be undone.`)) return;
-          const currentMeta = data.meta;
-          data = migrate(Object.assign(defaultData(), farmIn));
-          if (typeof BackupMerge !== 'undefined' && BackupMerge.mergeMetaReplace) {
-            data.meta = BackupMerge.mergeMetaReplace(currentMeta, data.meta);
-          } else if (typeof BackupMerge !== 'undefined' && BackupMerge.mergeMeta) {
-            data.meta = BackupMerge.mergeMeta(currentMeta, data.meta);
-          }
-          await idbPhotosClear();
-          await idbPhotosPutAll(info.photos);
-          await persistFarmThenReload();
-        }
-      } catch (err) {
-        toast('That file is not a valid backup: ' + err.message);
+    ingestBackupFile(file).finally(() => { e.target.value = ''; });
+  }
+
+  function initLaunchQueue() {
+    if (typeof window === 'undefined' || !window.launchQueue || !window.launchQueue.setConsumer) return;
+    window.launchQueue.setConsumer(async (params) => {
+      const handles = (params && params.files) || [];
+      for (const handle of handles) {
+        try {
+          const file = await handle.getFile();
+          await ingestBackupFile(file);
+        } catch (e) { /* skip a file we cannot open */ }
       }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
+    });
   }
 
   function fillCrewDatalist() {
@@ -7224,7 +7369,24 @@
     const dupBtn = $('#app-duplicate-last');
     if (sprayNowBtn) sprayNowBtn.disabled = !canLogNewSpray();
     if (dupBtn) dupBtn.disabled = !canLogNewSpray();
+    updateCabToolbar();
     syncNewLogChrome();
+  }
+
+  function updateCabToolbar() {
+    const sprayNowBtn = $('#app-spray-now');
+    const dupBtn = $('#app-duplicate-last');
+    if (!sprayNowBtn || !dupBtn) return;
+    const hasLast = !!(sortedApps()[0]);
+    sprayNowBtn.classList.toggle('btn-primary', !hasLast);
+    sprayNowBtn.classList.toggle('btn-secondary', hasLast);
+    dupBtn.classList.toggle('btn-primary', hasLast);
+    dupBtn.classList.toggle('btn-secondary', !hasLast);
+    const parent = sprayNowBtn.parentNode;
+    if (parent && dupBtn.parentNode === parent) {
+      if (hasLast) parent.insertBefore(dupBtn, sprayNowBtn);
+      else parent.insertBefore(sprayNowBtn, dupBtn);
+    }
   }
 
   function syncNewLogChrome() {
@@ -7431,7 +7593,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.28';
+  const APP_VERSION = 'v2.9.29';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {
@@ -7544,6 +7706,8 @@
     initCrew();
     initInspectorView();
     initGatherUi();
+    bindAutoBackupWatchers();
+    initLaunchQueue();
     if ($('#dash-rei-board')) $('#dash-rei-board').addEventListener('click', printReiBoard);
     initInstallHint();
     initLanguageControls();
@@ -7553,6 +7717,7 @@
     renderRecentProducts();
     renderDueBanner();
     checkReminders();
+    maybeReadAutoBackup();
   }
 
   initLanguageControls();

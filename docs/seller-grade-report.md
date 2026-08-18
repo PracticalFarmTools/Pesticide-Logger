@@ -228,6 +228,9 @@ Owner decisions left in place: public `start.html` in front of the logger; gener
 
 ## Blueprint — what is left (do not reopen P0–P3)
 
+Sequenced proposals (and v2.9.29 implementation of cab / how-to / hasher
+`--summary` / file catch-up; listing still not live): `docs/a-minus-holes-blueprint.md`.
+
 v2.9.27’s sequenced P0–P3 is **done**. Do not spend another month on cab chrome to avoid rewriting the homepage card.
 
 ### Owner (not an app feature)

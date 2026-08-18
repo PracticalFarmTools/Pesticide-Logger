@@ -5,7 +5,7 @@
 `laws/README.md`. This playbook is the **order of work** and the
 **ongoing cadence** so maintenance is not a quarterly research program.
 
-Matrix edition is **2026-08-18**. App version **v2.9.28**. The log,
+Matrix edition is **2026-08-18**. App version **v2.9.29**. The log,
 badges, packet freeze, and `laws/XX.json` isolation are already shipped.
 
 ## Proposal
@@ -83,10 +83,12 @@ rows above are gone or explained in `notes`.
 
 After 1a is mostly done (researched Cornell swapped):
 
-1. Run `node tools/watch-citations.js` (or `--dry-run`). It GETs each
+1. Run `node tools/watch-citations.js` (or `--dry-run` / `--summary`). It GETs each
    `--watch-list` URL, SHA-256 hashes the body, and compares to
    `watch-cache/hashes.json` (gitignored). Changed / 404 / error print as
-   a TSV. It does **not** write `laws/XX.json`.
+   a TSV (`--summary` is counts only). It does **not** write `laws/XX.json`.
+   First weekend of the month is enough; also run when you touch the FSMA
+   calculator in spring.
 2. Weekly is enough. The User-Agent identifies the crawler; one GET per URL;
    ~1.5s between requests.
 3. On changed or dead: `--show XX` → open the **new** official text → same
@@ -166,6 +168,7 @@ None of that is required to start Track 1 tomorrow.
 ```bash
 node tools/bundle-state-laws.js --watch-list   # hasher feed (no fetch)
 node tools/watch-citations.js                  # Track 2: fetch + hash (watch-cache/)
+node tools/watch-citations.js --summary        # counts only; exit 2 on changed/dead/error
 node tools/bundle-state-laws.js --holes        # Track 3 queue
 node tools/bundle-state-laws.js --show KS      # citation + fields
 node tools/bundle-state-laws.js --stamp KS     # confirmation or after a JSON edit

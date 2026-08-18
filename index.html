@@ -98,7 +98,7 @@
     <div class="card" id="dash-first-run" hidden>
       <h3 class="card-title">Get set up to log</h3>
       <p class="card-hint">Your state picks the boxes. Then you can log. Nothing leaves this device. A 30-day trial is already running — no card.</p>
-      <p class="card-hint"><a href="start.html">What this is</a> · <a href="inspector.html">For inspectors</a> · <a href="extension.html">For extension</a></p>
+      <p class="card-hint"><a href="start.html">What this is</a> · <a href="inspector.html">For inspectors</a> · <a href="extension.html">For extension</a> · <a href="how.html">How-to</a></p>
       <form id="first-run-farm" class="form-grid first-run-farm" hidden>
         <div class="form-row">
           <label>Interface language
@@ -138,7 +138,7 @@
 
     <div id="dash-keep-book" class="card keep-book-card" hidden>
       <h3 class="card-title">Keep this book</h3>
-      <p>There is no cloud copy. Download a backup and print the restore card before you rely on this phone. Tape the card in the shop. iPhone: Share → Add to Home Screen. Android: Install when the browser offers it.</p>
+      <p>There is no cloud copy. Download a backup and print the restore card before you rely on this phone. Tape the card in the shop. iPhone: Share → Add to Home Screen. Android: Install when the browser offers it. <a href="how.html">How restore works</a>.</p>
       <div class="form-actions">
         <button type="button" class="btn btn-primary" id="keep-book-download">Download backup</button>
         <button type="button" class="btn btn-secondary" id="keep-book-restore-card">Print restore card</button>
@@ -161,11 +161,11 @@
 
     <div id="send-nag-banner" class="setup-banner backup-banner" hidden>
       <div>
-        <strong>Send logs to the shop device.</strong>
-        <p id="send-nag-msg">Newer sprays on this phone have not been sent to the shop device.</p>
+        <strong>Catch up the shop device.</strong>
+        <p id="send-nag-msg">Newer sprays on this phone have not been sent as a file. Share or save the backup — we do not store it.</p>
       </div>
       <div class="banner-actions">
-        <button class="btn btn-primary" id="send-nag-send">Send logs to another device</button>
+        <button class="btn btn-primary" id="send-nag-send">Send a file to the shop</button>
         <button class="btn btn-secondary" id="send-nag-snooze">Remind me later</button>
       </div>
     </div>
@@ -393,8 +393,8 @@
           </div>
           <input type="search" id="app-product-filter" class="select-filter" placeholder="Type to find a product…" hidden autocomplete="off">
           <div class="mix-scan-row" id="app-mix-scan-row">
-            <button type="button" class="btn btn-secondary" id="app-scan-jug" hidden>Scan jug</button>
-            <label class="btn btn-secondary camera-file-btn" id="app-scan-jug-photo" hidden>Scan jug
+            <button type="button" class="btn btn-primary btn-lg" id="app-scan-jug" hidden>Scan jug</button>
+            <label class="btn btn-primary btn-lg camera-file-btn" id="app-scan-jug-photo" hidden>Scan jug
               <input type="file" id="app-scan-jug-input" accept="image/*" capture="environment" aria-label="Scan jug barcode or label">
             </label>
             <button type="button" class="btn btn-secondary" id="app-add-product">+ Add another product to this mix</button>
@@ -993,8 +993,8 @@
     </div>
 
     <div class="card" id="gather-card">
-      <h3 class="card-title">Shop gathers / cab sends</h3>
-      <p class="card-hint">Your records live only in this browser. The shop tablet is the book of record. Cab phones send a backup; this shop tablet brings them in. Newest edits win; the other version stays in that spray’s History so you can still change it. A full backup is one JSON file with the farm file and attached photos. Older backups from before photos were packed still restore records; you will be told if photos are missing. Print the restore card and tape it in the shop in case a phone dies.</p>
+      <h3 class="card-title">Catch up: shop gathers / cab sends</h3>
+      <p class="card-hint">Your records live only in this browser. Devices catch up by a file (Share / AirDrop / USB / a folder you already sync). We do not store the book. Newest edits win; the other version stays in that spray’s History. A full backup is one JSON file with the farm file and attached photos. Print the restore card and tape it in the shop. <a href="how.html">How-to</a>.</p>
       <div class="auto-backup-box">
         <p class="card-hint" id="auto-backup-status"></p>
         <div class="form-actions">
@@ -1006,7 +1006,7 @@
       <div class="form-actions">
         <button class="btn btn-primary" id="backup-download">Download full backup (.json)</button>
         <button type="button" class="btn btn-secondary" id="backup-restore-card">Print restore card</button>
-        <button class="btn btn-secondary" id="backup-share" hidden>Send logs to another device</button>
+        <button class="btn btn-secondary" id="backup-share" hidden>Send a file to the shop</button>
         <label class="btn btn-secondary file-btn">
           Bring in logs from another device
           <input type="file" id="backup-restore" accept=".json,application/json" hidden>
@@ -1186,7 +1186,7 @@
     <div class="card about-card">
       <h3 class="card-title">About</h3>
       <p>Pesticide Logger — part of the <strong>Practical Farm Tools</strong> suite. A licensed, offline-first tool built for farms of every size; your farm records stay on this device.</p>
-      <p class="card-hint"><a href="start.html">What this is</a> · <a href="inspector.html">For inspectors</a> · <a href="extension.html">For extension</a></p>
+      <p class="card-hint"><a href="start.html">What this is</a> · <a href="inspector.html">For inspectors</a> · <a href="extension.html">For extension</a> · <a href="how.html">How-to</a></p>
       <p class="card-hint">Questions about restore, gather, or Add to Home Screen: <a href="mailto:practicalfarmtools@gmail.com">practicalfarmtools@gmail.com</a> — we cannot recover your book.</p>
       <p class="card-hint">This tool provides 50-state application <em>recordkeeping field coverage</em> with audit history, lot tracking, and in-cab workflows. It is not legal advice, does not replace WPS employer duties, and does not file California PUR, New York PRL, or other electronic reports for you. Always follow the product label and confirm requirements with your state pesticide agency.</p>
       <div class="form-actions">

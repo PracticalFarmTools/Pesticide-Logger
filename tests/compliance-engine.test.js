@@ -69,6 +69,48 @@ check('AL privateDuty none still requires the operational core', () => {
   assert.strictEqual(ok.verification, 'researched');
 });
 
+check('MS Chapter 09 private RUP list can be fields_complete; no customer box', () => {
+  assert.strictEqual(STATE_LAWS.MS.verification, 'researched');
+  assert.strictEqual(STATE_LAWS.MS.privateDuty, 'required');
+  const missingArea = evaluate(
+    coreApp({
+      complianceState: 'MS',
+      complianceApplicatorClass: 'private',
+      products: [{
+        productName: 'Glyphosate 4',
+        epaRegNo: '524-445',
+        total: 2,
+        reiHours: 12,
+        phiDays: 14
+      }]
+    }),
+    { state: 'MS', applicatorClass: 'private' }
+  );
+  assert.strictEqual(missingArea.complete, false);
+  assert.ok(missingArea.missingFields.some(f => f.name === 'area_treated'));
+  assert.ok(!missingArea.missingFields.some(f => f.name === 'customer_name'));
+  assert.ok(!missingArea.missingFields.some(f => f.name === 'sprayer_pressure'));
+
+  const ok = evaluate(
+    coreApp({
+      complianceState: 'MS',
+      complianceApplicatorClass: 'private',
+      area: 40,
+      products: [{
+        productName: 'Glyphosate 4',
+        epaRegNo: '524-445',
+        total: 2,
+        reiHours: 12,
+        phiDays: 14
+      }]
+    }),
+    { state: 'MS', applicatorClass: 'private' }
+  );
+  assert.strictEqual(ok.complete, true);
+  assert.strictEqual(ok.status, 'fields_complete');
+  assert.strictEqual(ok.verification, 'researched');
+});
+
 check('IA privateDuty none still requires the operational core, not customer address', () => {
   assert.strictEqual(STATE_LAWS.IA.privateDuty, 'none');
   const missingDate = evaluate(

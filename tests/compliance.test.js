@@ -71,6 +71,8 @@ check('AL and IA privateDuty is none; several private-uncertain states encoded',
     assert.strictEqual(STATE_LAWS[code].privateDuty, 'uncertain', code);
   });
   assert.strictEqual(STATE_LAWS.RI.privateDuty, 'required');
+  assert.strictEqual(STATE_LAWS.MS.privateDuty, 'required');
+  assert.strictEqual(STATE_LAWS.MS.verification, 'researched');
 });
 
 check('BASE_RECORD_FIELDS includes drift + customer copy extras', () => {

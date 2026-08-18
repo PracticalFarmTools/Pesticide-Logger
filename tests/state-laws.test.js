@@ -179,7 +179,7 @@ check('Home and Settings surface check-again dates; maintainer queue lists holes
     encoding: 'utf8', cwd: root
   });
   assert.strictEqual(holes.status, 0, holes.stderr);
-  assert.ok(holes.stdout.includes('MS\tuncertain\tuncertain'));
+  assert.ok(!holes.stdout.includes('MS\t'), 'Mississippi Chapter 09 names private RUP and other certified RUP records');
   assert.ok(!holes.stdout.includes('AL\t'), 'Alabama commercial list is researched; privateDuty none is not a hole');
   assert.ok(!holes.stdout.includes('IA\t'), 'Iowa 45.26 names commercial/retail only; privateDuty none is not a hole');
   assert.ok(!holes.stdout.includes('RI\t'), 'Rhode Island 2.6(C) names private RUP/SLU records');
@@ -188,7 +188,8 @@ check('Home and Settings surface check-again dates; maintainer queue lists holes
   const show = spawnSync(process.execPath, [path.join(root, 'tools', 'bundle-state-laws.js'), '--show', 'MS'], {
     encoding: 'utf8', cwd: root
   });
-  assert.ok(show.stdout.includes('https://agnet.mdac.ms.gov'));
+  assert.ok(show.stdout.includes('https://agnet.mdac.ms.gov/agManage/uploads/1639.pdf'));
+  assert.ok(show.stdout.includes('privateDuty\trequired'));
 });
 
 check('watch-list prints 50 local citation URLs and does not fetch', () => {
@@ -225,7 +226,7 @@ check('watch-list prints 50 local citation URLs and does not fetch', () => {
   const ia = data.find((line) => line.indexOf('IA\t') === 0);
   assert.ok(ia.indexOf('\tno\tno\thttps://') >= 0, ia);
   const ms = data.find((line) => line.indexOf('MS\t') === 0);
-  assert.ok(ms.indexOf('pdf\tagnet.mdac.ms.gov\tyes\tno\thttps://') >= 0, ms);
+  assert.ok(ms.indexOf('pdf\tagnet.mdac.ms.gov\tno\tno\thttps://agnet.mdac.ms.gov/agManage/uploads/1639.pdf') >= 0, ms);
   const ok = data.find((line) => line.indexOf('OK\t') === 0);
   assert.ok(ok.indexOf('ag.ok.gov') >= 0, ok);
   assert.ok(ok.indexOf('elaws') < 0, ok);
@@ -256,6 +257,8 @@ check('each state keeps its own citation URL and field list; no mixed matrices',
   assert.notStrictEqual(names('LA'), names('MS'));
   assert.ok(!names('MS').includes('sprayer_pressure'), 'Mississippi farm row must not require WDI PSI');
   assert.ok(!names('MS').includes('nozzle_type'), 'Mississippi farm row must not require termiticide nozzles');
+  assert.ok(names('MS').includes('area_treated*'), 'Mississippi Chapter 09 §104 names size of the area treated');
+  assert.ok(!names('MS').includes('customer_name'), 'Mississippi farm row must not require §206 customer boxes for private');
   assert.ok(names('OK').includes('area_treated*'), 'Oklahoma 35:30-17-21 names size of area treated');
   assert.ok(!names('OK').includes('sprayer_pressure'), 'Oklahoma farm row must not require WDI PSI');
   const ver = { researched: [], partial: [], uncertain: [] };
@@ -265,13 +268,13 @@ check('each state keeps its own citation URL and field list; no mixed matrices',
     duty[states[code].privateDuty].push(code);
   });
   assert.deepStrictEqual(ver.partial, []);
-  assert.deepStrictEqual(ver.uncertain, ['MS']);
+  assert.deepStrictEqual(ver.uncertain, []);
   assert.deepStrictEqual(duty.none, ['AL', 'IA']);
-  assert.deepStrictEqual(duty.uncertain, ['AR', 'KS', 'MI', 'MN', 'MS', 'SC', 'SD', 'VA']);
+  assert.deepStrictEqual(duty.uncertain, ['AR', 'KS', 'MI', 'MN', 'SC', 'SD', 'VA']);
   assert.strictEqual(states.AL.verification, 'researched');
   assert.strictEqual(states.AL.privateDuty, 'none');
-  assert.strictEqual(states.MS.verification, 'uncertain');
-  assert.strictEqual(states.MS.privateDuty, 'uncertain');
+  assert.strictEqual(states.MS.verification, 'researched');
+  assert.strictEqual(states.MS.privateDuty, 'required');
   assert.strictEqual(states.HI.customerCopyDays, null, 'HI employer copy is before application, not a 30-day clock');
   assert.strictEqual(states.KS.customerCopyDays, 30);
   assert.strictEqual(states.IN.customerCopyDays, null, 'voided 355 IAC 4-4 is not a copy clock');

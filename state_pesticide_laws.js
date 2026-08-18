@@ -2592,35 +2592,17 @@ const STATE_LAWS = {
     }
   },
   "MS": {
-    "reviewedAt": "2026-08-14",
+    "reviewedAt": "2026-08-18",
     "agency": "Mississippi Department of Agriculture and Commerce, Bureau of Plant Industry",
     "citation": {
-      "reference": "Title 2, Part 1, Subpart 3, Chapter 11 §111.01 (professional services) — not an agricultural use-record rule",
-      "url": "https://agnet.mdac.ms.gov/agManage/uploads/1641.pdf"
+      "reference": "Title 2, Part 1, Subpart 3, Chapter 09 §104 (private RUP) and §206 (other certified RUP applicators)",
+      "url": "https://agnet.mdac.ms.gov/agManage/uploads/1639.pdf"
     },
     "retentionYears": 2,
-    "appliesTo": "The linked rule is professional-services (for-hire pest control / WDI / termiticide), not a farm use-record matrix. MDAC certifies private and commercial agricultural applicators and inspects restricted-use records, but no agricultural field list was found as of 2026-08-14.",
-    "verification": "uncertain",
-    "notes": "Read 2026-08-14: MDAC pesticide program pages describe private vs commercial certification and professional-services licensing, and say the Bureau inspects restricted-use application records, but they do not name agricultural record elements. §111.01 termiticide extras (PSI, nozzle, vehicle ID, volume/minute) must not appear as required farm boxes. This row stays uncertain until an ag use-record rule is cited. Private duty is also unverified (not copied from professional services). Operational core still applies.",
+    "appliesTo": "Certified private applicators using restricted-use pesticides to produce an agricultural commodity (Chapter 09 §104). Certified applicators under Subchapter 02 / §206 (RUP work not required by other Mississippi licensing to be licensed). Not professional-services Chapter 11.",
+    "verification": "researched",
+    "notes": "Official MDAC Chapter 09 PDF (uploads/1639.pdf, read 2026-08-18; source Miss. Code Ann. §69-23-109; amended Nov 2, 2024). Index: https://www.mdac.ms.gov/agency-info/laws-regulations/regulation-subpart-3/ item 09. §104 certified private applicators shall keep complete and accurate records of all work performed for at least two years: brand or product name; EPA registration number; total amount applied; size of the area treated; crop, commodity, stored product or site; date; location. That shared agricultural list is this row. §206 (Subchapter 02 certified applicators) adds name and address of the person for whom the RUP is applied; time as well as date; name and certification number of the certified applicator — do not treat those for-hire extras as required private boxes, and do not paste Chapter 11 professional-services WDI extras (PSI, nozzle, vehicle ID) onto a farm row. No completion clock in Chapter 09 (24-hour fallback is operational).",
     "fields": [
-      {
-        "name": "date",
-        "label": "Application date",
-        "type": "date",
-        "required": true
-      },
-      {
-        "name": "location",
-        "label": "Location / field / site description",
-        "type": "string",
-        "required": true
-      },
-      {
-        "name": "crop_treated",
-        "label": "Crop / commodity / site treated",
-        "type": "string",
-        "required": true
-      },
       {
         "name": "brand_name",
         "label": "Brand / product name",
@@ -2638,11 +2620,35 @@ const STATE_LAWS = {
         "label": "Total amount applied",
         "type": "string",
         "required": true
+      },
+      {
+        "name": "area_treated",
+        "label": "Area treated",
+        "type": "string",
+        "required": true
+      },
+      {
+        "name": "crop_treated",
+        "label": "Crop / commodity / site treated",
+        "type": "string",
+        "required": true
+      },
+      {
+        "name": "date",
+        "label": "Application date",
+        "type": "date",
+        "required": true
+      },
+      {
+        "name": "location",
+        "label": "Location / field / site description",
+        "type": "string",
+        "required": true
       }
     ],
     "recordWithinHours": 24,
     "customerCopyDays": null,
-    "privateDuty": "uncertain",
+    "privateDuty": "required",
     "recordDeadline": {
       "count": 24,
       "unit": "hours"

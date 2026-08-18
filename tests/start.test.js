@@ -49,9 +49,15 @@ check('Maine commercial lists required boxes and the agency', () => {
   assert.ok(s.citationUrl);
 });
 
-check('Mississippi hole is named, not hidden', () => {
+check('Mississippi private lists Chapter 09 RUP boxes, not a hole', () => {
   const s = StartPage.summarizeLaw(STATE_LAWS.MS, 'private', 'MS');
-  assert.ok(s.holes.some((h) => /uncertain/i.test(h)));
+  assert.strictEqual(s.quiet, false);
+  assert.strictEqual(s.verification, 'researched');
+  assert.strictEqual(s.privateDuty, 'required');
+  assert.ok(s.requiredLabels.includes('EPA registration number'));
+  assert.ok(s.requiredLabels.includes('Area treated'));
+  assert.ok(!s.requiredLabels.includes('Customer / person for whom applied'));
+  assert.ok(!s.holes.some((h) => /uncertain/i.test(h)));
 });
 
 check('all fifty names are present', () => {

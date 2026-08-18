@@ -489,8 +489,19 @@
     return '';
   }
 
-  function statuteChecklist(law) {
+  function statuteChecklist(law, settings) {
     if (!law || !Array.isArray(law.fields)) return [];
+    const cls = (settings && settings.applicatorClass) || 'private';
+    if (cls === 'private' && (law.privateDuty || 'required') === 'none') {
+      // Same operational core the completeness engine still requires.
+      return [
+        'Application date',
+        'Crop / commodity / site treated',
+        'Field / site',
+        'Applicator name',
+        'At least one product with amount applied'
+      ];
+    }
     return law.fields.filter((f) => f && f.required && f.label).map((f) => f.label);
   }
 
@@ -544,7 +555,7 @@
         matrixEdition: opts.matrixEdition
           || (typeof STATE_LAWS_RESEARCH_DATE !== 'undefined' ? STATE_LAWS_RESEARCH_DATE : '')
       },
-      checklist: statuteChecklist(law),
+      checklist: statuteChecklist(law, settings),
       counts: {
         total: records.length,
         filled: filled,

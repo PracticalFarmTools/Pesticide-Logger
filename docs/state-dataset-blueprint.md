@@ -19,8 +19,9 @@ way they get any other app update (Reload).
 The app already **runs** in all 50 states. Every code has an agency, a
 citation URL, a retention period, a field list, `privateDuty`, and a
 `recordDeadline`. What is not done is **confidence**. A Mississippi private
-grower and an Iowa private grower both get a log; only Iowa’s field list is
-marked `researched` from an agricultural rule. Completeness still means
+grower and an Iowa private grower both get a log; Iowa’s commercial list is
+marked `researched` from 45.26, and Iowa private stays quiet because that
+rule does not name private applicators. Completeness still means
 “required fields were filled,” never a legal determination.
 
 This is **not** 50 official PDF templates, not CA PUR / NY PRL / HI annual
@@ -45,19 +46,20 @@ green check we cannot defend.
 Source of truth: `laws/XX.json` (one state per file). Runtime cache:
 `state_pesticide_laws.js` via `node tools/bundle-state-laws.js`. Completeness:
 `compliance.js` `evaluateCompliance`. Log reshape: `reshapeAppFormForState`.
-Packet checklist: `FarmFile.statuteChecklist` (required `law.fields` labels).
+Packet checklist: `FarmFile.statuteChecklist` (required `law.fields` labels;
+operational core only when `privateDuty` is `none` for a private grower).
 Gate: `tests/compliance.test.js` (50 states present; agency / citation /
 retention / verification / fields / `privateDuty`).
 
-Research date in the file header: **2026-08-14**.
+Research date in the file header: **2026-08-18**.
 
 | Bucket | Count | Codes |
 |---|---|---|
 | `verification: researched` | 49 | All except MS |
 | `verification: partial` | 0 | — |
 | `verification: uncertain` | 1 | MS |
-| `privateDuty: required` | 41 | Default (RI private RUP/SLU is named in 250-RICR-40-15-2.6(C)) |
-| `privateDuty: none` | 1 | AL |
+| `privateDuty: required` | 40 | Default (RI private RUP/SLU is named in 250-RICR-40-15-2.6(C)) |
+| `privateDuty: none` | 2 | AL, IA |
 | `privateDuty: uncertain` | 8 | AR, KS, MI, MN, MS, SC, SD, VA |
 | Customer-copy days encoded | 6 | FL, KS, ND, NM, PA, WA (commercial; KS is the 30-day statute; HI employer copy is before application; IN 30-day copy was in voided 355 IAC 4-4) |
 | Citation host = Cornell LII | 9 | AZ, CA, IL, MA, MI, NE, TN, UT, WY (official host 403/404/redirect on 2026-08-14) |
@@ -67,7 +69,7 @@ pass:
 
 - `partial` / `uncertain` → warning; status cannot be `fields_complete`
   (`datasetOk` is false). Badge is **Needs review**.
-- `privateDuty: none` (AL private) → skip the state matrix; operational core
+- `privateDuty: none` (AL or IA private) → skip the state matrix; operational core
   still required (date, crop, location, applicator, product amount).
 - `privateDuty: uncertain` + private class → extra warning; same `datasetOk`
   block. A private spray in Virginia with every box filled is **Needs review**,
@@ -81,7 +83,7 @@ without ever flipping a state to Complete by inventing fields.
 
 | Settings state | Private grower | Commercial grower |
 |---|---|---|
-| Iowa (`researched` / `required`) | State required tags; Complete is possible | Same |
+| Iowa (`researched` / `none`) | No 45.26 matrix; operational core still required; **Fields complete** is possible | 45.26(3) commercial office-record matrix; Complete is possible |
 | Alabama (`researched` / `none`) | No Alabama matrix; operational core still required; **Fields complete** is possible | Commercial r. 80-1-13-.14 matrix; Complete is possible |
 | Virginia (`researched` / `uncertain`) | Commercial field list shown; Needs review because private duty is unverified | Complete is possible |
 | Mississippi (`uncertain` / `uncertain`) | Short generic farm row only (no WDI PSI/nozzles); Needs review; ag rule not verified | Same warning |

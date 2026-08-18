@@ -59,13 +59,17 @@ check('all fifty names are present', () => {
   assert.strictEqual(StartPage.STATE_NAMES.IA, 'Iowa');
 });
 
-check('Iowa private does not list commercial-only boxes on the public page', () => {
+check('Iowa private is quiet; commercial lists 1/1/2026 office-record extras', () => {
   const priv = StartPage.summarizeLaw(STATE_LAWS.IA, 'private', 'IA');
   const comm = StartPage.summarizeLaw(STATE_LAWS.IA, 'commercial', 'IA');
-  assert.ok(!priv.requiredLabels.includes('Business / operator name & address'));
-  assert.ok(!priv.requiredLabels.includes('Company / business license #'));
+  assert.strictEqual(priv.quiet, true);
+  assert.deepStrictEqual(priv.requiredLabels, []);
+  assert.ok(priv.holes.some((h) => /private-applicator record duty/i.test(h)));
+  assert.ok(comm.requiredLabels.includes('EPA registration number'));
+  assert.ok(comm.requiredLabels.includes('Area treated'));
+  assert.ok(comm.requiredLabels.includes('Applicator certification / license #'));
   assert.ok(comm.requiredLabels.includes('Company / business license #'));
-  assert.ok(priv.requiredLabels.includes('Location / field / site description'));
+  assert.ok(!priv.requiredLabels.includes('Business / operator name & address'));
 });
 
 if (failed) process.exit(1);

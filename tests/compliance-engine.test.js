@@ -69,6 +69,34 @@ check('AL privateDuty none still requires the operational core', () => {
   assert.strictEqual(ok.verification, 'researched');
 });
 
+check('IA privateDuty none still requires the operational core, not customer address', () => {
+  assert.strictEqual(STATE_LAWS.IA.privateDuty, 'none');
+  const missingDate = evaluate(
+    coreApp({ date: '', complianceState: 'IA', complianceApplicatorClass: 'private' }),
+    { state: 'IA', applicatorClass: 'private' }
+  );
+  assert.strictEqual(missingDate.complete, false);
+  assert.ok(missingDate.warnings.some(w => /no private-applicator recordkeeping duty/i.test(w)));
+  assert.ok(!missingDate.missingFields.some(f => f.name === 'customer_address'));
+
+  const ok = evaluate(
+    coreApp({ complianceState: 'IA', complianceApplicatorClass: 'private' }),
+    { state: 'IA', applicatorClass: 'private' }
+  );
+  assert.strictEqual(ok.complete, true);
+  assert.strictEqual(ok.status, 'fields_complete');
+
+  const comm = evaluate(
+    coreApp({ complianceState: 'IA', complianceApplicatorClass: 'commercial' }),
+    { state: 'IA', applicatorClass: 'commercial' }
+  );
+  assert.strictEqual(comm.complete, false);
+  assert.ok(comm.missingFields.some(f => f.name === 'epa_reg_no'));
+  assert.ok(comm.missingFields.some(f => f.name === 'area_treated'));
+  assert.ok(comm.missingFields.some(f => f.name === 'customer_address'));
+  assert.ok(comm.missingFields.some(f => f.name === 'applicator_license'));
+});
+
 check('missing mix REI is needs_review, never intervalsOk', () => {
   const r = evaluate(
     coreApp({

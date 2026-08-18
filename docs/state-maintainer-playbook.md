@@ -5,7 +5,7 @@
 `laws/README.md`. This playbook is the **order of work** and the
 **ongoing cadence** so maintenance is not a quarterly research program.
 
-Matrix edition is **2026-08-14**. App version **v2.9.26**. The log,
+Matrix edition is **2026-08-18**. App version **v2.9.26**. The log,
 badges, packet freeze, and `laws/XX.json` isolation are already shipped.
 
 ## Proposal
@@ -110,7 +110,7 @@ Order (one state per promotion; A–E already run):
 
 | Next | Codes | Why this order |
 |---|---|---|
-| Done | AL, ME, CT, HI, AR, KS, MS, RI | Promoted or frozen from primary sources on 2026-08-14 |
+| Done | AL, IA, ME, CT, HI, AR, KS, MS, RI | Promoted or frozen from primary sources. Iowa 45.26 (read 2026-08-18): commercial/retail only → `privateDuty: none`; 1/1/2026 commercial extras are on the matrix. |
 | Remaining private duty | MI, MN, SC, SD, VA (plus AR, KS still `uncertain` private) | Do not retouch commercial fields unless the same page contradicts them |
 | Frozen | MS | No ag field list found; do not paste professional-services WDI onto a farm row |
 

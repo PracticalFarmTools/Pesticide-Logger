@@ -146,7 +146,7 @@ check('engine and app do not hard-code per-state law branches; engine ignores re
 check('sw cache name splits app version from laws edition', () => {
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   assert.ok(sw.includes("const APP_CACHE = 'pesticide-logger-v2.9.26'"));
-  assert.ok(sw.includes("const LAWS_EDITION = '2026-08-14'"));
+  assert.ok(sw.includes("const LAWS_EDITION = '2026-08-18'"));
   assert.ok(sw.includes("const CACHE_NAME = APP_CACHE + '-laws-' + LAWS_EDITION"));
   assert.ok(!sw.includes("const CACHE_NAME = 'pesticide-logger-v2.9.26';"));
 });
@@ -173,7 +173,7 @@ check('Home and Settings surface check-again dates; maintainer queue lists holes
     encoding: 'utf8', cwd: root
   });
   assert.strictEqual(status.status, 0, status.stderr);
-  assert.ok(status.stdout.includes('IA\tresearched\trequired\t2026-07-31\t2027-07-31\tno'));
+  assert.ok(status.stdout.includes('IA\tresearched\tnone\t2026-08-18\t2027-08-18\tno'));
   assert.ok(status.stdout.includes('0 stale'));
   const holes = spawnSync(process.execPath, [path.join(root, 'tools', 'bundle-state-laws.js'), '--holes'], {
     encoding: 'utf8', cwd: root
@@ -181,6 +181,7 @@ check('Home and Settings surface check-again dates; maintainer queue lists holes
   assert.strictEqual(holes.status, 0, holes.stderr);
   assert.ok(holes.stdout.includes('MS\tuncertain\tuncertain'));
   assert.ok(!holes.stdout.includes('AL\t'), 'Alabama commercial list is researched; privateDuty none is not a hole');
+  assert.ok(!holes.stdout.includes('IA\t'), 'Iowa 45.26 names commercial/retail only; privateDuty none is not a hole');
   assert.ok(!holes.stdout.includes('RI\t'), 'Rhode Island 2.6(C) names private RUP/SLU records');
   assert.ok(holes.stdout.includes('VA\tresearched\tuncertain'));
   assert.ok(holes.stdout.includes('AR\tresearched\tuncertain'));
@@ -265,7 +266,7 @@ check('each state keeps its own citation URL and field list; no mixed matrices',
   });
   assert.deepStrictEqual(ver.partial, []);
   assert.deepStrictEqual(ver.uncertain, ['MS']);
-  assert.deepStrictEqual(duty.none, ['AL']);
+  assert.deepStrictEqual(duty.none, ['AL', 'IA']);
   assert.deepStrictEqual(duty.uncertain, ['AR', 'KS', 'MI', 'MN', 'MS', 'SC', 'SD', 'VA']);
   assert.strictEqual(states.AL.verification, 'researched');
   assert.strictEqual(states.AL.privateDuty, 'none');

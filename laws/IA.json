@@ -1,15 +1,15 @@
 {
   "code": "IA",
-  "reviewedAt": "2026-07-31",
+  "reviewedAt": "2026-08-18",
   "agency": "Iowa Department of Agriculture and Land Stewardship",
   "citation": {
     "reference": "Iowa Admin. Code r. 21-45.26(206)",
-    "url": "https://www.legis.iowa.gov/docs/iac/rule/02-05-2025.21.45.26.pdf"
+    "url": "https://www.legis.iowa.gov/docs/iac/chapter/07-22-2026.21.45.pdf"
   },
   "retentionYears": 3,
-  "appliesTo": "Commercial applicators and retail dealers; commercial applicator office records of all application activities on each pesticide applied.",
+  "appliesTo": "Commercial applicators and retail dealers. 45.26(3) is commercial applicator office records of each pesticide applied. Private applicators are not named in 45.26; follow the label.",
   "verification": "researched",
-  "notes": "Current 2025 text requires temperature/wind direction/velocity if applicable for outdoor areas. Rule effective 1/1/2026 adds EPA registration number, treatment area size, crop/commodity/site for RUP, and certified/noncertified applicator details; include those in the logger as recommended.",
+  "notes": "Official IAC ch. 21-45 PDF dated 7/22/2026 (read 2026-08-18; ARC 9145C, IAB 4/30/25, effective 1/1/26). Opening sentence: commercial applicators and retail dealers shall maintain records for three years. Private applicators are not in 45.26 — privateDuty none; still follow the label. 45.26(3) commercial office records: licensee name and license number; landowner/customer name and address; place of RUP application; date; trade name and EPA registration number; quantity, concentration or rate, and treatment-area size; outdoor temperature and wind direction/velocity if applicable; RUP use including crop/commodity/stored product/site; start and end time; certified applicator name and certification number; noncertified applicator name if applicable under 45.22(15). Weather stays optional (if applicable). Location and crop stay required on this commercial matrix because office records need a site and the operational core already requires them; 45.26(3)(c) and (h) name those elements for RUP. Do not paste 45.26(1)–(2) dealer RUP-sale lists, or 45.22(15) supervision-qualification extras (signature, issuing unit, expiration), onto a field-crop spray. No customer-copy day count and no completion clock in 45.26 (24-hour fallback is operational). Cornell reprint of 45.26: https://www.law.cornell.edu/regulations/iowa/Iowa-Admin-Code-r-21-45-26",
   "fields": [
     {
       "name": "business_name_address",
@@ -54,6 +54,12 @@
       "required": true
     },
     {
+      "name": "epa_reg_no",
+      "label": "EPA registration number",
+      "type": "string",
+      "required": true
+    },
+    {
       "name": "amount_applied",
       "label": "Total amount applied",
       "type": "string",
@@ -62,6 +68,12 @@
     {
       "name": "rate",
       "label": "Application rate",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
       "type": "string",
       "required": true
     },
@@ -90,6 +102,12 @@
       "required": true
     },
     {
+      "name": "crop_treated",
+      "label": "Crop / commodity / site treated",
+      "type": "string",
+      "required": true
+    },
+    {
       "name": "start_time",
       "label": "Start time",
       "type": "time",
@@ -100,11 +118,29 @@
       "label": "End time",
       "type": "time",
       "required": true
+    },
+    {
+      "name": "applicator_name",
+      "label": "Applicator name",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "applicator_license",
+      "label": "Applicator certification / license #",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "noncertified_applicator_name",
+      "label": "Noncertified / trainee applicator",
+      "type": "string",
+      "required": false
     }
   ],
   "recordWithinHours": 24,
   "customerCopyDays": null,
-  "privateDuty": "required",
+  "privateDuty": "none",
   "recordDeadline": {
     "count": 24,
     "unit": "hours"

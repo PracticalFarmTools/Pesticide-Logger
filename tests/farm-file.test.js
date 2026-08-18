@@ -306,6 +306,9 @@ await check('inspector packet v2 cover, checklist, incomplete, and print CSS', a
   assert.ok(payload.farm.retentionYears);
   assert.ok(payload.checklist.length > 3);
   assert.ok(payload.checklist.includes('Application date'));
+  assert.ok(!payload.checklist.includes('Customer address'),
+    'Iowa privateDuty none must not paste commercial 45.26 boxes onto a private packet');
+  assert.ok(!payload.checklist.includes('Company / business license #'));
   assert.strictEqual(payload.counts.total, 4);
   assert.strictEqual(payload.counts.filled, 2);
   assert.strictEqual(payload.counts.incomplete, 2);
@@ -328,11 +331,11 @@ await check('inspector packet v2 cover, checklist, incomplete, and print CSS', a
   assert.ok(html.includes('12 hr'));
   assert.ok(html.includes('The label is the law'));
   assert.ok(html.includes('not a filing') || html.includes('not the agency'));
-  assert.ok(html.includes('Rules last checked 2026-07-31'));
-  assert.ok(html.includes('check again by 2027-07-31'));
-  assert.ok(html.includes('matrix edition 2026-08-14'));
-  assert.strictEqual(payload.farm.reviewedAt, '2026-07-31');
-  assert.strictEqual(payload.farm.reviewBy, '2027-07-31');
+  assert.ok(html.includes('Rules last checked 2026-08-18'));
+  assert.ok(html.includes('check again by 2027-08-18'));
+  assert.ok(html.includes('matrix edition 2026-08-18'));
+  assert.strictEqual(payload.farm.reviewedAt, '2026-08-18');
+  assert.strictEqual(payload.farm.reviewBy, '2027-08-18');
   assert.ok(!html.includes('privateKey'));
   const completeRow = html.includes('INCOMPLETE') && html.includes('Complete');
   assert.ok(completeRow);

@@ -166,4 +166,4 @@ Owner decisions left in place: public page in front of the logger (now actually 
 
 The logger is **product-ready for a trial**. It is **not sale-ready** until the owner lists checkout and embeds the license public key. It is **strategy-ready** only if it stays the grower’s book.
 
-Ship the owner gates. Send the extension one-pager. Do not grow into the software this was built to refuse.
+The sequenced path from here is `docs/path-ahead-blueprint.md`: sale-ready (keys, merchant, hostname, contact), then one first-run backup ritual, then one beachhead, then Iowa/hasher with holes left named. Do not grow into the software this was built to refuse.

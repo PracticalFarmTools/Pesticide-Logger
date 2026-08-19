@@ -108,6 +108,21 @@ async function check(name, fn) {
     assert.strictEqual(badKey.keyReason, 'signature');
   });
 
+  await check('empty checkout URL keeps logging open even after 40 days', () => {
+    const start = Date.UTC(2026, 6, 1);
+    const open = lic.resolveLicenseState({
+      trialStartedAt: start, now: start + 40 * 86400000, keyValid: false, hasKey: false, checkoutUrl: ''
+    });
+    assert.strictEqual(open.mode, 'open');
+    assert.strictEqual(open.pro, true);
+    const withStore = lic.resolveLicenseState({
+      trialStartedAt: start, now: start + 40 * 86400000, keyValid: false, hasKey: false,
+      checkoutUrl: 'https://pay.example/buy'
+    });
+    assert.strictEqual(withStore.mode, 'trial_expired');
+    assert.strictEqual(withStore.pro, false);
+  });
+
   await check('delivery letter names mailbox and how.html, not a live origin', () => {
     const { deliveryBody } = require(path.join(__dirname, '..', 'tools', 'sign-license.js'));
     const letter = deliveryBody({ name: 'Jane Farmer', key: 'PLPRO.TESTKEY', expires: null });

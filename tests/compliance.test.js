@@ -240,14 +240,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.31 + deadline/license wiring', () => {
+check('source files advertise v2.9.32 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.31'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.31'));
+  assert.ok(app.includes('v2.9.32'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.32'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-18'"));
-  assert.ok(!html.includes('v2.9.31'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.32'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -415,8 +415,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.31'"));
-  assert.ok(!html.includes('v2.9.31'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.32'"));
+  assert.ok(!html.includes('v2.9.32'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -883,12 +883,14 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   const i18n = require(path.join(root, 'i18n.js'));
   const csvSrc = fs.readFileSync(path.join(root, 'csv-import.js'), 'utf8');
   assert.ok(start.includes('Open the logger') && start.includes('id="start-state"'));
-  assert.ok(start.includes('Try the logger — 30 days, no card'));
+  assert.ok(start.includes('Open the logger — no card'));
+  assert.ok(start.includes('Logging stays open on this host until checkout is live'));
+  assert.ok(!start.includes('Try the logger — 30 days, no card'));
   assert.ok(start.includes('If you spray') && start.includes('custom-applicator'));
   assert.ok(start.includes('grower’s book') || start.includes("grower's book"));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(start), 'public page does not name other products');
   assert.ok(!start.includes('Names on those buttons'));
-  assert.ok(!start.includes('v2.9.31'), 'public page keeps version out of copy');
+  assert.ok(!start.includes('v2.9.32'), 'public page keeps version out of copy');
   assert.ok(start.includes('id="start-copy-link"'));
   assert.ok(start.includes('mailto:practicalfarmtools@gmail.com') && inspector.includes('mailto:practicalfarmtools@gmail.com') &&
     extension.includes('mailto:practicalfarmtools@gmail.com'), 'public human on all three pages');
@@ -994,6 +996,27 @@ check('v2.9.30: cab A+ restage, compact mix, send-now, device role', () => {
   assert.ok(listing.includes('Coming soon') && !listing.includes('Status:** Active'));
   assert.ok(listing.includes('Delete from the live catalog card'));
   assert.ok(!start.includes('pesticide.practicalfarmtools.com is live'));
+});
+
+check('v2.9.32: empty BUY_URL keeps logging open and does not start a trial', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');
+  const lic = require(path.join(root, 'license.js'));
+  assert.ok(app.includes('checkoutUrl: BUY_URL'));
+  assert.ok(app.includes("if (!(BUY_URL || '').trim())"));
+  assert.ok(app.includes('delete data.meta.trialStartedAt'));
+  assert.ok(html.includes('Logging stays open on this host until checkout is live'));
+  assert.ok(start.includes('Open the logger — no card'));
+  const open = lic.resolveLicenseState({
+    trialStartedAt: Date.now() - 40 * 86400000,
+    now: Date.now(),
+    keyValid: false,
+    hasKey: false,
+    checkoutUrl: ''
+  });
+  assert.strictEqual(open.mode, 'open');
+  assert.strictEqual(open.pro, true);
 });
 
 check('v2.9.31: owner-ops kit — mailbox checkout, delivery letter, owner-next', () => {

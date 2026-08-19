@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.31 — Practical Farm Tools
+/* Pesticide Logger v2.9.32 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -7503,7 +7503,8 @@
       keyValid,
       hasKey: !!data.meta.licenseKey,
       holder,
-      keyReason
+      keyReason,
+      checkoutUrl: BUY_URL
     });
     licenseState.pro = next.pro;
     licenseState.mode = next.mode;
@@ -7517,15 +7518,21 @@
   function renderLicenseUI() {
     const badge = $('#license-badge');
     if (badge) {
-      badge.hidden = false;
-      if (licenseState.mode === 'licensed') badge.textContent = 'Licensed';
-      else if (licenseState.mode === 'trial') badge.textContent = `Trial · ${licenseState.daysLeft}d`;
-      else badge.textContent = 'Locked';
-      badge.classList.toggle('license-badge-pro', licenseState.pro);
+      if (licenseState.mode === 'open') {
+        badge.hidden = true;
+      } else {
+        badge.hidden = false;
+        if (licenseState.mode === 'licensed') badge.textContent = 'Licensed';
+        else if (licenseState.mode === 'trial') badge.textContent = `Trial · ${licenseState.daysLeft}d`;
+        else badge.textContent = 'Locked';
+        badge.classList.toggle('license-badge-pro', licenseState.pro);
+      }
     }
     const status = $('#license-status');
     if (status) {
-      if (licenseState.mode === 'licensed') {
+      if (licenseState.mode === 'open') {
+        status.textContent = tr('This host has no checkout. Logging stays open. Spray logs stay on this device.');
+      } else if (licenseState.mode === 'licensed') {
         status.textContent = `License active${licenseState.holder ? ' — ' + licenseState.holder : ''}. Thank you for your purchase.`;
       } else if (licenseState.mode === 'trial') {
         status.textContent = `Trial active — ${licenseState.daysLeft} day(s) left. No key needed yet.`;
@@ -7654,7 +7661,12 @@
   }
 
   function initLicense() {
-    if (!data.meta.trialStartedAt) {
+    if (!(BUY_URL || '').trim()) {
+      if (data.meta.trialStartedAt) {
+        delete data.meta.trialStartedAt;
+        save();
+      }
+    } else if (!data.meta.trialStartedAt) {
       data.meta.trialStartedAt = Date.now();
       save();
     }
@@ -7784,7 +7796,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.31';
+  const APP_VERSION = 'v2.9.32';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {

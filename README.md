@@ -1,8 +1,9 @@
-# Pesticide Logger v2.9.31
+# Pesticide Logger v2.9.32
 
 **Offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite. Licensed software with
-a 30-day trial — see `PRICING.md`.
+a 30-day trial once checkout exists — see `PRICING.md`. While `BUY_URL` is
+empty, logging stays open (beta / preview).
 
 The public page (what to send a neighbor, inspector, or extension) is `start.html`.
 Restore / catch-up / Add to Home Screen is `how.html` (no service worker).
@@ -110,7 +111,8 @@ label.
 ## Pricing & licensing
 
 Pesticide Logger is paid software. Every feature is included — there are no unpaid
-tiers or feature-gated upgrades. A 30-day trial unlocks the entire app with no card
+tiers or feature-gated upgrades. While checkout is empty, logging stays open
+(beta). Once Buy is set, a 30-day trial unlocks the entire app with no card
 required; after that, a license is required to keep using it. Licensing is
 fully offline — ECDSA-signed keys verified on-device, no license server, no
 telemetry. The sale price is set at checkout and is not shown in the app.

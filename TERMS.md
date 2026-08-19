@@ -7,7 +7,8 @@ _Last updated: 2026-08-18. Plain-English summary first; farmers are busy._
 - Your farm records belong to you and stay on your device. We never see them.
 - A CSV you exported from a spreadsheet or another app is still your file.
   We do not upload it and we are not those other companies.
-- This is paid software: a 30-day trial, then a license is required to
+- This is paid software. Until checkout is live on a host, logging is not
+  timed. Once checkout exists: a 30-day trial, then a license is required to
   keep logging new applications. Spray logs already saved stay on your
   device. You can review any year and export them after a trial or
   subscription ends. A license is for using the logger, not for keeping

@@ -5,7 +5,7 @@
 `laws/README.md`. This playbook is the **order of work** and the
 **ongoing cadence** so maintenance is not a quarterly research program.
 
-Matrix edition is **2026-08-18**. App version **v2.9.31**. The log,
+Matrix edition is **2026-08-18**. App version **v2.9.32**. The log,
 badges, packet freeze, and `laws/XX.json` isolation are already shipped.
 
 ## Proposal

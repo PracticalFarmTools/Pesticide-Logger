@@ -1,8 +1,13 @@
 # Owner next — what only you can do
 
-**App is v2.9.31.** Product grade: `docs/seller-grade-report.md`. Listing paste:
+**App is v2.9.32.** Product grade: `docs/seller-grade-report.md`. Listing paste:
 `docs/suite-listing.md`. This file is the **order**. Do not skip. Do not go
 live until step 2 answers. Do not set `BUY_URL` until step 4.
+
+**Beta testers:** send them this origin (the Vercel URL you attach). Logging
+stays open. There is no 30-day clock until you set `BUY_URL`. Tell them
+records stay on their phone and to open `how.html`. You do not need a key
+backup for this.
 
 The logger already logs, restages a mix, and sends a file to the shop. What
 is left is a storefront that matches the product, a hostname a neighbor can
@@ -90,6 +95,11 @@ the key inside. Without `--mail` you get the raw key only.
 **Only then** set `BUY_URL` in `app.js` to that real checkout URL, bump
 `APP_VERSION` / `APP_CACHE`, and deploy **this origin**. Tests fail if you
 leave a placeholder. Empty `BUY_URL` is still the honest state.
+
+Setting `BUY_URL` starts the 30-day trial on each device that does not
+already have a key. Preview clocks from beta are discarded, so testers
+get a fair 30 days from go-live — not from the day they first opened the
+preview.
 
 ---
 

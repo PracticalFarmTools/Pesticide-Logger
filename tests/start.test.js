@@ -111,6 +111,9 @@ check('owner-next is the go-live order; listing is not live; path-ahead is super
   assert.ok(listing.includes('NOT LIVE') && listing.includes('Coming soon'));
   assert.ok(pathAhead.includes('Status: superseded'));
   assert.ok(/const BUY_URL = ['"]['"]/.test(app), 'Buy URL stays empty until checkout exists');
+  const start = fs.readFileSync(path.join(__dirname, '..', 'start.html'), 'utf8');
+  assert.ok(start.includes('Open the logger — no card'));
+  assert.ok(start.includes('Logging stays open on this host until checkout is live'));
 });
 
 if (failed) process.exit(1);

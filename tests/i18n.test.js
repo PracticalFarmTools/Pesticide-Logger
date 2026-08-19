@@ -108,6 +108,12 @@ check('cab A+ restage, stamp weather, and send-now chrome are translated', () =>
   );
 });
 
+check('open-host license status is translated', () => {
+  const msg = 'This host has no checkout. Logging stays open. Spray logs stay on this device.';
+  assert.ok(i18n.ES[msg] && i18n.FR[msg] && i18n.PT_BR[msg]);
+  assert.notStrictEqual(i18n.t('es', 'Open the logger — no card'), 'Open the logger — no card');
+});
+
 check('checkout note names the mailbox until Buy is live', () => {
   const note = 'Paste a license key from your purchase email. Until checkout is live, email practicalfarmtools@gmail.com. Spray logs stay on this device either way.';
   assert.ok(i18n.ES[note]);

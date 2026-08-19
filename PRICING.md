@@ -28,8 +28,11 @@ label photo), crew nicknames and gather-from-phone, a signed inspector
 HTML packet, and the
 certifier/buyer packet export.
 
-**30-day trial for everyone, automatic, no card.** The whole app is
-unlocked during the trial. After it ends, a license is required to keep
+**30-day trial for everyone, automatic, no card — once checkout exists.**
+While `BUY_URL` is empty, logging stays open and the trial clock does not
+run (send this origin to beta testers). Setting `BUY_URL` starts a fresh
+30-day trial on each device that does not already have a key. After the
+trial ends, a license is required to keep
 *logging*. Records already on the device are never altered or deleted —
 you can still review every year and download a backup or CSV. A lapsed
 subscription does not take your spray logs. Activating a license restores

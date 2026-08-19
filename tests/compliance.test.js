@@ -211,11 +211,14 @@ check('HH:MM:SS application times still produce record deadlines', () => {
   assert.strictEqual(new Date(due).toISOString().slice(0, 13), '2026-08-01T16');
 });
 
-check('EPA product-name charset allows percent signs', () => {
+check('EPA product-name charset allows percent signs and hyphens', () => {
   // Mirrors api/epa.js query allowlist — keep in sync.
-  const invalid = /[^\p{L}\p{N}\s®™().,'&+/-/%]/u;
+  const invalid = /[^\p{L}\p{N}\s®™().,'&+/%-]/u;
   assert.ok(!invalid.test('NEEM OIL 70%'));
   assert.ok(!invalid.test("Joe's Fungicide (SC)"));
+  assert.ok(!invalid.test('2,4-D'));
+  assert.ok(!invalid.test('Ranger-Pro'));
+  assert.ok(!invalid.test('1021-1750'));
   assert.ok(invalid.test('bad<script>'));
 });
 

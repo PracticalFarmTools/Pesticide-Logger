@@ -123,9 +123,13 @@
   function fallbackQueries(query) {
     const raw = String(query || '').trim();
     if (!raw || isEpaRegQuery(raw)) return [];
-    const parts = raw.split(/\s+/).filter(Boolean);
+    const parts = raw.split(/[\s-]+/).filter(Boolean);
     if (parts.length < 2) return [];
     const out = [];
+    if (/-/.test(raw)) {
+      const spaced = parts.join(' ');
+      if (spaced.length >= 2) out.push(spaced);
+    }
     let end = parts.length;
     while (end > 1 && FORMULATION_TOKEN.test(parts[end - 1])) end -= 1;
     if (end < parts.length) {
@@ -134,12 +138,12 @@
     }
     const brand = parts.find((p) => /[A-Za-z]{3,}/.test(p) && !FORMULATION_TOKEN.test(p));
     if (brand && brand.length >= 3) out.push(brand);
-    const foldedRaw = fold(raw);
+    const rawKey = raw.toLowerCase().replace(/\s+/g, ' ');
     const seen = new Set();
     return out.filter((q) => {
-      const f = fold(q);
-      if (!f || f === foldedRaw || seen.has(f)) return false;
-      seen.add(f);
+      const key = String(q).trim().toLowerCase().replace(/\s+/g, ' ');
+      if (!key || key === rawKey || seen.has(key)) return false;
+      seen.add(key);
       return true;
     });
   }

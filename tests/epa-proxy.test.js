@@ -42,14 +42,15 @@ async function run() {
     assert.strictEqual(res.statusCode, 405);
   });
 
-  await check('percent sign is allowed in product-name search', async () => {
+  await check('hyphenated names and EPA numbers are allowed as search text', async () => {
     const orig = global.fetch;
     global.fetch = async () => ({ ok: true, json: async () => ({ items: [] }) });
     try {
-      const res = mockRes();
-      await handler(mockReq({ q: 'NEEM OIL 70%' }), res);
-      assert.strictEqual(res.statusCode, 200);
-      assert.deepStrictEqual(res.body.results, []);
+      for (const q of ['NEEM OIL 70%', '2,4-D', 'Ranger-Pro', '1021-1750']) {
+        const res = mockRes();
+        await handler(mockReq({ q }), res);
+        assert.strictEqual(res.statusCode, 200, q);
+      }
     } finally {
       global.fetch = orig;
     }

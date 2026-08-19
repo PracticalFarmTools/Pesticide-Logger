@@ -576,6 +576,9 @@ main {
   grid-column: 1 / -1;
   background: var(--bg-page);
 }
+.class-pick-refuse {
+  margin: 0.55rem 0 0.15rem;
+}
 .class-pick-sentence {
   margin: 0.65rem 0 0.25rem;
   font-weight: 600;
@@ -686,7 +689,7 @@ legend {
 .form-row-3 { grid-template-columns: repeat(3, 1fr); }
 .form-row-4 { grid-template-columns: repeat(4, 1fr); }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .form-row, .form-row-2, .form-row-3, .form-row-4 { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 480px) {

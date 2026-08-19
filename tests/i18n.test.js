@@ -58,7 +58,7 @@ check('farm terms: French vous + parcelle; Brazilian você + talhão/calda', () 
   assert.strictEqual(i18n.PT_BR['Tank Mix'], 'Calda');
   assert.strictEqual(i18n.FR['Inspector packet'], 'Dossier inspecteur');
   assert.strictEqual(i18n.PT_BR['Inspector packet'], 'Pacote do fiscal');
-  assert.strictEqual(i18n.ES['Open citation'], 'Abrir cita');
+  assert.strictEqual(i18n.ES['Open citation'], 'Abrir la referencia');
   assert.strictEqual(i18n.FR['Applicator'], 'Applicateur');
   assert.strictEqual(i18n.PT_BR['Applicator'], 'Aplicador');
   const frBlob = Object.values(i18n.FR).join('\n');
@@ -224,6 +224,22 @@ check('class picker strings are translated and keep {State}', () => {
   assert.ok(i18n.t('es', quiet).includes('{State}'));
   assert.ok(i18n.t('fr', quiet).includes('{State}'));
   assert.ok(i18n.t('pt-BR', quiet).includes('{State}'));
+});
+
+check('v2.9.39 copy: device kicker, citation, grower spray, refuse line', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');
+  assert.ok(html.includes('id="first-run-class-pick"'));
+  assert.ok(html.includes('class-pick-refuse'));
+  assert.ok(start.includes('Your spray book, on this device'));
+  assert.ok(!start.includes('Your spray book, on this phone'));
+  assert.strictEqual(i18n.t('es', 'Your spray book, on this device'), 'Su libro de aspersión, en este dispositivo');
+  assert.strictEqual(i18n.t('es', 'Open citation'), 'Abrir la referencia');
+  assert.ok(i18n.t('es', 'I spray to grow my crop on land I own or rent. Whatever my state calls that card. Selling the harvest wholesale or retail does not change this.').startsWith('Aplico'));
+  assert.ok(i18n.t('es', 'For-hire applications, or the office records my state requires of a commercial applicator. Not a contractor dispatch app. Not “I sell produce.”').includes('vendo la cosecha'));
+  const refuse = 'If you spray other people’s farms for a living — clients, signatures, a crew with roles — use a custom-applicator tool. This is the grower’s book.';
+  assert.notStrictEqual(i18n.t('es', refuse), refuse);
+  assert.notStrictEqual(i18n.t('fr', 'Pick your state. The form changes.'), 'Pick your state. The form changes.');
 });
 
 if (failed) {

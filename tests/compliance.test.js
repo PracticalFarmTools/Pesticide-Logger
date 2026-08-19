@@ -240,14 +240,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.38 + deadline/license wiring', () => {
+check('source files advertise v2.9.39 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.38'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.38'));
+  assert.ok(app.includes('v2.9.39'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.39'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-18'"));
-  assert.ok(!html.includes('v2.9.38'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.39'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -415,8 +415,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.38'"));
-  assert.ok(!html.includes('v2.9.38'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.39'"));
+  assert.ok(!html.includes('v2.9.39'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -896,7 +896,7 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(start.includes('grower’s book') || start.includes("grower's book"));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(start), 'public page does not name other products');
   assert.ok(!start.includes('Names on those buttons'));
-  assert.ok(!start.includes('v2.9.38'), 'public page keeps version out of copy');
+  assert.ok(!start.includes('v2.9.39'), 'public page keeps version out of copy');
   assert.ok(start.includes('id="start-copy-link"'));
   assert.ok(start.includes('mailto:practicalfarmtools@gmail.com') && inspector.includes('mailto:practicalfarmtools@gmail.com') &&
     extension.includes('mailto:practicalfarmtools@gmail.com'), 'public human on all three pages');
@@ -1041,7 +1041,7 @@ check('v2.9.35: one cab voice — Next, quiet save, inviting copy', () => {
   assert.ok(!html.includes('btn-lg" id="app-spray-now"'));
   assert.ok(html.includes('id="app-form-title" hidden'));
   assert.ok(css.includes('.app-save-honesty') && css.includes('.cab-toolbar .btn'));
-  assert.ok(start.includes('Your spray book, on this phone'));
+  assert.ok(start.includes('Your spray book, on this device'));
   assert.ok(start.includes('Log in the cab. Hand the inspector a file.'));
   assert.ok(!start.includes('Powerful and intuitive'));
   assert.ok(!start.includes('huge farms buy software'));
@@ -1190,6 +1190,29 @@ check('v2.9.38: class picker asks which record list; hints stay honest', () => {
   assert.strictEqual(i18n.t('fr', 'My crop on my land'), 'Ma culture sur ma terre');
   assert.ok(i18n.t('pt-BR', 'In {State}, a grower log stays quiet on for-hire boxes. Confirm with the agency.').includes('{State}'));
   assert.ok(app.includes('function paintClassPick') && app.includes('function bindClassPick'));
+});
+
+check('v2.9.39: tablet form rows, device kicker, refuse next to class cards', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  const i18n = require(path.join(root, 'i18n.js'));
+  assert.ok(/@media \(max-width: 900px\) \{\s*\n\s*\.form-row/.test(css),
+    'form rows collapse by 900px so iPad portrait is not four-across');
+  assert.ok(start.includes('Your spray book, on this device'));
+  assert.ok(!start.includes('Your spray book, on this phone'));
+  const refuse = 'If you spray other people’s farms for a living — clients, signatures, a crew with roles — use a custom-applicator tool. This is the grower’s book.';
+  const startPick = start.split('id="start-class-pick"')[1].split('id="start-copy-link"')[0];
+  assert.ok(startPick.includes(refuse), 'custom-applicator refusal sits on the class picker');
+  assert.ok(startPick.includes('class-pick-refuse'));
+  assert.ok(html.includes('class-pick-refuse') && html.includes(refuse));
+  const whoIdx = start.indexOf('Who this is for');
+  const refuseIdx = start.indexOf('class-pick-refuse');
+  assert.ok(refuseIdx > 0 && whoIdx > refuseIdx, 'refusal is next to the cards, not only later');
+  assert.strictEqual(i18n.ES['Open citation'], 'Abrir la referencia');
+  assert.ok(i18n.ES['Pick your state. The form changes.']);
+  assert.ok(i18n.ES['Add a field, add one jug, log this spray.']);
+  assert.ok(!/Agricultural Basic/.test(html) && !/Agricultural Basic/.test(start));
 });
 
 check('schema default version is 5', () => {

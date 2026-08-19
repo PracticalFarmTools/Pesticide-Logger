@@ -1,5 +1,12 @@
 # Product-success audit — Pesticide Logger v2.9.25
 
+**Status: historical.** Sale-readiness and what to do next:
+`docs/seller-grade-report.md` (v2.9.30) and `docs/owner-next.md`. The
+public key is now embedded; public pages have languages; mailbox and
+`how.html` exist. `BUY_URL` is still empty until checkout + origin are
+real. This audit’s “empty public key / no support identity” is no longer
+true.
+
 _Audited 2026-08-18 against GitHub `main` @ `edefc1f` and live `https://practical-farm-tools-2-c3dd.vercel.app`. Checkout, sale price, and payment processor remain owner-handled and were not set in this pass._
 
 This is not a re-run of the v2.9.23 defect list. That audit asked whether the shipped app matched its copy. The three ship-blockers from that pass are closed on `main` and on live. This pass asks a different question: **can this succeed as a product a grower will try, pay for, and still have next season?**

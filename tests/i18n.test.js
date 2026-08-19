@@ -108,6 +108,14 @@ check('cab A+ restage, stamp weather, and send-now chrome are translated', () =>
   );
 });
 
+check('checkout note names the mailbox until Buy is live', () => {
+  const note = 'Paste a license key from your purchase email. Until checkout is live, email practicalfarmtools@gmail.com. Spray logs stay on this device either way.';
+  assert.ok(i18n.ES[note]);
+  assert.ok(i18n.FR[note]);
+  assert.ok(i18n.PT_BR[note]);
+  assert.ok(i18n.ES[note].includes('practicalfarmtools@gmail.com'));
+});
+
 check('how-to and catch-up chrome are translated', () => {
   assert.strictEqual(i18n.t('es', 'How-to'), 'Cómo');
   assert.strictEqual(i18n.t('fr', 'Send a file to the shop'), 'Envoyer un fichier à l’atelier');

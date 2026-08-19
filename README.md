@@ -1,4 +1,4 @@
-# Pesticide Logger v2.9.30
+# Pesticide Logger v2.9.31
 
 **Offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite. Licensed software with
@@ -69,6 +69,7 @@ work on next (citation hygiene, hasher, holes): `docs/state-maintainer-playbook.
 `node tools/watch-citations.js` hashes `--watch-list` URLs on this machine
 ($0, no GitHub Action, no scrape-to-JSON). `--summary` prints counts only.
 A human still `--stamp`s.
+Go-live order (card → origin → merchant → `BUY_URL`): `docs/owner-next.md`.
 Do not change `app.js` or `compliance.js` for a citation or field-list edit.
 
 **It does:**
@@ -215,7 +216,8 @@ license.js                 Offline license verification (WebCrypto)
 state_pesticide_laws.js    Generated 50-state runtime matrix (do not edit by hand)
 laws/                      One JSON file per state — edit here for legal changes
 api/epa.js                 Stateless Vercel proxy to official EPA PPLS
-tools/                     License signing + `bundle-state-laws.js`
+tools/                     License signing (`--mail` delivery letter) + `bundle-state-laws.js` + citation hasher
+docs/owner-next.md         Owner go-live checklist (not a deploy)
 vendor/leaflet/            Leaflet 1.9.4 (vendored)
 vendor/fonts/              Inter + Outfit latin WOFF2 (SIL OFL, app-shell precache)
 label-ocr.js               Label-photo text parsing (EPA reg #, signal word) — pure functions

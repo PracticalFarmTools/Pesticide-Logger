@@ -240,14 +240,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.30 + deadline/license wiring', () => {
+check('source files advertise v2.9.31 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.30'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.30'));
+  assert.ok(app.includes('v2.9.31'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.31'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-18'"));
-  assert.ok(!html.includes('v2.9.30'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.31'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -415,8 +415,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.30'"));
-  assert.ok(!html.includes('v2.9.30'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.31'"));
+  assert.ok(!html.includes('v2.9.31'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -430,7 +430,8 @@ check('ship-ready: EPA host honesty, install timing, checkout note', () => {
   assert.ok(app.includes("'license-checkout-note', 'lock-checkout-note'"), 'checkout notes hide when BUY_URL is set');
   assert.ok(app.includes("if (typeof isEmptyHome === 'function' ? isEmptyHome() : false)"),
     'install banner yields to empty first-run home');
-  assert.ok(html.includes('This build has no in-app store.'));
+  assert.ok(html.includes('Until checkout is live, email practicalfarmtools@gmail.com'));
+  assert.ok(!html.includes('This build has no in-app store.'));
   assert.ok(!html.includes('no cost'), 'paid product must not say no cost');
   assert.strictEqual(i18n.ES['Inspector packet'], 'Paquete de inspector');
   assert.strictEqual(i18n.FR['Open citation'], 'Ouvrir la citation');
@@ -887,7 +888,7 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(start.includes('grower’s book') || start.includes("grower's book"));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(start), 'public page does not name other products');
   assert.ok(!start.includes('Names on those buttons'));
-  assert.ok(!start.includes('v2.9.30'), 'public page keeps version out of copy');
+  assert.ok(!start.includes('v2.9.31'), 'public page keeps version out of copy');
   assert.ok(start.includes('id="start-copy-link"'));
   assert.ok(start.includes('mailto:practicalfarmtools@gmail.com') && inspector.includes('mailto:practicalfarmtools@gmail.com') &&
     extension.includes('mailto:practicalfarmtools@gmail.com'), 'public human on all three pages');
@@ -991,7 +992,26 @@ check('v2.9.30: cab A+ restage, compact mix, send-now, device role', () => {
   assert.ok(hasher.includes('--summary') && hasher.includes('function printSummary'));
   assert.ok(listing.includes('NOT LIVE') && listing.includes('pesticide.practicalfarmtools.com'));
   assert.ok(listing.includes('Coming soon') && !listing.includes('Status:** Active'));
+  assert.ok(listing.includes('Delete from the live catalog card'));
   assert.ok(!start.includes('pesticide.practicalfarmtools.com is live'));
+});
+
+check('v2.9.31: owner-ops kit — mailbox checkout, delivery letter, owner-next', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const owner = fs.readFileSync(path.join(root, 'docs', 'owner-next.md'), 'utf8');
+  const pathAhead = fs.readFileSync(path.join(root, 'docs', 'path-ahead-blueprint.md'), 'utf8');
+  const signer = fs.readFileSync(path.join(root, 'tools', 'sign-license.js'), 'utf8');
+  const i18n = require(path.join(root, 'i18n.js'));
+  const note = 'Paste a license key from your purchase email. Until checkout is live, email practicalfarmtools@gmail.com. Spray logs stay on this device either way.';
+  assert.ok(html.includes(note));
+  assert.strictEqual((html.match(/id="lock-checkout-note"/g) || []).length, 1);
+  assert.ok(i18n.ES[note] && i18n.FR[note] && i18n.PT_BR[note]);
+  assert.ok(signer.includes('function deliveryBody') && signer.includes('--mail'));
+  assert.ok(signer.includes('if (require.main === module)'));
+  assert.ok(owner.includes('docs/suite-listing.md'));
+  assert.ok(owner.includes('node tools/sign-license.js'));
+  assert.ok(pathAhead.includes('Status: superseded'));
+  assert.ok(owner.includes('Back up the signing key'));
 });
 
 check('schema default version is 5', () => {

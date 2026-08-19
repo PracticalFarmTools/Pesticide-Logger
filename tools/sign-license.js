@@ -3,10 +3,11 @@
  *
  *   node tools/sign-license.js --name "Jane Farmer" --email jane@example.com
  *   node tools/sign-license.js --name "Acme Ag" --email ops@acme.com --expires 2027-12-31
+ *   node tools/sign-license.js --name "Jane Farmer" --email jane@example.com --mail
  *
- * Omit --expires for a perpetual license. Paste the printed key into the
- * buyer's order-confirmation email (Gumroad / Lemon Squeezy / Stripe Payment
- * Link all support custom delivery text) — no license server needed.
+ * Omit --expires for a perpetual license. --mail prints a paste-ready delivery
+ * letter (key + restore note + mailbox). Paste that into the buyer's order-
+ * confirmation email. No license server. The origin is not a restore URL.
  */
 'use strict';
 
@@ -17,6 +18,29 @@ const license = require(path.join(__dirname, '..', 'license.js'));
 function arg(name) {
   const i = process.argv.indexOf('--' + name);
   return i >= 0 ? process.argv[i + 1] : null;
+}
+
+function flag(name) {
+  return process.argv.includes('--' + name);
+}
+
+function deliveryBody({ name, key, expires }) {
+  const expireLine = expires
+    ? 'Expires ' + expires + '.'
+    : 'Does not expire.';
+  return [
+    'Pesticide Logger license for ' + name + '.',
+    expireLine,
+    '',
+    'Paste this in More → paste a license key (or on the lock screen if the trial has ended):',
+    '',
+    key,
+    '',
+    'Your book stays on your device. We cannot restore it from this email.',
+    'Restore / file catch-up / Add to Home Screen: how.html next to the logger.',
+    '',
+    'Questions: practicalfarmtools@gmail.com — we never store your book.',
+  ].join('\n');
 }
 
 async function main() {
@@ -30,7 +54,7 @@ async function main() {
   const email = arg('email');
   const expires = arg('expires');
   if (!name || !email) {
-    console.error('Usage: node tools/sign-license.js --name "Jane Farmer" --email jane@example.com [--expires YYYY-MM-DD]');
+    console.error('Usage: node tools/sign-license.js --name "Jane Farmer" --email jane@example.com [--expires YYYY-MM-DD] [--mail]');
     process.exit(1);
   }
   const payload = { n: name, e: email };
@@ -42,8 +66,17 @@ async function main() {
   const key = await license.makeLicenseKey(privateKeyPkcs8B64, payload);
   const check = await license.verifyLicenseKey(key, publicKeySpkiB64);
   if (!check.valid) { console.error('Self-check failed:', check.reason); process.exit(1); }
-  console.log('\nLicense for:', name, `<${email}>`, expires ? `(expires ${expires})` : '(perpetual)');
-  console.log('\n' + key + '\n');
+  if (flag('mail')) {
+    console.log(deliveryBody({ name, key, expires }));
+  } else {
+    console.log('\nLicense for:', name, `<${email}>`, expires ? `(expires ${expires})` : '(perpetual)');
+    console.log('\n' + key + '\n');
+    console.log('(Add --mail for a paste-ready delivery letter.)\n');
+  }
 }
 
-main().catch(e => { console.error(e); process.exit(1); });
+module.exports = { deliveryBody };
+
+if (require.main === module) {
+  main().catch(e => { console.error(e); process.exit(1); });
+}

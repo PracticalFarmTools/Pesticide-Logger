@@ -5,13 +5,13 @@
 `docs/stay-in-lane-blueprint.md`. Go-live order stays `docs/owner-next.md`
 (this file is not a sale blocker).
 
-Job: a farmer finishing first-run can pick the class that matches **whose
-land they spray**, see in one sentence what that does to the log, and not
-think they signed up for a contractor app.
+Job: a farmer finishing first-run can pick **which record list this book
+uses**, see in one sentence what *this state* will ask, and not think they
+signed up for a contractor app or a 50-state license counselor.
 
 This is **copy and layout**. It does not change `laws/XX.json`, does not
-invent Arkansas / South Dakota private duty, and does not add a second
-product library.
+invent Arkansas / South Dakota private duty, does not add `agricultural_basic`,
+and does not add a second product library.
 
 ---
 
@@ -28,7 +28,8 @@ product library.
 | **P7** | Drive / Dropbox OAuth “sync” | **No** | Catch-up is already a file in a folder they sync. OAuth looks like we take the book. |
 | **P8** | A second product catalog per class | **No** | The library is already farm-wide. Class does not split jugs. |
 | **P9** | Cab chrome, Scan, map, hasher, mailbox, listing | **No, not this file** | Already shipped or owner-only. Do not reopen cab to avoid this picker. |
-| **P10** | Third class “Agricultural Basic” / 50-state license wizard | **No** | Maine has three BPC licenses; the log has two record classes. Map both grower cards to This farm. Encode record lists in `laws/XX.json`, not exam names. |
+| **P10** | Third class “Agricultural Basic” / 50-state license wizard | **No** | Maine has three BPC licenses; the log has two record classes. Map both grower cards to My crop on my land. Encode record lists in `laws/XX.json`, not exam names. |
+| **P11** | Per-state `licenseNames[]` in JSON | **No** | 50 credential taxonomies to research and rot. Agency + citation link is enough. |
 
 ---
 
@@ -53,6 +54,36 @@ Rates on a later spray come from (1) what they stored on the product record, or 
 
 ---
 
+## 50-state rule (how it stays one picker)
+
+Do **not** ask which card is in the wallet. States do not share names (Maine Agricultural Basic vs Private vs Commercial Operator/Master; elsewhere noncommercial, government, dealer, operator vs master). Asking “are you a private applicator?” fails in Maine. Listing those names in the UI fails in Iowa.
+
+Ask a **use** question. Let **this state’s JSON** say what the log will ask.
+
+```
+1. Farm name
+2. State          ← required before the hint is honest
+3. This log is for:  [ My crop on my land ]  [ Commercial applicator work ]
+4. One sentence generated from STATE_LAWS[state].privateDuty
+5. Quiet link: {agency} · Open citation  (already on the law row)
+```
+
+**Same two buttons in all 50 states.** The only state-specific chrome is the sentence + agency link. That is already how completeness works (`privateDuty` none / required / uncertain). No new laws fields. No Maine-only string in `app.js`.
+
+| They mean | They pick | Engine |
+|---|---|---|
+| Any grower card: private, agricultural basic, “I just farm” | **My crop on my land** | `private` |
+| For hire, public/commercial sites, commercial office records | **Commercial applicator work** | `commercial` |
+| One device must cover crop sprays *and* commercial-category sprays | **This book covers both** (Settings) | `both` |
+
+Universal footnote under the cards (not a state encyclopedia):
+
+> Your state may issue several grower licenses. This choice is which record list to use, not which exam you passed. Selling your crop does not change the grower row.
+
+If they need the department’s license tree, they tap the citation. We are not BPC.
+
+---
+
 ## Why the current picker fails
 
 First-run puts **Applicator class** in a three-column row with farm name and state (`#first-run-class`). Settings does the same (`#set-applicator-class`). Options:
@@ -74,18 +105,17 @@ Engine (do not change):
 
 ## Copy (ship this; do not improvise a fourth class)
 
-**Question label:** `Whose land do you spray?`  
-(Not “Applicator class” on first-run. Settings may keep a short label plus the same two cards.)
+**Question label:** `This log is for`  
+(Not “Applicator class.” Not “Whose land” alone — Maine can require commercial on land you own if the *use* is public / for-hire / food establishment.)
 
-**This farm** — value `private`  
-I spray land I own or rent. Selling that crop wholesale or retail does not change this. Most growers pick this.
+**My crop on my land** — value `private`  
+I spray to grow my crop on land I own or rent. Whatever my state calls that card. Selling the harvest wholesale or retail does not change this.
 
-**Commercial license** — value `commercial`  
-I am licensed to apply pesticides for hire, or I keep commercial applicator office records. Some states add customer and weather boxes. This is not a contractor dispatch app. Selling produce is not this row.
+**Commercial applicator work** — value `commercial`  
+For-hire applications, or the office records my state requires of a commercial applicator. Not a contractor dispatch app. Not “I sell produce.”
 
-**Show every box** — value `both`  
-I hold both licenses. The log uses the strictest list. Rare.  
-First-run: text button under the two cards, or omit and leave it in Settings only.
+**This book covers both** — value `both`  
+Crop sprays and commercial-category sprays in one log. Strictest boxes. Settings only on first-run.
 
 **Live sentence** (`#class-pick-hint`), after state is chosen:
 
@@ -105,14 +135,14 @@ Use `STATE_LAWS[code].privateDuty` and `STATE_NAMES`. Do not list invented AR/SD
 
 ## FAQ — “I sell wholesale and retail. Which row?”
 
-**This farm.** The picker is pesticide-license class, not how you sell the crop.
+**My crop on my land.** The picker is which record list, not how you sell the crop.
 
 | You… | Pick | Why |
 |---|---|---|
-| Grow on land you own or rent, then sell that crop wholesale, retail, CSA, farm stand, auction | **This farm** (`private`) | Private applicator = you spray *your* production. A commercial farm in the business sense is still this row. |
+| Grow on land you own or rent, then sell that crop wholesale, retail, CSA, farm stand, auction | **My crop on my land** (`private`) | Grower record list. A commercial farm in the business sense is still this row. |
 | Apply pesticides for pay on other people’s land (custom work) | **Commercial license** | That is a commercial applicator. If that is the whole business (clients, signatures, crew roles), `start.html` still says use a custom-applicator tool. This log will only reshape office boxes, not become dispatch CRM. |
 | Hold both a grower card and a commercial applicator license | **Show every box** (`both`) in Settings | Strictest list. Rare. |
-| Sell pesticide jugs (dealer / wholesale chemical) | Not this picker by itself | Iowa 45.26 names retail *dealers*, but dealer **sale** lists are not this spray log (see `laws/IA.json` notes: do not paste 45.26(1)–(2) onto a field spray). Keep application records as This farm if you spray your acres; use the dealer’s own sale book for jug sales. Do not invent a fourth class. |
+| Sell pesticide jugs (dealer / wholesale chemical) | Not this picker by itself | Iowa 45.26 names retail *dealers*, but dealer **sale** lists are not this spray log (see `laws/IA.json` notes: do not paste 45.26(1)–(2) onto a field spray). Keep application records as My crop on my land if you spray your acres; use the dealer’s own sale book for jug sales. Do not invent a fourth class. |
 
 The word **commercial** in “commercial farm” / “sell commercially” is not the word **commercial** on a pesticide license. This blueprint exists because those two meanings share a label.
 
@@ -124,11 +154,11 @@ You are not wrong. Maine’s Board of Pesticides Control issues **three** applic
 
 | Maine BPC license ([licensing](https://www.maine.gov/dacf/php/pesticides/applicators/licensing.html)) | What it is | This logger |
 |---|---|---|
-| **Agricultural Basic** | Own (or leased) land, **general-use** products only, typically growers who sell more than $1,000 of food plants a year. Core exam. | **This farm** (`private`) |
-| **Private** | Own land, **restricted- or limited-use** (and general-use) in production of a commodity. Core + commodity exam. | **This farm** (`private`) |
+| **Agricultural Basic** | Own (or leased) land, **general-use** products only, typically growers who sell more than $1,000 of food plants a year. Core exam. | **My crop on my land** (`private`) |
+| **Private** | Own land, **restricted- or limited-use** (and general-use) in production of a commodity. Core + commodity exam. | **My crop on my land** (`private`) |
 | **Commercial** (Operator or Master) | For hire; public places (golf, campgrounds, apartments, hospitals); government; licensed food establishments; **non-agricultural sites open to public use**. | **Commercial license** |
 
-Needing Basic *and* commercial in Maine is a real combination: farm production on your acres (Basic or Private) plus a use the BPC puts on the commercial card (for-hire, farm store/grounds open to the public, food establishment, etc.). For **one book that must satisfy both kinds of spray**, Settings → **Show every box** (`both`). For **only** own-land crop sprays, stay on This farm even if you also hold a commercial card you use elsewhere.
+Needing Basic *and* commercial in Maine is a real combination: farm production on your acres (Basic or Private) plus a use the BPC puts on the commercial card (for-hire, farm store/grounds open to the public, food establishment, etc.). For **one book that must satisfy both kinds of spray**, Settings → **Show every box** (`both`). For **only** own-land crop sprays, stay on My crop on my land even if you also hold a commercial card you use elsewhere.
 
 `laws/ME.json` `appliesTo` is Chapter 50 §1(A): commercial agricultural producers **and** commercial applicators. `privateDuty` is `required`. An Ag Basic or Private grower in Maine still gets the Chapter 50 field list. We do not add a third `applicatorClass` named Agricultural Basic.
 
@@ -142,9 +172,9 @@ Needing Basic *and* commercial in Maine is a real combination: farm production o
 
 | Surface | Today | Take |
 |---|---|---|
-| First-run `#first-run-class` | `<select>` in a 3-col row, three options, no hint | Own row under farm + state. Two large buttons (`aria-pressed`). Hint. Default This farm. |
-| Settings `#set-applicator-class` | Same cramped select | Same two cards + Show every box. Hint updates on change. Changing class does not rewrite saved sprays (already true). |
-| `start.html` `#start-class` | Private / grower · Commercial / for-hire | Same new labels. Who-this-is-for card adds: selling your crop is still This farm. Commercial here means the pesticide license, not the farm’s sales channel. |
+| First-run `#first-run-class` | `<select>` in a 3-col row, three options, no hint | Farm name + **state first**. Then two cards + generated hint + agency/citation. Default My crop on my land. |
+| Settings `#set-applicator-class` | Same cramped select | Same two cards + This book covers both. Hint updates on change. Changing class does not rewrite saved sprays (already true). |
+| `start.html` `#start-class` | Private / grower · Commercial / for-hire | Same new labels. Who-this-is-for: selling your crop is still My crop on my land. Commercial here is the record list, not the farm’s sales channel. |
 | Log form | Hint: reshapes for state and class | Unchanged. Next coach stays field → crop → product. |
 | Product library / Find a product / restage | Already farm-wide | Unchanged. Not this PR. |
 
@@ -155,14 +185,14 @@ Needing Basic *and* commercial in Maine is a real combination: farm production o
 - Keep option **values** `private` | `commercial` | `both`. Tests and `?class=` handoff already use them (`consumeStartHandoff`, `start.js`).
 - Prefer buttons that set the hidden select (or keep the select and hide it visually) so `save settings` / first-run submit do not grow a new settings key.
 - i18n: add the new English strings to `i18n.js` (es / fr / pt-BR). Do not translate citation text.
-- Tests: first-run HTML has This farm / Commercial license; `both` is not required on first-run; `app.js` still reads `private`/`commercial`/`both`; Iowa private hint contains “quiet” or “for-hire”; Maine Ag Basic is not a new class; `start.html` labels match; no new `applicatorClass` string.
+- Tests: first-run HTML has This log is for / My crop on my land / Commercial applicator work; `both` is not required on first-run; `app.js` still reads `private`/`commercial`/`both`; Iowa private hint contains “quiet” or “for-hire”; no `Agricultural Basic` string in `index.html` / `app.js`; `start.html` labels match; no new `applicatorClass` string.
 - Do not bump cab Next copy. Do not add a wizard. Do not auto-fill class from cert number. Do not add `agricultural_basic` to settings.
 
 ---
 
 ## How to know it worked
 
-- A grower can pick This farm without knowing the word private applicator.
+- A grower can pick My crop on my land without knowing the word private applicator, including in Maine with Agricultural Basic.
 - An Iowa grower still gets a quiet log. An Iowa commercial still sees office extras. Arkansas private still cannot get Complete.
 - After they add Entrust once, Find a product / recent chips / Duplicate last still offer it. Class change does not empty the library.
 - Custom applicators are still told on `start.html` to use a different tool.

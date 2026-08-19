@@ -5,7 +5,7 @@ and how-to shipped in v2.9.29. Does **not** go live. Eventual origin:
 `https://pesticide.practicalfarmtools.com`. Do not attach DNS or mark the
 catalog card Active until the owner says so.
 
-App **v2.9.30**. Last full grade: `docs/seller-grade-report.md` (v2.9.28).
+App **v2.9.30**. Last full grade: `docs/seller-grade-report.md` (v2.9.30).
 Stay-in-lane: `docs/stay-in-lane-blueprint.md`. Hasher playbook:
 `docs/state-maintainer-playbook.md`. Listing copy (not published):
 `docs/suite-listing.md`.

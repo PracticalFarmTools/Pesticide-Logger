@@ -97,8 +97,8 @@ check('log Next coach is translated', () => {
   assert.strictEqual(i18n.t('es', 'Next: pick the field'), 'Siguiente: elija el campo');
   assert.strictEqual(i18n.t('fr', 'Next: Scan label, or pick a product'), 'Suivant : scannez l’étiquette, ou choisissez un produit');
   assert.notStrictEqual(
-    i18n.t('pt-BR', 'Ready to save. Extra boxes stay under More.'),
-    'Ready to save. Extra boxes stay under More.'
+    i18n.t('pt-BR', 'Ready to save.'),
+    'Ready to save.'
   );
 });
 
@@ -163,6 +163,7 @@ check('keep-book ritual and CSV honesty are translated', () => {
 check('first-run and reminder titles are translated', () => {
   assert.strictEqual(i18n.t('fr', 'Get set up to log'), 'Préparez-vous à enregistrer');
   assert.strictEqual(i18n.t('pt-BR', 'Get set up to log'), 'Prepare-se para registrar');
+  assert.strictEqual(i18n.t('es', "Welcome. Let's log."), 'Bienvenido. Vamos a registrar.');
   assert.notStrictEqual(i18n.t('fr', 'REI ends within an hour'), 'REI ends within an hour');
   assert.notStrictEqual(i18n.t('pt-BR', 'Earliest harvest date reached'), 'Earliest harvest date reached');
 });

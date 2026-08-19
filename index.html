@@ -96,8 +96,8 @@
   <!-- ============ DASHBOARD ============ -->
   <section id="tab-dashboard" class="tab-panel active" role="tabpanel">
     <div class="card" id="dash-first-run" hidden>
-      <h3 class="card-title">Get set up to log</h3>
-      <p class="card-hint">Your state picks the boxes. Then you can log. Nothing leaves this device. Logging stays open on this host until checkout is live — no card.</p>
+      <h3 class="card-title">Welcome. Let's log.</h3>
+      <p class="card-hint">Add a field, then Log. Logging stays open on this host until checkout is live — no card.</p>
       <p class="card-hint"><a href="start.html">What this is</a> · <a href="inspector.html">For inspectors</a> · <a href="extension.html">For extension</a> · <a href="how.html">How-to</a></p>
       <form id="first-run-farm" class="form-grid first-run-farm" hidden>
         <div class="form-row">
@@ -305,11 +305,11 @@
     </div>
     <div id="log-new-pane">
     <div class="card">
-      <h3 class="card-title" id="app-form-title">Log an application</h3>
+      <h3 class="card-title" id="app-form-title" hidden>Log an application</h3>
       <p class="card-hint" id="app-form-hint">This spray log reshapes for your selected state and applicator class. Completion means required fields are filled — not a legal determination. Extra boxes stay under More for the record.</p>
       <div class="cab-toolbar">
-        <button type="button" class="btn btn-primary btn-lg" id="app-spray-now">Spray now</button>
-        <button type="button" class="btn btn-secondary btn-lg" id="app-duplicate-last">Duplicate last spray</button>
+        <button type="button" class="btn btn-primary" id="app-spray-now">Spray now</button>
+        <button type="button" class="btn btn-secondary" id="app-duplicate-last">Duplicate last spray</button>
         <button type="button" class="text-btn" id="app-stamp-weather">Stamp weather</button>
         <button type="button" class="text-btn" data-goto="calculator" id="app-open-tank-mix">Tank Mix</button>
         <label class="checkbox-label cab-toggle">
@@ -623,9 +623,11 @@
         <div id="app-missing-fields" class="missing-fields" hidden></div>
 
         <div class="form-actions sticky-actions">
-          <button type="submit" class="btn btn-primary btn-lg" id="app-save-btn">Save — required boxes filled</button>
+          <button type="submit" class="btn btn-primary btn-lg" id="app-save-btn">Save this spray</button>
           <button type="button" class="btn btn-secondary btn-lg" id="app-save-draft-btn">Save incomplete draft</button>
           <button type="button" class="btn btn-secondary" id="app-cancel-btn" hidden>Cancel edit</button>
+          <p class="app-save-quiet" id="app-save-draft-hint">Save a draft anytime.</p>
+          <p class="app-save-honesty" id="app-save-honesty">The label is the law.</p>
         </div>
       </form>
     </div>

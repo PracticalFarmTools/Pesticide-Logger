@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.34 — Practical Farm Tools
+/* Pesticide Logger v2.9.35 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -1117,7 +1117,7 @@
     const hint = $('#app-form-hint');
     const summary = $('#app-form-shape-summary');
     const showRec = $('#app-show-recommended') && $('#app-show-recommended').checked;
-    if (hint) hint.hidden = !!(stateName && !showRec);
+    if (hint) hint.hidden = !showRec;
     const legend = document.querySelector('.field-req-legend');
     if (legend) legend.hidden = !showRec;
     const fresh = law ? lawFreshness(law) : { stale: false, reviewBy: '' };
@@ -1135,6 +1135,7 @@
         : 'Select your state in Settings — the spray log will reshape to that state’s required record fields instead of using one national form.';
     }
     if (summary) {
+      summary.hidden = !showRec;
       const shown = $$('#app-form label[data-log-field]:not([hidden])').length;
       const extra = [
         ver && ver !== 'researched' ? ver : '',
@@ -1155,6 +1156,7 @@
     if (title && !keepTitle) {
       title.textContent = stateName ? `Log an application — ${stateName}` : 'Log an application';
     }
+    syncFormTitleChrome();
     syncMixStateChrome();
     updateLogSectionCollapse();
     applyDurationVisibility();
@@ -1261,53 +1263,49 @@
     const status = $('#app-compliance-status');
     const missingBox = $('#app-missing-fields');
     if (!status || !missingBox) return;
-    const { law, code } = lawFor(formContextApp());
+    // Next is the cab coach. Keep the orange missing wall off the log while filling.
+    // Completeness still scores for nav dots, history, packet, and save-as-draft.
+    status.hidden = true;
+    status.textContent = '';
+    status.className = 'compliance-status';
+    missingBox.hidden = true;
+    missingBox.innerHTML = '';
+    const { law } = lawFor(formContextApp());
     if (!law) {
-      status.hidden = false;
-      status.className = 'compliance-status';
-      status.textContent = 'Select your state in Settings to enable state-shaped recordkeeping checks.';
-      missingBox.hidden = true;
       updateLogSectionNavDots([]);
       updateLogSectionCollapse();
       applyDurationVisibility();
+      updateLogNext();
       return;
     }
     try {
       const preview = collectAppFromForm(true);
       const result = evaluateCompliance(preview);
-      status.hidden = false;
-      const name = STATE_NAMES[code] || code;
       updateLogSectionNavDots(result.missingFields);
-      if (result.status === 'fields_complete') {
-        status.className = 'compliance-status ok';
-        status.textContent = `${name} required fields filled · retain ${result.retentionYears} year(s) · not a legal determination`;
-        missingBox.hidden = true;
-      } else if (result.status === 'needs_review') {
-        status.className = 'compliance-status warn';
-        status.textContent = `${name}: fields filled but needs review`;
-        missingBox.hidden = false;
-        missingBox.innerHTML = `<strong>Review:</strong> ${result.warnings.map(esc).join('; ')}`;
-      } else {
-        status.className = 'compliance-status warn';
-        status.textContent = `${result.missing.length} applicable ${name} field(s) still missing`;
-        missingBox.hidden = false;
-        const bits = [];
-        if (result.missingFields.length) {
-          const chips = result.missingFields.map(m =>
-            `<button type="button" class="missing-field-chip" data-missing-field="${esc(m.name || '')}">${esc(m.label)}</button>`
-          ).join(' ');
-          bits.push(`<strong>Missing — tap to jump:</strong><br>${chips}`);
-        }
-        if (result.warnings.length) bits.push(`<strong>Also:</strong> ${result.warnings.map(esc).join('; ')}`);
-        missingBox.innerHTML = bits.join('<br>');
-      }
     } catch (e) {
-      status.hidden = true;
-      missingBox.hidden = true;
+      updateLogSectionNavDots([]);
     }
     updateLogSectionCollapse();
     applyDurationVisibility();
     updateLogNext();
+  }
+
+  function showSaveMissingChips(result) {
+    const missingBox = $('#app-missing-fields');
+    if (!missingBox || !result) return;
+    const bits = [];
+    if (result.missingFields && result.missingFields.length) {
+      const chips = result.missingFields.map(m =>
+        `<button type="button" class="missing-field-chip" data-missing-field="${esc(m.name || '')}">${esc(m.label)}</button>`
+      ).join(' ');
+      bits.push(`<strong>Missing — tap to jump:</strong><br>${chips}`);
+    }
+    if (result.warnings && result.warnings.length) {
+      bits.push(`<strong>Also:</strong> ${result.warnings.map(esc).join('; ')}`);
+    }
+    if (!bits.length) { missingBox.hidden = true; return; }
+    missingBox.hidden = false;
+    missingBox.innerHTML = bits.join('<br>');
   }
 
   // Canonical compliance field name -> where to send focus. Most top-level
@@ -1418,7 +1416,7 @@
     try {
       const result = evaluateCompliance(collectAppFromForm(true));
       if (result.status === 'fields_complete') {
-        return { text: 'Ready to save. Extra boxes stay under More.', ready: true };
+        return { text: 'Ready to save.', ready: true };
       }
       if (result.missingFields && result.missingFields.length) {
         const m = result.missingFields[0];
@@ -1430,10 +1428,21 @@
         };
       }
       if (result.status === 'needs_review') {
-        return { text: 'Ready to save. Extra boxes stay under More.', ready: true };
+        return { text: 'Ready to save.', ready: true };
       }
     } catch (e) { /* form not ready */ }
-    return { text: 'Ready to save. Extra boxes stay under More.', ready: true };
+    return { text: 'Ready to save.', ready: true };
+  }
+
+  function syncFormTitleChrome() {
+    const el = $('#app-form-title');
+    if (!el) return;
+    const t = el.textContent || '';
+    el.hidden = !(
+      t.startsWith('Edit record') ||
+      t.startsWith('Duplicate of') ||
+      t.startsWith('Same mix')
+    );
   }
 
   function updateLogNext() {
@@ -3286,11 +3295,13 @@
 
     if (!asDraft && data.settings.strictCompliance !== false && !result.complete) {
       updateCompliancePreview();
+      showSaveMissingChips(result);
       toast(`Strict mode: fill ${result.missing.length} required field(s), or save as incomplete draft`);
       return;
     }
     if (!asDraft && data.settings.strictCompliance !== false && !result.intervalsOk) {
       updateCompliancePreview();
+      showSaveMissingChips(result);
       toast('Strict mode: enter label REI and PHI on every product (or save as draft)');
       return;
     }
@@ -3368,7 +3379,7 @@
     $('#app-total-note').hidden = true;
     $('#app-interval-preview').hidden = true;
     $('#app-form-title').textContent = 'Log an application';
-    $('#app-save-btn').textContent = 'Save — required boxes filled';
+    $('#app-save-btn').textContent = tr('Save this spray');
     $('#app-cancel-btn').hidden = true;
     logForceExpand = false;
     logPinnedSections.clear();
@@ -3381,6 +3392,7 @@
     updateDurationHint();
     syncNewLogChrome();
     updateCabToolbar();
+    syncFormTitleChrome();
   }
 
   function editApp(id) {
@@ -3448,7 +3460,7 @@
     reshapeAppFormForState();
     updateCompliancePreview();
     $('#app-form-title').textContent = `Edit record — ${appProductsLabel(a)} on ${fmtDate(a.date)}`;
-    $('#app-save-btn').textContent = 'Update — required boxes filled';
+    $('#app-save-btn').textContent = tr('Update this spray');
     $('#app-cancel-btn').hidden = false;
     updateLastOnFieldHint();
     logForceExpand = true;
@@ -3457,6 +3469,7 @@
     updateLogSectionCollapse();
     restoreDurationPref();
     updateDurationHint();
+    syncFormTitleChrome();
     showTab('log');
     syncNewLogChrome();
     $('#app-form').scrollIntoView({ behavior: 'smooth' });
@@ -3717,6 +3730,7 @@
     updateDurationHint();
     updateLogSectionCollapse();
     updateCabToolbar();
+    syncFormTitleChrome();
     if ($('#app-field')) $('#app-field').focus();
     const toolbar = $('.cab-toolbar');
     if (toolbar && toolbar.scrollIntoView) toolbar.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -3755,7 +3769,7 @@
     updateDurationHint();
     updateLogSectionCollapse();
     updateCabToolbar();
-    toast('Spray-now mode — date and start time set. Pick field and products.');
+    toast('Time is now. Pick the field.');
   }
 
   async function clonePhotoIds(ids) {
@@ -3799,6 +3813,7 @@
     updateDurationHint();
     updateLogSectionCollapse();
     updateCabToolbar();
+    syncFormTitleChrome();
     if ($('#app-field')) $('#app-field').focus();
     const toolbar = $('.cab-toolbar');
     if (toolbar && toolbar.scrollIntoView) toolbar.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -7949,7 +7964,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.34';
+  const APP_VERSION = 'v2.9.35';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {

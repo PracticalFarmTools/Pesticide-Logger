@@ -119,6 +119,7 @@ check('owner-next is the go-live order; listing is not live; path-ahead is super
 check('class-picker blueprint keeps private/commercial values and one library', () => {
   const bp = fs.readFileSync(path.join(__dirname, '..', 'docs/class-picker-blueprint.md'), 'utf8');
   assert.ok(bp.includes('Whose land do you spray?'));
+  assert.ok(bp.includes('Selling that crop wholesale or retail does not change this'));
   assert.ok(bp.includes('Keep values `private` / `commercial` / `both`'));
   assert.ok(bp.includes('Drop commercial class because we sell to farmers'));
   assert.ok(bp.includes('Drive / Dropbox OAuth'));

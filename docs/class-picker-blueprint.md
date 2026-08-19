@@ -77,10 +77,10 @@ Engine (do not change):
 (Not “Applicator class” on first-run. Settings may keep a short label plus the same two cards.)
 
 **This farm** — value `private`  
-I spray land I own or rent. Most growers pick this.
+I spray land I own or rent. Selling that crop wholesale or retail does not change this. Most growers pick this.
 
 **Commercial license** — value `commercial`  
-I keep this book as a licensed commercial applicator. Some states add customer and weather boxes. This is not a contractor dispatch app.
+I am licensed to apply pesticides for hire, or I keep commercial applicator office records. Some states add customer and weather boxes. This is not a contractor dispatch app. Selling produce is not this row.
 
 **Show every box** — value `both`  
 I hold both licenses. The log uses the strictest list. Rare.  
@@ -102,13 +102,28 @@ Use `STATE_LAWS[code].privateDuty` and `STATE_NAMES`. Do not list invented AR/SD
 
 ---
 
+## FAQ — “I sell wholesale and retail. Which row?”
+
+**This farm.** The picker is pesticide-license class, not how you sell the crop.
+
+| You… | Pick | Why |
+|---|---|---|
+| Grow on land you own or rent, then sell that crop wholesale, retail, CSA, farm stand, auction | **This farm** (`private`) | Private applicator = you spray *your* production. A commercial farm in the business sense is still this row. |
+| Apply pesticides for pay on other people’s land (custom work) | **Commercial license** | That is a commercial applicator. If that is the whole business (clients, signatures, crew roles), `start.html` still says use a custom-applicator tool. This log will only reshape office boxes, not become dispatch CRM. |
+| Hold both a grower card and a commercial applicator license | **Show every box** (`both`) in Settings | Strictest list. Rare. |
+| Sell pesticide jugs (dealer / wholesale chemical) | Not this picker by itself | Iowa 45.26 names retail *dealers*, but dealer **sale** lists are not this spray log (see `laws/IA.json` notes: do not paste 45.26(1)–(2) onto a field spray). Keep application records as This farm if you spray your acres; use the dealer’s own sale book for jug sales. Do not invent a fourth class. |
+
+The word **commercial** in “commercial farm” / “sell commercially” is not the word **commercial** on a pesticide license. This blueprint exists because those two meanings share a label.
+
+---
+
 ## Surfaces
 
 | Surface | Today | Take |
 |---|---|---|
 | First-run `#first-run-class` | `<select>` in a 3-col row, three options, no hint | Own row under farm + state. Two large buttons (`aria-pressed`). Hint. Default This farm. |
 | Settings `#set-applicator-class` | Same cramped select | Same two cards + Show every box. Hint updates on change. Changing class does not rewrite saved sprays (already true). |
-| `start.html` `#start-class` | Private / grower · Commercial / for-hire | Same new labels. Who-this-is-for card can add one line: “Commercial license on *your* farm is this picker. Spraying other people’s farms for a living is a different tool.” |
+| `start.html` `#start-class` | Private / grower · Commercial / for-hire | Same new labels. Who-this-is-for card adds: selling your crop is still This farm. Commercial here means the pesticide license, not the farm’s sales channel. |
 | Log form | Hint: reshapes for state and class | Unchanged. Next coach stays field → crop → product. |
 | Product library / Find a product / restage | Already farm-wide | Unchanged. Not this PR. |
 

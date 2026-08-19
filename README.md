@@ -1,4 +1,4 @@
-# Pesticide Logger v2.9.41
+# Pesticide Logger v2.9.42
 
 **Offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite. Licensed software with
@@ -133,7 +133,7 @@ To exercise live PPLS ranking locally:
 ```bash
 node tools/dev-server.js
 # open http://localhost:8080
-node tools/live-epa-rank.js Cease Star Captan Roundup
+node tools/live-epa-rank.js 'pyganic 5.0' Cease Star
 ```
 
 ## Checks
@@ -221,9 +221,9 @@ api/epa.js                 Stateless Vercel proxy to official EPA PPLS
 tools/                     License signing (`--mail` delivery letter) + `bundle-state-laws.js` + citation hasher
 docs/owner-next.md         Owner go-live checklist (not a deploy)
 vendor/leaflet/            Leaflet 1.9.4 (vendored)
-vendor/fonts/              Inter + Outfit latin WOFF2 (SIL OFL, app-shell precache)
+vendor/fonts/              Inter latin WOFF2 (SIL OFL, app-shell precache)
 label-ocr.js               Label-photo text parsing (EPA reg #, signal word) — pure functions
-epa-rank.js                Rank EPA name-search hits (whole-word before substring traps)
+epa-rank.js                Rank EPA name-search hits; jug-style fallback when PPLS consecutive search is empty
 vendor/tesseract/          Tesseract.js 7.0.0 OCR engine (vendored, lazy-loaded)
 vendor/zxing/              ZXing barcode decoder for iPhone still-photo scans (vendored, lazy-loaded)
 sw.js                      Service worker

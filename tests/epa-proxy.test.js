@@ -91,6 +91,39 @@ async function run() {
     }
   });
 
+  await check('empty consecutive PPLS query retries the brand token', async () => {
+    const orig = global.fetch;
+    const seen = [];
+    global.fetch = async (url) => {
+      seen.push(String(url));
+      const name = String(url).includes('pplstxt/pyganic%205.0') || String(url).includes('pplstxt/pyganic 5.0')
+        ? null
+        : 'brand';
+      if (String(url).includes('pyganic%205.0') || /pplstxt\/pyganic%205/.test(String(url))) {
+        return { ok: true, json: async () => ({ items: [] }) };
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          items: [
+            { productname: 'PYGANIC CROP PROTECTION EC 1.4', eparegno: '1021-1751', product_status: 'Active', cancel_flag: 'No', signal_word: 'Caution', active_ingredients: [], companyinfo: [] },
+            { productname: 'PYGANIC CROP PROTECTION EC 5.0', eparegno: '1021-1750', product_status: 'Active', cancel_flag: 'No', signal_word: 'Caution', active_ingredients: [], companyinfo: [] }
+          ]
+        })
+      };
+    };
+    try {
+      const res = mockRes();
+      await handler(mockReq({ q: 'pyganic 5.0' }), res);
+      assert.strictEqual(res.statusCode, 200);
+      assert.ok(seen.length >= 2, 'retried after empty consecutive hit');
+      assert.strictEqual(res.body.results[0].epaRegNo, '1021-1750');
+      assert.ok(res.body.results.some((r) => r.epaRegNo === '1021-1751'));
+    } finally {
+      global.fetch = orig;
+    }
+  });
+
   await check('upstream 404 returns empty results, not 502', async () => {
     const orig = global.fetch;
     global.fetch = async () => ({ ok: false, status: 404 });

@@ -215,7 +215,7 @@ check('app.js applies any dictionary language, not only Spanish', () => {
 
 check('class picker strings are translated and keep {State}', () => {
   assert.strictEqual(i18n.t('es', 'This log is for'), 'Este registro es para');
-  assert.strictEqual(i18n.t('fr', 'Commercial applicator work'), 'Travail d’applicateur commercial');
+  assert.strictEqual(i18n.t('fr', "This state's commercial record list"), 'Liste commerciale de cet État');
   assert.notStrictEqual(
     i18n.t('pt-BR', 'This book covers both'),
     'This book covers both'
@@ -236,9 +236,10 @@ check('v2.9.39 copy: device kicker, citation, grower spray, refuse line', () => 
   assert.strictEqual(i18n.t('es', 'Your spray book, on this device'), 'Su libro de aspersión, en este dispositivo');
   assert.strictEqual(i18n.t('es', 'Open citation'), 'Abrir la referencia');
   assert.ok(i18n.t('es', 'I spray to grow my crop on land I own or rent. Whatever my state calls that card. Selling the harvest wholesale or retail does not change this.').startsWith('Aplico'));
-  assert.ok(i18n.t('es', 'For-hire applications, or the office records my state requires of a commercial applicator. Not a contractor dispatch app. Not “I sell produce.”').includes('vendo la cosecha'));
+  assert.ok(i18n.t('es', 'Office boxes a commercial-category log may ask. Not a dispatch book. Not “I sell produce.”').includes('vendo la cosecha'));
   const refuse = 'If you spray other people’s farms for a living — clients, signatures, a crew with roles — use a custom-applicator tool. This is the grower’s book.';
   assert.notStrictEqual(i18n.t('es', refuse), refuse);
+  assert.ok(!i18n.t('es', 'Open the logger. Logging stays open until checkout is live — no card.').includes('host'));
   assert.notStrictEqual(i18n.t('fr', 'Pick your state. The form changes.'), 'Pick your state. The form changes.');
 });
 

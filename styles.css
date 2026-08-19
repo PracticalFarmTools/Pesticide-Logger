@@ -576,12 +576,15 @@ main {
   grid-column: 1 / -1;
   background: var(--bg-page);
 }
-.class-pick-refuse {
-  margin: 0.55rem 0 0.15rem;
+.class-pick-card .class-pick-refuse {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-dark);
 }
 .class-pick-sentence {
-  margin: 0.65rem 0 0.25rem;
+  margin: 0.55rem 0 0.2rem;
   font-weight: 600;
+  font-size: 0.95rem;
   color: var(--text-dark);
 }
 .class-pick-cite,
@@ -590,6 +593,7 @@ main {
 }
 @media (max-width: 480px) {
   .class-pick-cards { grid-template-columns: 1fr; }
+  .class-pick-card { padding: 0.7rem 0.85rem; }
 }
 
 .stat-card {

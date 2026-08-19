@@ -42,10 +42,10 @@
   <section class="card public-hero">
     <p class="public-kicker">Your spray book, on this device</p>
     <h2>Log in the cab. Hand the inspector a file.</h2>
-    <p>The book stays on the farm. Works without a signal. Your state picks the boxes. The label is the law.</p>
+    <p>The book stays on the farm. Works without a signal. Your state chooses which boxes to fill. The label is the law.</p>
     <ol class="public-ol public-try">
       <li>Pick your state. The form changes.</li>
-      <li>Open the logger. Logging stays open on this host until checkout is live — no card.</li>
+      <li>Open the logger. Logging stays open until checkout is live — no card.</li>
       <li>Add a field, add one jug, log this spray.</li>
     </ol>
     <div class="form-actions public-cta">
@@ -53,12 +53,12 @@
       <a class="btn btn-secondary btn-xl" href="inspector.html">For inspectors</a>
     </div>
     <p class="card-hint">Nothing leaves this device. When checkout is live, new devices get a 30-day trial. A license is for logging new sprays — the book stays yours.</p>
-    <p class="card-hint">Product identity: if this host offers EPA lookup, it is name and status only — never rates, REI, or PHI. USB, GitHub Pages, and local servers have no lookup. Type the jug number or Scan label. The label is the law.</p>
+    <p class="card-hint">Product identity: if EPA lookup is available here, it is name and status only — never rates, REI, or PHI. USB, GitHub Pages, and local servers have no lookup. Type the jug number or Scan label. The label is the law.</p>
   </section>
 
   <section class="card" id="your-state">
     <h3 class="card-title">Your state is the form</h3>
-    <p class="card-hint">A generic log or a chemical encyclopedia will not reshape for Maine vs Iowa vs Alabama private. This log does. Pick a state and see what it asks.</p>
+    <p class="card-hint">A generic log or a chemical encyclopedia will not reshape for a grower in Maine vs Iowa vs Alabama. This log does. Pick a state and see what it asks.</p>
     <div class="form-row">
       <label>Your state
         <select id="start-state"><option value="">— Select state —</option></select>
@@ -68,7 +68,7 @@
       <p class="class-pick-label" id="start-class-label">This log is for</p>
       <select id="start-class" class="visually-hidden" tabindex="-1" aria-hidden="true">
         <option value="private" selected>My crop on my land</option>
-        <option value="commercial">Commercial applicator work</option>
+        <option value="commercial">This state's commercial record list</option>
       </select>
       <div class="class-pick-cards" role="group" aria-labelledby="start-class-label">
         <button type="button" class="class-pick-card" data-class="private" aria-pressed="true">
@@ -76,11 +76,11 @@
           <span>I spray to grow my crop on land I own or rent. Whatever my state calls that card. Selling the harvest wholesale or retail does not change this.</span>
         </button>
         <button type="button" class="class-pick-card" data-class="commercial" aria-pressed="false">
-          <strong>Commercial applicator work</strong>
-          <span>For-hire applications, or the office records my state requires of a commercial applicator. Not a contractor dispatch app. Not “I sell produce.”</span>
+          <strong>This state's commercial record list</strong>
+          <span class="class-pick-refuse">If you spray other people’s farms for a living — clients, signatures, a crew with roles — use a custom-applicator tool. This is the grower’s book.</span>
+          <span>Office boxes a commercial-category log may ask. Not a dispatch book. Not “I sell produce.”</span>
         </button>
       </div>
-      <p class="card-hint class-pick-refuse">If you spray other people’s farms for a living — clients, signatures, a crew with roles — use a custom-applicator tool. This is the grower’s book.</p>
       <p class="card-hint class-pick-sentence" id="start-class-pick-hint"></p>
       <p class="card-hint class-pick-cite" id="start-class-pick-cite" hidden></p>
       <p class="card-hint class-pick-foot">Your state may issue several grower licenses. This choice is which record list to use, not which exam you passed. Selling your crop does not change the grower row.</p>
@@ -106,7 +106,7 @@
     <p>If you keep <strong>your own book</strong> — two tunnels or a hundred named sites — this is the logger. Cab phone sends. Shop tablet is the book. No cloud seat.</p>
     <p>Selling your crop wholesale or retail is still My crop on my land. That is the grower record list, not a commercial-applicator license.</p>
     <p>If you spray <strong>other people’s farms for a living</strong> — clients, on-site signatures, a crew with roles — use a custom-applicator tool. This logger is the grower’s book. We will not pretend to be that other product.</p>
-    <p>Commercial applicator work here only reshapes office record boxes. It is not a custom-applicator CRM.</p>
+    <p>The commercial record list here only reshapes office record boxes. It is not a custom-applicator CRM.</p>
   </section>
 
   <section class="card">

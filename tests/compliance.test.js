@@ -240,14 +240,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.39 + deadline/license wiring', () => {
+check('source files advertise v2.9.40 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.39'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.39'));
+  assert.ok(app.includes('v2.9.40'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.40'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-18'"));
-  assert.ok(!html.includes('v2.9.39'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.40'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -415,8 +415,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.39'"));
-  assert.ok(!html.includes('v2.9.39'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.40'"));
+  assert.ok(!html.includes('v2.9.40'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -890,13 +890,13 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   const csvSrc = fs.readFileSync(path.join(root, 'csv-import.js'), 'utf8');
   assert.ok(start.includes('Open the logger') && start.includes('id="start-state"'));
   assert.ok(start.includes('Open the logger — no card'));
-  assert.ok(start.includes('Logging stays open on this host until checkout is live'));
+  assert.ok(start.includes('Logging stays open until checkout is live'));
   assert.ok(!start.includes('Try the logger — 30 days, no card'));
   assert.ok(start.includes('If you spray') && start.includes('custom-applicator'));
   assert.ok(start.includes('grower’s book') || start.includes("grower's book"));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(start), 'public page does not name other products');
   assert.ok(!start.includes('Names on those buttons'));
-  assert.ok(!start.includes('v2.9.39'), 'public page keeps version out of copy');
+  assert.ok(!start.includes('v2.9.40'), 'public page keeps version out of copy');
   assert.ok(start.includes('id="start-copy-link"'));
   assert.ok(start.includes('mailto:practicalfarmtools@gmail.com') && inspector.includes('mailto:practicalfarmtools@gmail.com') &&
     extension.includes('mailto:practicalfarmtools@gmail.com'), 'public human on all three pages');
@@ -1046,7 +1046,7 @@ check('v2.9.35: one cab voice — Next, quiet save, inviting copy', () => {
   assert.ok(!start.includes('Powerful and intuitive'));
   assert.ok(!start.includes('huge farms buy software'));
   assert.ok(start.includes('Open the logger — no card'));
-  assert.ok(html.includes('Logging stays open on this host until checkout is live'));
+  assert.ok(html.includes('Logging stays open until checkout is live'));
   assert.strictEqual(i18n.t('es', 'Ready to save.'), 'Listo para guardar.');
   assert.strictEqual(i18n.t('fr', 'Update this spray'), 'Mettre à jour cette pulvérisation');
   assert.notStrictEqual(i18n.t('pt-BR', 'Time is now. Pick the field.'), 'Time is now. Pick the field.');
@@ -1120,7 +1120,7 @@ check('v2.9.32: empty BUY_URL keeps logging open and does not start a trial', ()
   assert.ok(app.includes('checkoutUrl: BUY_URL'));
   assert.ok(app.includes("if (!(BUY_URL || '').trim())"));
   assert.ok(app.includes('delete data.meta.trialStartedAt'));
-  assert.ok(html.includes('Logging stays open on this host until checkout is live'));
+  assert.ok(html.includes('Logging stays open until checkout is live'));
   assert.ok(start.includes('Open the logger — no card'));
   const open = lic.resolveLicenseState({
     trialStartedAt: Date.now() - 40 * 86400000,
@@ -1160,7 +1160,7 @@ check('v2.9.38: class picker asks which record list; hints stay honest', () => {
   const Compliance = require(path.join(root, 'compliance.js'));
   assert.ok(html.includes('This log is for'));
   assert.ok(html.includes('My crop on my land'));
-  assert.ok(html.includes('Commercial applicator work'));
+  assert.ok(html.includes('This state\'s commercial record list'));
   assert.ok(html.includes('id="class-pick-hint"'));
   assert.ok(html.includes('id="first-run-class"') && html.includes('id="set-applicator-class"'));
   const firstRun = html.split('id="first-run-class-pick"')[1].split('id="dash-setup-steps"')[0];
@@ -1175,7 +1175,7 @@ check('v2.9.38: class picker asks which record list; hints stay honest', () => {
   assert.ok(app.includes("$('#first-run-class')") && app.includes("$('#set-applicator-class')"));
   assert.ok(/value="private"|'private'/.test(app) && app.includes("'commercial'") && app.includes("'both'"));
   assert.ok(start.includes('This log is for') && start.includes('My crop on my land'));
-  assert.ok(start.includes('Commercial applicator work'));
+  assert.ok(start.includes('This state\'s commercial record list'));
   assert.ok(!start.includes('data-class="both"'));
   assert.ok(start.includes('Selling your crop wholesale or retail is still My crop on my land'));
   assert.ok(start.includes('custom-applicator CRM'));
@@ -1209,10 +1209,39 @@ check('v2.9.39: tablet form rows, device kicker, refuse next to class cards', ()
   const whoIdx = start.indexOf('Who this is for');
   const refuseIdx = start.indexOf('class-pick-refuse');
   assert.ok(refuseIdx > 0 && whoIdx > refuseIdx, 'refusal is next to the cards, not only later');
+  const commCard = start.split('data-class="commercial"')[1].split('</button>')[0];
+  assert.ok(commCard.includes(refuse), 'v2.9.39 still has refuse on the picker');
   assert.strictEqual(i18n.ES['Open citation'], 'Abrir la referencia');
   assert.ok(i18n.ES['Pick your state. The form changes.']);
   assert.ok(i18n.ES['Add a field, add one jug, log this spray.']);
   assert.ok(!/Agricultural Basic/.test(html) && !/Agricultural Basic/.test(start));
+});
+
+check('v2.9.40: refuse lives in the commercial card; farmer copy drops this host', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  const i18n = require(path.join(root, 'i18n.js'));
+  const refuse = 'If you spray other people’s farms for a living — clients, signatures, a crew with roles — use a custom-applicator tool. This is the grower’s book.';
+  const startComm = start.split('data-class="commercial"')[1].split('</button>')[0];
+  const firstRun = html.split('id="first-run-class-pick"')[1].split('id="dash-setup-steps"')[0];
+  const firstComm = firstRun.split('data-class="commercial"')[1].split('</button>')[0];
+  assert.ok(startComm.includes('class-pick-refuse') && startComm.includes(refuse));
+  assert.ok(firstComm.includes('class-pick-refuse') && firstComm.includes(refuse));
+  assert.ok(!start.includes('<p class="card-hint class-pick-refuse">'));
+  assert.ok(!html.includes('<p class="card-hint class-pick-refuse">'));
+  assert.ok(start.includes("This state's commercial record list"));
+  assert.ok(html.includes("This state's commercial record list"));
+  assert.ok(!start.includes('Commercial applicator work'));
+  assert.ok(!html.includes('Commercial applicator work'));
+  assert.ok(start.includes('Logging stays open until checkout is live'));
+  assert.ok(!start.includes('on this host until checkout'));
+  assert.ok(html.includes('Logging stays open until checkout is live'));
+  assert.ok(!html.includes('on this host until checkout'));
+  assert.ok(css.includes('.class-pick-card .class-pick-refuse'));
+  assert.ok(i18n.ES["This state's commercial record list"]);
+  assert.ok(i18n.t('es', 'Office boxes a commercial-category log may ask. Not a dispatch book. Not “I sell produce.”').includes('vendo la cosecha'));
+  assert.ok(!i18n.t('es', 'Open the logger. Logging stays open until checkout is live — no card.').includes('host'));
 });
 
 check('schema default version is 5', () => {

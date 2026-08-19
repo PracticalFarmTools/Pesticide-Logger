@@ -63,7 +63,7 @@ Ask a **use** question. Let **this state’s JSON** say what the log will ask.
 ```
 1. Farm name
 2. State          ← required before the hint is honest
-3. This log is for:  [ My crop on my land ]  [ Commercial applicator work ]
+3. This log is for:  [ My crop on my land ]  [ This state's commercial record list ]
 4. One sentence generated from STATE_LAWS[state].privateDuty
 5. Quiet link: {agency} · Open citation  (already on the law row)
 ```
@@ -73,7 +73,7 @@ Ask a **use** question. Let **this state’s JSON** say what the log will ask.
 | They mean | They pick | Engine |
 |---|---|---|
 | Any grower card: private, agricultural basic, “I just farm” | **My crop on my land** | `private` |
-| For hire, public/commercial sites, commercial office records | **Commercial applicator work** | `commercial` |
+| For hire, public/commercial sites, commercial office records | **This state's commercial record list** | `commercial` |
 | One device must cover crop sprays *and* commercial-category sprays | **This book covers both** (Settings) | `both` |
 
 Universal footnote under the cards (not a state encyclopedia):
@@ -111,8 +111,10 @@ Engine (do not change):
 **My crop on my land** — value `private`  
 I spray to grow my crop on land I own or rent. Whatever my state calls that card. Selling the harvest wholesale or retail does not change this.
 
-**Commercial applicator work** — value `commercial`  
-For-hire applications, or the office records my state requires of a commercial applicator. Not a contractor dispatch app. Not “I sell produce.”
+**This state's commercial record list** — value `commercial`  
+If you spray other people’s farms for a living — clients, signatures, a crew with roles — use a custom-applicator tool. This is the grower’s book. Office boxes a commercial-category log may ask. Not a dispatch book. Not “I sell produce.”
+
+The refuse sentence lives **inside** the commercial card (first span), not only under the cards. On a phone first-run the card is on screen; a paragraph below it was below the fold.
 
 **This book covers both** — value `both`  
 Crop sprays and commercial-category sprays in one log. Strictest boxes. Settings only on first-run.
@@ -185,7 +187,7 @@ Needing Basic *and* commercial in Maine is a real combination: farm production o
 - Keep option **values** `private` | `commercial` | `both`. Tests and `?class=` handoff already use them (`consumeStartHandoff`, `start.js`).
 - Prefer buttons that set the hidden select (or keep the select and hide it visually) so `save settings` / first-run submit do not grow a new settings key.
 - i18n: add the new English strings to `i18n.js` (es / fr / pt-BR). Do not translate citation text.
-- Tests: first-run HTML has This log is for / My crop on my land / Commercial applicator work; `both` is not required on first-run; `app.js` still reads `private`/`commercial`/`both`; Iowa private hint contains “quiet” or “for-hire”; no `Agricultural Basic` string in `index.html` / `app.js`; `start.html` labels match; no new `applicatorClass` string.
+- Tests: first-run HTML has This log is for / My crop on my land / This state's commercial record list; refuse sits inside the commercial card; `both` is not required on first-run; `app.js` still reads `private`/`commercial`/`both`; Iowa private hint contains “quiet” or “for-hire”; no `Agricultural Basic` string in `index.html` / `app.js`; `start.html` labels match; no new `applicatorClass` string.
 - Do not bump cab Next copy. Do not add a wizard. Do not auto-fill class from cert number. Do not add `agricultural_basic` to settings.
 
 ---

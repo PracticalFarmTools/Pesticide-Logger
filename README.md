@@ -1,4 +1,4 @@
-# Pesticide Logger v2.9.37
+# Pesticide Logger v2.9.38
 
 **Offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite. Licensed software with
@@ -25,7 +25,7 @@ application at the repository root.
 
 | Feature | Details |
 |---|---|
-| **Dynamic per-state / class spray log** | The log reshapes by state **and** applicator class (private vs commercial). Private duty is scoped (`required` / `none` / `uncertain`) so commercial-only states do not invent private requirements. Conditional fields appear only when applicable. |
+| **Dynamic per-state / class spray log** | First-run asks **which record list this book uses** (My crop on my land vs commercial applicator work), then the log reshapes by state **and** class (`private` / `commercial` / `both`). Private duty is scoped (`required` / `none` / `uncertain`) so Iowa growers stay quiet and Maine growers still get that state’s private list. Conditional fields appear only when applicable. |
 | **Honest completion status** | Badges say “Fields complete / Needs review / Incomplete” — not a legal determination. Related fields are not treated as interchangeable. Missing REI/PHI fails loud. Edits preserve frozen compliance state/class. |
 | **In-cab workflow** | Compact Spray Log (log this spray vs past sprays), thumb tabs, Spray now, Duplicate last (same mix, time is now, compact rows), a sticky **Next** line that names one step at a time, Stamp weather on the toolbar, restage after save for the next field, Tank Mix jump from the log (calculator stays under More), **type-to-find** on the mix (name, EPA #, or active ingredient) with optional **Scan label** (photograph the EPA Reg. No.; barcode is secondary), recent-product chips, sticky large save buttons, and touch-friendly targets for phone/tablet use in the tractor. Optional cab glare enlarges type in the sun. Field mapper can go **full screen** to draw or look around. |
 | **Audit trail & soft-delete** | Edits keep snapshot history. Deletes are soft (recoverable) with retention-aware prompts. |

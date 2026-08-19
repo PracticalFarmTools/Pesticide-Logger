@@ -314,6 +314,40 @@
     };
   }
 
+  // Live first-run / Settings sentence. Same copy as start.js classPickHint.
+  // Generated from privateDuty, not from license product names.
+  function classPickHint(opts) {
+    const o = opts || {};
+    const cls = String(o.applicatorClass || 'private').toLowerCase();
+    const duty = o.privateDuty || '';
+    const stateName = o.stateName || '';
+    const agency = o.agency || '';
+    const citationUrl = o.citationUrl || '';
+    let template;
+    if (!stateName) {
+      template = 'Pick your state first. This sentence is about that state’s record list, not which exam you passed.';
+    } else if (cls === 'both') {
+      template = 'The log shows the strictest boxes for {State}.';
+    } else if (cls === 'commercial') {
+      template = 'In {State}, a commercial log asks that state’s office record list. Customer and weather boxes may appear. Still not a custom-applicator CRM.';
+    } else if (duty === 'none') {
+      template = 'In {State}, a grower log stays quiet on for-hire boxes. Confirm with the agency.';
+    } else if (duty === 'uncertain') {
+      template = 'Private-applicator duty is not verified here. Confirm with the agency. The log will not pretend to be complete.';
+    } else {
+      template = 'In {State}, a grower log asks that state’s private record list. Completion is boxes filled, not a legal determination.';
+    }
+    return {
+      template: template,
+      sentence: template.replace(/\{State\}/g, stateName),
+      agency: agency,
+      citationUrl: citationUrl,
+      stateName: stateName,
+      applicatorClass: cls,
+      privateDuty: duty
+    };
+  }
+
   const api = {
     CORE_LOG_FIELDS,
     PRODUCT_SECTION_FIELDS,
@@ -336,7 +370,8 @@
     fieldAppliesToApp,
     stateFieldsApply,
     complianceValuePresent,
-    evaluateCompliance
+    evaluateCompliance,
+    classPickHint
   };
 
   if (typeof module !== 'undefined' && module.exports) {

@@ -1,6 +1,6 @@
 # Blueprint: obvious grower vs commercial class
 
-**Status: specified, not implemented.** App **v2.9.37**. Grade:
+**Status: implemented in v2.9.38.** Grade:
 `docs/seller-grade-report.md`. Stay-in-lane:
 `docs/stay-in-lane-blueprint.md`. Go-live order stays `docs/owner-next.md`
 (this file is not a sale blocker).

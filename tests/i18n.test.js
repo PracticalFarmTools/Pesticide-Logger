@@ -213,6 +213,19 @@ check('app.js applies any dictionary language, not only Spanish', () => {
   assert.ok(how.includes('id="public-lang"'));
 });
 
+check('class picker strings are translated and keep {State}', () => {
+  assert.strictEqual(i18n.t('es', 'This log is for'), 'Este registro es para');
+  assert.strictEqual(i18n.t('fr', 'Commercial applicator work'), 'Travail d’applicateur commercial');
+  assert.notStrictEqual(
+    i18n.t('pt-BR', 'This book covers both'),
+    'This book covers both'
+  );
+  const quiet = 'In {State}, a grower log stays quiet on for-hire boxes. Confirm with the agency.';
+  assert.ok(i18n.t('es', quiet).includes('{State}'));
+  assert.ok(i18n.t('fr', quiet).includes('{State}'));
+  assert.ok(i18n.t('pt-BR', quiet).includes('{State}'));
+});
+
 if (failed) {
   console.error('\n' + failed + ' check(s) failed');
   process.exit(1);

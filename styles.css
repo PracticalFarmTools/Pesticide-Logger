@@ -508,6 +508,87 @@ main {
 .setup-step:hover, .setup-step:focus-visible { border-color: var(--primary-green); }
 .first-run-farm { margin: 0.75rem 0 1rem; }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.class-pick {
+  position: relative;
+  margin: 0 0 0.9rem;
+}
+.class-pick-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 0 0 0.4rem;
+}
+.class-pick-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+.class-pick-card {
+  appearance: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0.85rem 0.95rem;
+  min-height: var(--touch);
+  box-shadow: var(--shadow-sm);
+}
+.class-pick-card strong {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary-green-dark);
+  letter-spacing: -0.02em;
+}
+.class-pick-card span {
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+.class-pick-card:hover,
+.class-pick-card:focus-visible {
+  border-color: var(--primary-green);
+}
+.class-pick-card[aria-pressed="true"] {
+  border-color: var(--primary-green);
+  background: var(--primary-green-translucent);
+  box-shadow: 0 0 0 1px var(--primary-green);
+}
+.class-pick-card-both {
+  grid-column: 1 / -1;
+  background: var(--bg-page);
+}
+.class-pick-sentence {
+  margin: 0.65rem 0 0.25rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+.class-pick-cite,
+.class-pick-foot {
+  margin: 0.2rem 0 0;
+}
+@media (max-width: 480px) {
+  .class-pick-cards { grid-template-columns: 1fr; }
+}
+
 .stat-card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);

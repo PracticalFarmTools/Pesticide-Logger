@@ -110,20 +110,35 @@
             </select>
           </label>
         </div>
-        <div class="form-row form-row-3">
+        <div class="form-row form-row-2">
           <label>Farm name <span class="req-star">*</span>
             <input type="text" id="first-run-farm-name" placeholder="e.g. Spear Farm" autocomplete="organization">
           </label>
           <label>Your state <span class="req-star">*</span>
             <select id="first-run-state"><option value="">— Select state —</option></select>
           </label>
-          <label>Applicator class
-            <select id="first-run-class">
-              <option value="private">Private / grower</option>
-              <option value="commercial">Commercial / for-hire</option>
-              <option value="both">Both (strictest fields)</option>
-            </select>
-          </label>
+        </div>
+        <div class="class-pick" id="first-run-class-pick">
+          <p class="class-pick-label" id="first-run-class-label">This log is for</p>
+          <select id="first-run-class" class="visually-hidden" tabindex="-1" aria-hidden="true">
+            <option value="private" selected>My crop on my land</option>
+            <option value="commercial">Commercial applicator work</option>
+            <option value="both">This book covers both</option>
+          </select>
+          <div class="class-pick-cards" role="group" aria-labelledby="first-run-class-label">
+            <button type="button" class="class-pick-card" data-class="private" aria-pressed="true">
+              <strong>My crop on my land</strong>
+              <span>I spray to grow my crop on land I own or rent. Whatever my state calls that card. Selling the harvest wholesale or retail does not change this.</span>
+            </button>
+            <button type="button" class="class-pick-card" data-class="commercial" aria-pressed="false">
+              <strong>Commercial applicator work</strong>
+              <span>For-hire applications, or the office records my state requires of a commercial applicator. Not a contractor dispatch app. Not “I sell produce.”</span>
+            </button>
+          </div>
+          <p class="card-hint class-pick-sentence" id="class-pick-hint"></p>
+          <p class="card-hint class-pick-cite" id="class-pick-cite" hidden></p>
+          <p class="card-hint class-pick-foot">Your state may issue several grower licenses. This choice is which record list to use, not which exam you passed. Selling your crop does not change the grower row.</p>
+          <p class="card-hint">Need crop sprays and commercial-category sprays in one book? After Save farm, Settings → This book covers both.</p>
         </div>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">Save farm</button>
@@ -1060,14 +1075,32 @@
             <input type="text" id="set-county" placeholder="e.g. Lincoln">
           </label>
         </div>
-        <div class="form-row form-row-3">
-          <label>Applicator class
-            <select id="set-applicator-class">
-              <option value="private">Private / grower</option>
-              <option value="commercial">Commercial / for-hire</option>
-              <option value="both">Both (strictest fields)</option>
-            </select>
-          </label>
+        <div class="class-pick" id="set-class-pick">
+          <p class="class-pick-label" id="set-class-label">This log is for</p>
+          <select id="set-applicator-class" class="visually-hidden" tabindex="-1" aria-hidden="true">
+            <option value="private">My crop on my land</option>
+            <option value="commercial">Commercial applicator work</option>
+            <option value="both">This book covers both</option>
+          </select>
+          <div class="class-pick-cards" role="group" aria-labelledby="set-class-label">
+            <button type="button" class="class-pick-card" data-class="private" aria-pressed="true">
+              <strong>My crop on my land</strong>
+              <span>I spray to grow my crop on land I own or rent. Whatever my state calls that card. Selling the harvest wholesale or retail does not change this.</span>
+            </button>
+            <button type="button" class="class-pick-card" data-class="commercial" aria-pressed="false">
+              <strong>Commercial applicator work</strong>
+              <span>For-hire applications, or the office records my state requires of a commercial applicator. Not a contractor dispatch app. Not “I sell produce.”</span>
+            </button>
+            <button type="button" class="class-pick-card class-pick-card-both" data-class="both" aria-pressed="false">
+              <strong>This book covers both</strong>
+              <span>Crop sprays and commercial-category sprays in one log. Strictest boxes. Does not rewrite sprays you already saved.</span>
+            </button>
+          </div>
+          <p class="card-hint class-pick-sentence" id="set-class-pick-hint"></p>
+          <p class="card-hint class-pick-cite" id="set-class-pick-cite" hidden></p>
+          <p class="card-hint class-pick-foot">Your state may issue several grower licenses. This choice is which record list to use, not which exam you passed. Selling your crop does not change the grower row.</p>
+        </div>
+        <div class="form-row form-row-2">
           <label>Default applicator name
             <input type="text" id="set-applicator">
           </label>

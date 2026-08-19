@@ -284,6 +284,27 @@ check('phiDate keeps fractional days instead of truncating', () => {
   assert.strictEqual(whole.getDate(), 15);
 });
 
+check('classPickHint maps privateDuty without inventing AR fields or a third class', () => {
+  const ia = Compliance.classPickHint({
+    applicatorClass: 'private', privateDuty: 'none', stateName: 'Iowa',
+    agency: 'Iowa Department of Agriculture and Land Stewardship'
+  });
+  assert.ok(/quiet/.test(ia.sentence));
+  const me = Compliance.classPickHint({
+    applicatorClass: 'private', privateDuty: 'required', stateName: 'Maine'
+  });
+  assert.ok(/private record list/.test(me.sentence));
+  const ar = Compliance.classPickHint({
+    applicatorClass: 'private', privateDuty: 'uncertain', stateName: 'Arkansas'
+  });
+  assert.ok(/will not pretend/.test(ar.sentence));
+  assert.ok(!/customer/i.test(ar.sentence));
+  const both = Compliance.classPickHint({
+    applicatorClass: 'both', privateDuty: 'required', stateName: 'Maine'
+  });
+  assert.ok(/strictest boxes for Maine/.test(both.sentence));
+});
+
 if (failed) {
   console.error(`\n${failed} compliance-engine check(s) failed.`);
   process.exit(1);

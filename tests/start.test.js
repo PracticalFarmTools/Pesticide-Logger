@@ -116,7 +116,7 @@ check('owner-next is the go-live order; listing is not live; path-ahead is super
   assert.ok(start.includes('Logging stays open on this host until checkout is live'));
 });
 
-check('class-picker blueprint keeps private/commercial values and one library', () => {
+check('class-picker blueprint is implemented; values stay private/commercial/both', () => {
   const bp = fs.readFileSync(path.join(__dirname, '..', 'docs/class-picker-blueprint.md'), 'utf8');
   assert.ok(bp.includes('This log is for'));
   assert.ok(bp.includes('My crop on my land'));
@@ -129,7 +129,41 @@ check('class-picker blueprint keeps private/commercial values and one library', 
   assert.ok(bp.includes('Drive / Dropbox OAuth'));
   assert.ok(bp.includes('The library: already yes'));
   assert.ok(bp.includes('does not change `laws/XX.json`'));
-  assert.ok(bp.includes('Status: specified, not implemented'));
+  assert.ok(bp.includes('Status: implemented'));
+});
+
+check('classPickHint is honest for Iowa quiet, Maine required, AR uncertain', () => {
+  const ia = StartPage.classPickHint({ applicatorClass: 'private', privateDuty: 'none', stateName: 'Iowa' });
+  assert.ok(/quiet|for-hire/.test(ia.sentence));
+  assert.ok(ia.sentence.includes('Iowa'));
+  const me = StartPage.classPickHint({ applicatorClass: 'private', privateDuty: 'required', stateName: 'Maine' });
+  assert.ok(/private record list/.test(me.sentence));
+  assert.ok(!/quiet/.test(me.sentence), 'Maine growers still get Chapter 50 boxes');
+  const ar = StartPage.classPickHint({ applicatorClass: 'private', privateDuty: 'uncertain', stateName: 'Arkansas' });
+  assert.ok(/not verified|will not pretend/.test(ar.sentence));
+  assert.ok(!/customer address|EPA registration/i.test(ar.sentence));
+  const comm = StartPage.classPickHint({ applicatorClass: 'commercial', privateDuty: 'none', stateName: 'Iowa' });
+  assert.ok(/office record list|CRM/.test(comm.sentence));
+  const both = StartPage.classPickHint({ applicatorClass: 'both', privateDuty: 'required', stateName: 'Maine' });
+  assert.ok(/strictest/.test(both.sentence));
+  const empty = StartPage.classPickHint({ applicatorClass: 'private', privateDuty: 'none', stateName: '' });
+  assert.ok(/Pick your state first/.test(empty.sentence));
+});
+
+check('start.js and compliance.js classPickHint agree', () => {
+  const Compliance = require(path.join(__dirname, '..', 'compliance.js'));
+  const cases = [
+    { applicatorClass: 'private', privateDuty: 'none', stateName: 'Iowa' },
+    { applicatorClass: 'private', privateDuty: 'required', stateName: 'Maine' },
+    { applicatorClass: 'private', privateDuty: 'uncertain', stateName: 'Arkansas' },
+    { applicatorClass: 'commercial', privateDuty: 'none', stateName: 'Iowa' },
+    { applicatorClass: 'both', privateDuty: 'required', stateName: 'Maine' },
+    { applicatorClass: 'private', privateDuty: 'none', stateName: '' }
+  ];
+  cases.forEach((c) => {
+    assert.strictEqual(StartPage.classPickHint(c).sentence, Compliance.classPickHint(c).sentence);
+    assert.strictEqual(StartPage.classPickHint(c).template, Compliance.classPickHint(c).template);
+  });
 });
 
 if (failed) process.exit(1);

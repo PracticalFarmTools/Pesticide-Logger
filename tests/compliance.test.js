@@ -240,14 +240,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.37 + deadline/license wiring', () => {
+check('source files advertise v2.9.38 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.37'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.37'));
+  assert.ok(app.includes('v2.9.38'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.38'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-18'"));
-  assert.ok(!html.includes('v2.9.37'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.38'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -415,8 +415,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.37'"));
-  assert.ok(!html.includes('v2.9.37'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.38'"));
+  assert.ok(!html.includes('v2.9.38'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -896,7 +896,7 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(start.includes('grower’s book') || start.includes("grower's book"));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(start), 'public page does not name other products');
   assert.ok(!start.includes('Names on those buttons'));
-  assert.ok(!start.includes('v2.9.37'), 'public page keeps version out of copy');
+  assert.ok(!start.includes('v2.9.38'), 'public page keeps version out of copy');
   assert.ok(start.includes('id="start-copy-link"'));
   assert.ok(start.includes('mailto:practicalfarmtools@gmail.com') && inspector.includes('mailto:practicalfarmtools@gmail.com') &&
     extension.includes('mailto:practicalfarmtools@gmail.com'), 'public human on all three pages');
@@ -1149,6 +1149,47 @@ check('v2.9.31: owner-ops kit — mailbox checkout, delivery letter, owner-next'
   assert.ok(owner.includes('node tools/sign-license.js'));
   assert.ok(pathAhead.includes('Status: superseded'));
   assert.ok(owner.includes('Back up the signing key'));
+});
+
+check('v2.9.38: class picker asks which record list; hints stay honest', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');
+  const startJs = fs.readFileSync(path.join(root, 'start.js'), 'utf8');
+  const i18n = require(path.join(root, 'i18n.js'));
+  const Compliance = require(path.join(root, 'compliance.js'));
+  assert.ok(html.includes('This log is for'));
+  assert.ok(html.includes('My crop on my land'));
+  assert.ok(html.includes('Commercial applicator work'));
+  assert.ok(html.includes('id="class-pick-hint"'));
+  assert.ok(html.includes('id="first-run-class"') && html.includes('id="set-applicator-class"'));
+  const firstRun = html.split('id="first-run-class-pick"')[1].split('id="dash-setup-steps"')[0];
+  assert.ok(firstRun.includes('data-class="private"') && firstRun.includes('data-class="commercial"'));
+  assert.ok(!firstRun.includes('data-class="both"'), 'both is Settings-only, not a first-run card');
+  assert.ok(firstRun.includes('option value="both"'), 'hidden first-run select still accepts ?class=both');
+  const settingsPick = html.split('id="set-class-pick"')[1].split('Default applicator name')[0];
+  assert.ok(settingsPick.includes('data-class="both"') && settingsPick.includes('This book covers both'));
+  assert.ok(!/Agricultural Basic/.test(html) && !/Agricultural Basic/.test(app),
+    'no Maine exam name in product UI');
+  assert.ok(!/agricultural_basic/.test(app));
+  assert.ok(app.includes("$('#first-run-class')") && app.includes("$('#set-applicator-class')"));
+  assert.ok(/value="private"|'private'/.test(app) && app.includes("'commercial'") && app.includes("'both'"));
+  assert.ok(start.includes('This log is for') && start.includes('My crop on my land'));
+  assert.ok(start.includes('Commercial applicator work'));
+  assert.ok(!start.includes('data-class="both"'));
+  assert.ok(start.includes('Selling your crop wholesale or retail is still My crop on my land'));
+  assert.ok(start.includes('custom-applicator CRM'));
+  const ia = Compliance.classPickHint({ applicatorClass: 'private', privateDuty: 'none', stateName: 'Iowa' });
+  assert.ok(/quiet|for-hire/.test(ia.sentence));
+  const me = Compliance.classPickHint({ applicatorClass: 'private', privateDuty: 'required', stateName: 'Maine' });
+  assert.ok(/private record list/.test(me.sentence));
+  assert.ok(!/quiet/.test(me.sentence));
+  assert.ok(typeof Compliance.classPickHint === 'function');
+  assert.ok(startJs.includes('function classPickHint'));
+  assert.strictEqual(i18n.t('es', 'This log is for'), 'Este registro es para');
+  assert.strictEqual(i18n.t('fr', 'My crop on my land'), 'Ma culture sur ma terre');
+  assert.ok(i18n.t('pt-BR', 'In {State}, a grower log stays quiet on for-hire boxes. Confirm with the agency.').includes('{State}'));
+  assert.ok(app.includes('function paintClassPick') && app.includes('function bindClassPick'));
 });
 
 check('schema default version is 5', () => {

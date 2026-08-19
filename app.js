@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.37 — Practical Farm Tools
+/* Pesticide Logger v2.9.38 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -860,8 +860,10 @@
         renderStateInfo();
         reshapeAppFormForState();
         updateCompliancePreview();
+        paintClassPick($('#set-class-pick'), $('#set-state'));
       });
     }
+    bindClassPick($('#set-class-pick'), $('#set-state'));
     applySettings();
   }
 
@@ -4008,6 +4010,81 @@
     if ($('#first-run-farm-name')) $('#first-run-farm-name').value = data.settings.farmName || '';
     if ($('#first-run-state')) $('#first-run-state').value = data.settings.state || '';
     if ($('#first-run-class')) $('#first-run-class').value = data.settings.applicatorClass || 'private';
+    paintClassPick($('#first-run-class-pick'), $('#first-run-state'));
+    paintClassPick($('#set-class-pick'), $('#set-state'));
+  }
+
+  function classPickFromLaw(code, cls) {
+    const law = (code && typeof STATE_LAWS !== 'undefined') ? STATE_LAWS[code] : null;
+    const hintFn = (typeof Compliance !== 'undefined' && Compliance.classPickHint)
+      ? Compliance.classPickHint
+      : null;
+    const payload = {
+      applicatorClass: cls || 'private',
+      privateDuty: law && law.privateDuty,
+      stateName: code ? (STATE_NAMES[code] || code) : '',
+      agency: law && law.agency,
+      citationUrl: law && law.citation && law.citation.url
+    };
+    if (hintFn) return hintFn(payload);
+    return {
+      template: 'Pick your state first. This sentence is about that state’s record list, not which exam you passed.',
+      sentence: 'Pick your state first. This sentence is about that state’s record list, not which exam you passed.',
+      agency: payload.agency || '',
+      citationUrl: payload.citationUrl || '',
+      stateName: payload.stateName,
+      applicatorClass: payload.applicatorClass,
+      privateDuty: payload.privateDuty || ''
+    };
+  }
+
+  function paintClassPick(pickEl, stateSel) {
+    if (!pickEl) return;
+    const sel = pickEl.querySelector('select');
+    const cls = (sel && sel.value) || 'private';
+    const code = (stateSel && stateSel.value) || '';
+    const hint = classPickFromLaw(code, cls);
+    pickEl.querySelectorAll('[data-class]').forEach((btn) => {
+      btn.setAttribute('aria-pressed', btn.getAttribute('data-class') === cls ? 'true' : 'false');
+    });
+    const sentenceEl = pickEl.querySelector('.class-pick-sentence');
+    const citeEl = pickEl.querySelector('.class-pick-cite');
+    if (sentenceEl) sentenceEl.textContent = tr(hint.template).replace(/\{State\}/g, hint.stateName);
+    if (citeEl) {
+      if (hint.agency && hint.citationUrl) {
+        citeEl.hidden = false;
+        citeEl.innerHTML = esc(hint.agency) + ' · <a href="' + esc(hint.citationUrl) +
+          '" target="_blank" rel="noopener">' + esc(tr('Open citation')) + '</a>';
+      } else {
+        citeEl.hidden = true;
+        citeEl.innerHTML = '';
+      }
+    }
+  }
+
+  function bindClassPick(pickEl, stateSel) {
+    if (!pickEl) return;
+    if (pickEl.dataset.bound) {
+      paintClassPick(pickEl, stateSel);
+      return;
+    }
+    pickEl.dataset.bound = '1';
+    const sel = pickEl.querySelector('select');
+    pickEl.querySelectorAll('[data-class]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const next = btn.getAttribute('data-class');
+        if (sel && sel.value !== next) {
+          sel.value = next;
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        paintClassPick(pickEl, stateSel);
+      });
+    });
+    if (stateSel && !stateSel.dataset.classPickBound) {
+      stateSel.dataset.classPickBound = '1';
+      stateSel.addEventListener('change', () => paintClassPick(pickEl, stateSel));
+    }
+    paintClassPick(pickEl, stateSel);
   }
 
   function consumeStartHandoff() {
@@ -4113,6 +4190,8 @@
     fillStateSelect($('#first-run-state'), data.settings.state);
     if ($('#first-run-class')) $('#first-run-class').value = data.settings.applicatorClass || 'private';
     if ($('#first-run-farm-name')) $('#first-run-farm-name').value = data.settings.farmName || '';
+    bindClassPick($('#first-run-class-pick'), $('#first-run-state'));
+    paintClassPick($('#set-class-pick'), $('#set-state'));
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       const name = ($('#first-run-farm-name') && $('#first-run-farm-name').value.trim()) || '';
@@ -4130,6 +4209,7 @@
       if ($('#set-farm')) $('#set-farm').value = name;
       if ($('#set-state')) $('#set-state').value = state;
       if ($('#set-applicator-class')) $('#set-applicator-class').value = cls;
+      paintClassPick($('#set-class-pick'), $('#set-state'));
       applySettings();
       renderStateInfo();
       reshapeAppFormForState();
@@ -8037,7 +8117,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.37';
+  const APP_VERSION = 'v2.9.38';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {

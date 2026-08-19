@@ -62,6 +62,42 @@
     return '';
   }
 
+  // Same sentences as compliance.js classPickHint — start.html does not load the engine.
+  function classPickHint(opts) {
+    if (typeof Compliance !== 'undefined' && Compliance.classPickHint) {
+      return Compliance.classPickHint(opts);
+    }
+    const o = opts || {};
+    const cls = String(o.applicatorClass || 'private').toLowerCase();
+    const duty = o.privateDuty || '';
+    const stateName = o.stateName || '';
+    const agency = o.agency || '';
+    const citationUrl = o.citationUrl || '';
+    let template;
+    if (!stateName) {
+      template = 'Pick your state first. This sentence is about that state’s record list, not which exam you passed.';
+    } else if (cls === 'both') {
+      template = 'The log shows the strictest boxes for {State}.';
+    } else if (cls === 'commercial') {
+      template = 'In {State}, a commercial log asks that state’s office record list. Customer and weather boxes may appear. Still not a custom-applicator CRM.';
+    } else if (duty === 'none') {
+      template = 'In {State}, a grower log stays quiet on for-hire boxes. Confirm with the agency.';
+    } else if (duty === 'uncertain') {
+      template = 'Private-applicator duty is not verified here. Confirm with the agency. The log will not pretend to be complete.';
+    } else {
+      template = 'In {State}, a grower log asks that state’s private record list. Completion is boxes filled, not a legal determination.';
+    }
+    return {
+      template: template,
+      sentence: template.replace(/\{State\}/g, stateName),
+      agency: agency,
+      citationUrl: citationUrl,
+      stateName: stateName,
+      applicatorClass: cls,
+      privateDuty: duty
+    };
+  }
+
   // Same names as compliance.js COMMERCIAL_ONLY_FIELDS — start.html does not
   // load the engine. Private growers should not see for-hire boxes here.
   const COMMERCIAL_ONLY_FIELDS = [
@@ -129,6 +165,54 @@
       <p class="form-actions"><a class="btn btn-primary" href="${esc(loggerHandoffHref(summary.code, summary.applicatorClass))}">Open the logger in ${esc(summary.name)}</a></p>`;
   }
 
+  function hintLang() {
+    if (typeof I18n !== 'undefined' && I18n.readStoredLang) return I18n.readStoredLang() || '';
+    return '';
+  }
+
+  function fillClassPickHint(doc, hint) {
+    const sentenceEl = doc.getElementById('start-class-pick-hint') ||
+      (doc.querySelector && doc.querySelector('#start-class-pick .class-pick-sentence'));
+    const citeEl = doc.getElementById('start-class-pick-cite') ||
+      (doc.querySelector && doc.querySelector('#start-class-pick .class-pick-cite'));
+    const t = (k) => (typeof I18n !== 'undefined' && I18n.t) ? I18n.t(hintLang(), k) : k;
+    if (sentenceEl) sentenceEl.textContent = t(hint.template).replace(/\{State\}/g, hint.stateName);
+    if (!citeEl) return;
+    if (hint.agency && hint.citationUrl) {
+      citeEl.hidden = false;
+      citeEl.innerHTML = esc(hint.agency) + ' · <a href="' + esc(hint.citationUrl) +
+        '" rel="noopener noreferrer">' + esc(t('Open citation')) + '</a>';
+    } else {
+      citeEl.hidden = true;
+      citeEl.innerHTML = '';
+    }
+  }
+
+  function syncClassPickCards(pickEl, value) {
+    if (!pickEl || !pickEl.querySelectorAll) return;
+    const val = value || 'private';
+    pickEl.querySelectorAll('[data-class]').forEach((btn) => {
+      btn.setAttribute('aria-pressed', btn.getAttribute('data-class') === val ? 'true' : 'false');
+    });
+  }
+
+  function bindClassPick(doc, clsSel) {
+    const pick = doc.getElementById('start-class-pick');
+    if (!pick || pick.dataset.bound) return;
+    pick.dataset.bound = '1';
+    pick.querySelectorAll('[data-class]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const next = btn.getAttribute('data-class');
+        if (clsSel && clsSel.value !== next) {
+          clsSel.value = next;
+          clsSel.dispatchEvent(new Event('change', { bubbles: true }));
+        } else {
+          syncClassPickCards(pick, next);
+        }
+      });
+    });
+  }
+
   function fillStateSelect(sel, selected) {
     if (!sel) return;
     const keep = sel.querySelector('option[value=""]');
@@ -162,6 +246,7 @@
     if (clsSel && (initialClass === 'private' || initialClass === 'commercial')) {
       clsSel.value = initialClass;
     }
+    bindClassPick(documentRef, clsSel);
     function syncHandoffLinks(code, cls) {
       const href = loggerHandoffHref(code, cls);
       const header = documentRef.getElementById('start-open-header');
@@ -176,6 +261,15 @@
       const cls = (clsSel && clsSel.value) || 'private';
       const law = code && matrix[code];
       const summary = law ? summarizeLaw(law, cls, code) : null;
+      const hint = classPickHint({
+        applicatorClass: cls,
+        privateDuty: law && law.privateDuty,
+        stateName: code ? (STATE_NAMES[code] || code) : '',
+        agency: law && law.agency,
+        citationUrl: law && law.citation && law.citation.url
+      });
+      fillClassPickHint(documentRef, hint);
+      syncClassPickCards(documentRef.getElementById('start-class-pick'), cls);
       renderSummary(out, summary);
       syncHandoffLinks(code, cls);
       if (typeof history !== 'undefined' && history.replaceState && code) {
@@ -198,8 +292,7 @@
     }
     if (sel) sel.addEventListener('change', paint);
     if (clsSel) clsSel.addEventListener('change', paint);
-    if (initial) paint();
-    else renderSummary(out, null);
+    paint();
   }
 
   const SUPPORT_EMAIL = 'practicalfarmtools@gmail.com';
@@ -213,6 +306,7 @@
     loggerHandoffHref,
     sharePath,
     privateDutyNote,
+    classPickHint,
     summarizeLaw,
     fillStateSelect,
     renderSummary,

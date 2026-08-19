@@ -230,12 +230,16 @@ check('v2.9.39 copy: device kicker, citation, grower spray, refuse line', () => 
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');
   assert.ok(html.includes('id="first-run-class-pick"'));
+  assert.ok(html.includes('on land I own or rent, whatever my state calls that card'));
+  assert.ok(!html.includes('on land I own or rent. Whatever my state'));
+  assert.ok(start.includes('on land I own or rent, whatever my state calls that card'));
   assert.ok(html.includes('class-pick-refuse'));
   assert.ok(start.includes('Your spray book, on this device'));
   assert.ok(!start.includes('Your spray book, on this phone'));
   assert.strictEqual(i18n.t('es', 'Your spray book, on this device'), 'Su libro de aspersión, en este dispositivo');
   assert.strictEqual(i18n.t('es', 'Open citation'), 'Abrir la referencia');
-  assert.ok(i18n.t('es', 'I spray to grow my crop on land I own or rent. Whatever my state calls that card. Selling the harvest wholesale or retail does not change this.').startsWith('Aplico'));
+  assert.ok(i18n.t('es', 'I spray to grow my crop on land I own or rent, whatever my state calls that card. Selling the harvest wholesale or retail does not change this.').startsWith('Aplico'));
+  assert.ok(i18n.ES['I spray to grow my crop on land I own or rent, whatever my state calls that card. Selling the harvest wholesale or retail does not change this.'].includes('rento, como'));
   assert.ok(i18n.t('es', 'Office boxes a commercial-category log may ask. Not a dispatch book. Not “I sell produce.”').includes('vendo la cosecha'));
   const refuse = 'If you spray other people’s farms for a living — clients, signatures, a crew with roles — use a custom-applicator tool. This is the grower’s book.';
   assert.notStrictEqual(i18n.t('es', refuse), refuse);

@@ -109,7 +109,7 @@ Engine (do not change):
 (Not “Applicator class.” Not “Whose land” alone — Maine can require commercial on land you own if the *use* is public / for-hire / food establishment.)
 
 **My crop on my land** — value `private`  
-I spray to grow my crop on land I own or rent. Whatever my state calls that card. Selling the harvest wholesale or retail does not change this.
+I spray to grow my crop on land I own or rent, whatever my state calls that card. Selling the harvest wholesale or retail does not change this.
 
 **This state's commercial record list** — value `commercial`  
 If you spray other people’s farms for a living — clients, signatures, a crew with roles — use a custom-applicator tool. This is the grower’s book. Office boxes a commercial-category log may ask. Not a dispatch book. Not “I sell produce.”

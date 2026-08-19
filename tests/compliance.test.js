@@ -240,14 +240,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.33 + deadline/license wiring', () => {
+check('source files advertise v2.9.34 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.33'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.33'));
+  assert.ok(app.includes('v2.9.34'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.34'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-18'"));
-  assert.ok(!html.includes('v2.9.33'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.34'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -415,8 +415,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.33'"));
-  assert.ok(!html.includes('v2.9.33'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.34'"));
+  assert.ok(!html.includes('v2.9.34'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -894,7 +894,7 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(start.includes('grower’s book') || start.includes("grower's book"));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(start), 'public page does not name other products');
   assert.ok(!start.includes('Names on those buttons'));
-  assert.ok(!start.includes('v2.9.33'), 'public page keeps version out of copy');
+  assert.ok(!start.includes('v2.9.34'), 'public page keeps version out of copy');
   assert.ok(start.includes('id="start-copy-link"'));
   assert.ok(start.includes('mailto:practicalfarmtools@gmail.com') && inspector.includes('mailto:practicalfarmtools@gmail.com') &&
     extension.includes('mailto:practicalfarmtools@gmail.com'), 'public human on all three pages');
@@ -1000,6 +1000,21 @@ check('v2.9.30: cab A+ restage, compact mix, send-now, device role', () => {
   assert.ok(listing.includes('Coming soon') && !listing.includes('Status:** Active'));
   assert.ok(listing.includes('Delete from the live catalog card'));
   assert.ok(!start.includes('pesticide.practicalfarmtools.com is live'));
+});
+
+check('v2.9.34: sticky Next coach; empty mix row hides rate until a product is picked', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  assert.ok(html.includes('id="app-log-next"') && html.includes('id="app-log-next-btn"'));
+  assert.ok(app.includes('function nextLogStep') && app.includes('function updateLogNext'));
+  assert.ok(app.includes("text: 'Next: pick the field'"));
+  assert.ok(app.includes("text: 'Next: Scan label, or pick a product'"));
+  assert.ok(app.includes("text: 'Ready to save. Extra boxes stay under More.'"));
+  assert.ok(app.includes("addEventListener('click', goLogNext)"));
+  assert.ok(app.includes('syncMixRowPresence') && css.includes('.app-product-row:not(.has-product)'));
+  assert.ok(css.includes('.log-next') && css.includes('position: sticky'));
+  assert.ok(!app.includes('function logWizard'), 'one-page form, not a wizard');
 });
 
 check('v2.9.33: mix Scan label is primary; picking a product does not collapse the rate', () => {

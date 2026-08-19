@@ -93,6 +93,15 @@ check('curly-apostrophe toasts used by app.js are translated', () => {
   assert.notStrictEqual(i18n.t('pt-BR', couldnt), couldnt);
 });
 
+check('log Next coach is translated', () => {
+  assert.strictEqual(i18n.t('es', 'Next: pick the field'), 'Siguiente: elija el campo');
+  assert.strictEqual(i18n.t('fr', 'Next: Scan label, or pick a product'), 'Suivant : scannez l’étiquette, ou choisissez un produit');
+  assert.notStrictEqual(
+    i18n.t('pt-BR', 'Ready to save. Extra boxes stay under More.'),
+    'Ready to save. Extra boxes stay under More.'
+  );
+});
+
 check('mix Scan label chrome is translated', () => {
   assert.strictEqual(i18n.t('es', 'Scan label'), 'Escanear etiqueta');
   assert.strictEqual(i18n.t('fr', 'Scan barcode'), 'Scanner le code-barres');

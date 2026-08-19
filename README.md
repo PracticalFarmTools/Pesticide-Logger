@@ -1,4 +1,4 @@
-# Pesticide Logger v2.9.33
+# Pesticide Logger v2.9.34
 
 **Offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite. Licensed software with
@@ -27,7 +27,7 @@ application at the repository root.
 |---|---|
 | **Dynamic per-state / class spray log** | The log reshapes by state **and** applicator class (private vs commercial). Private duty is scoped (`required` / `none` / `uncertain`) so commercial-only states do not invent private requirements. Conditional fields appear only when applicable. |
 | **Honest completion status** | Badges say “Fields complete / Needs review / Incomplete” — not a legal determination. Related fields are not treated as interchangeable. Missing REI/PHI fails loud. Edits preserve frozen compliance state/class. |
-| **In-cab workflow** | Compact Spray Log (log this spray vs past sprays), thumb tabs, Spray now, Duplicate last (same mix, time is now, compact rows), Stamp weather on the toolbar, restage after save for the next field, Tank Mix jump from the log (calculator stays under More), **Scan label** on the mix (photograph the EPA Reg. No.; barcode is secondary), recent-product chips, sticky large save buttons, and touch-friendly targets for phone/tablet use in the tractor. Optional cab glare enlarges type in the sun. |
+| **In-cab workflow** | Compact Spray Log (log this spray vs past sprays), thumb tabs, Spray now, Duplicate last (same mix, time is now, compact rows), a sticky **Next** line that names one step at a time, Stamp weather on the toolbar, restage after save for the next field, Tank Mix jump from the log (calculator stays under More), **Scan label** on the mix (photograph the EPA Reg. No.; barcode is secondary), recent-product chips, sticky large save buttons, and touch-friendly targets for phone/tablet use in the tractor. Optional cab glare enlarges type in the sun. |
 | **Audit trail & soft-delete** | Edits keep snapshot history. Deletes are soft (recoverable) with retention-aware prompts. |
 | **Lot / batch + OMRI + PHI overrides** | Per-mix-row lot numbers, OMRI flags, and crop-specific REI/PHI overrides that beat library defaults. |
 | **Commercial clocks** | Record-completion deadlines use `recordDeadline` units (`hours` / `calendarDays` / `businessDays` / `sameDay`). Customer-copy clocks only for researched copy duties (never invented). |

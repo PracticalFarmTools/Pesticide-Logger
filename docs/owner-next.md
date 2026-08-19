@@ -153,4 +153,5 @@ Do not advertise against named platforms.
 - Someone answers mail the same week.
 - `--holes` is still AR and SD.
 
-Full scorecard: `docs/seller-grade-report.md`.
+Full scorecard: `docs/seller-grade-report.md`. Optional first-run class
+copy (not a sale blocker): `docs/class-picker-blueprint.md`.

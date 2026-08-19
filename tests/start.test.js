@@ -116,5 +116,16 @@ check('owner-next is the go-live order; listing is not live; path-ahead is super
   assert.ok(start.includes('Logging stays open on this host until checkout is live'));
 });
 
+check('class-picker blueprint keeps private/commercial values and one library', () => {
+  const bp = fs.readFileSync(path.join(__dirname, '..', 'docs/class-picker-blueprint.md'), 'utf8');
+  assert.ok(bp.includes('Whose land do you spray?'));
+  assert.ok(bp.includes('Keep values `private` / `commercial` / `both`'));
+  assert.ok(bp.includes('Drop commercial class because we sell to farmers'));
+  assert.ok(bp.includes('Drive / Dropbox OAuth'));
+  assert.ok(bp.includes('The library: already yes'));
+  assert.ok(bp.includes('does not change `laws/XX.json`'));
+  assert.ok(bp.includes('Status: specified, not implemented'));
+});
+
 if (failed) process.exit(1);
 console.log('\nAll start-page checks passed.');

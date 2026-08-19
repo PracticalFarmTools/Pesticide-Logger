@@ -240,14 +240,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.30 + deadline/license wiring', () => {
+check('source files advertise v2.9.37 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.30'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.30'));
+  assert.ok(app.includes('v2.9.37'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.37'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-18'"));
-  assert.ok(!html.includes('v2.9.30'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.37'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -374,11 +374,11 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(html.includes('data-jump-section="who">Customer / business</button>'));
   assert.ok(html.includes('Extra boxes stay under More for the record.'));
   const logTab = html.split('id="tab-log"')[1].split('id="tab-calculator"')[0];
-  const scanAt = logTab.indexOf('id="app-scan-jug"');
+  const scanAt = logTab.indexOf('id="app-scan-label-btn"');
   const productsAt = logTab.indexOf('data-log-section="products"');
   const toolbarAt = logTab.indexOf('class="cab-toolbar"');
-  assert.ok(scanAt > productsAt && productsAt > toolbarAt, 'Scan jug sits in the products fieldset, not the five-button row');
-  assert.ok(html.includes('Scan the jug, or add from your library.'));
+  assert.ok(scanAt > productsAt && productsAt > toolbarAt, 'Scan label sits in the products fieldset, not the five-button row');
+  assert.ok(html.includes('Type a name or EPA # from your library. Scan label is optional.'));
   assert.ok(/id="app-open-tank-mix"[^>]*class="text-btn"|class="text-btn"[^>]*id="app-open-tank-mix"/.test(html),
     'Tank Mix is a text jump, not a primary cab button');
   assert.ok(app.includes('function setLogMode') && app.includes('function updateLogSectionCollapse'));
@@ -415,8 +415,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.30'"));
-  assert.ok(!html.includes('v2.9.30'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.37'"));
+  assert.ok(!html.includes('v2.9.37'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -430,7 +430,8 @@ check('ship-ready: EPA host honesty, install timing, checkout note', () => {
   assert.ok(app.includes("'license-checkout-note', 'lock-checkout-note'"), 'checkout notes hide when BUY_URL is set');
   assert.ok(app.includes("if (typeof isEmptyHome === 'function' ? isEmptyHome() : false)"),
     'install banner yields to empty first-run home');
-  assert.ok(html.includes('This build has no in-app store.'));
+  assert.ok(html.includes('Until checkout is live, email practicalfarmtools@gmail.com'));
+  assert.ok(!html.includes('This build has no in-app store.'));
   assert.ok(!html.includes('no cost'), 'paid product must not say no cost');
   assert.strictEqual(i18n.ES['Inspector packet'], 'Paquete de inspector');
   assert.strictEqual(i18n.FR['Open citation'], 'Ouvrir la citation');
@@ -452,7 +453,7 @@ check('empty first-run home hides zeros until a field or log exists', () => {
   assert.ok(first > 0 && working > first, 'first-run card sits above the working dashboard');
   assert.ok(spray > working && rei > spray && rei < closeWorking, 'stats, windows, and REI live inside dash-working');
   assert.ok(html.includes('id="dash-first-run" hidden'), 'first-run starts hidden until render');
-  assert.ok(html.includes('Get set up to log'), 'setup title');
+  assert.ok(html.includes("Welcome. Let's log."), 'setup title');
   assert.ok(html.includes('id="dash-setup-steps"'), 'setup steps host');
   const FarmStore = require(path.join(root, 'store.js'));
   const empty = FarmStore.defaultData();
@@ -509,7 +510,7 @@ check('v2.7 features wired: forecast, photos, barcode, posting, import, i18n', (
   assert.ok(app.includes('function capturePhotoInto'), 'photo capture');
   assert.ok(app.includes('function sweepOrphanPhotos'), 'photo sweep');
   assert.ok(app.includes('function scanJugIntoMix'), 'barcode jug scan');
-  assert.ok(app.includes("addEventListener('click', scanJugIntoMix)"), 'Scan jug uses the named entry point');
+  assert.ok(app.includes("addEventListener('click', scanJugIntoMix)"), 'Scan barcode uses the named entry point');
   assert.ok(!/\n  function mergeHistory\(/.test(app), 'gather merge lives in farm-file.js');
   assert.ok(!/\n  function newerRecord\(/.test(app), 'newer-record lives in farm-file.js');
   assert.ok(app.includes('function printReiPosting'), 'posting sheet');
@@ -553,7 +554,8 @@ check('OCR label scanning wired: parser, lazy loader, both entry points, hardene
   assert.ok(app.includes('function captureAndReadLabel'), 'capture+recognize pipeline');
   assert.ok(app.includes('function scanProductLabel'), 'product-form entry point');
   assert.ok(app.includes('function scanQuickAddProductLabel'), 'cab quick-add entry point');
-  assert.ok(app.includes('function scanJugPhoto'), 'cab Scan jug still-photo uses barcode+OCR');
+  assert.ok(app.includes('function scanJugPhoto'), 'cab still-photo uses OCR then barcode');
+  assert.ok(app.includes('function enhanceLabelImage'), 'label photos are scaled and contrasted for OCR');
   assert.ok(app.includes('function resolveJugScan'), 'jug scan goes through a review path, not a silent first hit');
   assert.ok(app.includes('CameraScan.resolveJugFacts'), 'library match vs EPA lookup is decided in camera-scan.js');
   assert.ok(app.includes('function initCameraCapture'), 'camera init wires iPhone + Android paths');
@@ -565,8 +567,11 @@ check('OCR label scanning wired: parser, lazy loader, both entry points, hardene
   assert.ok(html.includes('id="scan-label-input"'), 'Scan label uses an in-page file input (iOS gesture)');
   assert.ok(html.includes('id="qp-scan-label-btn"'), 'quick-add dialog button present');
   assert.ok(html.includes('id="qp-scan-label-input"'), 'quick-add Scan label uses an in-page file input');
+  assert.ok(html.includes('id="app-scan-label-btn"') && html.includes('id="app-scan-label-input"'),
+    'cab mix Scan label is an in-page file input');
+  assert.ok(app.includes("'app-scan-label-input'"), 'initCameraCapture checks the mix Scan label input');
   assert.ok(html.includes('id="app-scan-jug-photo"') && html.includes('id="app-scan-jug-input"'),
-    'Scan jug has a still-photo path for iPhone');
+    'Scan barcode has a still-photo path for iPhone');
   assert.ok(html.includes('id="prod-scan-barcode-photo"'), 'product barcode has a still-photo path');
   assert.ok(fs.existsSync(path.join(root, 'vendor', 'zxing', 'zxing.min.js')), 'ZXing still-photo decoder vendored');
   assert.ok(!sw.includes('vendor/zxing'), 'ZXing stays lazy-loaded, not precached');
@@ -609,7 +614,7 @@ check('cab scan / EPA ranking / mix chrome: whole-word ranker, state rules, add-
   assert.ok(html.includes('+ Add another product to this mix'));
   assert.ok(html.includes('Choose from library') || app.includes('Choose from library'));
   assert.ok(app.includes("value=\"__custom__\""), 'calculator custom name is opt-in');
-  assert.ok(html.includes('Scan jug barcode or label'));
+  assert.ok(html.includes('id="app-scan-label-btn"') && html.includes('Scan barcode'));
 });
 
 check('mix-calc, csv-import, and field-map are extracted modules the shell calls', () => {
@@ -773,8 +778,10 @@ check('gather, inspector packet, crew, and kiosk stay optional and editable', ()
   assert.ok(app.includes('function clonePhotoIds'), 'duplicate last clones photo blobs');
   assert.ok(/async function duplicateLastSpray[\s\S]*clonePhotoIds/.test(app),
     'duplicate last does not share photoIds with the source spray');
-  assert.ok(html.includes('Save — required boxes filled'), 'save button does not claim legal completeness');
-  assert.ok(app.includes('Update — required boxes filled'));
+  assert.ok(html.includes('Save this spray'), 'save button does not claim legal completeness');
+  assert.ok(app.includes("tr('Update this spray')") || app.includes('Update this spray'));
+  assert.ok(!html.includes('Save — required boxes filled'));
+  assert.ok(!html.includes('complete record') && !/id="app-save-btn"[^>]*>[^<]*complete/i.test(html));
   assert.ok(!/\$\('#app-customer'\)\.value = s\.farmName/.test(app),
     'customer field is not prefilled with the farm name');
   assert.ok(app.includes('operational fallback — confirm with your agency'),
@@ -882,12 +889,14 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   const i18n = require(path.join(root, 'i18n.js'));
   const csvSrc = fs.readFileSync(path.join(root, 'csv-import.js'), 'utf8');
   assert.ok(start.includes('Open the logger') && start.includes('id="start-state"'));
-  assert.ok(start.includes('Try the logger — 30 days, no card'));
+  assert.ok(start.includes('Open the logger — no card'));
+  assert.ok(start.includes('Logging stays open on this host until checkout is live'));
+  assert.ok(!start.includes('Try the logger — 30 days, no card'));
   assert.ok(start.includes('If you spray') && start.includes('custom-applicator'));
   assert.ok(start.includes('grower’s book') || start.includes("grower's book"));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(start), 'public page does not name other products');
   assert.ok(!start.includes('Names on those buttons'));
-  assert.ok(!start.includes('v2.9.30'), 'public page keeps version out of copy');
+  assert.ok(!start.includes('v2.9.37'), 'public page keeps version out of copy');
   assert.ok(start.includes('id="start-copy-link"'));
   assert.ok(start.includes('mailto:practicalfarmtools@gmail.com') && inspector.includes('mailto:practicalfarmtools@gmail.com') &&
     extension.includes('mailto:practicalfarmtools@gmail.com'), 'public human on all three pages');
@@ -991,7 +1000,155 @@ check('v2.9.30: cab A+ restage, compact mix, send-now, device role', () => {
   assert.ok(hasher.includes('--summary') && hasher.includes('function printSummary'));
   assert.ok(listing.includes('NOT LIVE') && listing.includes('pesticide.practicalfarmtools.com'));
   assert.ok(listing.includes('Coming soon') && !listing.includes('Status:** Active'));
+  assert.ok(listing.includes('Delete from the live catalog card'));
   assert.ok(!start.includes('pesticide.practicalfarmtools.com is live'));
+});
+
+check('v2.9.34: sticky Next coach; empty mix row hides rate until a product is picked', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  assert.ok(html.includes('id="app-log-next"') && html.includes('id="app-log-next-btn"'));
+  assert.ok(app.includes('function nextLogStep') && app.includes('function updateLogNext'));
+  assert.ok(app.includes("text: 'Next: pick the field'"));
+  assert.ok(app.includes("text: 'Next: pick a product, or Scan label'"));
+  assert.ok(app.includes("text: 'Ready to save.'"));
+  assert.ok(app.includes("addEventListener('click', goLogNext)"));
+  assert.ok(app.includes('syncMixRowPresence') && css.includes('.app-product-row:not(.has-product)'));
+  assert.ok(css.includes('.log-next') && css.includes('position: sticky'));
+  assert.ok(!app.includes('function logWizard'), 'one-page form, not a wizard');
+});
+
+check('v2.9.35: one cab voice — Next, quiet save, inviting copy', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  const i18n = require(path.join(root, 'i18n.js'));
+  assert.ok(html.includes('id="app-log-next"') && html.includes('id="app-log-next-btn"'));
+  assert.ok(html.includes('id="app-save-honesty"') && html.includes('The label is the law.'));
+  assert.ok(html.includes('id="app-save-draft-hint"') && html.includes('Save a draft anytime.'));
+  assert.ok(html.includes('Save this spray'));
+  assert.ok(!html.includes('Save — required boxes filled'));
+  assert.ok(!/id="app-save-btn"[^>]*>[^<]*(complete|legal)/i.test(html));
+  assert.ok(app.includes("tr('Update this spray')"));
+  assert.ok(app.includes("text: 'Ready to save.'"));
+  assert.ok(!app.includes("text: 'Ready to save. Extra boxes stay under More.'"));
+  assert.ok(!app.includes('field(s) still missing'));
+  assert.ok(app.includes('function showSaveMissingChips'));
+  assert.ok(app.includes("toast('Time is now. Pick the field.')"));
+  assert.ok(app.includes('function syncFormTitleChrome'));
+  assert.ok(!html.includes('btn-lg" id="app-spray-now"'));
+  assert.ok(html.includes('id="app-form-title" hidden'));
+  assert.ok(css.includes('.app-save-honesty') && css.includes('.cab-toolbar .btn'));
+  assert.ok(start.includes('Your spray book, on this phone'));
+  assert.ok(start.includes('Log in the cab. Hand the inspector a file.'));
+  assert.ok(!start.includes('Powerful and intuitive'));
+  assert.ok(!start.includes('huge farms buy software'));
+  assert.ok(start.includes('Open the logger — no card'));
+  assert.ok(html.includes('Logging stays open on this host until checkout is live'));
+  assert.strictEqual(i18n.t('es', 'Ready to save.'), 'Listo para guardar.');
+  assert.strictEqual(i18n.t('fr', 'Update this spray'), 'Mettre à jour cette pulvérisation');
+  assert.notStrictEqual(i18n.t('pt-BR', 'Time is now. Pick the field.'), 'Time is now. Pick the field.');
+});
+
+check('v2.9.37: mix search is first-class; scan is optional; map full screen', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  const i18n = require(path.join(root, 'i18n.js'));
+  const scale = fs.readFileSync(path.join(root, 'farm-scale.js'), 'utf8');
+  const products = html.split('data-log-section="products"')[1].split('data-log-section="when"')[0];
+  assert.ok(products.indexOf('id="app-product-filter"') < products.indexOf('id="recent-products"'),
+    'matches sit under Find a product');
+  assert.ok(products.indexOf('id="recent-products"') < products.indexOf('id="app-scan-label-btn"'),
+    'type-to-find and matches sit above Scan label');
+  assert.ok(html.includes('id="app-mix-find-wrap"') && html.includes('Find a product'));
+  assert.ok(!/id="app-product-filter"[^>]*\bhidden\b/.test(html), 'mix search is not gated on library size');
+  assert.ok(html.includes('Scan label is optional'));
+  assert.ok(!html.includes('btn-primary btn-lg camera-file-btn" id="app-scan-label-btn"'));
+  assert.ok(html.includes('btn-secondary camera-file-btn" id="app-scan-label-btn"'));
+  assert.ok(app.includes("text: 'Next: pick a product, or Scan label'"));
+  assert.ok(app.includes("const find = $('#app-product-filter')"));
+  assert.ok(app.includes('if (mixFilter) mixFilter.hidden = false'));
+  assert.ok(app.includes('function mixFindQuery'));
+  assert.ok(app.includes('FarmScale.mixProductHits') && scale.includes('function mixProductHits'));
+  assert.ok(app.includes("tr('Matches:')") && app.includes('No library match. Scan label or add the product.'));
+  assert.ok(html.includes('id="map-fullscreen"') && html.includes('>Full screen<'));
+  assert.ok(app.includes('function setMapFullscreen') && app.includes('function isMapFullscreen'));
+  assert.ok(app.includes("tr('Exit full screen')"));
+  assert.ok(app.includes("mapEl.style.height = ''"));
+  assert.ok(css.includes('body.map-fullscreen') && css.includes('.mix-find'));
+  assert.ok(/\.tab-nav-wrap \{[\s\S]*?z-index:\s*2000/.test(css), 'thumb bar stays above Leaflet after full screen');
+  assert.ok(!app.includes('function logWizard'));
+  assert.strictEqual(i18n.t('es', 'Find a product'), 'Hallar un producto');
+  assert.strictEqual(i18n.t('fr', 'Full screen'), 'Plein écran');
+  assert.strictEqual(i18n.t('es', 'Matches:'), 'Coincidencias:');
+  assert.notStrictEqual(
+    i18n.t('pt-BR', 'Type a name or EPA # from your library. Scan label is optional.'),
+    'Type a name or EPA # from your library. Scan label is optional.'
+  );
+});
+
+check('v2.9.33: mix Scan label is primary; picking a product does not collapse the rate', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  const mix = html.split('id="app-mix-scan-row"')[1].split('id="app-products"')[0];
+  assert.ok(mix.indexOf('id="app-scan-label-btn"') < mix.indexOf('id="app-scan-jug"'),
+    'Scan label is the first mix scan control');
+  assert.ok(mix.includes('>Scan label'));
+  assert.ok(mix.includes('>Scan barcode'));
+  const onRow = app.split('function onRowProductChange')[1].split('function computeRowTotal')[0];
+  assert.ok(!onRow.includes('setMixCompact'), 'selecting a product does not compact the rate row');
+  const totals = app.split('function computeMixTotals')[1].split('\n  //')[0];
+  assert.ok(!totals.includes('setMixCompact'), 'auto total does not collapse the mix');
+  assert.ok(/async function duplicateLastSpray[\s\S]*setMixCompact\(true\)/.test(app),
+    'Duplicate last still compact filled rows');
+  assert.ok(/function restageCabMix[\s\S]*setMixCompact\(true\)/.test(app),
+    'restage still compact filled rows');
+  assert.ok(app.includes("row.classList.remove('is-compact')") && app.includes('enter the label rate'));
+  assert.ok(app.includes('function enhanceLabelImage') && app.includes('await enhanceLabelImage(file)'));
+  assert.ok(css.includes('.mix-scan-row #app-scan-label-btn'));
+});
+
+check('v2.9.32: empty BUY_URL keeps logging open and does not start a trial', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');
+  const lic = require(path.join(root, 'license.js'));
+  assert.ok(app.includes('checkoutUrl: BUY_URL'));
+  assert.ok(app.includes("if (!(BUY_URL || '').trim())"));
+  assert.ok(app.includes('delete data.meta.trialStartedAt'));
+  assert.ok(html.includes('Logging stays open on this host until checkout is live'));
+  assert.ok(start.includes('Open the logger — no card'));
+  const open = lic.resolveLicenseState({
+    trialStartedAt: Date.now() - 40 * 86400000,
+    now: Date.now(),
+    keyValid: false,
+    hasKey: false,
+    checkoutUrl: ''
+  });
+  assert.strictEqual(open.mode, 'open');
+  assert.strictEqual(open.pro, true);
+});
+
+check('v2.9.31: owner-ops kit — mailbox checkout, delivery letter, owner-next', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const owner = fs.readFileSync(path.join(root, 'docs', 'owner-next.md'), 'utf8');
+  const pathAhead = fs.readFileSync(path.join(root, 'docs', 'path-ahead-blueprint.md'), 'utf8');
+  const signer = fs.readFileSync(path.join(root, 'tools', 'sign-license.js'), 'utf8');
+  const i18n = require(path.join(root, 'i18n.js'));
+  const note = 'Paste a license key from your purchase email. Until checkout is live, email practicalfarmtools@gmail.com. Spray logs stay on this device either way.';
+  assert.ok(html.includes(note));
+  assert.strictEqual((html.match(/id="lock-checkout-note"/g) || []).length, 1);
+  assert.ok(i18n.ES[note] && i18n.FR[note] && i18n.PT_BR[note]);
+  assert.ok(signer.includes('function deliveryBody') && signer.includes('--mail'));
+  assert.ok(signer.includes('if (require.main === module)'));
+  assert.ok(owner.includes('docs/suite-listing.md'));
+  assert.ok(owner.includes('node tools/sign-license.js'));
+  assert.ok(pathAhead.includes('Status: superseded'));
+  assert.ok(owner.includes('Back up the signing key'));
 });
 
 check('schema default version is 5', () => {

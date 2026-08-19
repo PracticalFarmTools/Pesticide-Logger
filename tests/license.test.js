@@ -59,7 +59,6 @@ async function check(name, fn) {
     assert.strictEqual((await lic.verifyLicenseKey('', pair.publicKeySpkiB64)).reason, 'empty');
     assert.strictEqual((await lic.verifyLicenseKey('not-a-key', pair.publicKeySpkiB64)).reason, 'format');
     assert.strictEqual((await lic.verifyLicenseKey('PLPRO.!!.!!', pair.publicKeySpkiB64)).reason, 'format');
-    // No public key configured in the shipped file yet ⇒ never falsely valid.
     const key = await lic.makeLicenseKey(pair.privateKeyPkcs8B64, { n: 'J', e: 'j@x.com' });
     if (!lic.LICENSE_PUBLIC_KEY_SPKI_B64) {
       assert.strictEqual((await lic.verifyLicenseKey(key)).reason, 'unconfigured');
@@ -107,6 +106,35 @@ async function check(name, fn) {
     });
     assert.strictEqual(badKey.mode, 'key_invalid');
     assert.strictEqual(badKey.keyReason, 'signature');
+  });
+
+  await check('empty checkout URL keeps logging open even after 40 days', () => {
+    const start = Date.UTC(2026, 6, 1);
+    const open = lic.resolveLicenseState({
+      trialStartedAt: start, now: start + 40 * 86400000, keyValid: false, hasKey: false, checkoutUrl: ''
+    });
+    assert.strictEqual(open.mode, 'open');
+    assert.strictEqual(open.pro, true);
+    const withStore = lic.resolveLicenseState({
+      trialStartedAt: start, now: start + 40 * 86400000, keyValid: false, hasKey: false,
+      checkoutUrl: 'https://pay.example/buy'
+    });
+    assert.strictEqual(withStore.mode, 'trial_expired');
+    assert.strictEqual(withStore.pro, false);
+  });
+
+  await check('delivery letter names mailbox and how.html, not a live origin', () => {
+    const { deliveryBody } = require(path.join(__dirname, '..', 'tools', 'sign-license.js'));
+    const letter = deliveryBody({ name: 'Jane Farmer', key: 'PLPRO.TESTKEY', expires: null });
+    assert.ok(letter.includes('Jane Farmer'));
+    assert.ok(letter.includes('PLPRO.TESTKEY'));
+    assert.ok(letter.includes('Does not expire.'));
+    assert.ok(letter.includes('how.html'));
+    assert.ok(letter.includes('practicalfarmtools@gmail.com'));
+    assert.ok(letter.includes('We cannot restore it from this email.') || letter.includes('cannot restore'));
+    assert.ok(!/pesticide\.practicalfarmtools\.com is live/i.test(letter));
+    const dated = deliveryBody({ name: 'Acme', key: 'PLPRO.X', expires: '2027-12-31' });
+    assert.ok(dated.includes('Expires 2027-12-31.'));
   });
 
   if (failed) {

@@ -101,5 +101,20 @@ check('how.html exists as a public how-to with no service worker', () => {
   assert.ok(how.includes('Add to Home Screen'));
 });
 
+check('owner-next is the go-live order; listing is not live; path-ahead is superseded', () => {
+  const owner = fs.readFileSync(path.join(__dirname, '..', 'docs', 'owner-next.md'), 'utf8');
+  const listing = fs.readFileSync(path.join(__dirname, '..', 'docs', 'suite-listing.md'), 'utf8');
+  const pathAhead = fs.readFileSync(path.join(__dirname, '..', 'docs', 'path-ahead-blueprint.md'), 'utf8');
+  const app = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
+  assert.ok(owner.includes('Rewrite the catalog card'));
+  assert.ok(owner.includes('Do not set `BUY_URL`'));
+  assert.ok(listing.includes('NOT LIVE') && listing.includes('Coming soon'));
+  assert.ok(pathAhead.includes('Status: superseded'));
+  assert.ok(/const BUY_URL = ['"]['"]/.test(app), 'Buy URL stays empty until checkout exists');
+  const start = fs.readFileSync(path.join(__dirname, '..', 'start.html'), 'utf8');
+  assert.ok(start.includes('Open the logger — no card'));
+  assert.ok(start.includes('Logging stays open on this host until checkout is live'));
+});
+
 if (failed) process.exit(1);
 console.log('\nAll start-page checks passed.');

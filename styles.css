@@ -173,7 +173,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 50;
+  z-index: 2000;
   padding-bottom: env(safe-area-inset-bottom, 0px);
   background: var(--primary-green-dark);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -334,6 +334,37 @@ main {
 .log-section-nav-item.is-parked { opacity: 0.55; }
 .log-section-nav-item.is-open { border-color: var(--primary-green); }
 .log-section-parked { display: none; }
+.log-next {
+  position: sticky;
+  top: calc(var(--tab-nav-h, 4.5rem) + 0.2rem);
+  z-index: 6;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.75rem;
+  margin: 0.35rem 0 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  background: var(--accent-sage-light);
+  color: var(--text-dark);
+  box-shadow: 0 4px 12px rgba(20, 40, 24, 0.08);
+}
+.log-next.is-ready { background: var(--ok-bg); color: var(--primary-green); }
+.log-next-go {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-family: var(--font-title);
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-align: left;
+  padding: 0.15rem 0;
+  cursor: pointer;
+  min-height: 2.4rem;
+}
+.log-next-go:hover, .log-next-go:focus-visible { text-decoration: underline; }
+.log-next-rest { font-size: 0.88rem; opacity: 0.85; }
 .log-more-record {
   flex: 0 0 auto;
   appearance: none;
@@ -357,15 +388,41 @@ main {
 @media (max-width: 720px) {
   .log-mode-toggle { flex-direction: column; align-items: stretch; }
 }
+.mix-find-label {
+  display: block;
+  font-weight: 700;
+  font-size: 0.92rem;
+  margin: 0.15rem 0 0.55rem;
+  color: var(--text-dark);
+}
+.mix-find {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0.3rem 0 0;
+  min-height: var(--touch);
+  font-size: 1.05rem;
+  font-weight: 500;
+}
 .mix-scan-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.5rem 0.75rem;
   align-items: center;
-  margin: 0.35rem 0 0.65rem;
+  margin: 0.15rem 0 0.65rem;
 }
-.mix-scan-row .btn-lg { flex: 1 1 11rem; }
+.mix-scan-row #app-scan-label-btn {
+  min-height: 2.55rem;
+  padding: 0.45rem 0.9rem;
+  font-weight: 700;
+}
 .mix-scan-row .camera-file-btn { text-align: center; justify-content: center; }
+.mix-scan-row .text-btn,
+.mix-scan-row #app-scan-jug-photo {
+  flex: 0 1 auto;
+  font-size: 0.92rem;
+}
+.mix-scan-row #app-add-product { flex: 1 1 11rem; }
 #app-form fieldset { scroll-margin-top: 4.5rem; }
 
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
@@ -1017,12 +1074,13 @@ label.state-required-field {
 
 /* ---------- Field mapper ---------- */
 #field-map {
+  position: relative;
   height: 440px;
   border-radius: 10px;
   border: 1px solid var(--border-color);
   background: var(--accent-sage-light);
   cursor: grab;
-  z-index: 1; /* keep Leaflet panes under the sticky tab bar */
+  z-index: 1; /* stacking context so Leaflet panes stay under the thumb bar */
 }
 #field-map.map-adding { cursor: crosshair; }
 #field-map.map-offline { filter: grayscale(0.35) saturate(0.7); }
@@ -1036,6 +1094,73 @@ label.state-required-field {
   margin-bottom: 0.75rem;
 }
 .map-toolbar-spacer { flex: 1; }
+
+body.map-fullscreen {
+  padding-bottom: 0;
+  overflow: hidden;
+}
+body.map-fullscreen .app-header,
+body.map-fullscreen .tab-nav-wrap,
+body.map-fullscreen #tab-fields .log-mode-toggle,
+body.map-fullscreen #fields-list-pane,
+body.map-fullscreen #fields-add-pane,
+body.map-fullscreen .map-card > .card-title,
+body.map-fullscreen .map-card > .card-hint {
+  display: none !important;
+}
+body.map-fullscreen main {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+body.map-fullscreen #tab-fields.tab-panel.active {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  min-height: 100vh;
+}
+body.map-fullscreen #fields-map-pane,
+body.map-fullscreen .map-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 100dvh;
+  min-height: 100vh;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+}
+body.map-fullscreen .map-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  margin: 0;
+  padding: 0.45rem 0.7rem;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+}
+body.map-fullscreen #field-map {
+  flex: 1 1 auto;
+  height: auto !important;
+  min-height: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  z-index: 2;
+}
+body.map-fullscreen .map-offline-note,
+body.map-fullscreen .map-legend {
+  margin: 0;
+  padding: 0.4rem 0.75rem;
+}
+body.map-fullscreen #map-fullscreen {
+  font-weight: 700;
+}
+body:not(.map-fullscreen) .tab-nav-wrap {
+  z-index: 2000;
+}
 
 .map-offline-note {
   margin: 0 0 0.55rem;
@@ -1159,9 +1284,15 @@ label.state-required-field {
 .cab-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.65rem;
+  gap: 0.45rem 0.55rem;
   align-items: center;
-  margin: 0.75rem 0 1rem;
+  margin: 0.35rem 0 0.65rem;
+}
+.cab-toolbar .btn {
+  min-height: 2.4rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.92rem;
+  font-weight: 600;
 }
 .cab-toggle { margin-left: auto; }
 .btn-lg {
@@ -1215,6 +1346,18 @@ label.state-required-field {
   padding-bottom: 0.35rem;
   margin-top: 0.5rem;
 }
+.app-save-quiet,
+.app-save-honesty {
+  flex: 1 0 100%;
+  margin: 0.1rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.app-save-honesty {
+  font-weight: 600;
+  color: var(--text-dark);
+}
 .history-controls {
   display: flex;
   flex-wrap: wrap;
@@ -1230,12 +1373,16 @@ label.state-required-field {
   margin-bottom: 0.75rem;
   background: var(--bg-white);
 }
+.app-product-row:not(.has-product) .apr-extra,
+.app-product-row:not(.has-product) .apr-main .form-row-4 > label:not(:first-child) {
+  display: none;
+}
 .app-product-row.is-compact .apr-main { display: none; }
 .app-product-row.is-compact .apr-compact-line { display: inline; font-weight: 600; }
 .apr-compact-line { font-size: 0.95rem; }
 @media (max-width: 720px) {
-  .cab-toolbar { flex-direction: column; align-items: stretch; }
-  .cab-toggle { margin-left: 0; }
+  .cab-toolbar { flex-direction: row; align-items: center; }
+  .cab-toggle { margin-left: auto; }
   .btn-lg, .chip, .icon-btn, .tab-btn {
     min-height: 2.75rem;
   }

@@ -1,8 +1,28 @@
 # Blueprint: path ahead (stay the grower’s book)
 
-**Status: specified.** Companion to `docs/product-success-audit.md`.
-Shipped app is **v2.9.25** on `main` and live. This file is the order of
-work from here — not another feature pile, not a farm OS.
+**Status: superseded 2026-08-19.** Do not follow this file as current
+order of work. Tracks 1e (mailbox), 2 (backup ritual / CSV honesty), 4
+(Iowa 45.26 private `none`, hasher built, `--holes` is AR/SD), and 5
+(public-page languages) already shipped through **v2.9.30**. The public
+key is embedded. `BUY_URL` is still empty **on purpose**.
+
+**Do now:** `docs/owner-next.md`. Grade: `docs/seller-grade-report.md`
+(v2.9.30). Listing paste: `docs/suite-listing.md`. Playbook:
+`docs/state-maintainer-playbook.md`.
+
+Iowa private is `none` from 45.26. Do **not** “fix” that back to
+`required`. Do not invent AR/SD private lists. Do not add Mix Tank,
+e-sign, CRM, or cloud seats.
+
+The sections below are a **v2.9.25 snapshot** and will send you backward
+if you treat them as a backlog.
+
+---
+
+# Historical snapshot (v2.9.25) — not the backlog
+
+Shipped app at the time of this file was **v2.9.25**. Companion:
+`docs/product-success-audit.md`.
 
 Job to be done: a U.S. grower who keeps **their own book** can try the
 logger today, pay when the trial ends, and still have the records next

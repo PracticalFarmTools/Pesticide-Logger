@@ -42,25 +42,41 @@
     return String(text || '').replace(/\s+/g, ' ').trim();
   }
 
+  function precededByEst(text, index) {
+    const before = text.slice(Math.max(0, index - 18), index);
+    return /EST(?:ABLISHMENT)?\.?\s*$/.test(before);
+  }
+
+  function tokenAfter(text, fromIndex) {
+    const windowText = text
+      .slice(fromIndex, fromIndex + 48)
+      .replace(/\s*-\s*/g, '-');
+    const tokenMatch = REG_TOKEN.exec(windowText);
+    if (!tokenMatch) return null;
+    const cleaned = cleanDigitLikeToken(tokenMatch[1]);
+    return EPA_REG_PATTERN.test(cleaned) ? cleaned : null;
+  }
+
   /**
-   * Finds a plausible EPA registration number near the literal
-   * "EPA REG" context (required — scanning the whole label for any
-   * digit-hyphen-digit shape would false-positive on lot numbers, phone
-   * numbers, and addresses). Returns null, never a low-confidence guess.
+   * Finds a plausible EPA registration number near EPA / REG context.
+   * Establishment numbers (EPA EST. NO.) are skipped. Scanning the whole
+   * label for any digit-hyphen-digit shape would false-positive on lots
+   * and phone numbers — no context still returns null.
    */
   function findEpaRegNo(normalizedUpperText) {
-    const contextRe = /EPA\s*(?:REG(?:ISTRATION)?)\s*\.?\s*(?:NO\.?|#|NUMBER)?\s*:?\s*/g;
+    const contextRe = /(?:U\.?\s*S\.?\s*)?EPA\s*(?:REGISTRATION|REG|REC)(?:NO)?\s*\.?\s*(?:NO\.?|#|NUMBER)?\s*:?\s*/g;
     let match;
     while ((match = contextRe.exec(normalizedUpperText))) {
-      // OCR often inserts spaces around the hyphen ("62719 - 621"). Collapse
-      // those before matching the same token shape the EPA proxy accepts.
-      const windowText = normalizedUpperText
-        .slice(match.index + match[0].length, match.index + match[0].length + 48)
-        .replace(/\s*-\s*/g, '-');
-      const tokenMatch = REG_TOKEN.exec(windowText);
-      if (!tokenMatch) continue;
-      const cleaned = cleanDigitLikeToken(tokenMatch[1]);
-      if (EPA_REG_PATTERN.test(cleaned)) return cleaned;
+      if (precededByEst(normalizedUpperText, match.index)) continue;
+      const hit = tokenAfter(normalizedUpperText, match.index + match[0].length);
+      if (hit) return hit;
+    }
+    if (!/\bEPA\b/.test(normalizedUpperText)) return null;
+    const regNoRe = /REG(?:ISTRATION)?\s*\.?\s*(?:NO\.?|#|NUMBER)\s*:?\s*/g;
+    while ((match = regNoRe.exec(normalizedUpperText))) {
+      if (precededByEst(normalizedUpperText, match.index)) continue;
+      const hit = tokenAfter(normalizedUpperText, match.index + match[0].length);
+      if (hit) return hit;
     }
     return null;
   }

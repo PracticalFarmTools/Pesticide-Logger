@@ -114,6 +114,7 @@ check('in-page file inputs exist with capture=environment (iOS gesture)', () => 
   const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   [
     'app-scan-jug-input',
+    'app-scan-label-input',
     'scan-label-input',
     'qp-scan-label-input',
     'prod-scan-barcode-input',

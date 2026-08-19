@@ -1,9 +1,11 @@
 /* Offline license verification for Pesticide Logger.
  * $0-overhead model: the owner signs license keys locally (tools/), the app
  * verifies signatures in the browser with WebCrypto. No license server,
- * no phone-home, works fully offline. Paid-only: a 30-day trial, then a
- * valid key is required to keep logging. Spray logs already on the device
- * stay reviewable and exportable — see app.js applyLicenseGate() /
+ * no phone-home, works fully offline. Paid-only once checkout exists: a
+ * 30-day trial, then a valid key is required to keep logging. While
+ * checkoutUrl is the empty string, logging stays open (beta / preview) and
+ * the trial clock does not run. Spray logs already on the device stay
+ * reviewable and exportable — see app.js applyLicenseGate() /
  * renderLockRecords().
  *
  * Key format:  PLPRO.<base64url payload JSON>.<base64url ECDSA-P256 signature>
@@ -159,7 +161,9 @@
 
   /**
    * Whole-app access decision. Key validity is already resolved by
-   * verifyLicenseKey — this only maps {trial, key} onto the gate.
+   * verifyLicenseKey — this only maps {trial, key, checkout} onto the gate.
+   * Pass checkoutUrl: '' (the empty Buy URL) to keep logging open with no
+   * trial clock. Omit checkoutUrl in unit tests of trial math.
    * Re-run on visibilitychange so an expired trial locks without a reload.
    */
   function resolveLicenseState(opts) {
@@ -171,8 +175,13 @@
     const hasKey = !!(opts && opts.hasKey);
     const holder = (opts && opts.holder) || '';
     const keyReason = (opts && opts.keyReason) || '';
+    const preview = opts && Object.prototype.hasOwnProperty.call(opts, 'checkoutUrl')
+      && !String(opts.checkoutUrl || '').trim();
     if (keyValid) {
       return { pro: true, mode: 'licensed', daysLeft: 0, holder, keyReason: '' };
+    }
+    if (preview) {
+      return { pro: true, mode: 'open', daysLeft: 0, holder: '', keyReason: '' };
     }
     if (trial.active) {
       return { pro: true, mode: 'trial', daysLeft: trial.daysLeft, holder: '', keyReason: '' };

@@ -54,7 +54,7 @@
       <button type="button" class="btn btn-primary" id="lock-activate">Activate</button>
       <button type="button" class="btn btn-secondary" id="lock-buy">Buy a license</button>
     </div>
-    <p class="card-hint" id="lock-checkout-note">This build has no in-app store. Paste a license key from your purchase email when you have one. Spray logs stay on this device either way.</p>
+    <p class="card-hint" id="lock-checkout-note">Paste a license key from your purchase email. Until checkout is live, email practicalfarmtools@gmail.com. Spray logs stay on this device either way.</p>
     <p class="card-hint">A paid license — annual or perpetual. Same tool for two tunnels or a
       hundred sites. Works offline, no account, no telemetry — keys are verified on this device.</p>
   </div>
@@ -96,8 +96,8 @@
   <!-- ============ DASHBOARD ============ -->
   <section id="tab-dashboard" class="tab-panel active" role="tabpanel">
     <div class="card" id="dash-first-run" hidden>
-      <h3 class="card-title">Get set up to log</h3>
-      <p class="card-hint">Your state picks the boxes. Then you can log. Nothing leaves this device. A 30-day trial is already running — no card.</p>
+      <h3 class="card-title">Welcome. Let's log.</h3>
+      <p class="card-hint">Add a field, then Log. Logging stays open on this host until checkout is live — no card.</p>
       <p class="card-hint"><a href="start.html">What this is</a> · <a href="inspector.html">For inspectors</a> · <a href="extension.html">For extension</a> · <a href="how.html">How-to</a></p>
       <form id="first-run-farm" class="form-grid first-run-farm" hidden>
         <div class="form-row">
@@ -305,11 +305,11 @@
     </div>
     <div id="log-new-pane">
     <div class="card">
-      <h3 class="card-title" id="app-form-title">Log an application</h3>
+      <h3 class="card-title" id="app-form-title" hidden>Log an application</h3>
       <p class="card-hint" id="app-form-hint">This spray log reshapes for your selected state and applicator class. Completion means required fields are filled — not a legal determination. Extra boxes stay under More for the record.</p>
       <div class="cab-toolbar">
-        <button type="button" class="btn btn-primary btn-lg" id="app-spray-now">Spray now</button>
-        <button type="button" class="btn btn-secondary btn-lg" id="app-duplicate-last">Duplicate last spray</button>
+        <button type="button" class="btn btn-primary" id="app-spray-now">Spray now</button>
+        <button type="button" class="btn btn-secondary" id="app-duplicate-last">Duplicate last spray</button>
         <button type="button" class="text-btn" id="app-stamp-weather">Stamp weather</button>
         <button type="button" class="text-btn" data-goto="calculator" id="app-open-tank-mix">Tank Mix</button>
         <label class="checkbox-label cab-toggle">
@@ -317,7 +317,6 @@
           Show extra boxes
         </label>
       </div>
-      <div id="recent-products" class="recent-products" hidden></div>
       <p class="card-hint" id="app-form-shape-summary"></p>
       <button type="button" class="text-btn" data-goto="settings" data-scroll-to="state-info-card" id="app-open-state-rules" hidden>View state rules</button>
       <p class="card-hint field-req-legend"><span class="req-star">*</span> always required · <span class="state-req-tag">state</span> required for your state · no tag = optional</p>
@@ -333,6 +332,10 @@
         <button type="button" class="log-section-nav-item" data-jump-section="notes">Notes</button>
         <button type="button" class="log-more-record" id="log-more-record" hidden>More for the record</button>
       </nav>
+      <p class="log-next" id="app-log-next" hidden>
+        <button type="button" class="log-next-go" id="app-log-next-btn">Next: pick the field</button>
+        <span class="log-next-rest" id="app-log-next-rest"></span>
+      </p>
       <div id="app-due-banner" class="due-banner" hidden></div>
       <div id="app-compliance-status" class="compliance-status" hidden></div>
 
@@ -389,7 +392,7 @@
         <fieldset data-log-section="products">
           <legend>Products applied (tank mix) <span class="req-star">*</span></legend>
           <p class="card-hint" id="app-mix-state-req" hidden></p>
-          <p class="card-hint" id="app-mix-empty-hint">Scan the jug, or add from your library.</p>
+          <p class="card-hint" id="app-mix-empty-hint">Type a name or EPA # from your library. Scan label is optional.</p>
           <p class="card-hint" id="app-mix-order-hint" hidden>This is the order you added them. Follow the label for W-A-L-E.</p>
           <div id="app-mix-req-tags" hidden>
             <span id="req-brand_name" class="state-req-tag" hidden>state</span>
@@ -400,11 +403,17 @@
             <span id="req-rei_hours" class="state-req-tag" hidden>state</span>
             <span id="req-phi_days" class="state-req-tag" hidden>state</span>
           </div>
-          <input type="search" id="app-product-filter" class="select-filter" placeholder="Type to find a product…" hidden autocomplete="off">
+          <label class="mix-find-label" id="app-mix-find-wrap">Find a product
+            <input type="search" id="app-product-filter" class="select-filter mix-find" placeholder="Name, EPA #, or active ingredient…" autocomplete="off">
+          </label>
+          <div id="recent-products" class="recent-products" hidden></div>
           <div class="mix-scan-row" id="app-mix-scan-row">
-            <button type="button" class="btn btn-primary btn-lg" id="app-scan-jug" hidden>Scan jug</button>
-            <label class="btn btn-primary btn-lg camera-file-btn" id="app-scan-jug-photo" hidden>Scan jug
-              <input type="file" id="app-scan-jug-input" accept="image/*" capture="environment" aria-label="Scan jug barcode or label">
+            <label class="btn btn-secondary camera-file-btn" id="app-scan-label-btn" hidden>Scan label
+              <input type="file" id="app-scan-label-input" accept="image/*" capture="environment" aria-label="Photograph the EPA Reg. No. on the label">
+            </label>
+            <button type="button" class="text-btn" id="app-scan-jug" hidden>Scan barcode</button>
+            <label class="text-btn camera-file-btn" id="app-scan-jug-photo" hidden>Scan barcode
+              <input type="file" id="app-scan-jug-input" accept="image/*" capture="environment" aria-label="Scan jug barcode">
             </label>
             <button type="button" class="btn btn-secondary" id="app-add-product">+ Add another product to this mix</button>
           </div>
@@ -616,9 +625,11 @@
         <div id="app-missing-fields" class="missing-fields" hidden></div>
 
         <div class="form-actions sticky-actions">
-          <button type="submit" class="btn btn-primary btn-lg" id="app-save-btn">Save — required boxes filled</button>
+          <button type="submit" class="btn btn-primary btn-lg" id="app-save-btn">Save this spray</button>
           <button type="button" class="btn btn-secondary btn-lg" id="app-save-draft-btn">Save incomplete draft</button>
           <button type="button" class="btn btn-secondary" id="app-cancel-btn" hidden>Cancel edit</button>
+          <p class="app-save-quiet" id="app-save-draft-hint">Save a draft anytime.</p>
+          <p class="app-save-honesty" id="app-save-honesty">The label is the law.</p>
         </div>
       </form>
     </div>
@@ -930,6 +941,7 @@
         <button type="button" class="btn btn-secondary btn-sm" id="map-undo" disabled>Undo point</button>
         <button type="button" class="btn btn-secondary btn-sm" id="map-clear" disabled>Clear</button>
         <button type="button" class="btn btn-primary btn-sm" id="map-use" disabled>Use this shape</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="map-fullscreen" aria-pressed="false">Full screen</button>
       </div>
       <p class="map-offline-note" id="map-offline-note" hidden>Imagery needs a network. Drawn boundaries stay on this device.</p>
       <div id="field-map" role="application" aria-label="Field boundary drawing map"></div>
@@ -1185,7 +1197,7 @@
         <button type="button" class="btn btn-primary" id="license-activate">Activate</button>
         <button type="button" class="btn btn-secondary" id="license-buy">Buy a license</button>
       </div>
-      <p class="card-hint" id="license-checkout-note">This build has no in-app store. Paste a license key from your purchase email when you have one. Spray logs stay on this device either way.</p>
+      <p class="card-hint" id="license-checkout-note">Paste a license key from your purchase email. Until checkout is live, email practicalfarmtools@gmail.com. Spray logs stay on this device either way.</p>
       <p class="card-hint">One purchase per farm, works offline, no account, no telemetry.
         Keys are verified on this device with a cryptographic signature — nothing is sent anywhere.</p>
     </div>
@@ -1221,7 +1233,7 @@
             selected context — a checklist result, not a compliance determination or certification.
             State datasets marked uncertain, or private-applicator duty marked unverified, need agency confirmation; even researched entries can
             lag rule changes. The product label is the law.</p>
-          <p><strong>License:</strong> a paid license is required after the 30-day trial to keep
+          <p><strong>License:</strong> until checkout is live on this host, logging is not timed. Once checkout exists, a paid license is required after the 30-day trial to keep
             logging new applications. A key licenses one farm operation across its devices; keys
             verify offline and never phone home. Spray logs already on this device stay yours —
             review any year and export them even if a trial or subscription has ended. Refunds

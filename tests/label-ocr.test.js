@@ -61,6 +61,27 @@ check('EPA reg number: garbage beyond repair does not coerce into a false match'
   assert.strictEqual(parseLabelText('EPA REG. NO. XQ719-K21').epaRegNo, null);
 });
 
+check('EPA reg number: OCR garbage still finds the number (REC, REGNO, U.S. Registration Number)', () => {
+  assert.strictEqual(parseLabelText('EPA REC. NO. 62719-621').epaRegNo, '62719-621');
+  assert.strictEqual(parseLabelText('EPA REGNO 62719-621').epaRegNo, '62719-621');
+  assert.strictEqual(parseLabelText('U.S. EPA Registration Number 62719-621').epaRegNo, '62719-621');
+});
+
+check('EPA reg number: establishment numbers are skipped', () => {
+  assert.strictEqual(parseLabelText('EPA EST. NO. 62719-MO-1').epaRegNo, null);
+  assert.strictEqual(
+    parseLabelText('EPA EST. NO. 62719-MO-1\nEPA REG. NO. 70051-19').epaRegNo,
+    '70051-19'
+  );
+});
+
+check('EPA reg number: EPA on the panel plus a later Reg. No. line', () => {
+  assert.strictEqual(
+    parseLabelText('KEEP OUT OF REACH OF CHILDREN\nEPA\nNet contents 2.5 gal\nReg. No. 62719-621').epaRegNo,
+    '62719-621'
+  );
+});
+
 check('signal word: recognizes the closed DANGER/WARNING/CAUTION vocabulary', () => {
   assert.strictEqual(parseLabelText('DANGER — CORROSIVE, CAUSES EYE DAMAGE').signalWord, 'DANGER');
   assert.strictEqual(parseLabelText('WARNING: HARMFUL IF SWALLOWED').signalWord, 'WARNING');

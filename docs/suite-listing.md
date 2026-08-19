@@ -26,6 +26,12 @@ never rates, REI, or PHI.
 **Not:** “& Database.” Not “Syncs when connected” as a cloud. Not a chemical
 encyclopedia.
 
+## Delete from the live catalog card
+
+- “Pesticide Logger **& Database**”
+- “**Syncs** when connected”
+- Any encyclopedia / chemical-DB pitch
+
 ## Host notes (when you go live)
 
 - Point `pesticide.practicalfarmtools.com` at this repo’s Vercel project (or

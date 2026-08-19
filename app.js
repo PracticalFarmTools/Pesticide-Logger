@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.30 — Practical Farm Tools
+/* Pesticide Logger v2.9.37 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -653,6 +653,7 @@
     });
     $$('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
     window.scrollTo({ top: 0 });
+    if (name !== 'fields') setMapFullscreen(false);
     if (name === 'dashboard') {
       renderDashboard();
       prefetchFieldForecasts(false);
@@ -1116,6 +1117,10 @@
 
     const hint = $('#app-form-hint');
     const summary = $('#app-form-shape-summary');
+    const showRec = $('#app-show-recommended') && $('#app-show-recommended').checked;
+    if (hint) hint.hidden = !showRec;
+    const legend = document.querySelector('.field-req-legend');
+    if (legend) legend.hidden = !showRec;
     const fresh = law ? lawFreshness(law) : { stale: false, reviewBy: '' };
     const honesty = law ? datasetHonestyLine(law, cls) : '';
     if (hint) {
@@ -1131,6 +1136,7 @@
         : 'Select your state in Settings — the spray log will reshape to that state’s required record fields instead of using one national form.';
     }
     if (summary) {
+      summary.hidden = !showRec;
       const shown = $$('#app-form label[data-log-field]:not([hidden])').length;
       const extra = [
         ver && ver !== 'researched' ? ver : '',
@@ -1151,6 +1157,7 @@
     if (title && !keepTitle) {
       title.textContent = stateName ? `Log an application — ${stateName}` : 'Log an application';
     }
+    syncFormTitleChrome();
     syncMixStateChrome();
     updateLogSectionCollapse();
     applyDurationVisibility();
@@ -1257,52 +1264,49 @@
     const status = $('#app-compliance-status');
     const missingBox = $('#app-missing-fields');
     if (!status || !missingBox) return;
-    const { law, code } = lawFor(formContextApp());
+    // Next is the cab coach. Keep the orange missing wall off the log while filling.
+    // Completeness still scores for nav dots, history, packet, and save-as-draft.
+    status.hidden = true;
+    status.textContent = '';
+    status.className = 'compliance-status';
+    missingBox.hidden = true;
+    missingBox.innerHTML = '';
+    const { law } = lawFor(formContextApp());
     if (!law) {
-      status.hidden = false;
-      status.className = 'compliance-status';
-      status.textContent = 'Select your state in Settings to enable state-shaped recordkeeping checks.';
-      missingBox.hidden = true;
       updateLogSectionNavDots([]);
       updateLogSectionCollapse();
       applyDurationVisibility();
+      updateLogNext();
       return;
     }
     try {
       const preview = collectAppFromForm(true);
       const result = evaluateCompliance(preview);
-      status.hidden = false;
-      const name = STATE_NAMES[code] || code;
       updateLogSectionNavDots(result.missingFields);
-      if (result.status === 'fields_complete') {
-        status.className = 'compliance-status ok';
-        status.textContent = `${name} required fields filled · retain ${result.retentionYears} year(s) · not a legal determination`;
-        missingBox.hidden = true;
-      } else if (result.status === 'needs_review') {
-        status.className = 'compliance-status warn';
-        status.textContent = `${name}: fields filled but needs review`;
-        missingBox.hidden = false;
-        missingBox.innerHTML = `<strong>Review:</strong> ${result.warnings.map(esc).join('; ')}`;
-      } else {
-        status.className = 'compliance-status warn';
-        status.textContent = `${result.missing.length} applicable ${name} field(s) still missing`;
-        missingBox.hidden = false;
-        const bits = [];
-        if (result.missingFields.length) {
-          const chips = result.missingFields.map(m =>
-            `<button type="button" class="missing-field-chip" data-missing-field="${esc(m.name || '')}">${esc(m.label)}</button>`
-          ).join(' ');
-          bits.push(`<strong>Missing — tap to jump:</strong><br>${chips}`);
-        }
-        if (result.warnings.length) bits.push(`<strong>Also:</strong> ${result.warnings.map(esc).join('; ')}`);
-        missingBox.innerHTML = bits.join('<br>');
-      }
     } catch (e) {
-      status.hidden = true;
-      missingBox.hidden = true;
+      updateLogSectionNavDots([]);
     }
     updateLogSectionCollapse();
     applyDurationVisibility();
+    updateLogNext();
+  }
+
+  function showSaveMissingChips(result) {
+    const missingBox = $('#app-missing-fields');
+    if (!missingBox || !result) return;
+    const bits = [];
+    if (result.missingFields && result.missingFields.length) {
+      const chips = result.missingFields.map(m =>
+        `<button type="button" class="missing-field-chip" data-missing-field="${esc(m.name || '')}">${esc(m.label)}</button>`
+      ).join(' ');
+      bits.push(`<strong>Missing — tap to jump:</strong><br>${chips}`);
+    }
+    if (result.warnings && result.warnings.length) {
+      bits.push(`<strong>Also:</strong> ${result.warnings.map(esc).join('; ')}`);
+    }
+    if (!bits.length) { missingBox.hidden = true; return; }
+    missingBox.hidden = false;
+    missingBox.innerHTML = bits.join('<br>');
   }
 
   // Canonical compliance field name -> where to send focus. Most top-level
@@ -1370,6 +1374,118 @@
     if (input) input.focus({ preventScroll: true });
   }
 
+  function mixProductPicked(row) {
+    const sel = row && row.querySelector('.apr-product');
+    return !!(sel && sel.value && sel.value !== '__new__');
+  }
+
+  function syncMixRowPresence(row) {
+    if (!row) return;
+    row.classList.toggle('has-product', mixProductPicked(row));
+  }
+
+  function nextLogStep() {
+    if (!data.settings.state) {
+      return { text: 'Select your state in Settings', goto: 'settings' };
+    }
+    const field = $('#app-field') && $('#app-field').value;
+    const crop = $('#app-crop') && $('#app-crop').value.trim();
+    const area = $('#app-area') && String($('#app-area').value).trim();
+    const date = $('#app-date') && $('#app-date').value;
+    const applicator = $('#app-applicator') && $('#app-applicator').value.trim();
+    const picked = mixRows().filter(mixProductPicked);
+    if (!field) return { text: 'Next: pick the field', field: 'location' };
+    if (!crop) return { text: 'Next: what crop?', field: 'crop_treated' };
+    if (!area) return { text: 'Next: how many acres?', field: 'area_treated' };
+    if (!picked.length) return { text: 'Next: pick a product, or Scan label', field: 'products' };
+    const row = picked[0];
+    const rate = row.querySelector('.apr-rate');
+    const total = row.querySelector('.apr-total');
+    if (!(rate && String(rate.value).trim()) && !(total && String(total.value).trim())) {
+      return { text: 'Next: enter the label rate', field: 'rate' };
+    }
+    const rei = row.querySelector('.apr-rei');
+    if (rei && String(rei.value).trim() === '') {
+      return { text: 'Next: REI hours from the label', field: 'rei_hours' };
+    }
+    const phi = row.querySelector('.apr-phi');
+    if (phi && String(phi.value).trim() === '') {
+      return { text: 'Next: PHI days from the label', field: 'phi_days' };
+    }
+    if (!date) return { text: 'Next: date of this spray', field: 'date' };
+    if (!applicator) return { text: 'Next: who applied?', field: 'applicator_name' };
+    try {
+      const result = evaluateCompliance(collectAppFromForm(true));
+      if (result.status === 'fields_complete') {
+        return { text: 'Ready to save.', ready: true };
+      }
+      if (result.missingFields && result.missingFields.length) {
+        const m = result.missingFields[0];
+        const more = result.missingFields.length - 1;
+        return {
+          text: 'Next: ' + (m.label || m.name),
+          field: m.name,
+          rest: more > 0 ? 'Then more after this.' : ''
+        };
+      }
+      if (result.status === 'needs_review') {
+        return { text: 'Ready to save.', ready: true };
+      }
+    } catch (e) { /* form not ready */ }
+    return { text: 'Ready to save.', ready: true };
+  }
+
+  function syncFormTitleChrome() {
+    const el = $('#app-form-title');
+    if (!el) return;
+    const t = el.textContent || '';
+    el.hidden = !(
+      t.startsWith('Edit record') ||
+      t.startsWith('Duplicate of') ||
+      t.startsWith('Same mix')
+    );
+  }
+
+  function updateLogNext() {
+    const host = $('#app-log-next');
+    const btn = $('#app-log-next-btn');
+    const rest = $('#app-log-next-rest');
+    if (!host || !btn) return;
+    if (logMode !== 'new') { host.hidden = true; return; }
+    const step = nextLogStep();
+    host.hidden = false;
+    host.classList.toggle('is-ready', !!step.ready);
+    btn.textContent = tr(step.text);
+    if (rest) rest.textContent = step.rest ? tr(step.rest) : '';
+  }
+
+  function goLogNext() {
+    const step = nextLogStep();
+    if (step.goto === 'settings') {
+      showTab('settings');
+      if ($('#set-state')) $('#set-state').focus();
+      return;
+    }
+    if (step.ready) {
+      const save = $('#app-save-btn');
+      if (save) {
+        save.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        save.focus({ preventScroll: true });
+      }
+      return;
+    }
+    if (step.field === 'products') {
+      revealLogSection('products');
+      const find = $('#app-product-filter');
+      const sel = document.querySelector('#app-products .apr-product');
+      const target = find || sel;
+      if (target && target.scrollIntoView) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (find) find.focus({ preventScroll: true });
+      else if (sel) sel.focus({ preventScroll: true });
+      return;
+    }
+    if (step.field) focusMissingField(step.field);
+  }
 
   function updateStorageUsage() {
     const el = $('#storage-usage');
@@ -2063,6 +2179,7 @@
       histBtn.classList.toggle('btn-secondary', !on);
     }
     if (logMode === 'history') renderAppList();
+    updateLogNext();
   }
 
   function setTogglePressed(btn, on) {
@@ -2096,6 +2213,7 @@
     setTogglePressed($('#fields-mode-list'), next === 'list');
     setTogglePressed($('#fields-mode-add'), next === 'add');
     setTogglePressed($('#fields-mode-map'), next === 'map');
+    if (next !== 'map') setMapFullscreen(false);
     if (next === 'map') {
       initFieldMap();
       if (fieldMap) setTimeout(() => fieldMap.invalidateSize(), 50);
@@ -2306,10 +2424,15 @@
     ['#app-field-filter', '#app-product-filter'].forEach((sel) => {
       const el = $(sel);
       if (!el) return;
-      el.addEventListener('input', () => {
+      const apply = () => {
         if (sel === '#app-field-filter') renderFieldOptions();
-        else renderProductOptions();
-      });
+        else {
+          renderProductOptions();
+          renderRecentProducts();
+        }
+      };
+      el.addEventListener('input', apply);
+      el.addEventListener('search', apply);
     });
     $('#app-form').addEventListener('input', updateCompliancePreview);
     $('#app-form').addEventListener('change', updateCompliancePreview);
@@ -2327,6 +2450,7 @@
     });
     if ($('#app-spray-now')) $('#app-spray-now').addEventListener('click', sprayNow);
     if ($('#app-duplicate-last')) $('#app-duplicate-last').addEventListener('click', duplicateLastSpray);
+    if ($('#app-log-next-btn')) $('#app-log-next-btn').addEventListener('click', goLogNext);
     if ($('#app-customer-copy')) {
       $('#app-customer-copy').addEventListener('change', () => {
         if ($('#app-customer-copy').checked && $('#app-customer-copy-date') && !$('#app-customer-copy-date').value) {
@@ -2448,9 +2572,15 @@
     return shown.map((o) => `<option value="${esc(o.value)}">${esc(o.text)}</option>`).join('');
   }
 
+  function mixFindQuery() {
+    const el = $('#app-product-filter');
+    return el ? String(el.value || '').trim().toLowerCase() : '';
+  }
+
   function renderProductOptions() {
     const mixOpts = productPickerOptions(true, '— Select product —');
-    setSelectFilterVisible($('#app-product-filter'), mixOpts.length);
+    const mixFilter = $('#app-product-filter');
+    if (mixFilter) mixFilter.hidden = false;
     const reportOpts = productPickerOptions(false, 'All products');
     const rep = $('#report-product');
     if (rep) {
@@ -2588,6 +2718,7 @@
     syncMixRowTags(row);
     numberMixRows();
     updateMixEmptyHint();
+    syncMixRowPresence(row);
     return row;
   }
 
@@ -2733,7 +2864,7 @@
     updateCompliancePreview();
     updateMixEmptyHint();
     numberMixRows();
-    if ($('#app-form') && $('#app-form').classList.contains('is-cab-run')) setMixCompact(true);
+    syncMixRowPresence(row);
   }
 
   // Total for one mix row: label rate × area, or × carrier for water-based rates.
@@ -2770,7 +2901,6 @@
 
   function computeMixTotals() {
     $$('#app-products .app-product-row').forEach(computeRowTotal);
-    if ($('#app-form') && $('#app-form').classList.contains('is-cab-run')) setMixCompact(true);
   }
 
   // Effective product intervals from mix rows (overrides beat library defaults).
@@ -3179,11 +3309,13 @@
 
     if (!asDraft && data.settings.strictCompliance !== false && !result.complete) {
       updateCompliancePreview();
+      showSaveMissingChips(result);
       toast(`Strict mode: fill ${result.missing.length} required field(s), or save as incomplete draft`);
       return;
     }
     if (!asDraft && data.settings.strictCompliance !== false && !result.intervalsOk) {
       updateCompliancePreview();
+      showSaveMissingChips(result);
       toast('Strict mode: enter label REI and PHI on every product (or save as draft)');
       return;
     }
@@ -3261,7 +3393,7 @@
     $('#app-total-note').hidden = true;
     $('#app-interval-preview').hidden = true;
     $('#app-form-title').textContent = 'Log an application';
-    $('#app-save-btn').textContent = 'Save — required boxes filled';
+    $('#app-save-btn').textContent = tr('Save this spray');
     $('#app-cancel-btn').hidden = true;
     logForceExpand = false;
     logPinnedSections.clear();
@@ -3274,6 +3406,7 @@
     updateDurationHint();
     syncNewLogChrome();
     updateCabToolbar();
+    syncFormTitleChrome();
   }
 
   function editApp(id) {
@@ -3341,7 +3474,7 @@
     reshapeAppFormForState();
     updateCompliancePreview();
     $('#app-form-title').textContent = `Edit record — ${appProductsLabel(a)} on ${fmtDate(a.date)}`;
-    $('#app-save-btn').textContent = 'Update — required boxes filled';
+    $('#app-save-btn').textContent = tr('Update this spray');
     $('#app-cancel-btn').hidden = false;
     updateLastOnFieldHint();
     logForceExpand = true;
@@ -3350,6 +3483,7 @@
     updateLogSectionCollapse();
     restoreDurationPref();
     updateDurationHint();
+    syncFormTitleChrome();
     showTab('log');
     syncNewLogChrome();
     $('#app-form').scrollIntoView({ behavior: 'smooth' });
@@ -3610,6 +3744,7 @@
     updateDurationHint();
     updateLogSectionCollapse();
     updateCabToolbar();
+    syncFormTitleChrome();
     if ($('#app-field')) $('#app-field').focus();
     const toolbar = $('.cab-toolbar');
     if (toolbar && toolbar.scrollIntoView) toolbar.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -3648,7 +3783,7 @@
     updateDurationHint();
     updateLogSectionCollapse();
     updateCabToolbar();
-    toast('Spray-now mode — date and start time set. Pick field and products.');
+    toast('Time is now. Pick the field.');
   }
 
   async function clonePhotoIds(ids) {
@@ -3692,6 +3827,7 @@
     updateDurationHint();
     updateLogSectionCollapse();
     updateCabToolbar();
+    syncFormTitleChrome();
     if ($('#app-field')) $('#app-field').focus();
     const toolbar = $('.cab-toolbar');
     if (toolbar && toolbar.scrollIntoView) toolbar.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -3779,9 +3915,25 @@
     }));
     const top = Object.entries(counts).sort((x, y) => y[1] - x[1]).slice(0, 6)
       .map(([id]) => data.products.find(p => p.id === id)).filter(Boolean);
-    if (!top.length) { host.hidden = true; host.innerHTML = ''; return; }
+    const q = mixFindQuery();
+    const shown = typeof FarmScale !== 'undefined' && FarmScale.mixProductHits
+      ? FarmScale.mixProductHits(data.products, q, top, 8)
+      : (q
+        ? (data.products || []).filter((p) => String(p.name || '').toLowerCase().includes(q)).slice(0, 8)
+        : top);
+    if (!shown.length) {
+      if (q) {
+        host.hidden = false;
+        host.innerHTML = `<span class="card-hint">${esc(tr('No library match. Scan label or add the product.'))}</span>`;
+        return;
+      }
+      host.hidden = true;
+      host.innerHTML = '';
+      return;
+    }
+    const label = q ? tr('Matches:') : tr('Recent products:');
     host.hidden = false;
-    host.innerHTML = `<span class="card-hint">Recent products:</span> ` + top.map(p =>
+    host.innerHTML = `<span class="card-hint">${esc(label)}</span> ` + shown.map(p =>
       `<button type="button" class="chip" data-quick-product="${p.id}">${esc(p.name)}${p.omri ? ' · OMRI' : ''}</button>`
     ).join(' ');
     host.querySelectorAll('[data-quick-product]').forEach(b => b.addEventListener('click', () => {
@@ -3793,7 +3945,9 @@
       const row = empty || $$('#app-products .app-product-row').slice(-1)[0];
       row.querySelector('.apr-product').value = b.dataset.quickProduct;
       onRowProductChange(row);
-      toast(`Queued ${b.textContent.trim()}`);
+      const rate = row.querySelector('.apr-rate');
+      if (rate) rate.focus();
+      toast(`Queued ${b.textContent.trim()} — enter the label rate`);
     }));
   }
 
@@ -5712,6 +5866,18 @@
     $('#map-undo').addEventListener('click', undoDrawPoint);
     $('#map-clear').addEventListener('click', () => clearDrawing(true));
     $('#map-use').addEventListener('click', useShape);
+    if ($('#map-fullscreen')) {
+      $('#map-fullscreen').addEventListener('click', () => setMapFullscreen(!isMapFullscreen()));
+    }
+    if (!document.body.dataset.mapFsEsc) {
+      document.body.dataset.mapFsEsc = '1';
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isMapFullscreen()) {
+          e.preventDefault();
+          setMapFullscreen(false);
+        }
+      });
+    }
     if ($('#map-add-corners')) {
       $('#map-add-corners').addEventListener('click', () => {
         addingCorners = !addingCorners;
@@ -5735,6 +5901,37 @@
     setTimeout(() => fieldMap.invalidateSize(), 50);
     syncWeatherPinButton();
     updateDrawUI();
+  }
+
+  function isMapFullscreen() {
+    return !!(document.body && document.body.classList.contains('map-fullscreen'));
+  }
+
+  function setMapFullscreen(on) {
+    if (!document.body) return;
+    const next = !!on;
+    document.body.classList.toggle('map-fullscreen', next);
+    const btn = $('#map-fullscreen');
+    if (btn) {
+      btn.setAttribute('aria-pressed', next ? 'true' : 'false');
+      btn.textContent = next ? tr('Exit full screen') : tr('Full screen');
+      btn.classList.toggle('btn-primary', next);
+      btn.classList.toggle('btn-secondary', !next);
+    }
+    const mapEl = $('#field-map');
+    if (next) {
+      const mapPane = $('#fields-map-pane');
+      if (mapPane && mapPane.hidden) setFieldsMode('map');
+      if (mapEl && mapEl.scrollIntoView) mapEl.scrollIntoView({ block: 'start' });
+    } else if (mapEl) {
+      mapEl.style.height = '';
+      mapEl.style.width = '';
+      mapEl.style.minHeight = '';
+    }
+    if (fieldMap) {
+      setTimeout(() => fieldMap.invalidateSize(), 80);
+      setTimeout(() => fieldMap.invalidateSize(), 280);
+    }
   }
 
   function applyFarmMapView() {
@@ -6348,6 +6545,34 @@
     });
   }
 
+  // Scale a label photo into the OCR sweet spot and boost contrast. Never
+  // invents REI / PHI / rates — this is only so Tesseract can read the
+  // EPA Reg. No. line.
+  function enhanceLabelImage(file) {
+    return new Promise((res, rej) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const longest = Math.max(img.width, img.height) || 1;
+        const minDim = 1400;
+        const maxDim = 2200;
+        let scale = 1;
+        if (longest < minDim) scale = minDim / longest;
+        else if (longest > maxDim) scale = maxDim / longest;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+        const ctx = canvas.getContext('2d');
+        try { ctx.filter = 'grayscale(1) contrast(1.35)'; } catch (e) { /* older canvas */ }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        res(canvas.toDataURL('image/jpeg', 0.92));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('bad image')); };
+      img.src = url;
+    });
+  }
+
   let photoAttachHandler = null;
 
   async function capturePhotoInto(idList, thumbsHost, label) {
@@ -6411,7 +6636,8 @@
   // ---- barcode scanning ----
   // Chromium/Android: live BarcodeDetector + getUserMedia preview.
   // iPhone / Firefox: native camera still photo + vendored ZXing decoder.
-  // Scan jug is always offered; only the capture method changes.
+  // Scan barcode is always offered; only the capture method changes.
+  // Mix identity is Scan label (still photo + OCR). Barcode is secondary.
 
   let scanStream = null;
   const BARCODE_FORMATS = CameraScan.BARCODE_FORMATS;
@@ -6435,7 +6661,7 @@
 
   async function openScanner(onCode, options) {
     if (!liveBarcodeSupported()) {
-      toast('Use Scan jug to photograph the barcode or the EPA number on the panel');
+      toast('Use Scan barcode to photograph the UPC, or Scan label for the EPA Reg. No. line');
       return;
     }
     const dlg = $('#scan-dialog');
@@ -6502,9 +6728,16 @@
 
   function selectMixProduct(product) {
     const row = emptyMixRow();
+    row.classList.remove('is-compact');
+    const details = row.querySelector('.apr-show-details');
+    const line = row.querySelector('.apr-compact-line');
+    if (details) details.hidden = true;
+    if (line) line.hidden = true;
     row.querySelector('.apr-product').value = product.id;
     onRowProductChange(row);
-    toast(`Scanned: ${product.name}`);
+    const rate = row.querySelector('.apr-rate');
+    if (rate) rate.focus();
+    toast(`Scanned: ${product.name} — enter the label rate`);
   }
 
   function applyEpaResultToQuickAdd(result, barcode) {
@@ -6561,7 +6794,7 @@
       openQuickAddProduct(emptyMixRow(), decision.barcode);
       return;
     }
-    toast('Could not read a barcode or EPA number — type the EPA # from the jug, or search Products.');
+    toast('Could not read an EPA number — photograph the EPA Reg. No. line, or type it.');
   }
 
   async function onJugLiveScan(code, frameCanvas) {
@@ -6607,12 +6840,12 @@
     try {
       const code = await decodeBarcodeFromFile(file);
       if (!code) {
-        toast('Could not read a barcode or EPA number — type the EPA # from the jug, or search Products.');
+        toast('Could not read an EPA number — photograph the EPA Reg. No. line, or type it.');
         return;
       }
       await resolveJugScan({ barcode: code });
     } catch (e) {
-      toast('Could not read a barcode or EPA number — type the EPA # from the jug, or search Products.');
+      toast('Could not read an EPA number — photograph the EPA Reg. No. line, or type it.');
     }
   }
 
@@ -6621,7 +6854,7 @@
     else {
       const input = $('#app-scan-jug-input');
       if (input) input.click();
-      else toast('Photograph the barcode or the EPA number on the panel');
+      else toast('Photograph the barcode, or use Scan label for the EPA Reg. No.');
     }
   }
 
@@ -6854,7 +7087,7 @@
     if (!file) throw new Error('cancelled');
     if (!navigator.onLine && !ocrEngineReadyOffline()) throw new Error('ocr-offline');
     if (onStatus) onStatus('Reading label…');
-    const dataUrl = await compressImage(file, 1900, 0.9);
+    const dataUrl = await enhanceLabelImage(file);
     const img = await dataUrlToImage(dataUrl);
     const barcodePromise = detectBarcodeInImage(img);
     const worker = await getTesseractWorker((m) => {
@@ -6879,7 +7112,7 @@
     else if (e.message === 'load-failed') toast('Could not download the text reader — check your connection and try again');
     else if (e.message === 'ocr-offline') {
       toast('Label scanning needs a one-time download (~7 MB). Connect once, then it works offline.');
-    } else toast('Could not read that label — try again with better light, or search manually');
+    } else toast('Could not read that label — photograph the EPA Reg. No. line in better light, or type it');
   }
 
   async function scanProductLabelFromFile(file) {
@@ -6966,8 +7199,8 @@
     if ($('#scan-cancel')) $('#scan-cancel').addEventListener('click', closeScanner);
 
     [
-      'photo-attach-input', 'app-scan-jug-input', 'scan-label-input',
-      'qp-scan-label-input', 'prod-scan-barcode-input'
+      'photo-attach-input', 'app-scan-jug-input', 'app-scan-label-input',
+      'scan-label-input', 'qp-scan-label-input', 'prod-scan-barcode-input'
     ].forEach((id) => {
       const el = document.getElementById(id);
       if (!CameraScan.inPageFileInputReady(el)) {
@@ -6988,6 +7221,14 @@
     if (ocrSupported()) {
       if ($('#scan-label-row')) $('#scan-label-row').hidden = false;
       if ($('#qp-scan-label-row')) $('#qp-scan-label-row').hidden = false;
+      if ($('#app-scan-label-btn')) $('#app-scan-label-btn').hidden = false;
+    }
+    const mixOcr = $('#app-scan-label-input');
+    if (mixOcr) {
+      mixOcr.addEventListener('change', async () => {
+        const file = fileFromInput(mixOcr);
+        if (file) await scanJugPhoto(file);
+      });
     }
     const prodOcr = $('#scan-label-input');
     if (prodOcr) {
@@ -7503,7 +7744,8 @@
       keyValid,
       hasKey: !!data.meta.licenseKey,
       holder,
-      keyReason
+      keyReason,
+      checkoutUrl: BUY_URL
     });
     licenseState.pro = next.pro;
     licenseState.mode = next.mode;
@@ -7517,15 +7759,21 @@
   function renderLicenseUI() {
     const badge = $('#license-badge');
     if (badge) {
-      badge.hidden = false;
-      if (licenseState.mode === 'licensed') badge.textContent = 'Licensed';
-      else if (licenseState.mode === 'trial') badge.textContent = `Trial · ${licenseState.daysLeft}d`;
-      else badge.textContent = 'Locked';
-      badge.classList.toggle('license-badge-pro', licenseState.pro);
+      if (licenseState.mode === 'open') {
+        badge.hidden = true;
+      } else {
+        badge.hidden = false;
+        if (licenseState.mode === 'licensed') badge.textContent = 'Licensed';
+        else if (licenseState.mode === 'trial') badge.textContent = `Trial · ${licenseState.daysLeft}d`;
+        else badge.textContent = 'Locked';
+        badge.classList.toggle('license-badge-pro', licenseState.pro);
+      }
     }
     const status = $('#license-status');
     if (status) {
-      if (licenseState.mode === 'licensed') {
+      if (licenseState.mode === 'open') {
+        status.textContent = tr('This host has no checkout. Logging stays open. Spray logs stay on this device.');
+      } else if (licenseState.mode === 'licensed') {
         status.textContent = `License active${licenseState.holder ? ' — ' + licenseState.holder : ''}. Thank you for your purchase.`;
       } else if (licenseState.mode === 'trial') {
         status.textContent = `Trial active — ${licenseState.daysLeft} day(s) left. No key needed yet.`;
@@ -7654,7 +7902,12 @@
   }
 
   function initLicense() {
-    if (!data.meta.trialStartedAt) {
+    if (!(BUY_URL || '').trim()) {
+      if (data.meta.trialStartedAt) {
+        delete data.meta.trialStartedAt;
+        save();
+      }
+    } else if (!data.meta.trialStartedAt) {
       data.meta.trialStartedAt = Date.now();
       save();
     }
@@ -7784,7 +8037,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.30';
+  const APP_VERSION = 'v2.9.37';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {

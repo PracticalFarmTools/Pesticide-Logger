@@ -28,8 +28,11 @@ label photo), crew nicknames and gather-from-phone, a signed inspector
 HTML packet, and the
 certifier/buyer packet export.
 
-**30-day trial for everyone, automatic, no card.** The whole app is
-unlocked during the trial. After it ends, a license is required to keep
+**30-day trial for everyone, automatic, no card — once checkout exists.**
+While `BUY_URL` is empty, logging stays open and the trial clock does not
+run (send this origin to beta testers). Setting `BUY_URL` starts a fresh
+30-day trial on each device that does not already have a key. After the
+trial ends, a license is required to keep
 *logging*. Records already on the device are never altered or deleted —
 you can still review every year and download a backup or CSV. A lapsed
 subscription does not take your spray logs. Activating a license restores
@@ -44,20 +47,26 @@ offline, private. Paper is $0 and has no clocks, search, or backup.
 
 ## How selling works with $0 infrastructure
 
-1. **One-time setup:** run `node tools/generate-signing-keys.js`.
-   This creates a private signing key (`keys/`, gitignored — back it up
-   offline) and embeds the public key in `license.js`. Commit `license.js`.
+Order: honest catalog card → live `pesticide.practicalfarmtools.com` →
+merchant listing → then `BUY_URL`. Full checklist: `docs/owner-next.md`.
+Do not set `BUY_URL` while the homepage still says Database / Syncs /
+Coming Soon.
+
+1. **One-time setup:** already done if `license.js` has a public key.
+   `keys/license-signing-key.json` is gitignored — **back it up offline**
+   (two copies). Losing it means you cannot issue new keys. Do not run
+   `generate-signing-keys.js` again unless you are rotating; it refuses to
+   overwrite.
 2. **List the product** on a merchant-of-record checkout (Gumroad,
    Lemon Squeezy, or a Stripe Payment Link). They handle cards, receipts,
    and sales tax. No monthly fee; they take ~5–10% per sale.
-   The license **public** key is already in `license.js`. Keep
-   `keys/license-signing-key.json` offline — never commit it.
 3. **Issue keys:** for each order, run
-   `node tools/sign-license.js --name "Jane Farmer" --email jane@example.com`
-   and paste the key into the order-delivery email. (Both Gumroad and
-   Lemon Squeezy support automated delivery text; batch-pre-signing keys
-   works too.)
-4. **The app verifies offline.** Keys are ECDSA P-256 signatures checked by
+   `node tools/sign-license.js --name "Jane Farmer" --email jane@example.com --mail`
+   and paste the printed letter into the order-delivery email. Add
+   `--expires YYYY-MM-DD` for annual keys. Omit `--expires` for perpetual.
+4. **Then** set `BUY_URL` in `app.js` to that real checkout URL and
+   deploy this origin. Empty is the honest state until that URL exists.
+5. **The app verifies offline.** Keys are ECDSA P-256 signatures checked by
    WebCrypto on the farmer's device. No server, no phone-home, works in a
    dead zone, keeps working if the business disappears.
 

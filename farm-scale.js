@@ -225,6 +225,19 @@
     });
   }
 
+  function mixProductHits(products, query, recent, limit) {
+    const list = Array.isArray(products) ? products : [];
+    const cap = Math.max(1, Number(limit) || 8);
+    if (norm(query)) {
+      return filterByQuery(list, query, productSearchHaystack)
+        .slice()
+        .sort((a, b) => String(a && a.name || '').localeCompare(String(b && b.name || '')))
+        .slice(0, cap);
+    }
+    const rec = Array.isArray(recent) ? recent.filter(Boolean) : [];
+    return rec.slice(0, cap);
+  }
+
   function slimHistorySnapshot(app) {
     const src = app && typeof app === 'object' ? app : {};
     const snap = {};
@@ -343,6 +356,7 @@
     shouldShowGlanceRow,
     glanceCountHint,
     filterSelectOptions,
+    mixProductHits,
     slimHistorySnapshot,
     pushSlimHistory,
     stripForecastFromFarm,

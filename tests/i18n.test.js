@@ -110,6 +110,11 @@ check('mix Scan label chrome is translated', () => {
     'Photograph the EPA Reg. No. on the panel, or pick from your library.'
   );
   assert.strictEqual(i18n.t('es', 'Find a product'), 'Hallar un producto');
+  assert.strictEqual(i18n.t('es', 'Matches:'), 'Coincidencias:');
+  assert.notStrictEqual(
+    i18n.t('pt-BR', 'No library match. Scan label or add the product.'),
+    'No library match. Scan label or add the product.'
+  );
   assert.notStrictEqual(
     i18n.t('fr', 'Type a name or EPA # from your library. Scan label is optional.'),
     'Type a name or EPA # from your library. Scan label is optional.'

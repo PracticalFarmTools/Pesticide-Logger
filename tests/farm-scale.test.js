@@ -319,6 +319,25 @@ check('select filter keeps the already-picked field even if the query misses it'
   assert.ok(shown.some((o) => o.value === 'b'));
 });
 
+check('mix product hits search the whole library, not only recents', () => {
+  const products = [
+    { id: 'a', name: 'Entrust', epaRegNo: '62719-282', activeIngredient: 'spinosad' },
+    { id: 'b', name: 'Sevin', epaRegNo: '264-334', activeIngredient: 'carbaryl' },
+    { id: 'c', name: 'Captan', epaRegNo: '66222-58', activeIngredient: 'captan' }
+  ];
+  const recent = [products[0]];
+  const hits = FS.mixProductHits(products, 'sevin', recent, 8);
+  assert.strictEqual(hits.length, 1);
+  assert.strictEqual(hits[0].name, 'Sevin');
+  const epa = FS.mixProductHits(products, '66222', recent, 8);
+  assert.strictEqual(epa.length, 1);
+  assert.strictEqual(epa[0].name, 'Captan');
+  const idle = FS.mixProductHits(products, '', recent, 8);
+  assert.strictEqual(idle.length, 1);
+  assert.strictEqual(idle[0].name, 'Entrust');
+  assert.strictEqual(FS.mixProductHits(products, 'zzzz', recent, 8).length, 0);
+});
+
 check('product search haystack covers EPA # and AI', () => {
   const products = [
     { name: 'Captan', epaRegNo: '66222-58', activeIngredient: 'captan', barcode: '0123' },

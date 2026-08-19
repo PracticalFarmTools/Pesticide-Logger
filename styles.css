@@ -173,7 +173,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 50;
+  z-index: 2000;
   padding-bottom: env(safe-area-inset-bottom, 0px);
   background: var(--primary-green-dark);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -1074,12 +1074,13 @@ label.state-required-field {
 
 /* ---------- Field mapper ---------- */
 #field-map {
+  position: relative;
   height: 440px;
   border-radius: 10px;
   border: 1px solid var(--border-color);
   background: var(--accent-sage-light);
   cursor: grab;
-  z-index: 1; /* keep Leaflet panes under the sticky tab bar */
+  z-index: 1; /* stacking context so Leaflet panes stay under the thumb bar */
 }
 #field-map.map-adding { cursor: crosshair; }
 #field-map.map-offline { filter: grayscale(0.35) saturate(0.7); }
@@ -1156,6 +1157,9 @@ body.map-fullscreen .map-legend {
 }
 body.map-fullscreen #map-fullscreen {
   font-weight: 700;
+}
+body:not(.map-fullscreen) .tab-nav-wrap {
+  z-index: 2000;
 }
 
 .map-offline-note {

@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.36 — Practical Farm Tools
+/* Pesticide Logger v2.9.37 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -2424,13 +2424,15 @@
     ['#app-field-filter', '#app-product-filter'].forEach((sel) => {
       const el = $(sel);
       if (!el) return;
-      el.addEventListener('input', () => {
+      const apply = () => {
         if (sel === '#app-field-filter') renderFieldOptions();
         else {
           renderProductOptions();
           renderRecentProducts();
         }
-      });
+      };
+      el.addEventListener('input', apply);
+      el.addEventListener('search', apply);
     });
     $('#app-form').addEventListener('input', updateCompliancePreview);
     $('#app-form').addEventListener('change', updateCompliancePreview);
@@ -3914,15 +3916,24 @@
     const top = Object.entries(counts).sort((x, y) => y[1] - x[1]).slice(0, 6)
       .map(([id]) => data.products.find(p => p.id === id)).filter(Boolean);
     const q = mixFindQuery();
-    const shown = q
-      ? top.filter((p) => {
-          const hay = typeof FarmScale !== 'undefined' ? FarmScale.productSearchHaystack(p) : (p.name || '');
-          return String(hay).toLowerCase().includes(q);
-        })
-      : top;
-    if (!shown.length) { host.hidden = true; host.innerHTML = ''; return; }
+    const shown = typeof FarmScale !== 'undefined' && FarmScale.mixProductHits
+      ? FarmScale.mixProductHits(data.products, q, top, 8)
+      : (q
+        ? (data.products || []).filter((p) => String(p.name || '').toLowerCase().includes(q)).slice(0, 8)
+        : top);
+    if (!shown.length) {
+      if (q) {
+        host.hidden = false;
+        host.innerHTML = `<span class="card-hint">${esc(tr('No library match. Scan label or add the product.'))}</span>`;
+        return;
+      }
+      host.hidden = true;
+      host.innerHTML = '';
+      return;
+    }
+    const label = q ? tr('Matches:') : tr('Recent products:');
     host.hidden = false;
-    host.innerHTML = `<span class="card-hint">Recent products:</span> ` + shown.map(p =>
+    host.innerHTML = `<span class="card-hint">${esc(label)}</span> ` + shown.map(p =>
       `<button type="button" class="chip" data-quick-product="${p.id}">${esc(p.name)}${p.omri ? ' · OMRI' : ''}</button>`
     ).join(' ');
     host.querySelectorAll('[data-quick-product]').forEach(b => b.addEventListener('click', () => {
@@ -5907,11 +5918,15 @@
       btn.classList.toggle('btn-primary', next);
       btn.classList.toggle('btn-secondary', !next);
     }
+    const mapEl = $('#field-map');
     if (next) {
       const mapPane = $('#fields-map-pane');
       if (mapPane && mapPane.hidden) setFieldsMode('map');
-      const mapEl = $('#field-map');
       if (mapEl && mapEl.scrollIntoView) mapEl.scrollIntoView({ block: 'start' });
+    } else if (mapEl) {
+      mapEl.style.height = '';
+      mapEl.style.width = '';
+      mapEl.style.minHeight = '';
     }
     if (fieldMap) {
       setTimeout(() => fieldMap.invalidateSize(), 80);
@@ -8022,7 +8037,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.36';
+  const APP_VERSION = 'v2.9.37';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {

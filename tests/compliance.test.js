@@ -240,14 +240,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.36 + deadline/license wiring', () => {
+check('source files advertise v2.9.37 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.36'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.36'));
+  assert.ok(app.includes('v2.9.37'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.37'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-18'"));
-  assert.ok(!html.includes('v2.9.36'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.37'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -415,8 +415,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.36'"));
-  assert.ok(!html.includes('v2.9.36'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.37'"));
+  assert.ok(!html.includes('v2.9.37'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -896,7 +896,7 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(start.includes('grower’s book') || start.includes("grower's book"));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(start), 'public page does not name other products');
   assert.ok(!start.includes('Names on those buttons'));
-  assert.ok(!start.includes('v2.9.36'), 'public page keeps version out of copy');
+  assert.ok(!start.includes('v2.9.37'), 'public page keeps version out of copy');
   assert.ok(start.includes('id="start-copy-link"'));
   assert.ok(start.includes('mailto:practicalfarmtools@gmail.com') && inspector.includes('mailto:practicalfarmtools@gmail.com') &&
     extension.includes('mailto:practicalfarmtools@gmail.com'), 'public human on all three pages');
@@ -1052,14 +1052,17 @@ check('v2.9.35: one cab voice — Next, quiet save, inviting copy', () => {
   assert.notStrictEqual(i18n.t('pt-BR', 'Time is now. Pick the field.'), 'Time is now. Pick the field.');
 });
 
-check('v2.9.36: mix search is first-class; scan is optional; map full screen', () => {
+check('v2.9.37: mix search is first-class; scan is optional; map full screen', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   const i18n = require(path.join(root, 'i18n.js'));
+  const scale = fs.readFileSync(path.join(root, 'farm-scale.js'), 'utf8');
   const products = html.split('data-log-section="products"')[1].split('data-log-section="when"')[0];
-  assert.ok(products.indexOf('id="app-product-filter"') < products.indexOf('id="app-scan-label-btn"'),
-    'type-to-find sits above Scan label');
+  assert.ok(products.indexOf('id="app-product-filter"') < products.indexOf('id="recent-products"'),
+    'matches sit under Find a product');
+  assert.ok(products.indexOf('id="recent-products"') < products.indexOf('id="app-scan-label-btn"'),
+    'type-to-find and matches sit above Scan label');
   assert.ok(html.includes('id="app-mix-find-wrap"') && html.includes('Find a product'));
   assert.ok(!/id="app-product-filter"[^>]*\bhidden\b/.test(html), 'mix search is not gated on library size');
   assert.ok(html.includes('Scan label is optional'));
@@ -1069,13 +1072,18 @@ check('v2.9.36: mix search is first-class; scan is optional; map full screen', (
   assert.ok(app.includes("const find = $('#app-product-filter')"));
   assert.ok(app.includes('if (mixFilter) mixFilter.hidden = false'));
   assert.ok(app.includes('function mixFindQuery'));
+  assert.ok(app.includes('FarmScale.mixProductHits') && scale.includes('function mixProductHits'));
+  assert.ok(app.includes("tr('Matches:')") && app.includes('No library match. Scan label or add the product.'));
   assert.ok(html.includes('id="map-fullscreen"') && html.includes('>Full screen<'));
   assert.ok(app.includes('function setMapFullscreen') && app.includes('function isMapFullscreen'));
   assert.ok(app.includes("tr('Exit full screen')"));
+  assert.ok(app.includes("mapEl.style.height = ''"));
   assert.ok(css.includes('body.map-fullscreen') && css.includes('.mix-find'));
+  assert.ok(/\.tab-nav-wrap \{[\s\S]*?z-index:\s*2000/.test(css), 'thumb bar stays above Leaflet after full screen');
   assert.ok(!app.includes('function logWizard'));
   assert.strictEqual(i18n.t('es', 'Find a product'), 'Hallar un producto');
   assert.strictEqual(i18n.t('fr', 'Full screen'), 'Plein écran');
+  assert.strictEqual(i18n.t('es', 'Matches:'), 'Coincidencias:');
   assert.notStrictEqual(
     i18n.t('pt-BR', 'Type a name or EPA # from your library. Scan label is optional.'),
     'Type a name or EPA # from your library. Scan label is optional.'

@@ -28,6 +28,7 @@ product library.
 | **P7** | Drive / Dropbox OAuth “sync” | **No** | Catch-up is already a file in a folder they sync. OAuth looks like we take the book. |
 | **P8** | A second product catalog per class | **No** | The library is already farm-wide. Class does not split jugs. |
 | **P9** | Cab chrome, Scan, map, hasher, mailbox, listing | **No, not this file** | Already shipped or owner-only. Do not reopen cab to avoid this picker. |
+| **P10** | Third class “Agricultural Basic” / 50-state license wizard | **No** | Maine has three BPC licenses; the log has two record classes. Map both grower cards to This farm. Encode record lists in `laws/XX.json`, not exam names. |
 
 ---
 
@@ -117,6 +118,26 @@ The word **commercial** in “commercial farm” / “sell commercially” is no
 
 ---
 
+## FAQ — Maine “I have Agricultural Basic but I still need commercial”
+
+You are not wrong. Maine’s Board of Pesticides Control issues **three** applicator licenses. This logger only has **two record classes**. That gap is intentional.
+
+| Maine BPC license ([licensing](https://www.maine.gov/dacf/php/pesticides/applicators/licensing.html)) | What it is | This logger |
+|---|---|---|
+| **Agricultural Basic** | Own (or leased) land, **general-use** products only, typically growers who sell more than $1,000 of food plants a year. Core exam. | **This farm** (`private`) |
+| **Private** | Own land, **restricted- or limited-use** (and general-use) in production of a commodity. Core + commodity exam. | **This farm** (`private`) |
+| **Commercial** (Operator or Master) | For hire; public places (golf, campgrounds, apartments, hospitals); government; licensed food establishments; **non-agricultural sites open to public use**. | **Commercial license** |
+
+Needing Basic *and* commercial in Maine is a real combination: farm production on your acres (Basic or Private) plus a use the BPC puts on the commercial card (for-hire, farm store/grounds open to the public, food establishment, etc.). For **one book that must satisfy both kinds of spray**, Settings → **Show every box** (`both`). For **only** own-land crop sprays, stay on This farm even if you also hold a commercial card you use elsewhere.
+
+`laws/ME.json` `appliesTo` is Chapter 50 §1(A): commercial agricultural producers **and** commercial applicators. `privateDuty` is `required`. An Ag Basic or Private grower in Maine still gets the Chapter 50 field list. We do not add a third `applicatorClass` named Agricultural Basic.
+
+**Other states also name credentials we will not enumerate:** commercial operator vs master, noncommercial, government, dealer. The 50 JSON files encode **record lists** (`fields`, `privateDuty`), not a license-counseling tree. Do not turn first-run into “which exam did you pass in {state}?”
+
+**P10 — Catalog every state’s license product names** | **No** | Unmaintainable. The picker is whose land / which record list. Wallet cards stay a BPC / department question.
+
+---
+
 ## Surfaces
 
 | Surface | Today | Take |
@@ -134,8 +155,8 @@ The word **commercial** in “commercial farm” / “sell commercially” is no
 - Keep option **values** `private` | `commercial` | `both`. Tests and `?class=` handoff already use them (`consumeStartHandoff`, `start.js`).
 - Prefer buttons that set the hidden select (or keep the select and hide it visually) so `save settings` / first-run submit do not grow a new settings key.
 - i18n: add the new English strings to `i18n.js` (es / fr / pt-BR). Do not translate citation text.
-- Tests: first-run HTML has This farm / Commercial license; `both` is not required on first-run; `app.js` still reads `private`/`commercial`/`both`; Iowa private hint contains “quiet” or “for-hire”; `start.html` labels match; no new `applicatorClass` string.
-- Do not bump cab Next copy. Do not add a wizard. Do not auto-fill class from cert number.
+- Tests: first-run HTML has This farm / Commercial license; `both` is not required on first-run; `app.js` still reads `private`/`commercial`/`both`; Iowa private hint contains “quiet” or “for-hire”; Maine Ag Basic is not a new class; `start.html` labels match; no new `applicatorClass` string.
+- Do not bump cab Next copy. Do not add a wizard. Do not auto-fill class from cert number. Do not add `agricultural_basic` to settings.
 
 ---
 

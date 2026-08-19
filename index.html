@@ -317,7 +317,6 @@
           Show extra boxes
         </label>
       </div>
-      <div id="recent-products" class="recent-products" hidden></div>
       <p class="card-hint" id="app-form-shape-summary"></p>
       <button type="button" class="text-btn" data-goto="settings" data-scroll-to="state-info-card" id="app-open-state-rules" hidden>View state rules</button>
       <p class="card-hint field-req-legend"><span class="req-star">*</span> always required · <span class="state-req-tag">state</span> required for your state · no tag = optional</p>
@@ -389,7 +388,7 @@
         <fieldset data-log-section="products">
           <legend>Products applied (tank mix) <span class="req-star">*</span></legend>
           <p class="card-hint" id="app-mix-state-req" hidden></p>
-          <p class="card-hint" id="app-mix-empty-hint">Scan the jug, or add from your library.</p>
+          <p class="card-hint" id="app-mix-empty-hint">Photograph the EPA Reg. No. on the panel, or pick from your library.</p>
           <p class="card-hint" id="app-mix-order-hint" hidden>This is the order you added them. Follow the label for W-A-L-E.</p>
           <div id="app-mix-req-tags" hidden>
             <span id="req-brand_name" class="state-req-tag" hidden>state</span>
@@ -402,12 +401,16 @@
           </div>
           <input type="search" id="app-product-filter" class="select-filter" placeholder="Type to find a product…" hidden autocomplete="off">
           <div class="mix-scan-row" id="app-mix-scan-row">
-            <button type="button" class="btn btn-primary btn-lg" id="app-scan-jug" hidden>Scan jug</button>
-            <label class="btn btn-primary btn-lg camera-file-btn" id="app-scan-jug-photo" hidden>Scan jug
-              <input type="file" id="app-scan-jug-input" accept="image/*" capture="environment" aria-label="Scan jug barcode or label">
+            <label class="btn btn-primary btn-lg camera-file-btn" id="app-scan-label-btn" hidden>Scan label
+              <input type="file" id="app-scan-label-input" accept="image/*" capture="environment" aria-label="Photograph the EPA Reg. No. on the label">
+            </label>
+            <button type="button" class="text-btn" id="app-scan-jug" hidden>Scan barcode</button>
+            <label class="text-btn camera-file-btn" id="app-scan-jug-photo" hidden>Scan barcode
+              <input type="file" id="app-scan-jug-input" accept="image/*" capture="environment" aria-label="Scan jug barcode">
             </label>
             <button type="button" class="btn btn-secondary" id="app-add-product">+ Add another product to this mix</button>
           </div>
+          <div id="recent-products" class="recent-products" hidden></div>
           <div id="app-products"></div>
           <div id="app-product-info" class="product-info-strip" hidden></div>
           <button type="button" class="text-btn" id="app-last-on-field" hidden></button>

@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.32 — Practical Farm Tools
+/* Pesticide Logger v2.9.33 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -2733,7 +2733,6 @@
     updateCompliancePreview();
     updateMixEmptyHint();
     numberMixRows();
-    if ($('#app-form') && $('#app-form').classList.contains('is-cab-run')) setMixCompact(true);
   }
 
   // Total for one mix row: label rate × area, or × carrier for water-based rates.
@@ -2770,7 +2769,6 @@
 
   function computeMixTotals() {
     $$('#app-products .app-product-row').forEach(computeRowTotal);
-    if ($('#app-form') && $('#app-form').classList.contains('is-cab-run')) setMixCompact(true);
   }
 
   // Effective product intervals from mix rows (overrides beat library defaults).
@@ -6348,6 +6346,34 @@
     });
   }
 
+  // Scale a label photo into the OCR sweet spot and boost contrast. Never
+  // invents REI / PHI / rates — this is only so Tesseract can read the
+  // EPA Reg. No. line.
+  function enhanceLabelImage(file) {
+    return new Promise((res, rej) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const longest = Math.max(img.width, img.height) || 1;
+        const minDim = 1400;
+        const maxDim = 2200;
+        let scale = 1;
+        if (longest < minDim) scale = minDim / longest;
+        else if (longest > maxDim) scale = maxDim / longest;
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+        const ctx = canvas.getContext('2d');
+        try { ctx.filter = 'grayscale(1) contrast(1.35)'; } catch (e) { /* older canvas */ }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        res(canvas.toDataURL('image/jpeg', 0.92));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('bad image')); };
+      img.src = url;
+    });
+  }
+
   let photoAttachHandler = null;
 
   async function capturePhotoInto(idList, thumbsHost, label) {
@@ -6411,7 +6437,8 @@
   // ---- barcode scanning ----
   // Chromium/Android: live BarcodeDetector + getUserMedia preview.
   // iPhone / Firefox: native camera still photo + vendored ZXing decoder.
-  // Scan jug is always offered; only the capture method changes.
+  // Scan barcode is always offered; only the capture method changes.
+  // Mix identity is Scan label (still photo + OCR). Barcode is secondary.
 
   let scanStream = null;
   const BARCODE_FORMATS = CameraScan.BARCODE_FORMATS;
@@ -6435,7 +6462,7 @@
 
   async function openScanner(onCode, options) {
     if (!liveBarcodeSupported()) {
-      toast('Use Scan jug to photograph the barcode or the EPA number on the panel');
+      toast('Use Scan barcode to photograph the UPC, or Scan label for the EPA Reg. No. line');
       return;
     }
     const dlg = $('#scan-dialog');
@@ -6502,9 +6529,16 @@
 
   function selectMixProduct(product) {
     const row = emptyMixRow();
+    row.classList.remove('is-compact');
+    const details = row.querySelector('.apr-show-details');
+    const line = row.querySelector('.apr-compact-line');
+    if (details) details.hidden = true;
+    if (line) line.hidden = true;
     row.querySelector('.apr-product').value = product.id;
     onRowProductChange(row);
-    toast(`Scanned: ${product.name}`);
+    const rate = row.querySelector('.apr-rate');
+    if (rate) rate.focus();
+    toast(`Scanned: ${product.name} — enter the label rate`);
   }
 
   function applyEpaResultToQuickAdd(result, barcode) {
@@ -6561,7 +6595,7 @@
       openQuickAddProduct(emptyMixRow(), decision.barcode);
       return;
     }
-    toast('Could not read a barcode or EPA number — type the EPA # from the jug, or search Products.');
+    toast('Could not read an EPA number — photograph the EPA Reg. No. line, or type it.');
   }
 
   async function onJugLiveScan(code, frameCanvas) {
@@ -6607,12 +6641,12 @@
     try {
       const code = await decodeBarcodeFromFile(file);
       if (!code) {
-        toast('Could not read a barcode or EPA number — type the EPA # from the jug, or search Products.');
+        toast('Could not read an EPA number — photograph the EPA Reg. No. line, or type it.');
         return;
       }
       await resolveJugScan({ barcode: code });
     } catch (e) {
-      toast('Could not read a barcode or EPA number — type the EPA # from the jug, or search Products.');
+      toast('Could not read an EPA number — photograph the EPA Reg. No. line, or type it.');
     }
   }
 
@@ -6621,7 +6655,7 @@
     else {
       const input = $('#app-scan-jug-input');
       if (input) input.click();
-      else toast('Photograph the barcode or the EPA number on the panel');
+      else toast('Photograph the barcode, or use Scan label for the EPA Reg. No.');
     }
   }
 
@@ -6854,7 +6888,7 @@
     if (!file) throw new Error('cancelled');
     if (!navigator.onLine && !ocrEngineReadyOffline()) throw new Error('ocr-offline');
     if (onStatus) onStatus('Reading label…');
-    const dataUrl = await compressImage(file, 1900, 0.9);
+    const dataUrl = await enhanceLabelImage(file);
     const img = await dataUrlToImage(dataUrl);
     const barcodePromise = detectBarcodeInImage(img);
     const worker = await getTesseractWorker((m) => {
@@ -6879,7 +6913,7 @@
     else if (e.message === 'load-failed') toast('Could not download the text reader — check your connection and try again');
     else if (e.message === 'ocr-offline') {
       toast('Label scanning needs a one-time download (~7 MB). Connect once, then it works offline.');
-    } else toast('Could not read that label — try again with better light, or search manually');
+    } else toast('Could not read that label — photograph the EPA Reg. No. line in better light, or type it');
   }
 
   async function scanProductLabelFromFile(file) {
@@ -6966,8 +7000,8 @@
     if ($('#scan-cancel')) $('#scan-cancel').addEventListener('click', closeScanner);
 
     [
-      'photo-attach-input', 'app-scan-jug-input', 'scan-label-input',
-      'qp-scan-label-input', 'prod-scan-barcode-input'
+      'photo-attach-input', 'app-scan-jug-input', 'app-scan-label-input',
+      'scan-label-input', 'qp-scan-label-input', 'prod-scan-barcode-input'
     ].forEach((id) => {
       const el = document.getElementById(id);
       if (!CameraScan.inPageFileInputReady(el)) {
@@ -6988,6 +7022,14 @@
     if (ocrSupported()) {
       if ($('#scan-label-row')) $('#scan-label-row').hidden = false;
       if ($('#qp-scan-label-row')) $('#qp-scan-label-row').hidden = false;
+      if ($('#app-scan-label-btn')) $('#app-scan-label-btn').hidden = false;
+    }
+    const mixOcr = $('#app-scan-label-input');
+    if (mixOcr) {
+      mixOcr.addEventListener('change', async () => {
+        const file = fileFromInput(mixOcr);
+        if (file) await scanJugPhoto(file);
+      });
     }
     const prodOcr = $('#scan-label-input');
     if (prodOcr) {
@@ -7796,7 +7838,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.32';
+  const APP_VERSION = 'v2.9.33';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {

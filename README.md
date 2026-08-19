@@ -1,4 +1,4 @@
-# Pesticide Logger v2.9.32
+# Pesticide Logger v2.9.33
 
 **Offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite. Licensed software with
@@ -27,7 +27,7 @@ application at the repository root.
 |---|---|
 | **Dynamic per-state / class spray log** | The log reshapes by state **and** applicator class (private vs commercial). Private duty is scoped (`required` / `none` / `uncertain`) so commercial-only states do not invent private requirements. Conditional fields appear only when applicable. |
 | **Honest completion status** | Badges say “Fields complete / Needs review / Incomplete” — not a legal determination. Related fields are not treated as interchangeable. Missing REI/PHI fails loud. Edits preserve frozen compliance state/class. |
-| **In-cab workflow** | Compact Spray Log (log this spray vs past sprays), thumb tabs, Spray now, Duplicate last (same mix, time is now, compact rows), Stamp weather on the toolbar, restage after save for the next field, Tank Mix jump from the log (calculator stays under More), Scan jug on the mix, recent-product chips, sticky large save buttons, and touch-friendly targets for phone/tablet use in the tractor. Optional cab glare enlarges type in the sun. |
+| **In-cab workflow** | Compact Spray Log (log this spray vs past sprays), thumb tabs, Spray now, Duplicate last (same mix, time is now, compact rows), Stamp weather on the toolbar, restage after save for the next field, Tank Mix jump from the log (calculator stays under More), **Scan label** on the mix (photograph the EPA Reg. No.; barcode is secondary), recent-product chips, sticky large save buttons, and touch-friendly targets for phone/tablet use in the tractor. Optional cab glare enlarges type in the sun. |
 | **Audit trail & soft-delete** | Edits keep snapshot history. Deletes are soft (recoverable) with retention-aware prompts. |
 | **Lot / batch + OMRI + PHI overrides** | Per-mix-row lot numbers, OMRI flags, and crop-specific REI/PHI overrides that beat library defaults. |
 | **Commercial clocks** | Record-completion deadlines use `recordDeadline` units (`hours` / `calendarDays` / `businessDays` / `sameDay`). Customer-copy clocks only for researched copy duties (never invented). |
@@ -43,8 +43,8 @@ application at the repository root.
 | **Crew & gather** | Optional crew list suggests names on the log (you can still type any name). Cab phones **send a file** as soon as this device has sprays the shop has not received (Share / AirDrop, or a connected shop file). The shop tablet **brings them in**. Newest edits win; the other version stays in History. Same-named fields/products can be combined or kept both. Optional device role (cab / shop / solo) so send nag and gather hint match the phone you are holding. |
 | **Inspector view & REI board** | Optional shop view hides editing so you can hand the tablet over — Exit anytime, optional PIN, farm name recovers a forgotten PIN. **Print today’s REI board** for the shop door (not the official WPS sign). |
 | **Spray window outlook** | Glance rows (Go / Wait / No) at each field’s map pin — not the phone’s GPS. Tap a field for the next 12 hours, then Details for the 48-hour chart. CONUS near-term uses NOAA HRRR; stale data is labeled and cannot be used as a go/no-go for a trip. Planning guidance — the label still rules. |
-| **Photos & barcode** | Attach label/lot/condition photos to records (device-local). Scan jug reads a UPC **and** the brand panel (EPA #) from one photo: live camera on Android Chrome, still photo on iPhone (ZXing + OCR). Review before the mix row changes. |
-| **OCR label scanning** | Photograph a product label to read its EPA registration number and signal word on-device (Tesseract.js). Works on iPhone and Android via the native camera. A ~7MB text reader downloads in the background after first visit, then scans work offline. The match is verified through the same live EPA lookup as manual search before anything is saved. |
+| **Photos & barcode** | Attach label/lot/condition photos to records (device-local). **Scan label** on the mix photographs the EPA Reg. No. line (Tesseract, on-device). **Scan barcode** is secondary: live camera on Android Chrome, still photo on iPhone (ZXing). Review before the mix row changes. Rate stays open so you type it from the label. |
+| **OCR label scanning** | Photograph the EPA Reg. No. on the panel. Works on iPhone and Android via the native camera. A ~7MB text reader downloads in the background after first visit, then scans work offline. The match is verified through the same live EPA lookup as manual search before anything is saved. Rates, REI, and PHI are never read from the photo. |
 | **REI posting & reminders** | Bilingual DO NOT ENTER / NO ENTRE posting sheet from any active REI, plus opt-in browser notifications when REI clears or PHI dates arrive. |
 | **CSV import** | Bring a CSV **you** already have from a spreadsheet or another spray-log app. One chooser; columns are mapped from headers. Rows land as drafts on this device — nothing is uploaded. Imports never invent REI, PHI, or rates. We are not affiliated with the software you exported from. |
 | **Spanish, French & Brazilian Portuguese** | Language control on the public pages (`start.html`, inspector, extension, `how.html`), first-run, and Settings. Same stored language for the trial wall and the logger. Printed REI posting stays English/Spanish (DO NOT ENTER / NO ENTRE). |
@@ -103,7 +103,7 @@ label.
   queries (no CORS on EPA). It stores no farm data. That route only exists on
   a host that runs the serverless function (the Vercel deployment). GitHub
   Pages, a USB copy, and `python3 -m http.server` have no `/api/epa` — use the
-  product library, Scan jug / Scan label, or type the EPA number yourself.
+  product library, Scan label / Scan barcode, or type the EPA number yourself.
 - **No build step.** No npm, no framework.
 - **Static hosting.** GitHub Pages (static core) or Vercel (`vercel.json` included).
   Serve over `http://localhost` when testing so the service worker can cache.

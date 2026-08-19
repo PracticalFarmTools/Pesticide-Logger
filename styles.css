@@ -360,12 +360,18 @@ main {
 .mix-scan-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.5rem 0.75rem;
   align-items: center;
   margin: 0.35rem 0 0.65rem;
 }
-.mix-scan-row .btn-lg { flex: 1 1 11rem; }
+.mix-scan-row .btn-lg { flex: 1 1 12rem; }
 .mix-scan-row .camera-file-btn { text-align: center; justify-content: center; }
+.mix-scan-row .text-btn,
+.mix-scan-row #app-scan-jug-photo {
+  flex: 0 1 auto;
+  font-size: 0.92rem;
+}
+.mix-scan-row #app-add-product { flex: 1 1 11rem; }
 #app-form fieldset { scroll-margin-top: 4.5rem; }
 
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }

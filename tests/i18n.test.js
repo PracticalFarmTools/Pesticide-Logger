@@ -93,6 +93,19 @@ check('curly-apostrophe toasts used by app.js are translated', () => {
   assert.notStrictEqual(i18n.t('pt-BR', couldnt), couldnt);
 });
 
+check('mix Scan label chrome is translated', () => {
+  assert.strictEqual(i18n.t('es', 'Scan label'), 'Escanear etiqueta');
+  assert.strictEqual(i18n.t('fr', 'Scan barcode'), 'Scanner le code-barres');
+  assert.notStrictEqual(
+    i18n.t('pt-BR', 'Photograph the EPA Reg. No. on the panel, or pick from your library.'),
+    'Photograph the EPA Reg. No. on the panel, or pick from your library.'
+  );
+  assert.notStrictEqual(
+    i18n.t('es', 'Could not read that label — photograph the EPA Reg. No. line in better light, or type it'),
+    'Could not read that label — photograph the EPA Reg. No. line in better light, or type it'
+  );
+});
+
 check('cab A+ restage, stamp weather, and send-now chrome are translated', () => {
   assert.strictEqual(i18n.t('es', 'Stamp weather'), 'Sellar clima');
   assert.strictEqual(i18n.t('fr', 'Save this spray'), 'Enregistrer cette pulvérisation');

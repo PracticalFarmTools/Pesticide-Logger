@@ -11,7 +11,7 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="preload" href="vendor/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="vendor/fonts/outfit-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="vendor/fonts/inter-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -128,17 +128,17 @@
           <div class="class-pick-cards" role="group" aria-labelledby="first-run-class-label">
             <button type="button" class="class-pick-card" data-class="private" aria-pressed="true">
               <strong>My crop on my land</strong>
-              <span>I spray to grow my crop on land I own or rent, whatever my state calls that card. Selling the harvest wholesale or retail does not change this.</span>
+              <span>I spray my crop on land I own or rent. Selling the harvest does not change this.</span>
             </button>
             <button type="button" class="class-pick-card" data-class="commercial" aria-pressed="false">
               <strong>This state's commercial record list</strong>
-              <span class="class-pick-refuse">If you spray other people’s farms for a living — clients, signatures, a crew with roles — use a custom-applicator tool. This is the grower’s book.</span>
-              <span>Office boxes a commercial-category log may ask. Not a dispatch book. Not “I sell produce.”</span>
+              <span class="class-pick-refuse">If you spray other people’s farms for a living, use a custom-applicator tool. This is the grower’s book.</span>
+              <span>Office boxes, not a dispatch book. Not “I sell produce.”</span>
             </button>
           </div>
           <p class="card-hint class-pick-sentence" id="class-pick-hint"></p>
           <p class="card-hint class-pick-cite" id="class-pick-cite" hidden></p>
-          <p class="card-hint class-pick-foot">Your state may issue several grower licenses. This choice is which record list to use, not which exam you passed. Selling your crop does not change the grower row.</p>
+          <p class="card-hint class-pick-foot">Which record list to use, not which exam you passed.</p>
         </div>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">Save farm</button>
@@ -858,12 +858,12 @@
       <div class="card-title-row">
         <div>
           <h3 class="card-title">Official EPA product lookup</h3>
-          <p class="card-hint">Search the official EPA Pesticide Product Label System when it is available here. USB, GitHub Pages, and local servers have no lookup — type the EPA number from the jug or Scan label. EPA does not supply crop-specific rates, REI, or PHI.</p>
+          <p class="card-hint">Live EPA catalog by jug name or EPA number. Identity and status only — not rates, REI, or PHI. USB, GitHub Pages, and local servers have no lookup.</p>
         </div>
         <button type="button" class="btn btn-secondary btn-sm" id="epa-verify-all">Verify my library</button>
       </div>
       <form id="epa-search-form" class="epa-search-row" role="search">
-        <input type="search" id="epa-search-input" placeholder="Product name or EPA Reg. No. (for example: Entrust or 62719-621)" minlength="2" maxlength="100" required>
+        <input type="search" id="epa-search-input" placeholder="PyGanic 5.0 or 1021-1750" minlength="2" maxlength="100" required>
         <button type="submit" class="btn btn-primary">Search EPA</button>
       </form>
       <p class="card-hint epa-lookup-note">When lookup works, EPA verifies identity, registration status, active ingredients, RUP, signal word, and label documents. Copy rates, REI, and PHI from the current label. The label is the law.</p>
@@ -1085,12 +1085,12 @@
           <div class="class-pick-cards" role="group" aria-labelledby="set-class-label">
             <button type="button" class="class-pick-card" data-class="private" aria-pressed="true">
               <strong>My crop on my land</strong>
-              <span>I spray to grow my crop on land I own or rent, whatever my state calls that card. Selling the harvest wholesale or retail does not change this.</span>
+              <span>I spray my crop on land I own or rent. Selling the harvest does not change this.</span>
             </button>
             <button type="button" class="class-pick-card" data-class="commercial" aria-pressed="false">
               <strong>This state's commercial record list</strong>
-              <span class="class-pick-refuse">If you spray other people’s farms for a living — clients, signatures, a crew with roles — use a custom-applicator tool. This is the grower’s book.</span>
-              <span>Office boxes a commercial-category log may ask. Not a dispatch book. Not “I sell produce.”</span>
+              <span class="class-pick-refuse">If you spray other people’s farms for a living, use a custom-applicator tool. This is the grower’s book.</span>
+              <span>Office boxes, not a dispatch book. Not “I sell produce.”</span>
             </button>
             <button type="button" class="class-pick-card class-pick-card-both" data-class="both" aria-pressed="false">
               <strong>This book covers both</strong>
@@ -1099,7 +1099,7 @@
           </div>
           <p class="card-hint class-pick-sentence" id="set-class-pick-hint"></p>
           <p class="card-hint class-pick-cite" id="set-class-pick-cite" hidden></p>
-          <p class="card-hint class-pick-foot">Your state may issue several grower licenses. This choice is which record list to use, not which exam you passed. Selling your crop does not change the grower row.</p>
+          <p class="card-hint class-pick-foot">Which record list to use, not which exam you passed.</p>
         </div>
         <div class="form-row form-row-2">
           <label>Default applicator name

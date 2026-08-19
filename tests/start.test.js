@@ -120,8 +120,7 @@ check('class-picker blueprint is implemented; values stay private/commercial/bot
   const bp = fs.readFileSync(path.join(__dirname, '..', 'docs/class-picker-blueprint.md'), 'utf8');
   assert.ok(bp.includes('This log is for'));
   assert.ok(bp.includes('My crop on my land'));
-  assert.ok(bp.includes('Selling the harvest wholesale or retail does not change this')
-    || bp.includes('Selling that crop wholesale or retail does not change this'));
+  assert.ok(bp.includes('Selling the harvest does not change this'));
   assert.ok(bp.includes('50-state rule'));
   assert.ok(bp.includes('Agricultural Basic'));
   assert.ok(bp.includes('Keep values `private` / `commercial` / `both`'));

@@ -11,6 +11,7 @@ const {
   libraryHits,
   scoreEpaResult,
   needsNameSearchHint,
+  fallbackQueries,
   epaAiText,
   NAME_SEARCH_HINT
 } = require(path.join(__dirname, '..', 'epa-rank.js'));
@@ -155,6 +156,26 @@ check('epaAiText joins percents from PPLS and never invents an ingredient', () =
   assert.strictEqual(epaAiText({ activeIngredients: [] }), '');
   assert.strictEqual(epaAiText({}), '');
   assert.strictEqual(epaAiText(null), '');
+});
+
+check('jug-style brand + rate falls back to the brand token', () => {
+  assert.deepStrictEqual(fallbackQueries('pyganic 5.0'), ['pyganic']);
+  assert.deepStrictEqual(fallbackQueries('PyGanic 5.0 II'), ['PyGanic']);
+  assert.deepStrictEqual(fallbackQueries('Ranger Pro'), ['Ranger']);
+  assert.deepStrictEqual(fallbackQueries('Ranger-Pro'), ['Ranger Pro', 'Ranger']);
+  assert.deepStrictEqual(fallbackQueries('pyganic'), []);
+  assert.deepStrictEqual(fallbackQueries('70051-19'), []);
+});
+
+check('brand + rate ranks the matching formulation first without inventing rows', () => {
+  const ranked = rankEpaResults('pyganic 5.0', [
+    hit('PYGANIC CROP PROTECTION EC 1.4'),
+    hit('PYGANIC CROP PROTECTION EC 5.0'),
+    hit('PYGANIC CROP PROTECTION EC 5.0 II'),
+    hit('PYGANIC MUP 20')
+  ]);
+  assert.ok(/^PYGANIC CROP PROTECTION EC 5\.0/.test(ranked[0].name));
+  assert.strictEqual(ranked.length, 4);
 });
 
 if (failed) {

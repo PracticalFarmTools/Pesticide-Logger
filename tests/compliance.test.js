@@ -211,11 +211,14 @@ check('HH:MM:SS application times still produce record deadlines', () => {
   assert.strictEqual(new Date(due).toISOString().slice(0, 13), '2026-08-01T16');
 });
 
-check('EPA product-name charset allows percent signs', () => {
+check('EPA product-name charset allows percent signs and hyphens', () => {
   // Mirrors api/epa.js query allowlist — keep in sync.
-  const invalid = /[^\p{L}\p{N}\s®™().,'&+/-/%]/u;
+  const invalid = /[^\p{L}\p{N}\s®™().,'&+/%-]/u;
   assert.ok(!invalid.test('NEEM OIL 70%'));
   assert.ok(!invalid.test("Joe's Fungicide (SC)"));
+  assert.ok(!invalid.test('2,4-D'));
+  assert.ok(!invalid.test('Ranger-Pro'));
+  assert.ok(!invalid.test('1021-1750'));
   assert.ok(invalid.test('bad<script>'));
 });
 
@@ -240,14 +243,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.41 + deadline/license wiring', () => {
+check('source files advertise v2.9.42 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.41'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.41'));
+  assert.ok(app.includes('v2.9.42'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.42'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-18'"));
-  assert.ok(!html.includes('v2.9.41'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.42'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -304,29 +307,30 @@ check('source files advertise v2.9.41 + deadline/license wiring', () => {
   assert.ok(!/(?<!\$)\$\('#app-products \.app-product-row'\)\.(forEach|map)/.test(app));
 });
 
-check('Outfit and Inter are vendored locally, not loaded from Google', () => {
+check('Inter is vendored locally for titles and body, not loaded from Google', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   assert.ok(!html.includes('fonts.googleapis.com'), 'no Google Fonts stylesheet');
   assert.ok(!html.includes('fonts.gstatic.com'), 'no Google font files');
   assert.ok(html.includes("font-src 'self'"), 'CSP pins fonts to this origin');
-  assert.ok((css.match(/@font-face/g) || []).length >= 6, 'all used weights have @font-face');
+  assert.ok((css.match(/@font-face/g) || []).length >= 3, 'used Inter weights have @font-face');
+  assert.ok(css.includes("--font-title: 'Inter'"));
+  assert.ok(css.includes("--font-body: 'Inter'"));
+  assert.ok(!/font-family:\s*'Outfit'/.test(css), 'Outfit is not a loaded face');
+  assert.ok(!html.includes('outfit-latin'), 'Outfit is not preloaded');
+  assert.ok(!sw.includes('outfit-latin'), 'Outfit is not app-shell precached');
   assert.ok(css.includes("url('vendor/fonts/inter-latin-400-normal.woff2')"));
-  assert.ok(css.includes("url('vendor/fonts/outfit-latin-700-normal.woff2')"));
+  assert.ok(css.includes("url('vendor/fonts/inter-latin-700-normal.woff2')"));
   [
     'inter-latin-400-normal.woff2',
     'inter-latin-600-normal.woff2',
-    'inter-latin-700-normal.woff2',
-    'outfit-latin-600-normal.woff2',
-    'outfit-latin-700-normal.woff2',
-    'outfit-latin-800-normal.woff2'
+    'inter-latin-700-normal.woff2'
   ].forEach((f) => {
     assert.ok(fs.existsSync(path.join(root, 'vendor', 'fonts', f)), f);
     assert.ok(sw.includes('./vendor/fonts/' + f), f + ' is app-shell precached');
   });
   assert.ok(fs.existsSync(path.join(root, 'vendor', 'fonts', 'OFL-Inter.txt')));
-  assert.ok(fs.existsSync(path.join(root, 'vendor', 'fonts', 'OFL-Outfit.txt')));
 });
 
 check('cab chrome: Home, Spray Log, Products, Fields, and More', () => {
@@ -415,8 +419,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.41'"));
-  assert.ok(!html.includes('v2.9.41'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.42'"));
+  assert.ok(!html.includes('v2.9.42'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -595,7 +599,9 @@ check('cab scan / EPA ranking / mix chrome: whole-word ranker, state rules, add-
   const epa = fs.readFileSync(path.join(root, 'api/epa.js'), 'utf8');
   assert.ok(fs.existsSync(path.join(root, 'epa-rank.js')));
   assert.ok(epa.includes('rankEpaResults'), 'proxy ranks before the 25 cap');
+  assert.ok(epa.includes('fallbackQueries'), 'proxy retries brand token when consecutive PPLS is empty');
   assert.ok(app.includes('EpaRank.rankEpaResults'), 'client re-ranks and joins library hits');
+  assert.ok(app.includes('EpaRank.fallbackQueries'), 'client retries brand token on hosts with an old proxy');
   assert.ok(html.includes('id="epa-search-hint"'), 'name-search hint is in the page');
   assert.ok(html.includes('Whole-word names are listed first'));
   const productsFieldset = html.match(/<fieldset data-log-section="products">[\s\S]*?<\/fieldset>/);
@@ -896,7 +902,7 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(start.includes('grower’s book') || start.includes("grower's book"));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(start), 'public page does not name other products');
   assert.ok(!start.includes('Names on those buttons'));
-  assert.ok(!start.includes('v2.9.41'), 'public page keeps version out of copy');
+  assert.ok(!start.includes('v2.9.42'), 'public page keeps version out of copy');
   assert.ok(start.includes('id="start-copy-link"'));
   assert.ok(start.includes('mailto:practicalfarmtools@gmail.com') && inspector.includes('mailto:practicalfarmtools@gmail.com') &&
     extension.includes('mailto:practicalfarmtools@gmail.com'), 'public human on all three pages');
@@ -1201,7 +1207,7 @@ check('v2.9.39: tablet form rows, device kicker, refuse next to class cards', ()
     'form rows collapse by 900px so iPad portrait is not four-across');
   assert.ok(start.includes('Your spray book, on this device'));
   assert.ok(!start.includes('Your spray book, on this phone'));
-  const refuse = 'If you spray other people’s farms for a living — clients, signatures, a crew with roles — use a custom-applicator tool. This is the grower’s book.';
+  const refuse = 'If you spray other people’s farms for a living, use a custom-applicator tool. This is the grower’s book.';
   const startPick = start.split('id="start-class-pick"')[1].split('id="start-copy-link"')[0];
   assert.ok(startPick.includes(refuse), 'custom-applicator refusal sits on the class picker');
   assert.ok(startPick.includes('class-pick-refuse'));
@@ -1222,7 +1228,7 @@ check('v2.9.40: refuse lives in the commercial card; farmer copy drops this host
   const start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   const i18n = require(path.join(root, 'i18n.js'));
-  const refuse = 'If you spray other people’s farms for a living — clients, signatures, a crew with roles — use a custom-applicator tool. This is the grower’s book.';
+  const refuse = 'If you spray other people’s farms for a living, use a custom-applicator tool. This is the grower’s book.';
   const startComm = start.split('data-class="commercial"')[1].split('</button>')[0];
   const firstRun = html.split('id="first-run-class-pick"')[1].split('id="dash-setup-steps"')[0];
   const firstComm = firstRun.split('data-class="commercial"')[1].split('</button>')[0];
@@ -1240,8 +1246,31 @@ check('v2.9.40: refuse lives in the commercial card; farmer copy drops this host
   assert.ok(!html.includes('on this host until checkout'));
   assert.ok(css.includes('.class-pick-card .class-pick-refuse'));
   assert.ok(i18n.ES["This state's commercial record list"]);
-  assert.ok(i18n.t('es', 'Office boxes a commercial-category log may ask. Not a dispatch book. Not “I sell produce.”').includes('vendo la cosecha'));
+  assert.ok(i18n.t('es', 'Office boxes, not a dispatch book. Not “I sell produce.”').includes('vendo la cosecha'));
   assert.ok(!i18n.t('es', 'Open the logger. Logging stays open until checkout is live — no card.').includes('host'));
+});
+
+check('v2.9.42: jug-style EPA fallback, shorter class copy, Inter titles', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
+  const rank = fs.readFileSync(path.join(root, 'epa-rank.js'), 'utf8');
+  const api = fs.readFileSync(path.join(root, 'api', 'epa.js'), 'utf8');
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const grower = 'I spray my crop on land I own or rent. Selling the harvest does not change this.';
+  assert.ok(rank.includes('function fallbackQueries'));
+  assert.ok(api.includes('fallbackQueries(query)'));
+  assert.ok(app.includes('EpaRank.fallbackQueries'));
+  assert.ok(html.includes(grower) && start.includes(grower));
+  assert.ok(!html.includes('whatever my state calls that card'));
+  assert.ok(!html.includes('clients, signatures, a crew with roles'));
+  assert.ok(html.includes('Live EPA catalog by jug name or EPA number'));
+  assert.ok(html.includes('PyGanic 5.0 or 1021-1750'));
+  assert.ok(css.includes("--font-title: 'Inter'"));
+  assert.ok(!/font-family:\s*'Outfit'/.test(css));
+  assert.ok(!sw.includes('outfit-latin'));
+  assert.ok(html.includes('inter-latin-700-normal.woff2'));
 });
 
 check('schema default version is 5', () => {

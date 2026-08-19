@@ -8,7 +8,7 @@
  */
 
 const EPA_BASE = 'https://ordspub.epa.gov/ords/pesticides/cswu';
-const { rankEpaResults } = require('../epa-rank.js');
+const { rankEpaResults, fallbackQueries } = require('../epa-rank.js');
 
 // In-memory per-IP rate limit. This only protects a single warm function
 // instance (it resets on cold start and isn't shared across regions), so it
@@ -85,8 +85,10 @@ module.exports = async function handler(req, res) {
   if (reg && !/^\d{1,6}-\d{1,6}(?:-\d{1,6})?$/.test(reg)) {
     return res.status(400).json({ error: 'Invalid EPA registration number format.' });
   }
-  // Percent signs are common in real product names ("NEEM OIL 70%").
-  if (query.length > 100 || /[^\p{L}\p{N}\s®™().,'&+/-/%]/u.test(query)) {
+  // Percent signs and hyphens are common in real product names
+  // ("NEEM OIL 70%", "2,4-D"). Keep "-" at the end of the class so it is
+  // a literal, not a range.
+  if (query.length > 100 || /[^\p{L}\p{N}\s®™().,'&+/%-]/u.test(query)) {
     return res.status(400).json({ error: 'Invalid search text.' });
   }
 
@@ -94,21 +96,12 @@ module.exports = async function handler(req, res) {
     ? `/ppls/${encodeURIComponent(reg)}`
     : `/pplstxt/${encodeURIComponent(query)}`;
 
-  try {
-    const upstream = await fetch(EPA_BASE + path, {
+  async function collectUnique(pplsPath) {
+    const upstream = await fetch(EPA_BASE + pplsPath, {
       headers: { Accept: 'application/json', 'User-Agent': 'PracticalFarmTools-PesticideLogger/2.2' },
       signal: AbortSignal.timeout(12000)
     });
-    // Unknown / mistyped registration numbers should read as "no match",
-    // not as an EPA outage — callers treat empty results as not-found.
-    if (upstream.status === 404) {
-      res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=3600');
-      return res.status(200).json({
-        results: [],
-        source: 'U.S. EPA Pesticide Product Label System',
-        checkedAt: new Date().toISOString()
-      });
-    }
+    if (upstream.status === 404) return { status: 404, unique: [] };
     if (!upstream.ok) throw new Error(`EPA returned ${upstream.status}`);
     const payload = await upstream.json();
     const seen = new Set();
@@ -118,6 +111,35 @@ module.exports = async function handler(req, res) {
       seen.add(item.eparegno);
       unique.push(normalize(item));
       if (unique.length >= 200) break;
+    }
+    return { status: upstream.status, unique };
+  }
+
+  try {
+    let unique = [];
+    if (reg) {
+      const first = await collectUnique(path);
+      if (first.status === 404) {
+        res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=3600');
+        return res.status(200).json({
+          results: [],
+          source: 'U.S. EPA Pesticide Product Label System',
+          checkedAt: new Date().toISOString()
+        });
+      }
+      unique = first.unique;
+    } else {
+      const first = await collectUnique(path);
+      unique = first.unique;
+      if (!unique.length) {
+        for (const q2 of fallbackQueries(query)) {
+          const next = await collectUnique(`/pplstxt/${encodeURIComponent(q2)}`);
+          if (next.unique.length) {
+            unique = next.unique;
+            break;
+          }
+        }
+      }
     }
     // Rank before the 25-cap so a whole-word hit is not dropped behind
     // substring cousins. Never invents rows that EPA did not return.

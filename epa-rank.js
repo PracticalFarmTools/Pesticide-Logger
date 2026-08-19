@@ -114,6 +114,40 @@
     return q.length >= 2 && !isEpaRegQuery(q);
   }
 
+  // PPLS `/pplstxt` is a consecutive-substring index. Growers type the jug
+  // ("PyGanic 5.0") but the EPA name is "PYGANIC CROP PROTECTION EC 5.0",
+  // so the full query returns nothing. These fallbacks are still EPA queries —
+  // never invented rows. Rank the original query against whatever comes back.
+  const FORMULATION_TOKEN = /^(?:\d+(?:\.\d+)?|[IVX]{1,4}|EC|SC|WP|WDG|DF|CS|ME|EW|SL|SP|G)$/i;
+
+  function fallbackQueries(query) {
+    const raw = String(query || '').trim();
+    if (!raw || isEpaRegQuery(raw)) return [];
+    const parts = raw.split(/[\s-]+/).filter(Boolean);
+    if (parts.length < 2) return [];
+    const out = [];
+    if (/-/.test(raw)) {
+      const spaced = parts.join(' ');
+      if (spaced.length >= 2) out.push(spaced);
+    }
+    let end = parts.length;
+    while (end > 1 && FORMULATION_TOKEN.test(parts[end - 1])) end -= 1;
+    if (end < parts.length) {
+      const stripped = parts.slice(0, end).join(' ');
+      if (stripped.length >= 2) out.push(stripped);
+    }
+    const brand = parts.find((p) => /[A-Za-z]{3,}/.test(p) && !FORMULATION_TOKEN.test(p));
+    if (brand && brand.length >= 3) out.push(brand);
+    const rawKey = raw.toLowerCase().replace(/\s+/g, ' ');
+    const seen = new Set();
+    return out.filter((q) => {
+      const key = String(q).trim().toLowerCase().replace(/\s+/g, ' ');
+      if (!key || key === rawKey || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
   // Join PPLS active-ingredient rows for display. Never invents a name.
   function epaAiText(result) {
     return ((result && result.activeIngredients) || []).map((ai) =>
@@ -131,6 +165,7 @@
     rankEpaResults,
     libraryHits,
     needsNameSearchHint,
+    fallbackQueries,
     epaAiText,
     NAME_SEARCH_HINT,
     EPA_REG_PATTERN

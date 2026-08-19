@@ -226,22 +226,23 @@ check('class picker strings are translated and keep {State}', () => {
   assert.ok(i18n.t('pt-BR', quiet).includes('{State}'));
 });
 
-check('v2.9.39 copy: device kicker, citation, grower spray, refuse line', () => {
+check('v2.9.42 copy: device kicker, citation, grower spray, refuse line', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');
+  const grower = 'I spray my crop on land I own or rent. Selling the harvest does not change this.';
   assert.ok(html.includes('id="first-run-class-pick"'));
-  assert.ok(html.includes('on land I own or rent, whatever my state calls that card'));
-  assert.ok(!html.includes('on land I own or rent. Whatever my state'));
-  assert.ok(start.includes('on land I own or rent, whatever my state calls that card'));
+  assert.ok(html.includes(grower));
+  assert.ok(!html.includes('whatever my state calls that card'));
+  assert.ok(start.includes(grower));
   assert.ok(html.includes('class-pick-refuse'));
   assert.ok(start.includes('Your spray book, on this device'));
   assert.ok(!start.includes('Your spray book, on this phone'));
   assert.strictEqual(i18n.t('es', 'Your spray book, on this device'), 'Su libro de aspersión, en este dispositivo');
   assert.strictEqual(i18n.t('es', 'Open citation'), 'Abrir la referencia');
-  assert.ok(i18n.t('es', 'I spray to grow my crop on land I own or rent, whatever my state calls that card. Selling the harvest wholesale or retail does not change this.').startsWith('Aplico'));
-  assert.ok(i18n.ES['I spray to grow my crop on land I own or rent, whatever my state calls that card. Selling the harvest wholesale or retail does not change this.'].includes('rento, como'));
-  assert.ok(i18n.t('es', 'Office boxes a commercial-category log may ask. Not a dispatch book. Not “I sell produce.”').includes('vendo la cosecha'));
-  const refuse = 'If you spray other people’s farms for a living — clients, signatures, a crew with roles — use a custom-applicator tool. This is the grower’s book.';
+  assert.ok(i18n.t('es', grower).startsWith('Aplico'));
+  assert.ok(i18n.ES[grower].includes('rento'));
+  assert.ok(i18n.t('es', 'Office boxes, not a dispatch book. Not “I sell produce.”').includes('vendo la cosecha'));
+  const refuse = 'If you spray other people’s farms for a living, use a custom-applicator tool. This is the grower’s book.';
   assert.notStrictEqual(i18n.t('es', refuse), refuse);
   assert.ok(!i18n.t('es', 'Open the logger. Logging stays open until checkout is live — no card.').includes('host'));
   assert.notStrictEqual(i18n.t('fr', 'Pick your state. The form changes.'), 'Pick your state. The form changes.');

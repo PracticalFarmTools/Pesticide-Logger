@@ -78,7 +78,7 @@ Ask a **use** question. Let **this state’s JSON** say what the log will ask.
 
 Universal footnote under the cards (not a state encyclopedia):
 
-> Your state may issue several grower licenses. This choice is which record list to use, not which exam you passed. Selling your crop does not change the grower row.
+> Which record list to use, not which exam you passed.
 
 If they need the department’s license tree, they tap the citation. We are not BPC.
 
@@ -109,10 +109,10 @@ Engine (do not change):
 (Not “Applicator class.” Not “Whose land” alone — Maine can require commercial on land you own if the *use* is public / for-hire / food establishment.)
 
 **My crop on my land** — value `private`  
-I spray to grow my crop on land I own or rent, whatever my state calls that card. Selling the harvest wholesale or retail does not change this.
+I spray my crop on land I own or rent. Selling the harvest does not change this.
 
 **This state's commercial record list** — value `commercial`  
-If you spray other people’s farms for a living — clients, signatures, a crew with roles — use a custom-applicator tool. This is the grower’s book. Office boxes a commercial-category log may ask. Not a dispatch book. Not “I sell produce.”
+If you spray other people’s farms for a living, use a custom-applicator tool. This is the grower’s book. Office boxes, not a dispatch book. Not “I sell produce.”
 
 The refuse sentence lives **inside** the commercial card (first span), not only under the cards. On a phone first-run the card is on screen; a paragraph below it was below the fold.
 

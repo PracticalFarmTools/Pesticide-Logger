@@ -1,8 +1,14 @@
 # Owner next — what only you can do
 
-**App is v2.9.37.** Product grade: `docs/seller-grade-report.md`. Listing paste:
-`docs/suite-listing.md`. This file is the **order**. Do not skip. Do not go
-live until step 2 answers. Do not set `BUY_URL` until step 4.
+**App is v2.9.37.** Product grade (2026-08-19, URL/payment out of scope):
+`docs/seller-grade-report.md` — **A−**. Listing paste: `docs/suite-listing.md`.
+This file is the **order**. Do not skip. Do not go live until step 2 answers.
+Do not set `BUY_URL` until step 4.
+
+Sell to **growers**. Keep applicator class in the app (private is the farmer;
+commercial boxes stay for farms that hold that license). Catch-up is still a
+**file** in a folder they already sync — not Drive OAuth and not a server of
+ours.
 
 **Beta testers:** send them this origin (the Vercel URL you attach). Logging
 stays open. There is no 30-day clock until you set `BUY_URL`. Tell them
@@ -19,9 +25,10 @@ text, and a way to take a card without a license server.
 
 - Mark the catalog **Active** while `pesticide.practicalfarmtools.com` 404s.
 - Point Buy at a placeholder.
-- Add a farm-data server, accounts, or “we restored your cloud copy.”
+- Add a farm-data server, accounts, Drive/Dropbox OAuth, or “we restored your cloud copy.”
 - Invent Arkansas / South Dakota private duty.
 - Chase contractor CRM or a farm OS.
+- Drop private vs commercial class to “simplify for farmers.” Farmers *are* the private class; the matrix still has to reshape.
 
 ---
 

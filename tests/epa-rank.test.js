@@ -162,6 +162,7 @@ check('jug-style brand + rate falls back to the brand token', () => {
   assert.deepStrictEqual(fallbackQueries('pyganic 5.0'), ['pyganic']);
   assert.deepStrictEqual(fallbackQueries('PyGanic 5.0 II'), ['PyGanic']);
   assert.deepStrictEqual(fallbackQueries('Ranger Pro'), ['Ranger']);
+  assert.deepStrictEqual(fallbackQueries('Ranger-Pro'), ['Ranger Pro', 'Ranger']);
   assert.deepStrictEqual(fallbackQueries('pyganic'), []);
   assert.deepStrictEqual(fallbackQueries('70051-19'), []);
 });

@@ -85,8 +85,10 @@ module.exports = async function handler(req, res) {
   if (reg && !/^\d{1,6}-\d{1,6}(?:-\d{1,6})?$/.test(reg)) {
     return res.status(400).json({ error: 'Invalid EPA registration number format.' });
   }
-  // Percent signs are common in real product names ("NEEM OIL 70%").
-  if (query.length > 100 || /[^\p{L}\p{N}\s®™().,'&+/-/%]/u.test(query)) {
+  // Percent signs and hyphens are common in real product names
+  // ("NEEM OIL 70%", "2,4-D"). Keep "-" at the end of the class so it is
+  // a literal, not a range.
+  if (query.length > 100 || /[^\p{L}\p{N}\s®™().,'&+/%-]/u.test(query)) {
     return res.status(400).json({ error: 'Invalid search text.' });
   }
 

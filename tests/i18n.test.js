@@ -95,7 +95,7 @@ check('curly-apostrophe toasts used by app.js are translated', () => {
 
 check('log Next coach is translated', () => {
   assert.strictEqual(i18n.t('es', 'Next: pick the field'), 'Siguiente: elija el campo');
-  assert.strictEqual(i18n.t('fr', 'Next: Scan label, or pick a product'), 'Suivant : scannez l’étiquette, ou choisissez un produit');
+  assert.strictEqual(i18n.t('fr', 'Next: pick a product, or Scan label'), 'Suivant : choisissez un produit, ou scannez l’étiquette');
   assert.notStrictEqual(
     i18n.t('pt-BR', 'Ready to save.'),
     'Ready to save.'
@@ -108,6 +108,11 @@ check('mix Scan label chrome is translated', () => {
   assert.notStrictEqual(
     i18n.t('pt-BR', 'Photograph the EPA Reg. No. on the panel, or pick from your library.'),
     'Photograph the EPA Reg. No. on the panel, or pick from your library.'
+  );
+  assert.strictEqual(i18n.t('es', 'Find a product'), 'Hallar un producto');
+  assert.notStrictEqual(
+    i18n.t('fr', 'Type a name or EPA # from your library. Scan label is optional.'),
+    'Type a name or EPA # from your library. Scan label is optional.'
   );
   assert.notStrictEqual(
     i18n.t('es', 'Could not read that label — photograph the EPA Reg. No. line in better light, or type it'),

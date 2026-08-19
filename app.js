@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.35 — Practical Farm Tools
+/* Pesticide Logger v2.9.36 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -653,6 +653,7 @@
     });
     $$('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
     window.scrollTo({ top: 0 });
+    if (name !== 'fields') setMapFullscreen(false);
     if (name === 'dashboard') {
       renderDashboard();
       prefetchFieldForecasts(false);
@@ -1396,7 +1397,7 @@
     if (!field) return { text: 'Next: pick the field', field: 'location' };
     if (!crop) return { text: 'Next: what crop?', field: 'crop_treated' };
     if (!area) return { text: 'Next: how many acres?', field: 'area_treated' };
-    if (!picked.length) return { text: 'Next: Scan label, or pick a product', field: 'products' };
+    if (!picked.length) return { text: 'Next: pick a product, or Scan label', field: 'products' };
     const row = picked[0];
     const rate = row.querySelector('.apr-rate');
     const total = row.querySelector('.apr-total');
@@ -1475,11 +1476,12 @@
     }
     if (step.field === 'products') {
       revealLogSection('products');
-      const scan = $('#app-scan-label-btn');
+      const find = $('#app-product-filter');
       const sel = document.querySelector('#app-products .apr-product');
-      const target = scan && !scan.hidden ? scan : sel;
+      const target = find || sel;
       if (target && target.scrollIntoView) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      if (sel) sel.focus({ preventScroll: true });
+      if (find) find.focus({ preventScroll: true });
+      else if (sel) sel.focus({ preventScroll: true });
       return;
     }
     if (step.field) focusMissingField(step.field);
@@ -2211,6 +2213,7 @@
     setTogglePressed($('#fields-mode-list'), next === 'list');
     setTogglePressed($('#fields-mode-add'), next === 'add');
     setTogglePressed($('#fields-mode-map'), next === 'map');
+    if (next !== 'map') setMapFullscreen(false);
     if (next === 'map') {
       initFieldMap();
       if (fieldMap) setTimeout(() => fieldMap.invalidateSize(), 50);
@@ -2423,7 +2426,10 @@
       if (!el) return;
       el.addEventListener('input', () => {
         if (sel === '#app-field-filter') renderFieldOptions();
-        else renderProductOptions();
+        else {
+          renderProductOptions();
+          renderRecentProducts();
+        }
       });
     });
     $('#app-form').addEventListener('input', updateCompliancePreview);
@@ -2564,9 +2570,15 @@
     return shown.map((o) => `<option value="${esc(o.value)}">${esc(o.text)}</option>`).join('');
   }
 
+  function mixFindQuery() {
+    const el = $('#app-product-filter');
+    return el ? String(el.value || '').trim().toLowerCase() : '';
+  }
+
   function renderProductOptions() {
     const mixOpts = productPickerOptions(true, '— Select product —');
-    setSelectFilterVisible($('#app-product-filter'), mixOpts.length);
+    const mixFilter = $('#app-product-filter');
+    if (mixFilter) mixFilter.hidden = false;
     const reportOpts = productPickerOptions(false, 'All products');
     const rep = $('#report-product');
     if (rep) {
@@ -3901,9 +3913,16 @@
     }));
     const top = Object.entries(counts).sort((x, y) => y[1] - x[1]).slice(0, 6)
       .map(([id]) => data.products.find(p => p.id === id)).filter(Boolean);
-    if (!top.length) { host.hidden = true; host.innerHTML = ''; return; }
+    const q = mixFindQuery();
+    const shown = q
+      ? top.filter((p) => {
+          const hay = typeof FarmScale !== 'undefined' ? FarmScale.productSearchHaystack(p) : (p.name || '');
+          return String(hay).toLowerCase().includes(q);
+        })
+      : top;
+    if (!shown.length) { host.hidden = true; host.innerHTML = ''; return; }
     host.hidden = false;
-    host.innerHTML = `<span class="card-hint">Recent products:</span> ` + top.map(p =>
+    host.innerHTML = `<span class="card-hint">Recent products:</span> ` + shown.map(p =>
       `<button type="button" class="chip" data-quick-product="${p.id}">${esc(p.name)}${p.omri ? ' · OMRI' : ''}</button>`
     ).join(' ');
     host.querySelectorAll('[data-quick-product]').forEach(b => b.addEventListener('click', () => {
@@ -5836,6 +5855,18 @@
     $('#map-undo').addEventListener('click', undoDrawPoint);
     $('#map-clear').addEventListener('click', () => clearDrawing(true));
     $('#map-use').addEventListener('click', useShape);
+    if ($('#map-fullscreen')) {
+      $('#map-fullscreen').addEventListener('click', () => setMapFullscreen(!isMapFullscreen()));
+    }
+    if (!document.body.dataset.mapFsEsc) {
+      document.body.dataset.mapFsEsc = '1';
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isMapFullscreen()) {
+          e.preventDefault();
+          setMapFullscreen(false);
+        }
+      });
+    }
     if ($('#map-add-corners')) {
       $('#map-add-corners').addEventListener('click', () => {
         addingCorners = !addingCorners;
@@ -5859,6 +5890,33 @@
     setTimeout(() => fieldMap.invalidateSize(), 50);
     syncWeatherPinButton();
     updateDrawUI();
+  }
+
+  function isMapFullscreen() {
+    return !!(document.body && document.body.classList.contains('map-fullscreen'));
+  }
+
+  function setMapFullscreen(on) {
+    if (!document.body) return;
+    const next = !!on;
+    document.body.classList.toggle('map-fullscreen', next);
+    const btn = $('#map-fullscreen');
+    if (btn) {
+      btn.setAttribute('aria-pressed', next ? 'true' : 'false');
+      btn.textContent = next ? tr('Exit full screen') : tr('Full screen');
+      btn.classList.toggle('btn-primary', next);
+      btn.classList.toggle('btn-secondary', !next);
+    }
+    if (next) {
+      const mapPane = $('#fields-map-pane');
+      if (mapPane && mapPane.hidden) setFieldsMode('map');
+      const mapEl = $('#field-map');
+      if (mapEl && mapEl.scrollIntoView) mapEl.scrollIntoView({ block: 'start' });
+    }
+    if (fieldMap) {
+      setTimeout(() => fieldMap.invalidateSize(), 80);
+      setTimeout(() => fieldMap.invalidateSize(), 280);
+    }
   }
 
   function applyFarmMapView() {
@@ -7964,7 +8022,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.35';
+  const APP_VERSION = 'v2.9.36';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {

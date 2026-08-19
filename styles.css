@@ -388,14 +388,34 @@ main {
 @media (max-width: 720px) {
   .log-mode-toggle { flex-direction: column; align-items: stretch; }
 }
+.mix-find-label {
+  display: block;
+  font-weight: 700;
+  font-size: 0.92rem;
+  margin: 0.15rem 0 0.55rem;
+  color: var(--text-dark);
+}
+.mix-find {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0.3rem 0 0;
+  min-height: var(--touch);
+  font-size: 1.05rem;
+  font-weight: 500;
+}
 .mix-scan-row {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem 0.75rem;
   align-items: center;
-  margin: 0.35rem 0 0.65rem;
+  margin: 0.15rem 0 0.65rem;
 }
-.mix-scan-row .btn-lg { flex: 1 1 12rem; }
+.mix-scan-row #app-scan-label-btn {
+  min-height: 2.55rem;
+  padding: 0.45rem 0.9rem;
+  font-weight: 700;
+}
 .mix-scan-row .camera-file-btn { text-align: center; justify-content: center; }
 .mix-scan-row .text-btn,
 .mix-scan-row #app-scan-jug-photo {
@@ -1073,6 +1093,70 @@ label.state-required-field {
   margin-bottom: 0.75rem;
 }
 .map-toolbar-spacer { flex: 1; }
+
+body.map-fullscreen {
+  padding-bottom: 0;
+  overflow: hidden;
+}
+body.map-fullscreen .app-header,
+body.map-fullscreen .tab-nav-wrap,
+body.map-fullscreen #tab-fields .log-mode-toggle,
+body.map-fullscreen #fields-list-pane,
+body.map-fullscreen #fields-add-pane,
+body.map-fullscreen .map-card > .card-title,
+body.map-fullscreen .map-card > .card-hint {
+  display: none !important;
+}
+body.map-fullscreen main {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+body.map-fullscreen #tab-fields.tab-panel.active {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  min-height: 100vh;
+}
+body.map-fullscreen #fields-map-pane,
+body.map-fullscreen .map-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 100dvh;
+  min-height: 100vh;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+}
+body.map-fullscreen .map-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  margin: 0;
+  padding: 0.45rem 0.7rem;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+}
+body.map-fullscreen #field-map {
+  flex: 1 1 auto;
+  height: auto !important;
+  min-height: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  z-index: 2;
+}
+body.map-fullscreen .map-offline-note,
+body.map-fullscreen .map-legend {
+  margin: 0;
+  padding: 0.4rem 0.75rem;
+}
+body.map-fullscreen #map-fullscreen {
+  font-weight: 700;
+}
 
 .map-offline-note {
   margin: 0 0 0.55rem;

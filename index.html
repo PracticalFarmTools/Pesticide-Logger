@@ -392,7 +392,7 @@
         <fieldset data-log-section="products">
           <legend>Products applied (tank mix) <span class="req-star">*</span></legend>
           <p class="card-hint" id="app-mix-state-req" hidden></p>
-          <p class="card-hint" id="app-mix-empty-hint">Photograph the EPA Reg. No. on the panel, or pick from your library.</p>
+          <p class="card-hint" id="app-mix-empty-hint">Type a name or EPA # from your library. Scan label is optional.</p>
           <p class="card-hint" id="app-mix-order-hint" hidden>This is the order you added them. Follow the label for W-A-L-E.</p>
           <div id="app-mix-req-tags" hidden>
             <span id="req-brand_name" class="state-req-tag" hidden>state</span>
@@ -403,9 +403,11 @@
             <span id="req-rei_hours" class="state-req-tag" hidden>state</span>
             <span id="req-phi_days" class="state-req-tag" hidden>state</span>
           </div>
-          <input type="search" id="app-product-filter" class="select-filter" placeholder="Type to find a product…" hidden autocomplete="off">
+          <label class="mix-find-label" id="app-mix-find-wrap">Find a product
+            <input type="search" id="app-product-filter" class="select-filter mix-find" placeholder="Name, EPA #, or active ingredient…" autocomplete="off">
+          </label>
           <div class="mix-scan-row" id="app-mix-scan-row">
-            <label class="btn btn-primary btn-lg camera-file-btn" id="app-scan-label-btn" hidden>Scan label
+            <label class="btn btn-secondary camera-file-btn" id="app-scan-label-btn" hidden>Scan label
               <input type="file" id="app-scan-label-input" accept="image/*" capture="environment" aria-label="Photograph the EPA Reg. No. on the label">
             </label>
             <button type="button" class="text-btn" id="app-scan-jug" hidden>Scan barcode</button>
@@ -939,6 +941,7 @@
         <button type="button" class="btn btn-secondary btn-sm" id="map-undo" disabled>Undo point</button>
         <button type="button" class="btn btn-secondary btn-sm" id="map-clear" disabled>Clear</button>
         <button type="button" class="btn btn-primary btn-sm" id="map-use" disabled>Use this shape</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="map-fullscreen" aria-pressed="false">Full screen</button>
       </div>
       <p class="map-offline-note" id="map-offline-note" hidden>Imagery needs a network. Drawn boundaries stay on this device.</p>
       <div id="field-map" role="application" aria-label="Field boundary drawing map"></div>

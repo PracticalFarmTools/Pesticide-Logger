@@ -1,6 +1,6 @@
 # Owner next — what only you can do
 
-**App is v2.9.42.** Product grade: `docs/seller-grade-report.md`. Listing paste:
+**App is v2.9.43.** Product grade: `docs/seller-grade-report.md`. Listing paste:
 `docs/suite-listing.md`. This file is the **order**. Do not skip. Do not go
 live until step 2 answers. Do not set `BUY_URL` until step 4.
 
@@ -153,5 +153,5 @@ Do not advertise against named platforms.
 - Someone answers mail the same week.
 - `--holes` is still AR and SD.
 
-Full scorecard: `docs/seller-grade-report.md`. Optional first-run class
-copy (not a sale blocker): `docs/class-picker-blueprint.md`.
+Full scorecard: `docs/seller-grade-report.md`. Class picker is shipped
+(not a sale blocker): `docs/class-picker-blueprint.md`.

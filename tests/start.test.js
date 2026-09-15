@@ -129,6 +129,9 @@ check('class-picker blueprint is implemented; values stay private/commercial/bot
   assert.ok(bp.includes('The library: already yes'));
   assert.ok(bp.includes('does not change `laws/XX.json`'));
   assert.ok(bp.includes('Status: implemented'));
+  assert.ok(bp.includes('After Save farm, Settings → This book covers both'));
+  assert.ok(bp.includes('What this replaced'));
+  assert.ok(!bp.includes('Show every box'));
 });
 
 check('classPickHint is honest for Iowa quiet, Maine required, AR uncertain', () => {

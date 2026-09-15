@@ -243,14 +243,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.42 + deadline/license wiring', () => {
+check('source files advertise v2.9.43 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.42'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.42'));
+  assert.ok(app.includes('v2.9.43'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.43'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-18'"));
-  assert.ok(!html.includes('v2.9.42'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.43'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -419,8 +419,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.42'"));
-  assert.ok(!html.includes('v2.9.42'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.43'"));
+  assert.ok(!html.includes('v2.9.43'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -906,7 +906,7 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(start.includes('grower’s book') || start.includes("grower's book"));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(start), 'public page does not name other products');
   assert.ok(!start.includes('Names on those buttons'));
-  assert.ok(!start.includes('v2.9.42'), 'public page keeps version out of copy');
+  assert.ok(!start.includes('v2.9.43'), 'public page keeps version out of copy');
   assert.ok(start.includes('id="start-copy-link"'));
   assert.ok(start.includes('mailto:practicalfarmtools@gmail.com') && inspector.includes('mailto:practicalfarmtools@gmail.com') &&
     extension.includes('mailto:practicalfarmtools@gmail.com'), 'public human on all three pages');
@@ -1177,8 +1177,13 @@ check('v2.9.38: class picker asks which record list; hints stay honest', () => {
   assert.ok(firstRun.includes('data-class="private"') && firstRun.includes('data-class="commercial"'));
   assert.ok(!firstRun.includes('data-class="both"'), 'both is Settings-only, not a first-run card');
   assert.ok(firstRun.includes('option value="both"'), 'hidden first-run select still accepts ?class=both');
+  const bothHint = 'Need crop sprays and commercial-category sprays in one book? After Save farm, Settings → This book covers both.';
+  assert.ok(firstRun.includes(bothHint), 'first-run points to Settings for both');
+  assert.ok(firstRun.includes('id="class-pick-both-hint"'));
   const settingsPick = html.split('id="set-class-pick"')[1].split('Default applicator name')[0];
   assert.ok(settingsPick.includes('data-class="both"') && settingsPick.includes('This book covers both'));
+  assert.ok(!settingsPick.includes('After Save farm'), 'Settings already has the both card');
+  assert.ok(!start.includes(bothHint), 'start.html has no Settings both pointer');
   assert.ok(!/Agricultural Basic/.test(html) && !/Agricultural Basic/.test(app),
     'no Maine exam name in product UI');
   assert.ok(!/agricultural_basic/.test(app));
@@ -1275,6 +1280,27 @@ check('v2.9.42: jug-style EPA fallback, shorter class copy, Inter titles', () =>
   assert.ok(!/font-family:\s*'Outfit'/.test(css));
   assert.ok(!sw.includes('outfit-latin'));
   assert.ok(html.includes('inter-latin-700-normal.woff2'));
+});
+
+check('v2.9.43: first-run points to Settings for This book covers both', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');
+  const bp = fs.readFileSync(path.join(root, 'docs', 'class-picker-blueprint.md'), 'utf8');
+  const i18n = require(path.join(root, 'i18n.js'));
+  const hint = 'Need crop sprays and commercial-category sprays in one book? After Save farm, Settings → This book covers both.';
+  const firstRun = html.split('id="first-run-class-pick"')[1].split('id="dash-setup-steps"')[0];
+  const settingsPick = html.split('id="set-class-pick"')[1].split('Default applicator name')[0];
+  assert.ok(firstRun.includes(hint));
+  assert.ok(!firstRun.includes('data-class="both"'));
+  assert.ok(settingsPick.includes('data-class="both"'));
+  assert.ok(!settingsPick.includes(hint));
+  assert.ok(!start.includes(hint));
+  assert.ok(bp.includes('What this replaced'));
+  assert.ok(!bp.includes('Why the current picker fails'));
+  assert.ok(!bp.includes('Show every box'));
+  assert.ok(i18n.t('es', hint).includes('Este libro cubre ambos'));
+  assert.ok(i18n.t('fr', hint).includes('Ce livre couvre les deux'));
+  assert.ok(i18n.t('pt-BR', hint).includes('Este livro cobre os dois'));
 });
 
 check('schema default version is 5', () => {

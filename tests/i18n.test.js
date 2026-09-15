@@ -246,6 +246,10 @@ check('v2.9.42 copy: device kicker, citation, grower spray, refuse line', () => 
   assert.notStrictEqual(i18n.t('es', refuse), refuse);
   assert.ok(!i18n.t('es', 'Open the logger. Logging stays open until checkout is live — no card.').includes('host'));
   assert.notStrictEqual(i18n.t('fr', 'Pick your state. The form changes.'), 'Pick your state. The form changes.');
+  const bothHint = 'Need crop sprays and commercial-category sprays in one book? After Save farm, Settings → This book covers both.';
+  assert.ok(html.includes(bothHint));
+  assert.ok(!start.includes(bothHint));
+  assert.notStrictEqual(i18n.t('es', bothHint), bothHint);
 });
 
 if (failed) {

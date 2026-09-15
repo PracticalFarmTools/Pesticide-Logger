@@ -3702,7 +3702,7 @@ const STATE_LAWS = {
     }
   },
   "ND": {
-    "reviewedAt": "2026-07-31",
+    "reviewedAt": "2026-09-15",
     "agency": "North Dakota Department of Agriculture",
     "citation": {
       "reference": "N.D.C.C. §4.1-33-14; N.D. Admin. Code 60-03-01-07",
@@ -3711,8 +3711,14 @@ const STATE_LAWS = {
     "retentionYears": 3,
     "appliesTo": "Commercial and public applicators: all pesticide applications and rinsate use/disposal; private applicators: all RUP applications.",
     "verification": "researched",
-    "notes": "Records made within 24 hours. Commercial/public customer copy within 30 days unless waived. Weather required for outdoor applications except seed treatment, bait, or indoor applications. Right-of-way records require weather and geographic location in two-hour increments.",
+    "notes": "N.D. Admin. Code 60-03-01-07 (read 2026-09-15) requires the start and completion time of the application as month, day, year, and hour for commercial/public (subsection 2.d) and private (subsection 3.b) records, so the application date is a required row. Records made within 24 hours. Commercial/public customer copy within 30 days unless waived. Weather required for outdoor applications except seed treatment, bait, or indoor applications. Right-of-way records require weather and geographic location in two-hour increments.",
     "fields": [
+      {
+        "name": "date",
+        "label": "Application date",
+        "type": "date",
+        "required": true
+      },
       {
         "name": "customer_name",
         "label": "Customer / person for whom applied",

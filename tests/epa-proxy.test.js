@@ -42,14 +42,15 @@ async function run() {
     assert.strictEqual(res.statusCode, 405);
   });
 
-  await check('percent sign is allowed in product-name search', async () => {
+  await check('hyphenated names and EPA numbers are allowed as search text', async () => {
     const orig = global.fetch;
     global.fetch = async () => ({ ok: true, json: async () => ({ items: [] }) });
     try {
-      const res = mockRes();
-      await handler(mockReq({ q: 'NEEM OIL 70%' }), res);
-      assert.strictEqual(res.statusCode, 200);
-      assert.deepStrictEqual(res.body.results, []);
+      for (const q of ['NEEM OIL 70%', '2,4-D', 'Ranger-Pro', '1021-1750']) {
+        const res = mockRes();
+        await handler(mockReq({ q }), res);
+        assert.strictEqual(res.statusCode, 200, q);
+      }
     } finally {
       global.fetch = orig;
     }
@@ -86,6 +87,39 @@ async function run() {
       assert.strictEqual(res.body.results[0].epaRegNo, '70051-19');
       assert.strictEqual(res.body.results[0].name, 'CEASE BIOFUNGICIDE');
       assert.ok(res.body.results.some((r) => r.epaRegNo === '101563-38'));
+    } finally {
+      global.fetch = orig;
+    }
+  });
+
+  await check('empty consecutive PPLS query retries the brand token', async () => {
+    const orig = global.fetch;
+    const seen = [];
+    global.fetch = async (url) => {
+      seen.push(String(url));
+      const name = String(url).includes('pplstxt/pyganic%205.0') || String(url).includes('pplstxt/pyganic 5.0')
+        ? null
+        : 'brand';
+      if (String(url).includes('pyganic%205.0') || /pplstxt\/pyganic%205/.test(String(url))) {
+        return { ok: true, json: async () => ({ items: [] }) };
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          items: [
+            { productname: 'PYGANIC CROP PROTECTION EC 1.4', eparegno: '1021-1751', product_status: 'Active', cancel_flag: 'No', signal_word: 'Caution', active_ingredients: [], companyinfo: [] },
+            { productname: 'PYGANIC CROP PROTECTION EC 5.0', eparegno: '1021-1750', product_status: 'Active', cancel_flag: 'No', signal_word: 'Caution', active_ingredients: [], companyinfo: [] }
+          ]
+        })
+      };
+    };
+    try {
+      const res = mockRes();
+      await handler(mockReq({ q: 'pyganic 5.0' }), res);
+      assert.strictEqual(res.statusCode, 200);
+      assert.ok(seen.length >= 2, 'retried after empty consecutive hit');
+      assert.strictEqual(res.body.results[0].epaRegNo, '1021-1750');
+      assert.ok(res.body.results.some((r) => r.epaRegNo === '1021-1751'));
     } finally {
       global.fetch = orig;
     }

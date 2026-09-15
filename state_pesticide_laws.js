@@ -37,9 +37,9 @@
  * reviewedAt is when this state's citation was last opened. It is not a
  * completeness field and must not change badges by itself.
  *
- * Matrix edition: 2026-08-18. Always confirm with your state agency.
+ * Matrix edition: 2026-09-15. Always confirm with your state agency.
  */
-const STATE_LAWS_RESEARCH_DATE = "2026-08-18";
+const STATE_LAWS_RESEARCH_DATE = "2026-09-15";
 const STATE_LAW_STALE_DAYS = 365;
 
 function stateLawParseIsoDate(iso) {
@@ -3270,16 +3270,16 @@ const STATE_LAWS = {
     }
   },
   "NJ": {
-    "reviewedAt": "2026-08-14",
+    "reviewedAt": "2026-09-15",
     "agency": "New Jersey Department of Environmental Protection, Pesticide Control Program",
     "citation": {
-      "reference": "N.J.A.C. 7:30-6.8, 7:30-7.3, 7:30-8.8",
+      "reference": "N.J.A.C. 7:30-6.8(c) (commercial), 7:30-7.3, 7:30-8.8(c) (private)",
       "url": "https://dep.nj.gov/pesticides/regulations/"
     },
-    "retentionYears": 5,
-    "appliesTo": "Licensed private and commercial pesticide applicators/businesses; any pesticide application, with longer termiticide retention.",
+    "retentionYears": 3,
+    "appliesTo": "Licensed private and commercial pesticide applicators/businesses; any pesticide application. Termiticide records (commercial, 7:30-6.8(c)) keep five years; that is out of scope for a farm spray record.",
     "verification": "researched",
-    "notes": "Records must be written as soon as possible and no later than 24 hours. For agricultural commodity applications, place includes farm name/address, specific field/greenhouse/land area, municipality/county, crop/commodity/stored product, and treated size. Product list/symbol correlation allowed.",
+    "notes": "Retention is three years: 7:30-8.8(c) (private) and 7:30-6.8(c) (commercial) both say a minimum of three years; the five-year term in 7:30-6.8(c) applies only to termiticide applications, so do not raise this row back to 5. Read 2026-09-15 (as amended by 52 N.J.R. 756(a), eff. 4/6/2020); the DEP host blocks non-browser fetches, convenience reprints at https://www.law.cornell.edu/regulations/new-jersey/N-J-A-C-7-30-8-8 and https://www.law.cornell.edu/regulations/new-jersey/N-J-A-C-7-30-6-8. Records must be written as soon as possible and no later than 24 hours. For agricultural commodity applications, place includes farm name/address, specific field/greenhouse/land area, municipality/county, crop/commodity/stored product, and treated size. Product list/symbol correlation allowed.",
     "fields": [
       {
         "name": "date",

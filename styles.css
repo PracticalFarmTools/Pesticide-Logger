@@ -362,8 +362,14 @@ main {
   padding: 0.15rem 0;
   cursor: pointer;
   min-height: 2.4rem;
+  /* Always look tappable: the line is the way to the missing box, and a
+     first-time user on a phone gets no hover. */
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
 }
-.log-next-go:hover, .log-next-go:focus-visible { text-decoration: underline; }
+.log-next:not(.is-ready) .log-next-go::after { content: " →"; }
+.log-next-go:hover, .log-next-go:focus-visible { text-decoration-thickness: 3px; }
 .log-next-rest { font-size: 0.88rem; opacity: 0.85; }
 .log-more-record {
   flex: 0 0 auto;

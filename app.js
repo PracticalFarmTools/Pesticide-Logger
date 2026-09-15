@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.41 — Practical Farm Tools
+/* Pesticide Logger v2.9.42 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -605,6 +605,10 @@
   // -------------------------------------------------------------- tab nav
 
   const MORE_TABS = { calculator: 1, reports: 1, settings: 1 };
+  // Set when the log sent someone to the product editor; Save / Cancel there
+  // brings them straight back to the record they were filling. Any other
+  // tab change forgets it.
+  let productEditorReturnToLog = false;
 
   function moreMenu() { return $('#tab-more-menu'); }
 
@@ -634,6 +638,7 @@
       name = 'reports';
     }
     closeMoreMenu();
+    if (name !== 'products') productEditorReturnToLog = false;
     $$('.tab-btn[data-tab]').forEach(b => {
       const on = b.dataset.tab === name;
       b.classList.toggle('active', on);
@@ -1320,10 +1325,25 @@
     amount_applied: 'apr-total', rate: 'apr-rate',
     rei_hours: 'apr-rei', phi_days: 'apr-phi', lot_number: 'apr-lot'
   };
-  const PRODUCT_IDENTITY_FIELD_PROP = {
-    brand_name: 'name', epa_reg_no: 'epaRegNo', active_ingredient: 'activeIngredient',
-    manufacturer_name: 'epaCompany', state_registration_no: 'stateRegNo', pesticide_formulation: 'type'
+  // Jump map for boxes that live on the Product record (Products tab), keyed
+  // by compliance field name: which library property is missing and which
+  // product-editor input to land on. Together with PRODUCT_ROW_FIELD_CLASS
+  // this must cover every name in Compliance.PRODUCT_SECTION_FIELDS.
+  const PRODUCT_EDITOR_FIELDS = {
+    brand_name: { prop: 'name', input: '#prod-name' },
+    epa_reg_no: { prop: 'epaRegNo', input: '#prod-epa' },
+    active_ingredient: { prop: 'activeIngredient', input: '#prod-ai' },
+    pesticide_formulation: { prop: 'type', input: '#prod-type' },
+    manufacturer_name: { prop: 'epaCompany', input: '#prod-company' },
+    state_registration_no: { prop: 'stateRegNo', input: '#prod-state-reg' },
+    restricted_use_flag: { prop: 'rup', input: '#prod-rup', present: (p) => typeof p.rup === 'boolean' }
   };
+
+  function productEditorValuePresent(p, name) {
+    const spec = PRODUCT_EDITOR_FIELDS[name];
+    if (!spec) return true;
+    return spec.present ? spec.present(p) : hasText(p[spec.prop]);
+  }
 
   function focusProductsSection() {
     revealLogSection('products');
@@ -1345,18 +1365,36 @@
   }
 
   function focusProductIdentityIssue(name) {
-    const prop = PRODUCT_IDENTITY_FIELD_PROP[name];
+    const spec = PRODUCT_EDITOR_FIELDS[name];
     const rows = $$('#app-products .app-product-row');
     for (const row of rows) {
       const p = getProduct(row.querySelector('.apr-product').value);
-      if (p && !hasText(p[prop])) {
+      if (p && !productEditorValuePresent(p, name)) {
         showTab('products');
         editProduct(p.id);
+        productEditorReturnToLog = true;
+        const input = spec && $(spec.input);
+        if (input) {
+          input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          input.focus({ preventScroll: true });
+        }
         return;
       }
     }
     // No product picked yet in any row — that's the real blocker.
     focusProductsSection();
+  }
+
+  function returnToLogFromProductEditor() {
+    if (!productEditorReturnToLog) return;
+    productEditorReturnToLog = false;
+    showTab('log');
+    setLogMode('new');
+    updateCompliancePreview();
+    // showTab() already put the page at the top, where the sticky Next line
+    // sits fully in view; focusing it reads the new step to screen readers.
+    const btn = $('#app-log-next-btn');
+    if (btn && !$('#app-log-next').hidden) btn.focus({ preventScroll: true });
   }
 
   function focusMissingField(rawName) {
@@ -1368,7 +1406,7 @@
     if (name === 'state_select') { showTab('settings'); $('#set-state')?.focus(); return; }
     if (name === 'products') { focusProductsSection(); return; }
     if (PRODUCT_ROW_FIELD_CLASS[name]) { focusProductRowInput(name); return; }
-    if (PRODUCT_IDENTITY_FIELD_PROP[name]) { focusProductIdentityIssue(name); return; }
+    if (PRODUCT_EDITOR_FIELDS[name]) { focusProductIdentityIssue(name); return; }
     const label = document.querySelector(`[data-log-field="${name}"]`);
     if (!label) return;
     label.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1427,6 +1465,9 @@
         return {
           text: 'Next: ' + (m.label || m.name),
           field: m.name,
+          // Boxes that live on the Product record say so, or a first-time
+          // user hunts the log form for a box that is not there.
+          where: PRODUCT_EDITOR_FIELDS[m.name] ? 'on the product' : '',
           rest: more > 0 ? 'Then more after this.' : ''
         };
       }
@@ -1457,7 +1498,7 @@
     const step = nextLogStep();
     host.hidden = false;
     host.classList.toggle('is-ready', !!step.ready);
-    btn.textContent = tr(step.text);
+    btn.textContent = tr(step.text) + (step.where ? ' — ' + tr(step.where) : '');
     if (rest) rest.textContent = step.rest ? tr(step.rest) : '';
   }
 
@@ -1789,10 +1830,12 @@
       renderDashboard();
       setProductsMode('library');
       toast(idx >= 0 ? 'Product updated' : 'Product added to library');
+      returnToLogFromProductEditor();
     });
     $('#prod-cancel-btn').addEventListener('click', () => {
       resetProductForm();
       setProductsMode('library');
+      returnToLogFromProductEditor();
     });
     if ($('#product-search')) $('#product-search').addEventListener('input', renderProducts);
     if ($('#products-mode-library')) $('#products-mode-library').addEventListener('click', () => setProductsMode('library'));
@@ -2333,7 +2376,7 @@
   // to keep this in sync with how those chips already jump.
   function sectionForMissingField(name) {
     const resolved = MISSING_FIELD_ALIASES[name] || name;
-    if (resolved === 'products' || PRODUCT_ROW_FIELD_CLASS[resolved] || PRODUCT_IDENTITY_FIELD_PROP[resolved]) {
+    if (resolved === 'products' || PRODUCT_ROW_FIELD_CLASS[resolved] || PRODUCT_EDITOR_FIELDS[resolved]) {
       return 'products';
     }
     const label = document.querySelector(`[data-log-field="${resolved}"]`);
@@ -8117,7 +8160,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.41';
+  const APP_VERSION = 'v2.9.42';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {

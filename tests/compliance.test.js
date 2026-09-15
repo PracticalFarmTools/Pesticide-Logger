@@ -240,14 +240,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.41 + deadline/license wiring', () => {
+check('source files advertise v2.9.42 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.41'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.41'));
+  assert.ok(app.includes('v2.9.42'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.42'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-08-18'"));
-  assert.ok(!html.includes('v2.9.41'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.42'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -415,8 +415,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.41'"));
-  assert.ok(!html.includes('v2.9.41'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.42'"));
+  assert.ok(!html.includes('v2.9.42'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -896,7 +896,7 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(start.includes('grower’s book') || start.includes("grower's book"));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(start), 'public page does not name other products');
   assert.ok(!start.includes('Names on those buttons'));
-  assert.ok(!start.includes('v2.9.41'), 'public page keeps version out of copy');
+  assert.ok(!start.includes('v2.9.42'), 'public page keeps version out of copy');
   assert.ok(start.includes('id="start-copy-link"'));
   assert.ok(start.includes('mailto:practicalfarmtools@gmail.com') && inspector.includes('mailto:practicalfarmtools@gmail.com') &&
     extension.includes('mailto:practicalfarmtools@gmail.com'), 'public human on all three pages');
@@ -1266,6 +1266,60 @@ check('state-dataset blueprint specifies in-app keep-current without a live lega
     assert.ok(bp.includes(refuse), 'refuses ' + refuse);
   });
   assert.ok(/Ordinary compliance\s+tests must not fail solely because a date is old/.test(bp));
+});
+
+check('v2.9.42: Next line names product-record boxes and jumps to that box in the product editor', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  const i18n = require(path.join(root, 'i18n.js'));
+  const Compliance = require(path.join(root, 'compliance.js'));
+
+  function literal(name) {
+    const m = app.match(new RegExp('const ' + name + ' = (\\{[\\s\\S]*?\\n  \\});'));
+    assert.ok(m, name + ' map is defined in app.js');
+    return vm.runInNewContext('(' + m[1] + ')');
+  }
+  const editorMap = literal('PRODUCT_EDITOR_FIELDS');
+  const rowMap = literal('PRODUCT_ROW_FIELD_CLASS');
+
+  // Every product-section compliance name has a jump: either a mix-row
+  // input on the log form or a box in the product editor.
+  Compliance.PRODUCT_SECTION_FIELDS.forEach((name) => {
+    assert.ok(editorMap[name] || rowMap[name], 'jump map covers ' + name);
+  });
+  // The one the Maine tester could not find lives on the product.
+  assert.strictEqual(editorMap.active_ingredient.input, '#prod-ai');
+  Object.entries(editorMap).forEach(([name, spec]) => {
+    assert.ok(spec.prop && spec.input, name + ' has prop + input');
+    assert.ok(html.includes('id="' + spec.input.slice(1) + '"'), spec.input + ' exists in the product editor');
+  });
+  Object.values(rowMap).forEach((cls) => {
+    assert.ok(app.includes('class="' + cls + '"'), cls + ' exists on the mix row');
+  });
+
+  // Copy stays one voice: the label, then where it lives. No second sentence.
+  assert.ok(app.includes("where: PRODUCT_EDITOR_FIELDS[m.name] ? 'on the product' : ''"));
+  assert.ok(app.includes("tr(step.text) + (step.where ? ' — ' + tr(step.where) : '')"));
+  assert.strictEqual(i18n.t('es', 'on the product'), 'en el producto');
+  assert.strictEqual(i18n.t('fr', 'on the product'), 'sur le produit');
+  assert.strictEqual(i18n.t('pt-BR', 'on the product'), 'no produto');
+
+  // The jump lands on the box, and Save / Cancel in the editor returns to
+  // the record instead of stranding the user in the product library.
+  assert.ok(app.includes('function returnToLogFromProductEditor'));
+  assert.ok(app.includes('productEditorReturnToLog = true'));
+  const editorSubmit = app.split("$('#product-form').addEventListener('submit'")[1].split("$('#prod-cancel-btn')")[0];
+  assert.ok(editorSubmit.includes('returnToLogFromProductEditor()'), 'Save product returns to the log');
+  const cancel = app.split("$('#prod-cancel-btn').addEventListener('click'")[1].split('});')[0];
+  assert.ok(cancel.includes('returnToLogFromProductEditor()'), 'Cancel edit returns to the log');
+  assert.ok(app.includes("if (name !== 'products') productEditorReturnToLog = false;"), 'leaving Products any other way forgets the return');
+  assert.ok(!app.includes('PRODUCT_IDENTITY_FIELD_PROP'), 'one jump map, not two');
+
+  // The Next line reads as tappable without hover.
+  const nextGo = css.split('.log-next-go {')[1].split('}')[0];
+  assert.ok(nextGo.includes('text-decoration: underline'));
+  assert.ok(css.includes('.log-next:not(.is-ready) .log-next-go::after'));
 });
 
 if (failed) {

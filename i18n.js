@@ -117,6 +117,7 @@
     ["Ready to save.", "Listo para guardar.", "Prêt à enregistrer.", "Pronto para salvar."],
     ["Select your state in Settings", "Seleccione su estado en Ajustes", "Choisissez votre État dans Réglages", "Selecione seu estado em Configurações"],
     ["Then more after this.", "Después, lo que falte.", "Ensuite, le reste.", "Depois, o que faltar."],
+    ["on the product", "en el producto", "sur le produit", "no produto"],
     ["Photograph the EPA Reg. No. on the panel, or pick from your library.", "Fotografie el n.º EPA del panel, o elija de su biblioteca.", "Photographiez le n° EPA du panneau, ou choisissez dans votre bibliothèque.", "Fotografe o nº EPA do painel, ou escolha na biblioteca."],
     ["Type a name or EPA # from your library. Scan label is optional.", "Escriba un nombre o n.º EPA de su biblioteca. Escanear etiqueta es opcional.", "Tapez un nom ou un n° EPA de votre bibliothèque. Scanner l’étiquette est facultatif.", "Digite um nome ou nº EPA da biblioteca. Escanear o rótulo é opcional."],
     ["Find a product", "Hallar un producto", "Trouver un produit", "Achar um produto"],

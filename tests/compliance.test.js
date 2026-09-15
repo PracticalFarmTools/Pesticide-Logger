@@ -683,6 +683,7 @@ check('audit hardening: EPA proxy + interval/deadline correctness', () => {
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   const deadline = fs.readFileSync(path.join(root, 'deadline.js'), 'utf8');
   assert.ok(epa.includes('%'), 'product-name search allows percent');
+  assert.ok(epa.includes("&+/%-]"), 'hyphen is last in the charset so 2,4-D is not a regex range');
   assert.ok(epa.includes('upstream.status === 404'), 'EPA 404 returns empty results, not 502');
   assert.ok(app.includes('GAP_MS') || app.includes('2100'), 'library verify throttles under rate limit');
   assert.ok(compliance.includes('function intervalHoursPresent'), 'REI/PHI require finite non-negative values');
@@ -694,7 +695,10 @@ check('audit hardening: EPA proxy + interval/deadline correctness', () => {
 });
 
 check('paid-only: user-facing copy does not call the product free', () => {
-  const files = ['index.html', 'app.js', 'manifest.json', 'README.md', 'PRICING.md', 'TERMS.md'];
+  const files = [
+    'index.html', 'app.js', 'manifest.json', 'README.md', 'PRICING.md', 'TERMS.md',
+    'start.html', 'how.html', 'start.js', 'i18n.js', 'inspector.html', 'extension.html'
+  ];
   files.forEach(name => {
     const text = fs.readFileSync(path.join(root, name), 'utf8');
     assert.ok(!/\bfree trial\b/i.test(text), `${name} still says "free trial"`);

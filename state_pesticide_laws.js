@@ -37,9 +37,9 @@
  * reviewedAt is when this state's citation was last opened. It is not a
  * completeness field and must not change badges by itself.
  *
- * Matrix edition: 2026-08-18. Always confirm with your state agency.
+ * Matrix edition: 2026-09-15. Always confirm with your state agency.
  */
-const STATE_LAWS_RESEARCH_DATE = "2026-08-18";
+const STATE_LAWS_RESEARCH_DATE = "2026-09-15";
 const STATE_LAW_STALE_DAYS = 365;
 
 function stateLawParseIsoDate(iso) {
@@ -3270,16 +3270,16 @@ const STATE_LAWS = {
     }
   },
   "NJ": {
-    "reviewedAt": "2026-08-14",
+    "reviewedAt": "2026-09-15",
     "agency": "New Jersey Department of Environmental Protection, Pesticide Control Program",
     "citation": {
-      "reference": "N.J.A.C. 7:30-6.8, 7:30-7.3, 7:30-8.8",
+      "reference": "N.J.A.C. 7:30-6.8(c) (commercial), 7:30-7.3, 7:30-8.8(c) (private)",
       "url": "https://dep.nj.gov/pesticides/regulations/"
     },
-    "retentionYears": 5,
-    "appliesTo": "Licensed private and commercial pesticide applicators/businesses; any pesticide application, with longer termiticide retention.",
+    "retentionYears": 3,
+    "appliesTo": "Licensed private and commercial pesticide applicators/businesses; any pesticide application. Termiticide records (commercial, 7:30-6.8(c)) keep five years; that is out of scope for a farm spray record.",
     "verification": "researched",
-    "notes": "Records must be written as soon as possible and no later than 24 hours. For agricultural commodity applications, place includes farm name/address, specific field/greenhouse/land area, municipality/county, crop/commodity/stored product, and treated size. Product list/symbol correlation allowed.",
+    "notes": "Retention is three years: 7:30-8.8(c) (private) and 7:30-6.8(c) (commercial) both say a minimum of three years; the five-year term in 7:30-6.8(c) applies only to termiticide applications, so do not raise this row back to 5. Read 2026-09-15 (as amended by 52 N.J.R. 756(a), eff. 4/6/2020); the DEP host blocks non-browser fetches, convenience reprints at https://www.law.cornell.edu/regulations/new-jersey/N-J-A-C-7-30-8-8 and https://www.law.cornell.edu/regulations/new-jersey/N-J-A-C-7-30-6-8. Records must be written as soon as possible and no later than 24 hours. For agricultural commodity applications, place includes farm name/address, specific field/greenhouse/land area, municipality/county, crop/commodity/stored product, and treated size. Product list/symbol correlation allowed.",
     "fields": [
       {
         "name": "date",
@@ -3702,7 +3702,7 @@ const STATE_LAWS = {
     }
   },
   "ND": {
-    "reviewedAt": "2026-07-31",
+    "reviewedAt": "2026-09-15",
     "agency": "North Dakota Department of Agriculture",
     "citation": {
       "reference": "N.D.C.C. §4.1-33-14; N.D. Admin. Code 60-03-01-07",
@@ -3711,8 +3711,14 @@ const STATE_LAWS = {
     "retentionYears": 3,
     "appliesTo": "Commercial and public applicators: all pesticide applications and rinsate use/disposal; private applicators: all RUP applications.",
     "verification": "researched",
-    "notes": "Records made within 24 hours. Commercial/public customer copy within 30 days unless waived. Weather required for outdoor applications except seed treatment, bait, or indoor applications. Right-of-way records require weather and geographic location in two-hour increments.",
+    "notes": "N.D. Admin. Code 60-03-01-07 (read 2026-09-15) requires the start and completion time of the application as month, day, year, and hour for commercial/public (subsection 2.d) and private (subsection 3.b) records, so the application date is a required row. Records made within 24 hours. Commercial/public customer copy within 30 days unless waived. Weather required for outdoor applications except seed treatment, bait, or indoor applications. Right-of-way records require weather and geographic location in two-hour increments.",
     "fields": [
+      {
+        "name": "date",
+        "label": "Application date",
+        "type": "date",
+        "required": true
+      },
       {
         "name": "customer_name",
         "label": "Customer / person for whom applied",

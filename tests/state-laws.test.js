@@ -146,7 +146,7 @@ check('engine and app do not hard-code per-state law branches; engine ignores re
 check('sw cache name splits app version from laws edition', () => {
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   assert.ok(sw.includes("const APP_CACHE = 'pesticide-logger-v2.9.41'"));
-  assert.ok(sw.includes("const LAWS_EDITION = '2026-08-18'"));
+  assert.ok(sw.includes("const LAWS_EDITION = '2026-09-15'"));
   assert.ok(sw.includes("const CACHE_NAME = APP_CACHE + '-laws-' + LAWS_EDITION"));
   assert.ok(!sw.includes("const CACHE_NAME = 'pesticide-logger-v2.9.41';"));
 });

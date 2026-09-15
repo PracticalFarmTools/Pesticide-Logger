@@ -4,7 +4,7 @@
 freshness in **v2.9.5**. Playbook Tracks 1 and 3: official citation URLs
 where a primary host answered; hole states researched or frozen from that
 state's source only (`docs/state-maintainer-playbook.md`). Matrix edition
-is **2026-08-18**. Remaining work is leftover Cornell URLs that 403/404,
+is **2026-09-15**. Remaining work is leftover Cornell URLs that 403/404,
 Arkansas and South Dakota private duty, and the external hasher (Track 2)
 — not a new engine.
 
@@ -49,7 +49,7 @@ operational core only when `privateDuty` is `none` for a private grower).
 Gate: `tests/compliance.test.js` (50 states present; agency / citation /
 retention / verification / fields / `privateDuty`).
 
-Research date in the file header: **2026-08-18**.
+Research date in the file header: **2026-09-15**.
 
 | Bucket | Count | Codes |
 |---|---|---|

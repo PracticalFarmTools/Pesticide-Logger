@@ -94,6 +94,7 @@ agency and always follow the product label.
 
 ## 6. Open source
 
-The application source code is MIT-licensed. The paid license applies to
+The application source code is MIT-licensed (see the `LICENSE` file at the
+repository root). The paid license applies to
 the *service of issued keys* that unlock use of the hosted app, not the
 code itself — you may read, audit, or self-host the source.

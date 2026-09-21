@@ -572,6 +572,9 @@ main {
 .class-pick-foot {
   margin: 0.2rem 0 0;
 }
+#class-pick-both-hint {
+  margin-top: 0.45rem;
+}
 @media (max-width: 480px) {
   .class-pick-cards { grid-template-columns: 1fr; }
   .class-pick-card { padding: 0.7rem 0.85rem; }

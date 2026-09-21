@@ -333,7 +333,7 @@ await check('inspector packet v2 cover, checklist, incomplete, and print CSS', a
   assert.ok(html.includes('not a filing') || html.includes('not the agency'));
   assert.ok(html.includes('Rules last checked 2026-08-18'));
   assert.ok(html.includes('check again by 2027-08-18'));
-  assert.ok(html.includes('matrix edition 2026-08-18'));
+  assert.ok(html.includes('matrix edition 2026-09-15'));
   assert.strictEqual(payload.farm.reviewedAt, '2026-08-18');
   assert.strictEqual(payload.farm.reviewBy, '2027-08-18');
   assert.ok(!html.includes('privateKey'));

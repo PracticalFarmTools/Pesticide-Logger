@@ -168,5 +168,18 @@ check('start.js and compliance.js classPickHint agree', () => {
   });
 });
 
+check('NY public preview matches the class split', () => {
+  const priv = StartPage.summarizeLaw(STATE_LAWS.NY, 'private', 'NY');
+  const comm = StartPage.summarizeLaw(STATE_LAWS.NY, 'commercial', 'NY');
+  assert.ok(priv.requiredLabels.includes('Method / equipment'));
+  assert.ok(priv.requiredLabels.includes('Brand / product name'));
+  assert.ok(!priv.requiredLabels.includes('Application rate'));
+  assert.ok(!priv.requiredLabels.includes('Target pest'));
+  assert.ok(!priv.requiredLabels.includes('EPA registration number'));
+  assert.ok(comm.requiredLabels.includes('Application rate'));
+  assert.ok(comm.requiredLabels.includes('Target pest'));
+  assert.ok(comm.requiredLabels.includes('EPA registration number'));
+});
+
 if (failed) process.exit(1);
 console.log('\nAll start-page checks passed.');

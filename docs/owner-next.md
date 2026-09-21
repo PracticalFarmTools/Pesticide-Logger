@@ -1,9 +1,11 @@
 # Owner next — what only you can do
 
-**App is v2.9.44.** Product grade (2026-08-19 against v2.9.37, URL/payment out
+**App is v2.9.45.** Product grade (2026-08-19 against v2.9.37, URL/payment out
 of scope): `docs/seller-grade-report.md` — **A−**. Listing paste:
-`docs/suite-listing.md`. This file is the **order**. Do not skip. Do not go
-live until step 2 answers. Do not set `BUY_URL` until step 4.
+`docs/suite-listing.md`. Merchant: **Lemon Squeezy** (`docs/lemonsqueezy.md`).
+This file is the **order**. Do not skip. Do not attach
+`pesticide.practicalfarmtools.com` and do not mark the catalog Active until
+a real Lemon Squeezy product URL exists. Do not set `BUY_URL` until step 4.
 
 Sell to **growers**. Keep applicator class in the app (private is the farmer;
 commercial boxes stay for farms that hold that license). Catch-up is still a
@@ -23,8 +25,10 @@ text, and a way to take a card without a license server.
 
 ## Do not do
 
-- Mark the catalog **Active** while `pesticide.practicalfarmtools.com` 404s.
+- Mark the catalog **Active** or add an Open link while checkout is empty.
+- Attach `pesticide.practicalfarmtools.com` before the Lemon Squeezy product exists.
 - Point Buy at a placeholder.
+- Turn on Lemon Squeezy’s built-in license-key generator. Keys come from `tools/sign-license.js`.
 - Add a farm-data server, accounts, Drive/Dropbox OAuth, or “we restored your cloud copy.”
 - Invent Arkansas / South Dakota private duty.
 - Chase contractor CRM or a farm OS.
@@ -34,10 +38,13 @@ text, and a way to take a card without a license server.
 
 ## 1. Rewrite the catalog card (today)
 
-`https://practicalfarmtools.com/` still says Logger **& Database**, **Syncs**,
-Coming Soon. Paste `docs/suite-listing.md` over that block.
+The homepage source is `practical-farm-tools-home/index.html` in
+`PracticalFarmTools/fsma-calculator-2026`. The card title is **Pesticide
+Logger** (not “& Database”). The blurb does not say Syncs. The badge stays
+**Coming soon** and the button stays disabled. There is no Open link.
 
-Leave status **Coming soon** until step 2 is live. Then switch to
+Leave status **Coming soon** until the Lemon Squeezy product URL exists and
+`pesticide.practicalfarmtools.com` answers. Then switch to
 **Active — 30-day trial, no card**.
 
 Drop: “& Database.” Drop: “Syncs when connected” as a cloud. Keep: data
@@ -45,9 +52,10 @@ stays on the device; catch-up is a file.
 
 ---
 
-## 2. Attach the hostname (then say go live)
+## 2. Attach the hostname (after Lemon Squeezy, not before)
 
-Point `pesticide.practicalfarmtools.com` at this repo’s Vercel project (same
+Do not attach this yet. When the Lemon Squeezy product page exists, point
+`pesticide.practicalfarmtools.com` at this repo’s Vercel project (same
 pattern as `https://fsma.practicalfarmtools.com/`). Catalog stays on
 `practicalfarmtools.com`.
 
@@ -80,11 +88,11 @@ The key already exists in this workspace. That is not your backup.
 
 ---
 
-## 4. Merchant listing, then `BUY_URL`
+## 4. Lemon Squeezy listing, then `BUY_URL`
 
-Create one product on Gumroad, Lemon Squeezy, or a Stripe Payment Link.
-They take the card, the receipt, and sales tax. ~5–10% per sale. No monthly
-infra.
+Create one product on Lemon Squeezy. Click path: `docs/lemonsqueezy.md`.
+They take the card, the receipt, and sales tax. No monthly infra. Do not
+enable their license-key feature.
 
 Price like a **single-farm book**, not a farm OS. Do not put the price in
 the app.

@@ -132,8 +132,18 @@
     return (law && law.privateDuty) || 'required';
   }
 
-  function fieldAppliesToApp(app, fieldName, settings) {
+  function fieldClassListed(field, cls) {
+    const classes = field && Array.isArray(field.classes) ? field.classes : null;
+    if (!classes || !classes.length) return true;
+    if (cls === 'both') {
+      return classes.indexOf('private') >= 0 || classes.indexOf('commercial') >= 0;
+    }
+    return classes.indexOf(cls) >= 0;
+  }
+
+  function fieldAppliesToApp(app, fieldName, settings, field) {
     const cls = applicatorClassFor(app, settings);
+    if (!fieldClassListed(field, cls)) return false;
     if (commercialOnly.has(fieldName) && cls === 'private') return false;
     if (fieldName === 'aircraft_id') return isAerialApp(app);
     if (fieldName === 'noncertified_applicator_name') return usedTrainee(app);
@@ -243,7 +253,7 @@
 
     const missing = applyStateMatrix
       ? law.fields
-          .filter(f => f.required && fieldAppliesToApp(app, f.name, settings)
+          .filter(f => f.required && fieldAppliesToApp(app, f.name, settings, f)
             && !complianceValuePresent(app, f.name, settings))
           .map(f => ({ name: f.name, label: f.label }))
       : [];
@@ -367,6 +377,7 @@
     applicatorClassFor,
     lawFor,
     privateDutyFor,
+    fieldClassListed,
     fieldAppliesToApp,
     stateFieldsApply,
     complianceValuePresent,

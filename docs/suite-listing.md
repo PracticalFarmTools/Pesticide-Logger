@@ -1,9 +1,12 @@
 # Suite listing copy — NOT LIVE
 
-**Do not publish this to `practicalfarmtools.com` or attach DNS until the owner
-says go live.** Eventual logger origin: `https://pesticide.practicalfarmtools.com`
-(same pattern as `https://fsma.practicalfarmtools.com/`). Catalog stays on
-`https://practicalfarmtools.com/`.
+**Coming soon stays until Lemon Squeezy checkout exists.** Do not mark the
+card Active, do not add an Open link, and do not attach
+`pesticide.practicalfarmtools.com` before that URL is real. Eventual logger
+origin: `https://pesticide.practicalfarmtools.com` (same pattern as
+`https://fsma.practicalfarmtools.com/`). Catalog stays on
+`https://practicalfarmtools.com/`. Homepage source:
+`fsma-calculator-2026/practical-farm-tools-home/index.html`.
 
 This file is paste-ready copy for the catalog card. It is not a deploy.
 

@@ -81,6 +81,17 @@ function loadStateFile(code) {
   if (!ISO_DATE.test(row.reviewedAt)) {
     throw new Error(code + '.json reviewedAt must be YYYY-MM-DD');
   }
+  (row.fields || []).forEach((field) => {
+    if (!field || field.classes == null) return;
+    if (!Array.isArray(field.classes) || !field.classes.length) {
+      throw new Error(code + '.json field ' + (field.name || '?') + ' classes must be a non-empty array');
+    }
+    field.classes.forEach((entry) => {
+      if (entry !== 'private' && entry !== 'commercial') {
+        throw new Error(code + '.json field ' + field.name + ' has unknown class ' + entry);
+      }
+    });
+  });
   const law = Object.assign({}, row);
   delete law.code;
   return law;

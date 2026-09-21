@@ -236,5 +236,5 @@ archive/vercel-2026.1.0/   Historical recovered deployment (reference only)
 
 ## License
 
-The application source is MIT-licensed (see `TERMS.md` §5). Use of the hosted
+The application source is MIT-licensed (see `LICENSE` and `TERMS.md` §6). Use of the hosted
 app after the 30-day trial requires a paid license key.

@@ -7,7 +7,7 @@ order of work. Tracks 1e (mailbox), 2 (backup ritual / CSV honesty), 4
 key is embedded. `BUY_URL` is still empty **on purpose**.
 
 **Do now:** `docs/owner-next.md`. Grade: `docs/seller-grade-report.md`
-(v2.9.30). Listing paste: `docs/suite-listing.md`. Playbook:
+(v2.9.37, URL/payment out of scope). Listing paste: `docs/suite-listing.md`. Playbook:
 `docs/state-maintainer-playbook.md`.
 
 Iowa private is `none` from 45.26. Do **not** “fix” that back to

@@ -49,7 +49,13 @@
   function haystackMatch(haystack, query) {
     const q = norm(query).toLowerCase();
     if (!q) return true;
-    return String(haystack || '').toLowerCase().includes(q);
+    const hay = String(haystack || '').toLowerCase();
+    if (hay.includes(q)) return true;
+    // "PyGanic 5.0" is not a consecutive substring of the EPA product name.
+    const qTokens = q.replace(/[^a-z0-9%.]+/g, ' ').trim().split(/\s+/).filter(Boolean);
+    if (qTokens.length < 2) return false;
+    const hayTokens = hay.replace(/[^a-z0-9%.]+/g, ' ').trim().split(/\s+/).filter(Boolean);
+    return qTokens.every((t) => hayTokens.includes(t));
   }
 
   function fieldSearchHaystack(field) {
@@ -221,7 +227,8 @@
       if (selectedValue && String(opt.value) === String(selectedValue)) return true;
       if (!q) return true;
       const hay = opt.haystack != null ? opt.haystack : opt.text;
-      return String(hay || '').toLowerCase().includes(q);
+      // Same rule as the mix-find chips, so a chip hit is always a live option.
+      return haystackMatch(hay, q);
     });
   }
 

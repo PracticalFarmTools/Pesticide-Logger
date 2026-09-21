@@ -177,8 +177,12 @@ check('applicator: type-filter shortens 150 options; clear restores all; reserve
     .concat([{ value: '__new__', text: '+ Add new field…', reserved: true }]);
   assert.strictEqual(FS.shouldShowSelectFilter(options.length), true);
   const narrowed = FS.filterSelectOptions(options, 'lincoln 4', '');
-  assert.ok(narrowed.length < 20, 'expected a short list, got ' + narrowed.length);
+  assert.ok(narrowed.length < 40, 'expected a short list, got ' + narrowed.length);
   assert.ok(narrowed.some((o) => o.value === 'x4'));
+  // The select and the Fields list search read the same query the same way
+  // (token-AND), so the two views never disagree about what matches.
+  const listHits = FS.filterByQuery(applicatorFields, 'lincoln 4', FS.fieldSearchHaystack);
+  assert.strictEqual(narrowed.filter((o) => !o.reserved).length, listHits.length);
   assert.ok(narrowed.some((o) => o.reserved && o.value === ''));
   assert.ok(narrowed.some((o) => o.value === '__new__'));
   const restored = FS.filterSelectOptions(options, '', '');
@@ -345,6 +349,23 @@ check('product search haystack covers EPA # and AI', () => {
   ];
   assert.strictEqual(FS.filterByQuery(products, '66222', FS.productSearchHaystack).length, 1);
   assert.strictEqual(FS.filterByQuery(products, 'captan', FS.productSearchHaystack).length, 1);
+  const pyganic = [
+    { name: 'PYGANIC CROP PROTECTION EC 5.0', epaRegNo: '1021-1750', activeIngredient: 'pyrethrins' },
+    { name: 'PYGANIC CROP PROTECTION EC 1.4', epaRegNo: '1021-1751', activeIngredient: 'pyrethrins' },
+    { name: 'PYGANIC MUP 20', epaRegNo: '1021-1771', activeIngredient: 'pyrethrins' }
+  ];
+  const five = FS.filterByQuery(pyganic, 'pyganic 5.0', FS.productSearchHaystack);
+  assert.strictEqual(five.length, 1);
+  assert.strictEqual(five[0].epaRegNo, '1021-1750');
+  // The mix <select> is filtered by the same box as the chips; a chip hit
+  // must still be a live option or clicking it assigns nothing.
+  const mixOpts = [{ value: '', text: '— Select product —', reserved: true }]
+    .concat(pyganic.map((p) => ({ value: p.epaRegNo, text: p.name, haystack: FS.productSearchHaystack(p) })));
+  const chipHits = FS.mixProductHits(pyganic, 'pyganic 5.0', [], 8);
+  const selectHits = FS.filterSelectOptions(mixOpts, 'pyganic 5.0', '');
+  assert.strictEqual(chipHits.length, 1);
+  assert.ok(chipHits.every((p) => selectHits.some((o) => o.value === p.epaRegNo)),
+    'every chip hit is an option in the filtered select');
   assert.strictEqual(FS.shouldShowListSearch(products.length), false);
   const many = [];
   for (let i = 0; i < 8; i++) many.push({ name: 'P' + i, epaRegNo: String(i) });

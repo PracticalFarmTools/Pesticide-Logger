@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.42 — Practical Farm Tools
+/* Pesticide Logger v2.9.43 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -1600,7 +1600,7 @@
     const status = $('#epa-search-status');
     const host = $('#epa-search-results');
     const hint = $('#epa-search-hint');
-    status.textContent = 'Searching the official EPA database…';
+    status.textContent = tr('Searching the official EPA database…');
     host.innerHTML = '';
     if (hint) hint.hidden = true;
     try {
@@ -1609,15 +1609,24 @@
         : /^\d{1,6}-\d{1,6}(?:-\d{1,6})?$/.test(query);
       const payload = await fetchEpa(isReg ? { reg: query } : { q: query });
       if (seq !== epaSearchSeq) return;
+      let rows = payload.results || [];
+      if (!isReg && !rows.length && typeof EpaRank !== 'undefined' && EpaRank.fallbackQueries) {
+        const retry = EpaRank.fallbackQueries(query);
+        for (let i = 0; i < retry.length && !rows.length; i++) {
+          const again = await fetchEpa({ q: retry[i] });
+          if (seq !== epaSearchSeq) return;
+          rows = again.results || [];
+        }
+      }
       const ranked = (!isReg && typeof EpaRank !== 'undefined' && EpaRank.rankEpaResults)
-        ? EpaRank.rankEpaResults(query, payload.results || [])
-        : (payload.results || []);
+        ? EpaRank.rankEpaResults(query, rows)
+        : rows;
       const library = (!isReg && typeof EpaRank !== 'undefined' && EpaRank.libraryHits)
         ? EpaRank.libraryHits(query, data.products)
         : [];
       status.textContent = ranked.length
         ? `${ranked.length} EPA record${ranked.length === 1 ? '' : 's'} found.`
-        : 'No matching EPA records found.';
+        : tr('No matching EPA records found. Try the brand name or the EPA number on the jug.');
       if (hint) {
         hint.hidden = !(typeof EpaRank !== 'undefined' && EpaRank.needsNameSearchHint
           ? EpaRank.needsNameSearchHint(query) && ranked.length
@@ -8160,7 +8169,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.42';
+  const APP_VERSION = 'v2.9.43';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {

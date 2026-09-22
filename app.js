@@ -5863,6 +5863,11 @@
     const el = $('#send-nag-banner');
     if (!el) return;
     const m = data.meta;
+    const liveSprays = (data.applications || []).filter((a) => a && !a.deletedAt).length;
+    if (liveSprays < 3 && !m.lastSendAt) {
+      el.hidden = true;
+      return;
+    }
     if (m.sendNagSnoozeUntil && Date.now() < m.sendNagSnoozeUntil) {
       el.hidden = true;
       return;

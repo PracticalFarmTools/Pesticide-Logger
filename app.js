@@ -5820,7 +5820,7 @@
     const m = data.meta;
     if (!data.applications.length) return false;
     if (m.backupSnoozeUntil && Date.now() < m.backupSnoozeUntil) return false;
-    if (!m.lastBackupAt) return data.applications.length >= 1;
+    if (!m.lastBackupAt) return data.applications.length >= 3;
     return data.applications.some(a => (a.createdAt || '') > m.lastBackupAt) &&
       (Date.now() - new Date(m.lastBackupAt).getTime()) > 14 * 86400000;
   }

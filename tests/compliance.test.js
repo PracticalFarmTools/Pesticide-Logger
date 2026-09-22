@@ -1399,6 +1399,7 @@ check('v2.9.46: Save keeps an incomplete line and Next stays the guide', () => {
   assert.ok(html.indexOf('id="app-save-btn"') < html.indexOf('id="log-cab-more"'));
   assert.ok(html.indexOf('id="log-cab-more"') < html.indexOf('data-log-section="where"'));
   assert.ok(store.includes('apps.length < 3'));
+  assert.ok(app.includes('return data.applications.length >= 3'));
   assert.ok(store.includes("goto: 'log'"));
   assert.ok(!store.includes("goto: 'products'"));
 });

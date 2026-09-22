@@ -155,10 +155,13 @@
     }
     const holeHtml = (summary.holes || []).map((h) =>
       `<p class="card-hint start-hole">${esc(h)}</p>`).join('');
+    const askLabel = (typeof I18n !== 'undefined' && I18n.t)
+      ? I18n.t(hintLang(), 'What {State} asks').replace(/\{State\}/g, summary.name || '')
+      : ('What ' + (summary.name || 'this state') + ' asks');
     const labels = summary.quiet
       ? '<p class="card-hint">No private-applicator field list is applied.</p>'
       : (summary.requiredLabels.length
-        ? `<ul class="start-fields">${summary.requiredLabels.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`
+        ? `<details class="start-asks"><summary>${esc(askLabel)}</summary><ul class="start-fields">${summary.requiredLabels.map((l) => `<li>${esc(l)}</li>`).join('')}</ul></details>`
         : '<p class="card-hint">Required boxes load in the logger after you pick this state.</p>');
     const cite = summary.citationUrl
       ? `<a href="${esc(summary.citationUrl)}" rel="noopener noreferrer">${esc(summary.citationRef || 'Open citation')}</a>`
@@ -171,9 +174,9 @@
       <p>${esc(summary.agency)}</p>
       <p class="card-hint">${cite}${retain ? ' · ' + retain : ''} · ${esc(summary.verification || 'status unknown')}</p>
       ${holeHtml}
+      <p class="form-actions"><a class="btn btn-primary" href="${esc(loggerHandoffHref(summary.code, summary.applicatorClass))}">Open the logger in ${esc(summary.name)}</a></p>
       <p class="card-hint">What the log asks. Completion means fields are filled — not a legal determination. The label is the law.</p>
-      ${labels}
-      <p class="form-actions"><a class="btn btn-primary" href="${esc(loggerHandoffHref(summary.code, summary.applicatorClass))}">Open the logger in ${esc(summary.name)}</a></p>`;
+      ${labels}`;
   }
 
   function hintLang() {

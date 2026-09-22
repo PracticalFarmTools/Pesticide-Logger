@@ -291,26 +291,23 @@
     return firstRunSteps(farm).some((s) => !s.done);
   }
 
-  // After farm + field + product (or the first spray), Home asks them to
-  // keep a copy. Printing the restore card or downloading a backup clears
-  // it. "I'll log first" only hides it until a spray exists.
+  // Home shows the spray first. The shop-file prompt waits until three
+  // sprays exist. "I'll log first" before that does not bring the wall
+  // back on spray one. A defer once the prompt is up hides it until a
+  // backup or restore card exists.
   function keepBookPending(farm) {
     const m = (farm && farm.meta) || {};
     if (m.lastBackupAt || m.restoreCardPrintedAt) return false;
     const apps = (farm && farm.applications) || [];
-    const fields = (farm && farm.fields) || [];
-    const products = (farm && farm.products) || [];
-    const settings = (farm && farm.settings) || {};
-    const setup = !!(settings.farmName && settings.state && fields.length && products.length);
-    if (!setup && !apps.length) return false;
-    if (m.keepBookDeferred && !apps.length) return false;
+    if (apps.length < 3) return false;
+    if (m.keepBookDeferred && (m.keepBookDeferredCount || 0) >= 3) return false;
     return true;
   }
 
   function firstRunSteps(farm) {
     const settings = (farm && farm.settings) || {};
     const fields = (farm && farm.fields) || [];
-    const products = (farm && farm.products) || [];
+    const apps = (farm && farm.applications) || [];
     return [
       {
         done: !!(settings.farmName && settings.state),
@@ -327,11 +324,11 @@
         cta: 'Add a field'
       },
       {
-        done: products.length > 0,
-        goto: 'products',
-        where: 'Add a product',
-        what: 'REI, PHI, and rates come off the label',
-        cta: 'Add a product'
+        done: apps.length > 0,
+        goto: 'log',
+        where: 'Log this spray',
+        what: 'Type the jug on the spray. The library grows from that row.',
+        cta: 'Log this spray'
       }
     ];
   }

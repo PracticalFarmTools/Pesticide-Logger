@@ -243,14 +243,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.45 + deadline/license wiring', () => {
+check('source files advertise v2.9.46 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.45'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.45'));
+  assert.ok(app.includes('v2.9.46'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.46'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-09-15'"));
-  assert.ok(!html.includes('v2.9.45'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.46'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -382,7 +382,7 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   const productsAt = logTab.indexOf('data-log-section="products"');
   const toolbarAt = logTab.indexOf('class="cab-toolbar"');
   assert.ok(scanAt > productsAt && productsAt > toolbarAt, 'Scan label sits in the products fieldset, not the five-button row');
-  assert.ok(html.includes('Type a name or EPA # from your library. Scan label is optional.'));
+  assert.ok(html.includes('Type the jug name. It joins your library. Scan label is optional.'));
   assert.ok(/id="app-open-tank-mix"[^>]*class="text-btn"|class="text-btn"[^>]*id="app-open-tank-mix"/.test(html),
     'Tank Mix is a text jump, not a primary cab button');
   assert.ok(app.includes('function setLogMode') && app.includes('function updateLogSectionCollapse'));
@@ -419,8 +419,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.45'"));
-  assert.ok(!html.includes('v2.9.45'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.46'"));
+  assert.ok(!html.includes('v2.9.46'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -906,7 +906,7 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(start.includes('grower’s book') || start.includes("grower's book"));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(start), 'public page does not name other products');
   assert.ok(!start.includes('Names on those buttons'));
-  assert.ok(!start.includes('v2.9.45'), 'public page keeps version out of copy');
+  assert.ok(!start.includes('v2.9.46'), 'public page keeps version out of copy');
   assert.ok(start.includes('id="start-copy-link"'));
   assert.ok(start.includes('mailto:practicalfarmtools@gmail.com') && inspector.includes('mailto:practicalfarmtools@gmail.com') &&
     extension.includes('mailto:practicalfarmtools@gmail.com'), 'public human on all three pages');
@@ -920,8 +920,9 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(fs.existsSync(path.join(root, 'tools/watch-citations.js')));
   assert.ok(html.includes('id="dash-keep-book"') && html.includes('Keep this book'));
   assert.ok(html.includes('id="import-honesty"') && html.includes('never invent REI, PHI, or rates'));
-  assert.ok(html.includes('id="dash-keep-book"') && html.indexOf('id="dash-keep-book"') < html.indexOf('id="dash-working"'),
-    'keep-book sits above working Home so the restore card is the fourth beat');
+  assert.ok(html.indexOf('id="dash-working"') < html.indexOf('id="recent-apps"') &&
+    html.indexOf('id="recent-apps"') < html.indexOf('id="dash-keep-book"'),
+    'Home shows the spray before the shop-file prompt');
   assert.ok(inspector.includes('opens without an account') || inspector.includes('without an account'));
   assert.ok(inspector.includes('The label is the law'));
   assert.ok(extension.includes('State-shaped log') && extension.includes('Label is the law'));
@@ -1037,7 +1038,8 @@ check('v2.9.35: one cab voice — Next, quiet save, inviting copy', () => {
   const i18n = require(path.join(root, 'i18n.js'));
   assert.ok(html.includes('id="app-log-next"') && html.includes('id="app-log-next-btn"'));
   assert.ok(html.includes('id="app-save-honesty"') && html.includes('The label is the law.'));
-  assert.ok(html.includes('id="app-save-draft-hint"') && html.includes('Save a draft anytime.'));
+  assert.ok(html.includes('id="app-save-draft-hint"') && html.includes('An incomplete spray still saves. Next shows what is missing.'));
+  assert.ok(!html.includes('id="app-save-draft-btn"'), 'one save button');
   assert.ok(html.includes('Save this spray'));
   assert.ok(!html.includes('Save — required boxes filled'));
   assert.ok(!/id="app-save-btn"[^>]*>[^<]*(complete|legal)/i.test(html));
@@ -1083,7 +1085,8 @@ check('v2.9.37: mix search is first-class; scan is optional; map full screen', (
   assert.ok(app.includes('if (mixFilter) mixFilter.hidden = false'));
   assert.ok(app.includes('function mixFindQuery'));
   assert.ok(app.includes('FarmScale.mixProductHits') && scale.includes('function mixProductHits'));
-  assert.ok(app.includes("tr('Matches:')") && app.includes('No library match. Scan label or add the product.'));
+  assert.ok(app.includes("tr('Matches:')") && app.includes('Type this jug on the spray'));
+  assert.ok(app.includes('function offerTypedJug'));
   assert.ok(html.includes('id="map-fullscreen"') && html.includes('>Full screen<'));
   assert.ok(app.includes('function setMapFullscreen') && app.includes('function isMapFullscreen'));
   assert.ok(app.includes("tr('Exit full screen')"));
@@ -1174,12 +1177,12 @@ check('v2.9.38: class picker asks which record list; hints stay honest', () => {
   assert.ok(html.includes('id="class-pick-hint"'));
   assert.ok(html.includes('id="first-run-class"') && html.includes('id="set-applicator-class"'));
   const firstRun = html.split('id="first-run-class-pick"')[1].split('id="dash-setup-steps"')[0];
-  assert.ok(firstRun.includes('data-class="private"') && firstRun.includes('data-class="commercial"'));
-  assert.ok(!firstRun.includes('data-class="both"'), 'both is Settings-only, not a first-run card');
+  assert.ok(!firstRun.includes('data-class='), 'cab first-run does not open with class cards');
+  assert.ok(!firstRun.includes('class-pick-refuse'), 'custom-applicator refusal stays off the cab first-run');
+  assert.ok(firstRun.includes('Commercial and both live in Settings'));
   assert.ok(firstRun.includes('option value="both"'), 'hidden first-run select still accepts ?class=both');
   const bothHint = 'Need crop sprays and commercial-category sprays in one book? After Save farm, Settings → This book covers both.';
-  assert.ok(firstRun.includes(bothHint), 'first-run points to Settings for both');
-  assert.ok(firstRun.includes('id="class-pick-both-hint"'));
+  assert.ok(!firstRun.includes(bothHint));
   const settingsPick = html.split('id="set-class-pick"')[1].split('Default applicator name')[0];
   assert.ok(settingsPick.includes('data-class="both"') && settingsPick.includes('This book covers both'));
   assert.ok(!settingsPick.includes('After Save farm'), 'Settings already has the both card');
@@ -1239,10 +1242,12 @@ check('v2.9.40: refuse lives in the commercial card; farmer copy drops this host
   const i18n = require(path.join(root, 'i18n.js'));
   const refuse = 'If you spray other people’s farms for a living, use a custom-applicator tool. This is the grower’s book.';
   const startComm = start.split('data-class="commercial"')[1].split('</button>')[0];
+  const settingsPick = html.split('id="set-class-pick"')[1].split('Default applicator name')[0];
+  const settingsComm = settingsPick.split('data-class="commercial"')[1].split('</button>')[0];
   const firstRun = html.split('id="first-run-class-pick"')[1].split('id="dash-setup-steps"')[0];
-  const firstComm = firstRun.split('data-class="commercial"')[1].split('</button>')[0];
   assert.ok(startComm.includes('class-pick-refuse') && startComm.includes(refuse));
-  assert.ok(firstComm.includes('class-pick-refuse') && firstComm.includes(refuse));
+  assert.ok(settingsComm.includes('class-pick-refuse') && settingsComm.includes(refuse));
+  assert.ok(!firstRun.includes('class-pick-refuse') && !firstRun.includes('data-class="commercial"'));
   assert.ok(!start.includes('<p class="card-hint class-pick-refuse">'));
   assert.ok(!html.includes('<p class="card-hint class-pick-refuse">'));
   assert.ok(start.includes("This state's commercial record list"));
@@ -1287,7 +1292,7 @@ check('v2.9.44: first-run points to Settings for This book covers both', () => {
   const start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');
   const bp = fs.readFileSync(path.join(root, 'docs', 'class-picker-blueprint.md'), 'utf8');
   const i18n = require(path.join(root, 'i18n.js'));
-  const hint = 'Need crop sprays and commercial-category sprays in one book? After Save farm, Settings → This book covers both.';
+  const hint = 'My crop on my land. Commercial and both live in Settings.';
   const firstRun = html.split('id="first-run-class-pick"')[1].split('id="dash-setup-steps"')[0];
   const settingsPick = html.split('id="set-class-pick"')[1].split('Default applicator name')[0];
   assert.ok(firstRun.includes(hint));
@@ -1298,9 +1303,9 @@ check('v2.9.44: first-run points to Settings for This book covers both', () => {
   assert.ok(bp.includes('What this replaced'));
   assert.ok(!bp.includes('Why the current picker fails'));
   assert.ok(!bp.includes('Show every box'));
-  assert.ok(i18n.t('es', hint).includes('Este libro cubre ambos'));
-  assert.ok(i18n.t('fr', hint).includes('Ce livre couvre les deux'));
-  assert.ok(i18n.t('pt-BR', hint).includes('Este livro cobre os dois'));
+  assert.ok(i18n.t('es', hint).includes('Configuración'));
+  assert.ok(i18n.t('fr', hint).includes('Réglages'));
+  assert.ok(i18n.t('pt-BR', hint).includes('Configurações'));
 });
 
 check('schema default version is 5', () => {
@@ -1379,6 +1384,23 @@ check('v2.9.42: Next line names product-record boxes and jumps to that box in th
   const nextGo = css.split('.log-next-go {')[1].split('}')[0];
   assert.ok(nextGo.includes('text-decoration: underline'));
   assert.ok(css.includes('.log-next:not(.is-ready) .log-next-go::after'));
+});
+
+check('v2.9.46: Save keeps an incomplete line and Next stays the guide', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const store = fs.readFileSync(path.join(root, 'store.js'), 'utf8');
+  assert.ok(!app.includes('Strict mode: fill'));
+  assert.ok(!app.includes('or save as incomplete draft'));
+  assert.ok(app.includes('Saved. Still incomplete — Next shows the next box.'));
+  assert.ok(app.includes('if (incomplete) app.complianceComplete = false'));
+  assert.ok(html.includes('id="log-cab-more"') && html.includes('More on this log'));
+  assert.ok(html.indexOf('id="log-lead"') < html.indexOf('data-log-section="products"'));
+  assert.ok(html.indexOf('id="app-save-btn"') < html.indexOf('id="log-cab-more"'));
+  assert.ok(html.indexOf('id="log-cab-more"') < html.indexOf('data-log-section="where"'));
+  assert.ok(store.includes('apps.length < 3'));
+  assert.ok(store.includes("goto: 'log'"));
+  assert.ok(!store.includes("goto: 'products'"));
 });
 
 if (failed) {

@@ -309,6 +309,31 @@ main {
 .log-section-nav-item.is-parked { opacity: 0.55; }
 .log-section-nav-item.is-open { border-color: var(--primary-green); }
 .log-section-parked { display: none; }
+.log-lead { margin: 0 0 0.35rem; }
+.log-cab-more { margin: 0.35rem 0 0.75rem; }
+.log-cab-more summary {
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+}
+.log-more-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.75rem;
+  align-items: center;
+  margin: 0.35rem 0 0.75rem;
+}
+.start-asks { margin: 0.5rem 0 0; }
+.start-asks summary {
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+}
+.class-pick-quiet { margin-top: 0.25rem; }
 .log-next {
   position: sticky;
   top: calc(var(--tab-nav-h, 4.5rem) + 0.2rem);

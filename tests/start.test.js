@@ -181,5 +181,18 @@ check('NY public preview matches the class split', () => {
   assert.ok(comm.requiredLabels.includes('EPA registration number'));
 });
 
+check('Maine field list stays behind What Maine asks, and Open leads', () => {
+  const el = { innerHTML: '' };
+  const summary = StartPage.summarizeLaw(STATE_LAWS.ME, 'private', 'ME');
+  StartPage.renderSummary(el, summary);
+  assert.ok(summary.requiredLabels.length > 10, 'Maine private list is still the full researched set');
+  assert.ok(el.innerHTML.includes('<details class="start-asks">'));
+  assert.ok(!el.innerHTML.includes('<details class="start-asks" open'));
+  const openAt = el.innerHTML.indexOf('Open the logger in Maine');
+  const listAt = el.innerHTML.indexOf('class="start-fields"');
+  assert.ok(openAt > 0 && listAt > openAt, 'Open sits above the field list');
+  assert.ok(el.innerHTML.includes('What Maine asks'));
+});
+
 if (failed) process.exit(1);
 console.log('\nAll start-page checks passed.');

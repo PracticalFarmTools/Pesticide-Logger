@@ -118,28 +118,13 @@
             <select id="first-run-state"><option value="">— Select state —</option></select>
           </label>
         </div>
-        <div class="class-pick" id="first-run-class-pick">
-          <p class="class-pick-label" id="first-run-class-label">This log is for</p>
+        <div class="class-pick class-pick-quiet" id="first-run-class-pick">
+          <p class="card-hint" id="class-pick-hint">My crop on my land. Commercial and both live in Settings.</p>
           <select id="first-run-class" class="visually-hidden" tabindex="-1" aria-hidden="true">
             <option value="private" selected>My crop on my land</option>
             <option value="commercial">This state's commercial record list</option>
             <option value="both">This book covers both</option>
           </select>
-          <div class="class-pick-cards" role="group" aria-labelledby="first-run-class-label">
-            <button type="button" class="class-pick-card" data-class="private" aria-pressed="true">
-              <strong>My crop on my land</strong>
-              <span>I spray my crop on land I own or rent. Selling the harvest does not change this.</span>
-            </button>
-            <button type="button" class="class-pick-card" data-class="commercial" aria-pressed="false">
-              <strong>This state's commercial record list</strong>
-              <span class="class-pick-refuse">If you spray other people’s farms for a living, use a custom-applicator tool. This is the grower’s book.</span>
-              <span>Office boxes, not a dispatch book. Not “I sell produce.”</span>
-            </button>
-          </div>
-          <p class="card-hint class-pick-sentence" id="class-pick-hint"></p>
-          <p class="card-hint class-pick-cite" id="class-pick-cite" hidden></p>
-          <p class="card-hint class-pick-foot">Which record list to use, not which exam you passed.</p>
-          <p class="card-hint class-pick-foot" id="class-pick-both-hint">Need crop sprays and commercial-category sprays in one book? After Save farm, Settings → This book covers both.</p>
         </div>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">Save farm</button>
@@ -151,6 +136,21 @@
         <button type="button" class="btn btn-secondary" data-goto="reports" data-scroll-to="csv-import-card">Bring last season in</button>
       </div>
     </div>
+
+    <div id="dash-working">
+    <div class="home-actions" id="dash-home-actions">
+      <button type="button" class="btn btn-primary btn-xl" data-goto="log" id="dash-log-spray">Log this spray</button>
+      <button type="button" class="btn btn-secondary btn-xl" id="dash-inspect-packet">Hand to inspector</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title-row">
+        <h3 class="card-title">Recent applications</h3>
+        <button class="btn btn-primary btn-sm" data-goto="log" id="dash-new-app">+ Log application</button>
+      </div>
+      <div id="recent-apps"></div>
+    </div>
+
 
     <div id="dash-keep-book" class="card keep-book-card" hidden>
       <h3 class="card-title">Keep this book</h3>
@@ -169,7 +169,7 @@
       </div>
     </div>
 
-    <div id="dash-working">
+
     <div id="backup-banner" class="setup-banner backup-banner" hidden>
       <div>
         <strong>Back up your records.</strong>
@@ -211,11 +211,6 @@
         <button class="btn btn-primary" id="install-banner-action" hidden>Install</button>
         <button class="btn btn-secondary" id="install-banner-dismiss">Not now</button>
       </div>
-    </div>
-
-    <div class="home-actions" id="dash-home-actions">
-      <button type="button" class="btn btn-primary btn-xl" data-goto="log" id="dash-log-spray">Log this spray</button>
-      <button type="button" class="btn btn-secondary btn-xl" id="dash-inspect-packet">Hand to inspector</button>
     </div>
 
     <div id="dash-clerk" class="card" hidden>
@@ -294,14 +289,6 @@
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-title-row">
-        <h3 class="card-title">Recent applications</h3>
-        <button class="btn btn-primary btn-sm" data-goto="log" id="dash-new-app">+ Log application</button>
-      </div>
-      <div id="recent-apps"></div>
-    </div>
-
     <div class="card compliance-card" id="compliance-card" hidden>
       <h3 class="card-title">Your state's rules</h3>
       <p id="compliance-summary"></p>
@@ -315,58 +302,109 @@
 
   <!-- ============ SPRAY LOG ============ -->
   <section id="tab-log" class="tab-panel" role="tabpanel">
-    <div class="log-mode-toggle" role="group" aria-label="Spray log mode">
-      <button type="button" class="btn btn-primary btn-lg" id="log-mode-new" aria-pressed="true">Log this spray</button>
-      <button type="button" class="btn btn-secondary btn-lg" id="log-mode-history" aria-pressed="false">Past sprays</button>
-    </div>
     <div id="log-new-pane">
-    <div class="card">
+    <div class="card log-cab-card">
       <h3 class="card-title" id="app-form-title" hidden>Log an application</h3>
-      <p class="card-hint" id="app-form-hint">This spray log reshapes for your selected state and applicator class. Completion means required fields are filled — not a legal determination. Extra boxes stay under More for the record.</p>
-      <div class="cab-toolbar">
+      <div class="cab-toolbar cab-toolbar-lead">
         <button type="button" class="btn btn-primary" id="app-spray-now">Spray now</button>
         <button type="button" class="btn btn-secondary" id="app-duplicate-last">Duplicate last spray</button>
-        <button type="button" class="text-btn" id="app-stamp-weather">Stamp weather</button>
-        <button type="button" class="text-btn" data-goto="calculator" id="app-open-tank-mix">Tank Mix</button>
-        <label class="checkbox-label cab-toggle">
-          <input type="checkbox" id="app-show-recommended">
-          Show extra boxes
-        </label>
       </div>
-      <p class="card-hint" id="app-form-shape-summary"></p>
-      <button type="button" class="text-btn" data-goto="settings" data-scroll-to="state-info-card" id="app-open-state-rules" hidden>View state rules</button>
-      <p class="card-hint field-req-legend"><span class="req-star">*</span> always required · <span class="state-req-tag">state</span> required for your state · no tag = optional</p>
-      <nav class="log-section-nav" id="log-section-nav" aria-label="Jump to spray log section">
-        <button type="button" class="log-section-nav-item" data-jump-section="where">Where</button>
-        <button type="button" class="log-section-nav-item" data-jump-section="products">Products</button>
-        <button type="button" class="log-section-nav-item" data-jump-section="when">When</button>
-        <button type="button" class="log-section-nav-item" data-jump-section="applicator">Applicator</button>
-        <button type="button" class="log-section-nav-item" data-jump-section="volume">Volume</button>
-        <button type="button" class="log-section-nav-item" data-jump-section="conditions">Conditions</button>
-        <button type="button" class="log-section-nav-item" data-jump-section="equipment">Equipment</button>
-        <button type="button" class="log-section-nav-item" data-jump-section="who">Customer / business</button>
-        <button type="button" class="log-section-nav-item" data-jump-section="notes">Notes</button>
-        <button type="button" class="log-more-record" id="log-more-record" hidden>More for the record</button>
-      </nav>
-      <p class="log-next" id="app-log-next" hidden>
-        <button type="button" class="log-next-go" id="app-log-next-btn">Next: pick the field</button>
-        <span class="log-next-rest" id="app-log-next-rest"></span>
-      </p>
       <div id="app-due-banner" class="due-banner" hidden></div>
       <div id="app-compliance-status" class="compliance-status" hidden></div>
 
       <form id="app-form" class="form-grid" autocomplete="off">
         <input type="hidden" id="app-id">
 
-        <fieldset data-log-section="where">
-          <legend>Where</legend>
-          <div class="form-row form-row-3">
+        <div class="log-lead" id="log-lead">
+          <div class="form-row form-row-2">
             <label data-log-field="location">Field / site <span class="req-star">*</span> <span id="req-location" class="state-req-tag" hidden>state</span>
               <input type="search" id="app-field-filter" class="select-filter" placeholder="Type to find a field…" hidden autocomplete="off">
               <select id="app-field" required>
                 <option value="">— Select field —</option>
               </select>
             </label>
+            <label data-log-field="crop_treated">Crop / commodity / site treated <span class="req-star">*</span> <span id="req-crop_treated" class="state-req-tag" hidden>state</span>
+              <input type="text" id="app-crop" required placeholder="e.g. Sweet corn">
+            </label>
+          </div>
+        </div>
+
+        <fieldset data-log-section="products">
+          <legend>Products applied (tank mix) <span class="req-star">*</span></legend>
+          <p class="card-hint" id="app-mix-state-req" hidden></p>
+          <p class="card-hint" id="app-mix-empty-hint">Type the jug name. It joins your library. Scan label is optional.</p>
+          <p class="card-hint" id="app-mix-order-hint" hidden>This is the order you added them. Follow the label for W-A-L-E.</p>
+          <div id="app-mix-req-tags" hidden>
+            <span id="req-brand_name" class="state-req-tag" hidden>state</span>
+            <span id="req-epa_reg_no" class="state-req-tag" hidden>state</span>
+            <span id="req-amount_applied" class="state-req-tag" hidden>state</span>
+            <span id="req-rate" class="state-req-tag" hidden>state</span>
+            <span id="req-active_ingredient" class="state-req-tag" hidden>state</span>
+            <span id="req-rei_hours" class="state-req-tag" hidden>state</span>
+            <span id="req-phi_days" class="state-req-tag" hidden>state</span>
+          </div>
+          <label class="mix-find-label" id="app-mix-find-wrap">Find a product
+            <input type="search" id="app-product-filter" class="select-filter mix-find" placeholder="Name, EPA #, or active ingredient…" autocomplete="off">
+          </label>
+          <div id="recent-products" class="recent-products" hidden></div>
+          <div id="app-products"></div>
+          <div class="mix-scan-row" id="app-mix-scan-row">
+            <label class="btn btn-secondary camera-file-btn" id="app-scan-label-btn" hidden>Scan label
+              <input type="file" id="app-scan-label-input" accept="image/*" capture="environment" aria-label="Photograph the EPA Reg. No. on the label">
+            </label>
+            <button type="button" class="text-btn" id="app-scan-jug" hidden>Scan barcode</button>
+            <label class="text-btn camera-file-btn" id="app-scan-jug-photo" hidden>Scan barcode
+              <input type="file" id="app-scan-jug-input" accept="image/*" capture="environment" aria-label="Scan jug barcode">
+            </label>
+            <button type="button" class="btn btn-secondary" id="app-add-product">+ Add another product to this mix</button>
+          </div>
+          <div id="app-product-info" class="product-info-strip" hidden></div>
+          <button type="button" class="text-btn" id="app-last-on-field" hidden></button>
+        </fieldset>
+
+
+        <p class="log-next" id="app-log-next" hidden>
+          <button type="button" class="log-next-go" id="app-log-next-btn">Next: pick the field</button>
+          <span class="log-next-rest" id="app-log-next-rest"></span>
+        </p>
+        <div class="form-actions sticky-actions">
+          <button type="submit" class="btn btn-primary btn-lg" id="app-save-btn">Save this spray</button>
+          <button type="button" class="btn btn-secondary" id="app-cancel-btn" hidden>Cancel edit</button>
+          <p class="app-save-quiet" id="app-save-draft-hint">An incomplete spray still saves. Next shows what is missing.</p>
+          <p class="app-save-honesty" id="app-save-honesty">The label is the law.</p>
+        </div>
+        <details class="log-cab-more" id="log-cab-more">
+          <summary>More on this log</summary>
+          <p class="card-hint" id="app-form-hint">This spray log reshapes for your selected state and applicator class. Completion means required fields are filled — not a legal determination. Extra boxes stay under More for the record.</p>
+          <div class="log-more-tools">
+            <button type="button" class="btn btn-secondary" id="log-mode-history" aria-pressed="false">Past sprays</button>
+            <button type="button" class="text-btn" id="app-stamp-weather">Stamp weather</button>
+            <button type="button" class="text-btn" data-goto="calculator" id="app-open-tank-mix">Tank Mix</button>
+            <label class="checkbox-label">
+              <input type="checkbox" id="app-show-recommended">
+              Show extra boxes
+            </label>
+          </div>
+          <p class="card-hint" id="app-form-shape-summary"></p>
+          <button type="button" class="text-btn" data-goto="settings" data-scroll-to="state-info-card" id="app-open-state-rules" hidden>View state rules</button>
+          <p class="card-hint field-req-legend"><span class="req-star">*</span> always required · <span class="state-req-tag">state</span> required for your state · no tag = optional</p>
+          <nav class="log-section-nav" id="log-section-nav" aria-label="Jump to spray log section">
+            <button type="button" class="log-section-nav-item" data-jump-section="where">Where</button>
+            <button type="button" class="log-section-nav-item" data-jump-section="products">Products</button>
+            <button type="button" class="log-section-nav-item" data-jump-section="when">When</button>
+            <button type="button" class="log-section-nav-item" data-jump-section="applicator">Applicator</button>
+            <button type="button" class="log-section-nav-item" data-jump-section="volume">Volume</button>
+            <button type="button" class="log-section-nav-item" data-jump-section="conditions">Conditions</button>
+            <button type="button" class="log-section-nav-item" data-jump-section="equipment">Equipment</button>
+            <button type="button" class="log-section-nav-item" data-jump-section="who">Customer / business</button>
+            <button type="button" class="log-section-nav-item" data-jump-section="notes">Notes</button>
+            <button type="button" class="log-more-record" id="log-more-record" hidden>More for the record</button>
+          </nav>
+        </details>
+
+        <fieldset data-log-section="where">
+          <legend>Where</legend>
+          <div class="form-row form-row-3">
             <label data-log-field="county">County of application <span id="req-county" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-county" placeholder="e.g. Lincoln">
             </label>
@@ -375,9 +413,6 @@
             </label>
           </div>
           <div class="form-row form-row-3">
-            <label data-log-field="crop_treated">Crop / commodity / site treated <span class="req-star">*</span> <span id="req-crop_treated" class="state-req-tag" hidden>state</span>
-              <input type="text" id="app-crop" required placeholder="e.g. Sweet corn">
-            </label>
             <label data-log-field="target_pest">Target pest <span id="req-target_pest" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-pest" placeholder="e.g. Colorado potato beetle">
             </label>
@@ -403,39 +438,6 @@
               </select>
             </label>
           </div>
-        </fieldset>
-
-        <fieldset data-log-section="products">
-          <legend>Products applied (tank mix) <span class="req-star">*</span></legend>
-          <p class="card-hint" id="app-mix-state-req" hidden></p>
-          <p class="card-hint" id="app-mix-empty-hint">Type a name or EPA # from your library. Scan label is optional.</p>
-          <p class="card-hint" id="app-mix-order-hint" hidden>This is the order you added them. Follow the label for W-A-L-E.</p>
-          <div id="app-mix-req-tags" hidden>
-            <span id="req-brand_name" class="state-req-tag" hidden>state</span>
-            <span id="req-epa_reg_no" class="state-req-tag" hidden>state</span>
-            <span id="req-amount_applied" class="state-req-tag" hidden>state</span>
-            <span id="req-rate" class="state-req-tag" hidden>state</span>
-            <span id="req-active_ingredient" class="state-req-tag" hidden>state</span>
-            <span id="req-rei_hours" class="state-req-tag" hidden>state</span>
-            <span id="req-phi_days" class="state-req-tag" hidden>state</span>
-          </div>
-          <label class="mix-find-label" id="app-mix-find-wrap">Find a product
-            <input type="search" id="app-product-filter" class="select-filter mix-find" placeholder="Name, EPA #, or active ingredient…" autocomplete="off">
-          </label>
-          <div id="recent-products" class="recent-products" hidden></div>
-          <div class="mix-scan-row" id="app-mix-scan-row">
-            <label class="btn btn-secondary camera-file-btn" id="app-scan-label-btn" hidden>Scan label
-              <input type="file" id="app-scan-label-input" accept="image/*" capture="environment" aria-label="Photograph the EPA Reg. No. on the label">
-            </label>
-            <button type="button" class="text-btn" id="app-scan-jug" hidden>Scan barcode</button>
-            <label class="text-btn camera-file-btn" id="app-scan-jug-photo" hidden>Scan barcode
-              <input type="file" id="app-scan-jug-input" accept="image/*" capture="environment" aria-label="Scan jug barcode">
-            </label>
-            <button type="button" class="btn btn-secondary" id="app-add-product">+ Add another product to this mix</button>
-          </div>
-          <div id="app-products"></div>
-          <div id="app-product-info" class="product-info-strip" hidden></div>
-          <button type="button" class="text-btn" id="app-last-on-field" hidden></button>
         </fieldset>
 
         <fieldset data-log-section="when">
@@ -640,18 +642,14 @@
         <div id="app-interval-preview" class="interval-preview" hidden></div>
         <div id="app-missing-fields" class="missing-fields" hidden></div>
 
-        <div class="form-actions sticky-actions">
-          <button type="submit" class="btn btn-primary btn-lg" id="app-save-btn">Save this spray</button>
-          <button type="button" class="btn btn-secondary btn-lg" id="app-save-draft-btn">Save incomplete draft</button>
-          <button type="button" class="btn btn-secondary" id="app-cancel-btn" hidden>Cancel edit</button>
-          <p class="app-save-quiet" id="app-save-draft-hint">Save a draft anytime.</p>
-          <p class="app-save-honesty" id="app-save-honesty">The label is the law.</p>
-        </div>
       </form>
     </div>
     </div>
 
     <div id="log-history-pane" hidden>
+    <div class="form-actions">
+      <button type="button" class="btn btn-primary btn-lg" id="log-mode-new" aria-pressed="false">Log this spray</button>
+    </div>
     <div class="card" id="app-history-card">
       <div class="card-title-row">
         <h3 class="card-title">Application history</h3>
@@ -1129,7 +1127,7 @@
         <div class="form-row">
           <label class="checkbox-label">
             <input type="checkbox" id="set-strict-compliance" checked>
-            Strict compliance mode — block incomplete state-required fields on save (drafts still allowed)
+            Strict records — incomplete sprays save, and stay marked incomplete
           </label>
         </div>
         <div class="form-row form-row-3">

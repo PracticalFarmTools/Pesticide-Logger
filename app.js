@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.45 — Practical Farm Tools
+/* Pesticide Logger v2.9.46 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -1049,12 +1049,13 @@
 
   function updateMixEmptyHint() {
     const hint = $('#app-mix-empty-hint');
-    if (!hint) return;
     const filled = $$('#app-products .app-product-row').some((r) => {
       const sel = r.querySelector('.apr-product');
       return sel && sel.value;
     });
-    hint.hidden = filled;
+    if (hint) hint.hidden = filled;
+    const scan = $('#app-mix-scan-row');
+    if (scan) scan.hidden = !filled;
   }
 
   function syncMixStateChrome() {
@@ -1064,7 +1065,8 @@
     const labels = mixRequiredLabels();
     const stateName = data.settings.state ? (STATE_NAMES[data.settings.state] || data.settings.state) : '';
     if (line) {
-      if (stateName && labels.length) {
+      const jugOnRow = $$('#app-products .app-product-row').some(mixProductPicked);
+      if (stateName && labels.length && jugOnRow) {
         line.hidden = false;
         line.textContent = `${stateName} requires on each product: ${labels.join(', ')}.`;
       } else {
@@ -2448,7 +2450,9 @@
       syncTempC();
     }
     $('#app-form').addEventListener('submit', (e) => onAppSubmit(e, false));
-    $('#app-save-draft-btn').addEventListener('click', () => onAppSubmit(null, true));
+    if ($('#app-save-draft-btn')) {
+      $('#app-save-draft-btn').addEventListener('click', () => onAppSubmit(null, true));
+    }
     $('#app-cancel-btn').addEventListener('click', resetAppForm);
     $('#log-search').addEventListener('input', renderAppList);
     if ($('#log-filter-incomplete')) {
@@ -2487,6 +2491,13 @@
       };
       el.addEventListener('input', apply);
       el.addEventListener('search', apply);
+      if (sel === '#app-product-filter') {
+        el.addEventListener('keydown', (ev) => {
+          if (ev.key !== 'Enter') return;
+          ev.preventDefault();
+          offerTypedJug();
+        });
+      }
     });
     $('#app-form').addEventListener('input', updateCompliancePreview);
     $('#app-form').addEventListener('change', updateCompliancePreview);
@@ -2829,19 +2840,42 @@
   // offered here; open the full product form later for barcode/photo/notes.
   let quickAddProductRow = null;
 
-  function openQuickAddProduct(row, barcode) {
+  function offerTypedJug() {
+    const q = ($('#app-product-filter') && $('#app-product-filter').value.trim()) || '';
+    const row = emptyMixRow() || mixRows()[0];
+    if (!row) return;
+    if (!q) {
+      openQuickAddProduct(row);
+      return;
+    }
+    const hits = typeof FarmScale !== 'undefined' && FarmScale.mixProductHits
+      ? FarmScale.mixProductHits(data.products, q.toLowerCase(), [], 1)
+      : (data.products || []).filter((p) => String(p.name || '').toLowerCase().includes(q.toLowerCase())).slice(0, 1);
+    if (hits.length) {
+      row.querySelector('.apr-product').value = hits[0].id;
+      onRowProductChange(row);
+      const rate = row.querySelector('.apr-rate');
+      if (rate) rate.focus();
+      return;
+    }
+    openQuickAddProduct(row, '', q);
+  }
+
+  function openQuickAddProduct(row, barcode, prefillName) {
     quickAddProductRow = row;
     const dlg = $('#quick-add-product-dialog');
     if (!dlg || !dlg.showModal) return;
     ['#qp-name', '#qp-epa', '#qp-ai', '#qp-company', '#qp-state-reg', '#qp-rei', '#qp-phi']
       .forEach(sel => { $(sel).value = ''; });
+    if (prefillName && $('#qp-name')) $('#qp-name').value = prefillName;
     $('#qp-type').value = 'Insecticide';
     $('#qp-rup').checked = false;
     $('#qp-barcode').value = barcode || '';
     $('#qp-barcode-hint').hidden = !barcode;
     if (barcode) $('#qp-barcode-hint').textContent = `Linking scanned barcode ${barcode} to this product for next time.`;
     dlg.showModal();
-    $('#qp-name').focus();
+    if (prefillName && $('#qp-epa')) $('#qp-epa').focus();
+    else $('#qp-name').focus();
   }
 
   function saveQuickAddProduct() {
@@ -3330,10 +3364,21 @@
     const mix = collectMixRows();
 
     if (!asDraft) {
-      if (!mix.length) { toast('Pick at least one product (add products in the Products tab first)'); return; }
-      if (!getField($('#app-field').value)) { toast('Pick a field (add one in Fields first)'); return; }
+      if (!mix.length) {
+        const typed = mixFindQuery();
+        if (typed) offerTypedJug();
+        else {
+          const find = $('#app-product-filter');
+          if (find) find.focus();
+        }
+        toast(typed ? 'Add this jug, then Save.' : 'Type the jug on this spray');
+        return;
+      }
+      if (!getField($('#app-field').value)) { toast('Pick a field'); focusMissingField('location'); return; }
       if (!$('#app-date').value || !$('#app-crop').value.trim() || !$('#app-applicator').value.trim()) {
         toast('Date, crop, and applicator name are always required');
+        if (!$('#app-crop').value.trim()) focusMissingField('crop_treated');
+        else if (!$('#app-applicator').value.trim()) focusMissingField('applicator_name');
         return;
       }
     } else if (!$('#app-date').value) {
@@ -3361,19 +3406,11 @@
     app.retentionYears = result.retentionYears;
     app.complianceCheckedAt = new Date().toISOString();
 
-    if (!asDraft && data.settings.strictCompliance !== false && !result.complete) {
-      updateCompliancePreview();
-      showSaveMissingChips(result);
-      toast(`Strict mode: fill ${result.missing.length} required field(s), or save as incomplete draft`);
-      return;
-    }
-    if (!asDraft && data.settings.strictCompliance !== false && !result.intervalsOk) {
-      updateCompliancePreview();
-      showSaveMissingChips(result);
-      toast('Strict mode: enter label REI and PHI on every product (or save as draft)');
-      return;
-    }
-    if (asDraft) app.draft = true;
+    const incomplete = !result.complete || !result.intervalsOk;
+    // Strict mode used to refuse the save. The line still saves. Incomplete
+    // stays incomplete — never fields_complete — and Next names the next box.
+    if (incomplete) app.complianceComplete = false;
+    if (asDraft || (incomplete && data.settings.strictCompliance !== false)) app.draft = true;
     app.recordDueAt = computeRecordDueAt(app);
     app.updatedAt = new Date().toISOString();
 
@@ -3389,6 +3426,22 @@
       data.applications.push(app);
     }
     save();
+    if (incomplete) {
+      $('#app-id').value = app.id;
+      if ($('#app-save-btn')) $('#app-save-btn').textContent = tr('Update this spray');
+      if ($('#app-cancel-btn')) $('#app-cancel-btn').hidden = false;
+      renderAppList();
+      renderDashboard();
+      renderFields();
+      fillCustomerDatalist();
+      updateStorageUsage();
+      renderRecentProducts();
+      updateCompliancePreview();
+      const next = $('#app-log-next');
+      if (next && next.scrollIntoView) next.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      toast('Saved. Still incomplete — Next shows the next box.');
+      return;
+    }
     const restageMix = (!asDraft && !editingId && mix.length && canLogNewSpray()) ? mix : null;
     const restageCrop = restageMix ? (($('#app-crop') && $('#app-crop').value.trim()) || '') : '';
     const restageApplicator = restageMix ? (($('#app-applicator') && $('#app-applicator').value.trim()) || '') : '';
@@ -3978,7 +4031,9 @@
     if (!shown.length) {
       if (q) {
         host.hidden = false;
-        host.innerHTML = `<span class="card-hint">${esc(tr('No library match. Scan label or add the product.'))}</span>`;
+        host.innerHTML = `<button type="button" class="btn btn-secondary" data-type-jug="1">${esc(tr('Type this jug on the spray'))}</button>`;
+        const btn = host.querySelector('[data-type-jug]');
+        if (btn) btn.addEventListener('click', () => offerTypedJug());
         return;
       }
       host.hidden = true;
@@ -4227,10 +4282,11 @@
     if ($('#keep-book-defer')) {
       $('#keep-book-defer').addEventListener('click', () => {
         data.meta.keepBookDeferred = true;
+        data.meta.keepBookDeferredCount = (data.applications || []).length;
         save();
         renderKeepBook();
         queueHomeMessages();
-        toast('Log this spray, then come back to Home for the backup.');
+        toast('The shop file can wait. Home shows the spray.');
       });
     }
   }
@@ -4395,12 +4451,15 @@
       ? `<div class="interval-list">${recent.map(a => `
           <div class="interval-item clear">
             <div>
-              <div class="where">${esc(appProductsLabel(a))} → ${esc(a.fieldName)}</div>
+              <div class="where">${esc(appProductsLabel(a))} → ${esc(a.fieldName)}${appIncomplete(a) ? ' · ' + esc(tr('Incomplete')) : ''}</div>
               <div class="what">${esc(a.crop)} · ${(a.products || []).map(p => fmtAmount(p.total, p.totalUnit)).join(' + ')} on ${fmtNum(a.area)} ${a.areaUnit === 'sqft' ? 'sq ft' : a.areaUnit === '1000sqft' ? '× 1,000 sq ft' : 'ac'}</div>
             </div>
-            <div class="when">${fmtDate(a.date)}</div>
+            <div class="when">${fmtDate(a.date)}<br><button type="button" class="text-btn" data-open-recent="${esc(a.id)}">${appIncomplete(a) ? esc(tr('Finish')) : esc(tr('Open'))}</button></div>
           </div>`).join('')}</div>`
       : `<p class="empty-note">Nothing logged yet — Log this spray after your next pass.</p>`;
+    recentHost.querySelectorAll('[data-open-recent]').forEach((b) => {
+      b.addEventListener('click', () => editApp(b.dataset.openRecent));
+    });
 
     // Compliance card — small farms keep the honesty line + Settings jump.
     const law = stateLaw();
@@ -8174,7 +8233,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.45';
+  const APP_VERSION = 'v2.9.46';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {

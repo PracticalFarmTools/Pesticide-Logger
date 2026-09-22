@@ -131,32 +131,37 @@ check('isEmptyHome is fields AND applications, not products', () => {
   assert.strictEqual(FarmStore.isEmptyHome(farm2), false);
 });
 
-check('first-run stays until farm, field, and product exist', () => {
+check('first-run stays until farm, field, and a spray exist', () => {
   const farm = FarmStore.defaultData();
   assert.strictEqual(FarmStore.stillFirstRun(farm), true);
   farm.settings.farmName = 'Oak Hill';
   farm.settings.state = 'IA';
   farm.fields = [{ id: 'f' }];
-  assert.strictEqual(FarmStore.stillFirstRun(farm), true, 'product still missing');
+  assert.strictEqual(FarmStore.stillFirstRun(farm), true, 'jug is typed on the spray, not a Products step');
   farm.products = [{ id: 'p' }];
-  assert.strictEqual(FarmStore.stillFirstRun(farm), false);
-  farm.products = [];
+  assert.strictEqual(FarmStore.stillFirstRun(farm), true, 'a library product does not end first-run');
   farm.applications = [{ id: 'a' }];
   assert.strictEqual(FarmStore.stillFirstRun(farm), false, 'a log skips first-run');
 });
 
-check('keep-book waits until setup, yields to I’ll log first, then returns after a spray', () => {
+check('keep-book waits for three sprays and does not return on the first', () => {
   const farm = FarmStore.defaultData();
   assert.strictEqual(FarmStore.keepBookPending(farm), false);
   farm.settings.farmName = 'Oak Hill';
   farm.settings.state = 'IA';
   farm.fields = [{ id: 'f' }];
   farm.products = [{ id: 'p' }];
-  assert.strictEqual(FarmStore.keepBookPending(farm), true, 'setup done, no copy yet');
+  assert.strictEqual(FarmStore.keepBookPending(farm), false, 'setup alone does not ask for the shop file');
   farm.meta.keepBookDeferred = true;
-  assert.strictEqual(FarmStore.keepBookPending(farm), false, 'defer until a spray exists');
   farm.applications = [{ id: 'a' }];
-  assert.strictEqual(FarmStore.keepBookPending(farm), true, 'first spray brings it back');
+  assert.strictEqual(FarmStore.keepBookPending(farm), false, 'first spray does not bring the wall back');
+  farm.applications = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+  assert.strictEqual(FarmStore.keepBookPending(farm), true, 'third spray asks for the shop file');
+  farm.meta.keepBookDeferredCount = 3;
+  assert.strictEqual(FarmStore.keepBookPending(farm), false, 'defer at three sprays hides the prompt');
+  farm.meta.keepBookDeferred = false;
+  farm.meta.keepBookDeferredCount = 0;
+  assert.strictEqual(FarmStore.keepBookPending(farm), true);
   farm.meta.lastBackupAt = '2026-08-18T12:00:00Z';
   assert.strictEqual(FarmStore.keepBookPending(farm), false, 'download clears it');
   farm.meta.lastBackupAt = '';
@@ -164,7 +169,7 @@ check('keep-book waits until setup, yields to I’ll log first, then returns aft
   assert.strictEqual(FarmStore.keepBookPending(farm), false, 'restore card also counts as keeping the book');
 });
 
-check('first-run steps mark farm/field/product independently', () => {
+check('first-run steps are farm, field, then the spray itself', () => {
   const farm = FarmStore.defaultData();
   let steps = FarmStore.firstRunSteps(farm);
   assert.ok(steps.every(s => !s.done));
@@ -177,7 +182,8 @@ check('first-run steps mark farm/field/product independently', () => {
   assert.strictEqual(steps[2].done, false);
   assert.strictEqual(steps[0].goto, 'first-run');
   assert.strictEqual(steps[1].goto, 'fields');
-  assert.strictEqual(steps[2].goto, 'products');
+  assert.strictEqual(steps[2].goto, 'log');
+  assert.strictEqual(steps[2].cta, 'Log this spray');
 });
 
 check('default and migrate include empty deviceRole', () => {

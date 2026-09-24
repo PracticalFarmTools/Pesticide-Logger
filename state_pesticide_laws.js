@@ -5725,7 +5725,7 @@ const STATE_LAWS = {
     }
   },
   "VA": {
-    "reviewedAt": "2026-08-18",
+    "reviewedAt": "2026-09-24",
     "agency": "Virginia Department of Agriculture and Consumer Services",
     "citation": {
       "reference": "2VAC5-680-50, 2VAC5-680-70; 2VAC5-685-200, -210",
@@ -5734,7 +5734,7 @@ const STATE_LAWS = {
     "retentionYears": 2,
     "appliesTo": "Pesticide businesses: each general-use and RUP application (2VAC5-680-70). Commercial applicators not for hire and registered technicians not for hire: each pesticide application (2VAC5-685-200/-210). 2VAC5-685-40 is private certification with no application-record list. Private applicators are not named in these recordkeeping sections; follow the label.",
     "verification": "researched",
-    "notes": "2VAC5-680-70 (pesticide businesses) and 2VAC5-685-200/-210 (commercial applicators not for hire and registered technicians not for hire) were read 2026-08-18 on law.lis.virginia.gov. 2VAC5-685-40 is private-applicator certification (exam / literacy waiver) and does not name application records. Those who-clauses do not include certified private applicators — privateDuty none; still follow the label. WPS employer duties are not this log. Do not paste business/not-for-hire customer boxes onto a private spray. Records not readily available must be submitted within 72 hours of written request. No wind/weather field in the cited rules.",
+    "notes": "2VAC5-680-70 (pesticide businesses) and 2VAC5-685-200/-210 (commercial applicators not for hire and registered technicians not for hire) were read 2026-08-18 on law.lis.virginia.gov. 2VAC5-685-40 is private-applicator certification (exam / literacy waiver) and does not name application records. Those who-clauses do not include certified private applicators — privateDuty none; still follow the label. WPS employer duties are not this log. Do not paste business/not-for-hire customer boxes onto a private spray. Records not readily available must be submitted within 72 hours of written request. No wind/weather field in the cited rules. 2026-09-24 primary-text audit: No clock to make the record; records not readily available go to the commissioner within 72 hours of a written request.",
     "fields": [
       {
         "name": "customer_name",
@@ -5827,12 +5827,12 @@ const STATE_LAWS = {
         "required": true
       }
     ],
-    "recordWithinHours": 24,
+    "recordWithinHours": null,
     "customerCopyDays": null,
     "privateDuty": "none",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
+      "count": null,
+      "unit": "none"
     }
   },
   "WA": {

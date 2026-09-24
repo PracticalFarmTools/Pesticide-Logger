@@ -542,7 +542,7 @@ const STATE_LAWS = {
     "privateDutyException": "Class F (2,4-D, MCPA) and Class H (dicamba) products: private applicators must record each application and keep it 2 years (2 CAR 70-110(d)(3), 70-113(c)(5)); start/end time, wind speed and direction, and temperature per 2 CAR 72-102 apply to those sprays."
   },
   "CA": {
-    "reviewedAt": "2026-07-31",
+    "reviewedAt": "2026-09-24",
     "agency": "California Department of Pesticide Regulation and county agricultural commissioners",
     "citation": {
       "reference": "3 CCR §§6624, 6626, 6623",
@@ -551,7 +551,7 @@ const STATE_LAWS = {
     "retentionYears": 2,
     "appliesTo": "Any person using pesticides for agricultural use; operators of property producing agricultural commodities; agricultural pest control businesses; broader California PUR/use-reporting duties apply.",
     "verification": "researched",
-    "notes": "CA requires production-ag PUR/use reporting: property operators report to the county by the 10th of the following month unless an agricultural pest control business reports; ag pest control businesses report within 7 days and send the operator a copy within 30 days. Operator identification numbers and site IDs are central; site IDs are issued by county and retained with permits/forms for two years. REI/rate/dilution fields may be optional on PUR forms but are recommended for the logger. CDPR calcode deep links redirected to a general laws page on 2026-08-14; Cornell LII remains the citation watch until a stable 3 CCR 6624 host is found.",
+    "notes": "CA requires production-ag PUR/use reporting: property operators report to the county by the 10th of the following month unless an agricultural pest control business reports; ag pest control businesses report within 7 days and send the operator a copy within 30 days. Operator identification numbers and site IDs are central; site IDs are issued by county and retained with permits/forms for two years. REI/rate/dilution fields may be optional on PUR forms but are recommended for the logger. CDPR calcode deep links redirected to a general laws page on 2026-08-14; Cornell LII remains the citation watch until a stable 3 CCR 6624 host is found. 2026-09-24 primary-text audit: Customer copy: “A copy of the report shall be sent by the business to the operator of the property where the pest control was done within 30 days of completion of the pesticide application.” The 3 CCR 6624 record has no clock; PUR reports are due to the county within 7 days (business) or by the 10th of the following month (operator) — reports, not this log. Production-ag records also need total planted acreage or units at the site (use Notes). EPA or state registration number satisfies the product ID.",
     "fields": [
       {
         "name": "date",
@@ -563,7 +563,7 @@ const STATE_LAWS = {
         "name": "application_time",
         "label": "Application time",
         "type": "time",
-        "required": true
+        "required": false
       },
       {
         "name": "start_time",
@@ -659,15 +659,27 @@ const STATE_LAWS = {
         "name": "supervisor_name",
         "label": "Supervising applicator",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
+      },
+      {
+        "name": "business_name_address",
+        "label": "Business / operator name & address",
+        "type": "string",
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       }
     ],
-    "recordWithinHours": 24,
-    "customerCopyDays": null,
+    "recordWithinHours": null,
+    "customerCopyDays": 30,
     "privateDuty": "required",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
+      "count": null,
+      "unit": "none"
     }
   },
   "CO": {

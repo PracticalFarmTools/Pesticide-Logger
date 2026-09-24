@@ -1841,7 +1841,7 @@ const STATE_LAWS = {
     }
   },
   "KS": {
-    "reviewedAt": "2026-08-18",
+    "reviewedAt": "2026-09-24",
     "agency": "Kansas Department of Agriculture",
     "citation": {
       "reference": "K.S.A. 2-2455; K.A.R. 4-13-4a",
@@ -1850,7 +1850,7 @@ const STATE_LAWS = {
     "retentionYears": 3,
     "appliesTo": "Pesticide businesses: statement of services or contract for each customer pest-control service involving pesticide application. Government agencies keep parallel application records. Certified commercial applicators not acting for a business keep records under K.A.R. 4-13-5. Private applicators are a KDA certification class not named in K.S.A. 2-2455; follow the label.",
     "verification": "researched",
-    "notes": "K.S.A. 2-2455 (read 2026-08-18 on ksrevisor.gov): business name/address/license number; customer name and address; pest; pesticide including quantity and total area; concentration or rate when applicable; date, location, start and end time; applicator signature and certification number; supervisor signature and number when applicable; wind direction and velocity when applicable; less-than-label-rate when applicable. K.A.R. 4-13-4a adds complete product name and EPA or Kansas registration number. Present the statement to the customer within 30 days (unless prepaid). Wood-destroying-pest diagrams and retreatments are structural extras — not required boxes on an ag spray. 2-2455(a) names pesticide businesses, (e) government agencies, and (g) certified commercial applicators not acting for a business. Private applicators are not in that who-clause — privateDuty none; still follow the label. KSU MF531 still describes federal RUP records that are not in 2-2455; do not paste those boxes onto a private spray. No hours completion clock (24-hour fallback is operational).",
+    "notes": "K.S.A. 2-2455 (read 2026-08-18 on ksrevisor.gov): business name/address/license number; customer name and address; pest; pesticide including quantity and total area; concentration or rate when applicable; date, location, start and end time; applicator signature and certification number; supervisor signature and number when applicable; wind direction and velocity when applicable; less-than-label-rate when applicable. K.A.R. 4-13-4a adds complete product name and EPA or Kansas registration number. Present the statement to the customer within 30 days (unless prepaid). Wood-destroying-pest diagrams and retreatments are structural extras — not required boxes on an ag spray. 2-2455(a) names pesticide businesses, (e) government agencies, and (g) certified commercial applicators not acting for a business. Private applicators are not in that who-clause — privateDuty none; still follow the label. KSU MF531 still describes federal RUP records that are not in 2-2455; do not paste those boxes onto a private spray. No hours completion clock (24-hour fallback is operational). 2026-09-24 primary-text audit: K.A.R. 4-13-4a: statement of services includes wind direction and velocity (listed exceptions), concentration as percent AI in the mix applied, and “less than label rate” when applicable (use Notes); customer copy within 30 days. K.A.R. 4-13-5 unaffiliated certified commercial applicators: restricted-use applications only. No clock to make the record.",
     "fields": [
       {
         "name": "business_name_address",
@@ -1956,23 +1956,29 @@ const STATE_LAWS = {
       },
       {
         "name": "wind_speed",
-        "label": "Wind speed",
+        "label": "Wind speed (not for enclosed, barrier, seed, soil-injection, trench, or bait-station work)",
         "type": "number",
-        "required": false
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "wind_direction",
-        "label": "Wind direction",
+        "label": "Wind direction (not for enclosed, barrier, seed, soil-injection, trench, or bait-station work)",
         "type": "string",
-        "required": false
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       }
     ],
-    "recordWithinHours": 24,
+    "recordWithinHours": null,
     "customerCopyDays": 30,
     "privateDuty": "none",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
+      "count": null,
+      "unit": "none"
     }
   },
   "KY": {

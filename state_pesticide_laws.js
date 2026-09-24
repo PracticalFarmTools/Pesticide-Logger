@@ -3718,16 +3718,16 @@ const STATE_LAWS = {
     }
   },
   "NM": {
-    "reviewedAt": "2026-07-31",
+    "reviewedAt": "2026-09-24",
     "agency": "New Mexico Department of Agriculture",
     "citation": {
       "reference": "21.17.50.10 NMAC; 21.17.56.15 NMAC",
       "url": "https://www.srca.nm.gov/parts/title21/21.017.0050.html"
     },
     "retentionYears": 2,
-    "appliesTo": "Commercial, non-commercial, and public applicators for all pesticide applications; licensed/certified applicators have related records under 21.17.56.15. Private coverage partially verified through 21.17.56 after USDA rescission.",
+    "appliesTo": "Commercial, non-commercial, and public applicators: all applications (21.17.50.10). Licensed and certified applicators, private included, keep the 21.17.50.10 elements for restricted-use pesticides for 2 years (21.17.56.15).",
     "verification": "researched",
-    "notes": "Records completed and available within 24 hours. Outdoor weather required except baits in bait stations or applications in/immediately adjacent to structures. Customer copy upon written request.",
+    "notes": "Records completed and available within 24 hours. Outdoor weather required except baits in bait stations or applications in/immediately adjacent to structures. Customer copy upon written request. 2026-09-24 primary-text audit: Customer copy is “Upon written request” with no day count, so none is encoded. Item (10) asks for the applicator's name, not license #. The private scope may be restricted-use only; the text is ambiguous, so the full list stays.",
     "fields": [
       {
         "name": "customer_name",
@@ -3773,21 +3773,21 @@ const STATE_LAWS = {
       },
       {
         "name": "wind_direction",
-        "label": "Wind direction",
+        "label": "Wind direction (not baits in bait stations or in/at structures)",
         "type": "string",
-        "required": false
+        "required": true
       },
       {
         "name": "wind_speed",
-        "label": "Wind speed",
+        "label": "Wind speed (not baits in bait stations or in/at structures)",
         "type": "number",
-        "required": false
+        "required": true
       },
       {
         "name": "temperature",
-        "label": "Temperature",
+        "label": "Temperature (not baits in bait stations or in/at structures)",
         "type": "number",
-        "required": false
+        "required": true
       },
       {
         "name": "concentration",
@@ -3829,17 +3829,26 @@ const STATE_LAWS = {
         "name": "applicator_license",
         "label": "Applicator certification / license #",
         "type": "string",
-        "required": true
+        "required": false
       },
       {
         "name": "start_time",
         "label": "Start time",
         "type": "time",
-        "required": true
+        "required": false
+      },
+      {
+        "name": "total_mix_applied",
+        "label": "Volume of use-dilution applied (categories 1A, 1B, 2, 3A, 3B, 5, 6, 7D, 8)",
+        "type": "string",
+        "required": false,
+        "classes": [
+          "commercial"
+        ]
       }
     ],
     "recordWithinHours": 24,
-    "customerCopyDays": 30,
+    "customerCopyDays": null,
     "privateDuty": "required",
     "recordDeadline": {
       "count": 24,

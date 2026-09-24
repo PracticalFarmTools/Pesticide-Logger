@@ -2648,16 +2648,16 @@ const STATE_LAWS = {
     }
   },
   "MI": {
-    "reviewedAt": "2026-08-18",
+    "reviewedAt": "2026-09-24",
     "agency": "Michigan Department of Agriculture and Rural Development",
     "citation": {
       "reference": "Mich. Admin. Code R 285.636.15; MCL 324.8311",
-      "url": "https://www.law.cornell.edu/regulations/michigan/Mich-Admin-Code-R-285-636-15"
+      "url": "https://ars.apps.lara.state.mi.us/AdminCode/DownloadAdminCodeFile?FileName=R%20285.636.1%20to%20R%20285.636.17.pdf"
     },
     "retentionYears": 3,
-    "appliesTo": "Certified commercial applicators: RUP application records under MCL 324.8311(5)–(6) and R 285.636.15. Private applicators are not given an application-record list in those sections; at sale they identify the intended county of RUP application. Follow the label.",
+    "appliesTo": "Commercial applicators: restricted-use records kept 3 years and general-use records kept 1 year (R 285.636.15), same elements. Private applicators have no application-record list; follow the label.",
     "verification": "researched",
-    "notes": "MCL 324.8311 (https://www.legislature.mi.gov/Laws/MCL?objectName=mcl-324-8311, read 2026-08-18) names certified commercial applicator RUP records (3 years) and a commercial county summary due before March 1 — that summary is a report, not this log. Subsection (4) is a private-applicator duty at sale (identify intended county), not an application-record list. R 285.636.15 is the commercial application-record list on this row. Private applicators are not in the application-record who-clause — privateDuty none; still follow the label. MSU E2342 still points at the old federal RUP chart; do not paste that chart onto a private spray. Weather is not required in the cited commercial rule. LARA ARS download for R 285.636 did not return the rule PDF on 2026-08-14; Cornell LII remains the citation watch until a primary host is found.",
+    "notes": "MCL 324.8311 (https://www.legislature.mi.gov/Laws/MCL?objectName=mcl-324-8311, read 2026-08-18) names certified commercial applicator RUP records (3 years) and a commercial county summary due before March 1 — that summary is a report, not this log. Subsection (4) is a private-applicator duty at sale (identify intended county), not an application-record list. R 285.636.15 is the commercial application-record list on this row. Private applicators are not in the application-record who-clause — privateDuty none; still follow the label. MSU E2342 still points at the old federal RUP chart; do not paste that chart onto a private spray. Weather is not required in the cited commercial rule. LARA ARS download for R 285.636 did not return the rule PDF on 2026-08-14; Cornell LII remains the citation watch until a primary host is found. 2026-09-24 primary-text audit: Item (d) is “The target pest, purpose, or crop site” — crop (core) satisfies it. No clock.",
     "fields": [
       {
         "name": "brand_name",
@@ -2687,13 +2687,13 @@ const STATE_LAWS = {
         "name": "target_pest",
         "label": "Target pest",
         "type": "string",
-        "required": true
+        "required": false
       },
       {
         "name": "application_purpose",
         "label": "Purpose of application",
         "type": "string",
-        "required": true
+        "required": false
       },
       {
         "name": "crop_treated",
@@ -2726,12 +2726,12 @@ const STATE_LAWS = {
         "required": true
       }
     ],
-    "recordWithinHours": 24,
+    "recordWithinHours": null,
     "customerCopyDays": null,
     "privateDuty": "none",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
+      "count": null,
+      "unit": "none"
     }
   },
   "MN": {

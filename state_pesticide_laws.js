@@ -4714,7 +4714,7 @@ const STATE_LAWS = {
     }
   },
   "PA": {
-    "reviewedAt": "2026-07-31",
+    "reviewedAt": "2026-09-24",
     "agency": "Pennsylvania Department of Agriculture",
     "citation": {
       "reference": "7 Pa. Code §§128.35, 128.65",
@@ -4723,7 +4723,7 @@ const STATE_LAWS = {
     "retentionYears": 3,
     "appliesTo": "Pesticide application businesses: every pesticide application; private applicators: every RUP application. WPS can require general-use records for agricultural employers.",
     "verification": "researched",
-    "notes": "Records completed in written/printable form within 24 hours. If pesticide has a reentry time, date includes hour completed. Commercial ag RUP customer copy within 30 days.",
+    "notes": "Records completed in written/printable form within 24 hours. If pesticide has a reentry time, date includes hour completed. Commercial ag RUP customer copy within 30 days. 2026-09-24 primary-text audit: R6 scope quote: “(a) A private applicator shall keep for each application of a restricted use pesticide a record containing the following information:” General-use private sprays keep the core boxes. 7 Pa. Code 128.85 private place of application includes the farm name and address. Commercial (128.85(b)) records the customer name and address.",
     "fields": [
       {
         "name": "date",
@@ -4733,7 +4733,7 @@ const STATE_LAWS = {
       },
       {
         "name": "end_time",
-        "label": "End time",
+        "label": "Hour completed (RUP with a reentry time)",
         "type": "time",
         "required": false
       },
@@ -4741,13 +4741,19 @@ const STATE_LAWS = {
         "name": "customer_name",
         "label": "Customer / person for whom applied",
         "type": "string",
-        "required": false
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "customer_address",
         "label": "Customer address",
         "type": "string",
-        "required": false
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "location",
@@ -4816,7 +4822,8 @@ const STATE_LAWS = {
     "recordDeadline": {
       "count": 24,
       "unit": "hours"
-    }
+    },
+    "privateDutyScope": "rupOnly"
   },
   "RI": {
     "reviewedAt": "2026-08-14",

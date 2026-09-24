@@ -1,15 +1,15 @@
 {
   "code": "TN",
-  "reviewedAt": "2026-07-31",
+  "reviewedAt": "2026-09-24",
   "agency": "Tennessee Department of Agriculture",
   "citation": {
     "reference": "Tenn. Comp. R. & Regs. 0080-09-04-.06",
-    "url": "https://www.law.cornell.edu/regulations/tennessee/Tenn-Comp-R-Regs-0080-09-04-.06"
+    "url": "https://publications.tnsosfiles.com/rules/0080/0080-09/0080-09-04.20211226.pdf"
   },
   "retentionYears": 2,
   "appliesTo": "Commercial applicators: each custom application and each RUP application they apply or authorize by direct supervision; private applicators: each RUP application.",
   "verification": "researched",
-  "notes": "For RUPs, EPA registration number and time of application are required. Applicators must supply required records within 48 hours of request by owner/tenant. publications.tnsosfiles.com 0080-09-04 returned AccessDenied on 2026-08-14; Cornell LII remains the citation watch until a primary host is found.",
+  "notes": "For RUPs, EPA registration number and time of application are required. Applicators must supply required records within 48 hours of request by owner/tenant. publications.tnsosfiles.com 0080-09-04 returned AccessDenied on 2026-08-14; Cornell LII remains the citation watch until a primary host is found. 2026-09-24 primary-text audit: R6 scope quote: “(2) Private applicators shall maintain records for each application of restricted use pesticide that they apply or authorize by direct supervision.” General-use private sprays keep the core boxes. Every private record is an RUP record, so EPA # and time are required for private. Commercial RUP records also need them. Any applicator supplies a copy within 48 hours of a request by the property owner or tenant (on request). No clock to make the record.",
   "fields": [
     {
       "name": "applicator_name",
@@ -81,20 +81,27 @@
       "name": "epa_reg_no",
       "label": "EPA registration number",
       "type": "string",
-      "required": false
+      "required": true,
+      "classes": [
+        "private"
+      ]
     },
     {
       "name": "application_time",
       "label": "Application time",
       "type": "time",
-      "required": false
+      "required": true,
+      "classes": [
+        "private"
+      ]
     }
   ],
-  "recordWithinHours": 24,
+  "recordWithinHours": null,
   "customerCopyDays": null,
   "privateDuty": "required",
   "recordDeadline": {
-    "count": 24,
-    "unit": "hours"
-  }
+    "count": null,
+    "unit": "none"
+  },
+  "privateDutyScope": "rupOnly"
 }

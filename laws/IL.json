@@ -1,15 +1,15 @@
 {
   "code": "IL",
-  "reviewedAt": "2026-07-31",
+  "reviewedAt": "2026-09-24",
   "agency": "Illinois Department of Agriculture",
   "citation": {
     "reference": "8 Ill. Admin. Code §250.150(b)",
-    "url": "https://www.law.cornell.edu/regulations/illinois/Ill-Admin-Code-tit-8-SS-250.150"
+    "url": "https://www.ilga.gov/commission/jcar/admincode/008/008002500001500R.html"
   },
   "retentionYears": 2,
-  "appliesTo": "Certified commercial applicators and operators; all restricted pesticide/RUP usage. State private-applicator RUP duty not verified after 7 CFR Part 110 rescission.",
+  "appliesTo": "Certified commercial applicators and operators; restricted-use pesticide applications. Illinois rules impose no private-applicator record duty.",
   "verification": "researched",
-  "notes": "Rule text lists chemical name, USEPA registration number, amount of chemical concentration per unit treated, date, and use site. Illinois Extension says wind speed/direction is not required in Illinois but recommended for drift defense. WPS records can still apply to agricultural employers. JCAR 8 Ill. Adm. Code 250.150 returned 404 on 2026-08-14; Cornell LII remains the citation watch until a primary host is found.",
+  "notes": "Rule text lists chemical name, USEPA registration number, amount of chemical concentration per unit treated, date, and use site. Illinois Extension says wind speed/direction is not required in Illinois but recommended for drift defense. WPS records can still apply to agricultural employers. JCAR 8 Ill. Adm. Code 250.150 returned 404 on 2026-08-14; Cornell LII remains the citation watch until a primary host is found. 2026-09-24 primary-text audit: Who-clause: “b) Certified commercial applicators and operators shall keep a record of all restricted pesticide usage for two (2) years.” (8 Ill. Adm. Code 250.150). No private record rule found; no clock.",
   "fields": [
     {
       "name": "brand_name",
@@ -42,11 +42,11 @@
       "required": true
     }
   ],
-  "recordWithinHours": 24,
+  "recordWithinHours": null,
   "customerCopyDays": null,
-  "privateDuty": "required",
+  "privateDuty": "none",
   "recordDeadline": {
-    "count": 24,
-    "unit": "hours"
+    "count": null,
+    "unit": "none"
   }
 }

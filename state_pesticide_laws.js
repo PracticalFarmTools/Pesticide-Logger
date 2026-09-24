@@ -5848,7 +5848,7 @@ const STATE_LAWS = {
     }
   },
   "WA": {
-    "reviewedAt": "2026-07-31",
+    "reviewedAt": "2026-09-24",
     "agency": "Washington State Department of Agriculture",
     "citation": {
       "reference": "RCW 17.21.100; WAC 16-228-1320",
@@ -5857,7 +5857,7 @@ const STATE_LAWS = {
     "retentionYears": 7,
     "appliesTo": "Certified applicators; persons applying pesticides to more than one acre of agricultural land in a calendar year; public roadside spray entities; specified landscape applicators.",
     "verification": "researched",
-    "notes": "Records completed the same day. Agricultural land >=1 acre must be locatable on adopted/map form using section-township-range, GPS, or irrigation block/farm unit. Commercial applicators applying to ag crop/land must provide copy to owner/lessee; employers with employees must also keep records for seven years.",
+    "notes": "Records completed the same day. Agricultural land >=1 acre must be locatable on adopted/map form using section-township-range, GPS, or irrigation block/farm unit. Commercial applicators applying to ag crop/land must provide copy to owner/lessee; employers with employees must also keep records for seven years. 2026-09-24 primary-text audit: RCW 17.21.100 / WAC 16-228-1320: commercial agricultural applicators must provide the owner a copy (no day count) and any applicator provides one on written request, so no customer-copy clock is encoded. Apparatus license plate #; commercial firm name and address.",
     "fields": [
       {
         "name": "customer_name",
@@ -5923,7 +5923,7 @@ const STATE_LAWS = {
         "name": "carrier_volume",
         "label": "Carrier / finished spray volume",
         "type": "string",
-        "required": true
+        "required": false
       },
       {
         "name": "crop_treated",
@@ -5965,7 +5965,7 @@ const STATE_LAWS = {
         "name": "method",
         "label": "Method / equipment",
         "type": "string",
-        "required": true
+        "required": false
       },
       {
         "name": "applicator_name",
@@ -5983,11 +5983,32 @@ const STATE_LAWS = {
         "name": "permit_number",
         "label": "Permit / operator ID",
         "type": "string",
+        "required": false
+      },
+      {
+        "name": "equipment_id",
+        "label": "Apparatus license plate #",
+        "type": "string",
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
+      },
+      {
+        "name": "business_name_address",
+        "label": "Business / operator name & address",
+        "type": "string",
+        "required": true
+      },
+      {
+        "name": "noncertified_applicator_name",
+        "label": "Individual(s) making the application",
+        "type": "string",
         "required": true
       }
     ],
     "recordWithinHours": 0,
-    "customerCopyDays": 30,
+    "customerCopyDays": null,
     "privateDuty": "required",
     "recordDeadline": {
       "count": 0,

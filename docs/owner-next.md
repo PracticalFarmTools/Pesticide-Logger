@@ -141,7 +141,7 @@ It GETs 50 citation URLs, hashes bodies into gitignored `watch-cache/`, and
 does **not** write `laws/XX.json`. First run on a machine is all `new` (a
 baseline). After that, `--summary` should read mostly `stable`.
 
-On `changed` or `dead`: `node tools/bundle-state-laws.js --show XX` → read
+On `changed`: `node tools/watch-citations.js --diff XX` shows what moved. Then, or on `dead`: `node tools/bundle-state-laws.js --show XX` → read
 the new official text → `--stamp XX` or edit that one JSON file.
 
 A first fetch in this environment (2026-08-19) was **50 new, 0 dead, 0

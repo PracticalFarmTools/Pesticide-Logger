@@ -68,7 +68,7 @@ To update one state's rule after a legal change, edit only `laws/XX.json`
 and run `node tools/bundle-state-laws.js`. See `laws/README.md`. What to
 work on next (citation hygiene, hasher, holes): `docs/state-maintainer-playbook.md`.
 `node tools/watch-citations.js` hashes `--watch-list` URLs on this machine
-($0, no GitHub Action, no scrape-to-JSON). `--summary` prints counts only.
+($0, no GitHub Action, no scrape-to-JSON). `--summary` prints counts only; `--diff XX` shows what changed in a citation since the last run.
 A human still `--stamp`s.
 Go-live order (card → origin → merchant → `BUY_URL`): `docs/owner-next.md`.
 Do not change `app.js` or `compliance.js` for a citation or field-list edit.

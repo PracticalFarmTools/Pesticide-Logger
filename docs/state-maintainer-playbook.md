@@ -91,10 +91,13 @@ After 1a is mostly done (researched Cornell swapped):
    calculator in spring.
 2. Weekly is enough. The User-Agent identifies the crawler; one GET per URL;
    ~1.5s between requests.
-3. On changed or dead: `--show XX` → open the **new** official text → same
-   fields → `--stamp XX`. Changed fields → edit `laws/XX.json` like
+3. On changed: `node tools/watch-citations.js --diff XX` prints the lines
+   that moved since the run before (HTML as text; PDFs when `pdftotext` is
+   installed, otherwise it names both saved files). Advisory: markup churn
+   shows as "text is the same". Then, or on dead: `--show XX` → open the
+   **new** official text → same fields → `--stamp XX`. Changed fields → edit `laws/XX.json` like
    any other legal change, then stamp.
-4. Optional: paste old vs new into an AI and ask whether the
+4. Optional: paste the `--diff` output into an AI and ask whether the
    **recordkeeping elements** changed. Do not paste its field list into
    JSON unedited.
 5. Changedetection.io remains optional if you already use it. This repo’s
@@ -169,6 +172,7 @@ None of that is required to start Track 1 tomorrow.
 node tools/bundle-state-laws.js --watch-list   # hasher feed (no fetch)
 node tools/watch-citations.js                  # Track 2: fetch + hash (watch-cache/)
 node tools/watch-citations.js --summary        # counts only; exit 2 on changed/dead/error
+node tools/watch-citations.js --diff SD        # what changed in SD's citation text (advisory)
 node tools/bundle-state-laws.js --holes        # Track 3 queue
 node tools/bundle-state-laws.js --show KS      # citation + fields
 node tools/bundle-state-laws.js --stamp KS     # confirmation or after a JSON edit

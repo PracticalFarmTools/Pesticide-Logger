@@ -1,15 +1,15 @@
 {
   "code": "DE",
-  "reviewedAt": "2026-07-31",
+  "reviewedAt": "2026-09-24",
   "agency": "Delaware Department of Agriculture",
   "citation": {
     "reference": "3 Del. Admin. Code §601-14.0",
     "url": "https://regulations.delaware.gov/AdminCode/title3/601"
   },
   "retentionYears": 2,
-  "appliesTo": "Commercial applicators; each application of any pesticide.",
+  "appliesTo": "Licensees and certified commercial applicators; each application of any pesticide. Private applicators are not named.",
   "verification": "researched",
-  "notes": "EPA registration number is required for RUP or WPS-covered products. Weather (wind velocity/direction, temperature, relative humidity) is required when label directions advise drift precautions. Records logged immediately or within 24 hours unless good cause.",
+  "notes": "EPA registration number is required for RUP or WPS-covered products. Weather (wind velocity/direction, temperature, relative humidity) is required when label directions advise drift precautions. Records logged immediately or within 24 hours unless good cause. 2026-09-24 primary-text audit: Who-clause: “(a) The Department shall require the licensee or certified commercial applicators to maintain records with respect to applications of pesticides” (3 Del. C. §1216); rule 14.1 names commercial applicators only. EPA # must be recorded at or before application for RUP or WPS-covered products; weather (wind, temperature, relative humidity) when label directions advise drift precautions.",
   "fields": [
     {
       "name": "brand_name",
@@ -19,15 +19,15 @@
     },
     {
       "name": "epa_reg_no",
-      "label": "EPA registration number",
+      "label": "EPA registration number (RUP or WPS-covered products)",
       "type": "string",
       "required": false
     },
     {
       "name": "dilution_rate",
-      "label": "Dilution rate",
+      "label": "Dilution rate (when applicable)",
       "type": "string",
-      "required": true
+      "required": false
     },
     {
       "name": "rate",
@@ -91,32 +91,32 @@
     },
     {
       "name": "wind_speed",
-      "label": "Wind speed",
+      "label": "Wind speed (when label advises drift precautions)",
       "type": "number",
       "required": false
     },
     {
       "name": "wind_direction",
-      "label": "Wind direction",
+      "label": "Wind direction (when label advises drift precautions)",
       "type": "string",
       "required": false
     },
     {
       "name": "temperature",
-      "label": "Temperature",
+      "label": "Temperature (when label advises drift precautions)",
       "type": "number",
       "required": false
     },
     {
       "name": "sky",
-      "label": "Humidity / sky conditions",
+      "label": "Relative humidity (when label advises drift precautions)",
       "type": "string",
       "required": false
     }
   ],
   "recordWithinHours": 24,
   "customerCopyDays": null,
-  "privateDuty": "required",
+  "privateDuty": "none",
   "recordDeadline": {
     "count": 24,
     "unit": "hours"

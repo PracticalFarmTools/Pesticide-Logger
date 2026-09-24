@@ -1,6 +1,6 @@
 {
   "code": "OH",
-  "reviewedAt": "2026-07-31",
+  "reviewedAt": "2026-09-24",
   "agency": "Ohio Department of Agriculture",
   "citation": {
     "reference": "Ohio Admin. Code 901:5-11-10",
@@ -9,7 +9,7 @@
   "retentionYears": 3,
   "appliesTo": "Commercial applicators/pesticide businesses; private applicators for each application required under paragraph (E), primarily RUP agricultural applications.",
   "verification": "researched",
-  "notes": "Commercial excluding categories 7/10 includes weather when applicable. Private records include applicator name/license, brand/product and EPA number, total amount, location/field number, total area/acreage, crop, and date. Records created on date of application; some customer-copy rules apply.",
+  "notes": "Commercial excluding categories 7/10 includes weather when applicable. Private records include applicator name/license, brand/product and EPA number, total amount, location/field number, total area/acreage, crop, and date. Records created on date of application; some customer-copy rules apply. 2026-09-24 primary-text audit: OAC 901:5-11-02: private applicators “Shall record the following information for each application on the date of application” — same day. Commercial ag categories give the customer a copy within thirty days unless requested sooner or waived; private applicators give the landowner a copy within 30 days of a request. Private records cover restricted-use pesticides plus general-use pesticides applied under the ORC 921.26(D) exemption, so the full private list stays. No sky element.",
   "fields": [
     {
       "name": "applicator_name",
@@ -21,19 +21,28 @@
       "name": "applicator_license",
       "label": "Applicator certification / license #",
       "type": "string",
-      "required": true
+      "required": true,
+      "classes": [
+        "private"
+      ]
     },
     {
       "name": "customer_name",
       "label": "Customer / person for whom applied",
       "type": "string",
-      "required": true
+      "required": true,
+      "classes": [
+        "commercial"
+      ]
     },
     {
       "name": "customer_address",
       "label": "Customer address",
       "type": "string",
-      "required": true
+      "required": true,
+      "classes": [
+        "commercial"
+      ]
     },
     {
       "name": "date",
@@ -78,59 +87,83 @@
       "required": true
     },
     {
-      "name": "carrier_volume",
-      "label": "Carrier / finished spray volume",
-      "type": "string",
-      "required": true
-    },
-    {
       "name": "method",
       "label": "Method / equipment",
       "type": "string",
-      "required": true
+      "required": true,
+      "classes": [
+        "commercial"
+      ]
     },
     {
       "name": "start_time",
       "label": "Start time",
       "type": "time",
-      "required": true
+      "required": true,
+      "classes": [
+        "commercial"
+      ]
     },
     {
       "name": "end_time",
       "label": "End time",
       "type": "time",
-      "required": true
+      "required": true,
+      "classes": [
+        "commercial"
+      ]
     },
     {
       "name": "wind_direction",
       "label": "Wind direction",
       "type": "string",
-      "required": true
+      "required": true,
+      "classes": [
+        "commercial"
+      ]
     },
     {
       "name": "wind_speed",
       "label": "Wind speed",
       "type": "number",
-      "required": true
+      "required": true,
+      "classes": [
+        "commercial"
+      ]
     },
     {
       "name": "temperature",
       "label": "Temperature",
       "type": "number",
-      "required": true
+      "required": true,
+      "classes": [
+        "commercial"
+      ]
     },
     {
-      "name": "sky",
-      "label": "Humidity / sky conditions",
+      "name": "total_mix_applied",
+      "label": "Total volume of use dilution applied (if diluted)",
       "type": "string",
-      "required": true
+      "required": false,
+      "classes": [
+        "commercial"
+      ]
+    },
+    {
+      "name": "noncertified_applicator_name",
+      "label": "Trained serviceperson(s) applying",
+      "type": "string",
+      "required": false,
+      "classes": [
+        "commercial"
+      ]
     }
   ],
-  "recordWithinHours": 24,
-  "customerCopyDays": null,
+  "recordWithinHours": 0,
+  "customerCopyDays": 30,
   "privateDuty": "required",
   "recordDeadline": {
-    "count": 24,
-    "unit": "hours"
+    "count": 0,
+    "unit": "sameDay"
   }
 }

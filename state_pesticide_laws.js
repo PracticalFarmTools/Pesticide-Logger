@@ -2231,22 +2231,22 @@ const STATE_LAWS = {
     }
   },
   "ME": {
-    "reviewedAt": "2026-08-14",
+    "reviewedAt": "2026-09-24",
     "agency": "Maine Board of Pesticides Control, Department of Agriculture, Conservation and Forestry",
     "citation": {
       "reference": "01-026 C.M.R. ch. 50, §1(A)",
-      "url": "https://www.maine.gov/dacf/php/pesticides/documents2/rulemaking_2024/BPC-Ch50-amended_rule_legislative_Final.pdf"
+      "url": "https://www.maine.gov/sos/sites/maine.gov.sos/files/content/assets/026c050.docx"
     },
     "retentionYears": 2,
-    "appliesTo": "Commercial agricultural producers and commercial applicators (01-026 C.M.R. ch. 50 §1(A)). Not a structural-only list. Indoor/bait/ear-tag/tree-injection outdoor exceptions are in the weather clause, not a different field matrix.",
+    "appliesTo": "Commercial agricultural producers (anyone producing an agricultural commodity for commercial purposes, Ch. 10 §2) and commercial applicators (01-026 C.M.R. ch. 50 §1(A)); all pesticides. Weather is required for outdoor applications except bait stations, animal devices, and tree/pole injections.",
     "verification": "researched",
-    "notes": "Chapter 50 PDF (read 2026-08-14): record the same day; keep two years. Site: town and location, crop or site, target organism, customer and address where applicable, treated area/volume/scope. Application: date and time, brand, EPA number, active ingredient, REI and/or ventilation where applicable, method/equipment, dilution agents other than water, licensed applicator name and certification number, noncertified applicator name where applicable, spray contracting firm where applicable. Rate: RUP total undiluted amount; GUP may use mix ratio plus total mix or mix per unit area. Outdoor weather (wind speed and direction, air temperature, sky) is required except bait stations, animal tags, and tree/pole injections — those weather boxes stay optional on this log so indoor applications are not forced. Annual commercial summary is electronic by January 31 (e-file, out of app).",
+    "notes": "Chapter 50 PDF (read 2026-08-14): record the same day; keep two years. Site: town and location, crop or site, target organism, customer and address where applicable, treated area/volume/scope. Application: date and time, brand, EPA number, active ingredient, REI and/or ventilation where applicable, method/equipment, dilution agents other than water, licensed applicator name and certification number, noncertified applicator name where applicable, spray contracting firm where applicable. Rate: RUP total undiluted amount; GUP may use mix ratio plus total mix or mix per unit area. Outdoor weather (wind speed and direction, air temperature, sky) is required except bait stations, animal tags, and tree/pole injections — those weather boxes stay optional on this log so indoor applications are not forced. Annual commercial summary is electronic by January 31 (e-file, out of app). 2026-09-24 primary-text audit: Ch. 50 II: town and location (not county); dilution agent other than water; REI “where applicable”; RUP total undiluted amount, or for general-use the total amount, mix ratio + total mix, or mix ratio + mix per area. “For outdoor applications, except those listed below, weather conditions including wind speed and direction, air temperature and sky conditions recorded such as sunny, partly cloudy, overcast, foggy or rainy.” SOS copy adds filing 2024-239.",
     "fields": [
       {
         "name": "county",
         "label": "County of application",
         "type": "string",
-        "required": true
+        "required": false
       },
       {
         "name": "location",
@@ -2316,9 +2316,9 @@ const STATE_LAWS = {
       },
       {
         "name": "rei_hours",
-        "label": "Restricted-entry interval (REI)",
+        "label": "REI / ventilation period (where applicable)",
         "type": "string",
-        "required": true
+        "required": false
       },
       {
         "name": "method",
@@ -2328,9 +2328,9 @@ const STATE_LAWS = {
       },
       {
         "name": "dilution_rate",
-        "label": "Dilution rate",
+        "label": "Dilution agent (other than water)",
         "type": "string",
-        "required": true
+        "required": false
       },
       {
         "name": "applicator_name",
@@ -2360,7 +2360,7 @@ const STATE_LAWS = {
         "name": "rate",
         "label": "Application rate",
         "type": "string",
-        "required": true
+        "required": false
       },
       {
         "name": "amount_applied",
@@ -2370,26 +2370,32 @@ const STATE_LAWS = {
       },
       {
         "name": "wind_speed",
-        "label": "Wind speed",
+        "label": "Wind speed (outdoor)",
         "type": "number",
-        "required": false
+        "required": true
       },
       {
         "name": "wind_direction",
-        "label": "Wind direction",
+        "label": "Wind direction (outdoor)",
         "type": "string",
-        "required": false
+        "required": true
       },
       {
         "name": "temperature",
-        "label": "Temperature",
+        "label": "Temperature (outdoor)",
         "type": "number",
-        "required": false
+        "required": true
       },
       {
         "name": "start_time",
         "label": "Start time",
         "type": "time",
+        "required": true
+      },
+      {
+        "name": "sky",
+        "label": "Sky conditions (sunny, overcast, foggy, rain) (outdoor)",
+        "type": "string",
         "required": true
       }
     ],

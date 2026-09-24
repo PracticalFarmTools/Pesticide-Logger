@@ -1158,7 +1158,7 @@ const STATE_LAWS = {
     "privateDutyScope": "rupOnly"
   },
   "GA": {
-    "reviewedAt": "2026-07-31",
+    "reviewedAt": "2026-09-24",
     "agency": "Georgia Department of Agriculture",
     "citation": {
       "reference": "Ga. Comp. R. & Regs. 40-21-5",
@@ -1167,7 +1167,7 @@ const STATE_LAWS = {
     "retentionYears": 2,
     "appliesTo": "Licensed pesticide contractors: all business applications; licensed commercial applicators not acting for a contractor: RUP and state-restricted-use applications. Licensed private applicators are not required by this rule to maintain records.",
     "verification": "researched",
-    "notes": "Record content includes unexpected occurrences such as spillage, exposure, drift, and corrective/emergency action, plus pesticide disposal details. Weather is not a standard required field except as part of incident notes/label duties.",
+    "notes": "Record content includes unexpected occurrences such as spillage, exposure, drift, and corrective/emergency action, plus pesticide disposal details. Weather is not a standard required field except as part of incident notes/label duties. 2026-09-24 primary-text audit: Who-clause: “Licensed private pesticide applicators shall not be required to maintain records of pesticide application.” (Ga. Comp. R. & Regs. 40-21-5-.01). Area element is “Acreage, size of area treated, or total amount of pesticide applied” (amount is always captured). Occurrence and disposal items apply only when they happen. One “date and time” element. No clock. rules.sos.ga.gov blocks automated readers; LII mirror used.",
     "fields": [
       {
         "name": "date",
@@ -1203,7 +1203,7 @@ const STATE_LAWS = {
         "name": "area_treated",
         "label": "Area treated",
         "type": "string",
-        "required": true
+        "required": false
       },
       {
         "name": "amount_applied",
@@ -1243,29 +1243,29 @@ const STATE_LAWS = {
       },
       {
         "name": "notes",
-        "label": "Notes / unexpected occurrences",
+        "label": "Unexpected occurrences (spill, exposure, drift) and action taken",
         "type": "string",
-        "required": true
+        "required": false
       },
       {
         "name": "disposal_method",
-        "label": "Disposal of unused pesticide",
+        "label": "Pesticides disposed of: names, concentrations, quantities, manner",
         "type": "string",
-        "required": true
+        "required": false
       },
       {
         "name": "start_time",
         "label": "Start time",
         "type": "time",
-        "required": true
+        "required": false
       }
     ],
-    "recordWithinHours": 24,
+    "recordWithinHours": null,
     "customerCopyDays": null,
-    "privateDuty": "required",
+    "privateDuty": "none",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
+      "count": null,
+      "unit": "none"
     }
   },
   "HI": {

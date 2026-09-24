@@ -38,11 +38,11 @@ application at the repository root.
 | **Live EPA product lookup** | Official EPA PPLS identity/status import when the host provides `/api/epa`. Name search ranks whole-word matches first so short queries are not trapped by a longer substring. USB, GitHub Pages, and local servers have no lookup — type the jug number or Scan label. Rates, REI, and PHI stay label-entered. |
 | **Field mapper** | Satellite corner tapping with geodesic acreage; boundaries stay local. **Add corners** is a toggle so dragging a handle or the amber forecast pin does not drop extra points. Tap a field line to insert a corner; tap the first corner to close. Saved rings show last spray / REI / PHI. **Fit all fields** when two or more rings exist. First open zooms toward the farm state, not CONUS. |
 | **Farm scale** | Same app for two tunnels or 150 named sites. Search appears on Fields/Products at 8+ rows; long pickers get a type-filter; Spray Log can default to this season on a long history — **Show prior years** is there for every farm size that has older logs. Optional field groups only if you actually named two. |
-| **Weather auto-fill** | Open-Meteo fill for wind, temperature, sky/humidity at the field’s forecast pin (or GPS if you are logging on-site). |
+| **Weather auto-fill** | U.S. National Weather Service (public domain, no key): the nearest station’s latest report for wind, temperature, sky/humidity at the field’s forecast pin (or GPS if you are logging on-site). The stamp names the station and distance (e.g. `NWS KAUG, 1 mi`); with no fresh report it falls back to the NWS forecast grid and says so. |
 | **Inspection output** | Print/PDF, CSV, **state compliance pack** (JSON with citation, field matrix, due/copy status, audit history), a **signed inspector HTML packet** from Reports (Home keeps the jump on larger farms — a snapshot, not a lock on the live log), and a **certifier/buyer packet** for organic & GAP audits. Reports stay under More. |
 | **Crew & gather** | Optional crew list suggests names on the log (you can still type any name). Cab phones **send a file** as soon as this device has sprays the shop has not received (Share / AirDrop, or a connected shop file). The shop tablet **brings them in**. Newest edits win; the other version stays in History. Same-named fields/products can be combined or kept both. Optional device role (cab / shop / solo) so send nag and gather hint match the phone you are holding. |
 | **Inspector view & REI board** | Optional shop view hides editing so you can hand the tablet over — Exit anytime, optional PIN, farm name recovers a forgotten PIN. **Print today’s REI board** for the shop door (not the official WPS sign). |
-| **Spray window outlook** | Glance rows (Go / Wait / No) at each field’s map pin — not the phone’s GPS. Tap a field for the next 12 hours, then Details for the 48-hour chart. CONUS near-term uses NOAA HRRR; stale data is labeled and cannot be used as a go/no-go for a trip. Planning guidance — the label still rules. |
+| **Spray window outlook** | Glance rows (Go / Wait / No) at each field’s map pin — not the phone’s GPS. Tap a field for the next 12 hours, then Details for the 48-hour chart. Hours come from the NWS forecast grid (~2.5 km) for the pin; stale data is labeled and cannot be used as a go/no-go for a trip. Planning guidance — the label still rules. |
 | **Photos & barcode** | Attach label/lot/condition photos to records (device-local). **Scan label** on the mix photographs the EPA Reg. No. line (Tesseract, on-device). **Scan barcode** is secondary: live camera on Android Chrome, still photo on iPhone (ZXing). Review before the mix row changes. Rate stays open so you type it from the label. |
 | **OCR label scanning** | Photograph the EPA Reg. No. on the panel. Works on iPhone and Android via the native camera. A ~7MB text reader downloads in the background after first visit, then scans work offline. The match is verified through the same live EPA lookup as manual search before anything is saved. Rates, REI, and PHI are never read from the photo. |
 | **REI posting & reminders** | Bilingual DO NOT ENTER / NO ENTRE posting sheet from any active REI, plus opt-in browser notifications when REI clears or PHI dates arrive. |
@@ -148,6 +148,7 @@ node --check epa-rank.js
 node --check backup-merge.js
 node --check backup-pack.js
 node --check spray-window.js
+node --check nws-weather.js
 node --check store.js
 node --check compliance.js
 node --check camera-scan.js
@@ -168,6 +169,7 @@ node tests/backup-merge.test.js
 node tests/backup-pack.test.js
 node tests/epa-proxy.test.js
 node tests/spray-window.test.js
+node tests/nws-weather.test.js
 node tests/store.test.js
 node tests/compliance-engine.test.js
 node tests/camera-scan.test.js
@@ -211,7 +213,8 @@ camera-scan.js             Camera / still-photo / OCR scan path
 deadline.js                Record / customer-copy deadline math
 backup-merge.js            Conservative trial/license merge for backup restore
 backup-pack.js             Farm JSON + JPEG photo pack/inspect for full backups
-spray-window.js            Per-field spray-window scoring, cache isolation, Open-Meteo stitch
+spray-window.js            Per-field spray-window scoring, cache isolation
+nws-weather.js             NWS api.weather.gov parsing (grid → hourly rows, stations, observations)
 farm-scale.js              Find/pick/window helpers so the same UI fits 2 fields and 150 sites
 farm-file.js               Crew, gather/merge receipt, signed inspector HTML, REI board
 license.js                 Offline license verification (WebCrypto)

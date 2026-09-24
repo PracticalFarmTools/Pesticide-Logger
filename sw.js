@@ -29,6 +29,7 @@ const APP_SHELL = [
   './backup-merge.js',
   './backup-pack.js',
   './spray-window.js',
+  './nws-weather.js',
   './store.js',
   './compliance.js',
   './camera-scan.js',

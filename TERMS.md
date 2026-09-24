@@ -1,6 +1,6 @@
 # Pesticide Logger — Terms of Use, License & Privacy
 
-_Last updated: 2026-08-18. Plain-English summary first; farmers are busy._
+_Last updated: 2026-09-24. Plain-English summary first; farmers are busy._
 
 ## The short version
 
@@ -40,7 +40,8 @@ changes.
   photos. There is no account and no server database.
 - The app sends nothing anywhere, with two optional exceptions you trigger:
   EPA product lookups (via the stateless proxy) and weather fetches
-  (Open-Meteo). Both send only the query, never your records.
+  (U.S. National Weather Service, api.weather.gov — it receives the field
+  pin's coordinates). Both send only the query, never your records.
 - No analytics, no telemetry, no tracking. License keys are verified on your
   device.
 - Because we hold no copy of your data, **we cannot recover it for you.**

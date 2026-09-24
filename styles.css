@@ -1722,7 +1722,6 @@ body:not(.map-fullscreen) .tab-nav-wrap {
 .fc-banner-error { background: var(--danger-bg); color: var(--danger); }
 .fc-strip { display: flex; flex-direction: column; gap: 0.45rem; margin: 0.15rem 0 0.35rem; }
 .fc-evidence { font-size: 0.8rem; color: var(--text-muted); margin: 0.35rem 0; }
-.fc-seam { font-size: 0.78rem; color: var(--text-muted); margin: 0.25rem 0 0.5rem; }
 
 .legal-details { margin-top: 0.75rem; }
 .legal-details summary {

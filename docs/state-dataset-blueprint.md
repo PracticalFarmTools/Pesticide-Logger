@@ -312,7 +312,7 @@ The hard part is **knowing a rule changed**, not shipping JSON. The matrix
 already lives in the app shell (`state_pesticide_laws.js` → `index.html` →
 cache-first `sw.js`). Growers already receive a new edition the same way
 they receive any other fix: new version, `#update-banner`, Reload. CSP
-`connect-src` is `'self'` plus Open-Meteo. There is no live statute feed,
+`connect-src` is `'self'` plus the National Weather Service API. There is no live statute feed,
 and adding one would be unsigned legal text over the network — out of
 lane, and it would break offline cab.
 
@@ -427,7 +427,7 @@ The in-app path is already: a human reads `citation.url` → edits
 `laws/XX.json` → `node tools/bundle-state-laws.js --stamp XX` → growers
 Reload. The remaining problem is **knowing the page moved**. That work
 belongs in a maintainer pipeline, not in the cab. The PWA must not fetch
-statutes (`connect-src` is `'self'` + Open-Meteo), must not parse PDFs into
+statutes (`connect-src` is `'self'` + api.weather.gov), must not parse PDFs into
 `fields[]`, and must not auto-promote `verification`. Snapshots of official
 text do not belong in the service-worker shell.
 

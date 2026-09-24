@@ -1403,6 +1403,22 @@ check('v2.9.46: product library opens the editor from a row and stacks as cards 
   assert.ok(phone && phone.includes('display: block'), 'rows become cards under 640px');
 });
 
+check('v2.9.47: weather is NWS (public domain) — no Open-Meteo free tier in a paid app', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
+  const spray = fs.readFileSync(path.join(root, 'spray-window.js'), 'utf8');
+  [app, html, spray].forEach((src) => assert.ok(!/open-meteo/i.test(src), 'no Open-Meteo request or copy'));
+  const csp = html.match(/connect-src ([^;]*);/)[1];
+  assert.strictEqual(csp.trim(), "'self' https://api.weather.gov");
+  assert.ok(html.indexOf('src="nws-weather.js"') > html.indexOf('src="spray-window.js"'));
+  assert.ok(html.indexOf('src="nws-weather.js"') < html.indexOf('src="app.js"'));
+  assert.ok(sw.includes("'./nws-weather.js'"), 'precached for offline boot');
+  assert.ok(!/setRequestHeader|'User-Agent'/.test(app), 'browser default User-Agent (a custom one fails CORS)');
+  assert.ok(app.includes('(NWS ${station.id}${miles})'), 'the stamp names its station');
+  assert.ok(app.includes("' (NWS forecast grid — no station report)'"), 'grid fallback says so');
+});
+
 if (failed) {
   console.error(`\n${failed} check(s) failed`);
   process.exit(1);

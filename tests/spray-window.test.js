@@ -15,14 +15,6 @@ check('DEVICE_KEY is not a field id shape that could collide', () => {
   assert.strictEqual(SW.DEVICE_KEY, '__device__');
 });
 
-check('CONUS vs Alaska / Hawaii / ocean', () => {
-  assert.strictEqual(SW.isConus(44.1, -69.5), true);   // Maine
-  assert.strictEqual(SW.isConus(40.0, -105.0), true);  // Colorado
-  assert.strictEqual(SW.isConus(61.2, -149.9), false); // Anchorage
-  assert.strictEqual(SW.isConus(21.3, -157.8), false); // Honolulu
-  assert.strictEqual(SW.isConus(19.0, -155.0), false);
-});
-
 check('ring centroid of a square is the center', () => {
   const c = SW.ringCentroid([
     [44.0, -70.0],
@@ -138,51 +130,6 @@ check('heat is marginal', () => {
   assert.strictEqual(s.score, 'fair');
 });
 
-check('batch parse: array vs single object', () => {
-  const one = SW.parseOpenMeteoPayload({ latitude: 1, longitude: 2, hourly: { time: [] } });
-  assert.strictEqual(one.length, 1);
-  const many = SW.parseOpenMeteoPayload([
-    { latitude: 1, hourly: { time: [] } },
-    { latitude: 2, hourly: { time: [] } }
-  ]);
-  assert.strictEqual(many.length, 2);
-  assert.deepStrictEqual(SW.parseOpenMeteoPayload(null), []);
-});
-
-check('hoursFromHourly skips past hours', () => {
-  const now = Date.parse('2026-08-13T12:00:00');
-  const hours = SW.hoursFromHourly({
-    time: ['2026-08-13T10:00', '2026-08-13T13:00', '2026-08-13T14:00'],
-    wind_speed_10m: [9, 5, 6],
-    wind_gusts_10m: [11, 7, 8],
-    precipitation: [0, 0, 0],
-    temperature_2m: [70, 71, 72],
-    relative_humidity_2m: [50, 50, 50],
-    precipitation_probability: [10, 10, 10],
-    weather_code: [1, 1, 1]
-  }, now, 'hrrr', 48);
-  assert.strictEqual(hours.length, 2);
-  assert.strictEqual(hours[0].time, '2026-08-13T13:00');
-  assert.strictEqual(hours[0].source, 'hrrr');
-});
-
-check('stitchHours keeps HRRR then longer-range, never mixing times backwards', () => {
-  const hrrr = [
-    { time: '2026-08-13T13:00', source: 'hrrr', wind: 5 },
-    { time: '2026-08-13T14:00', source: 'hrrr', wind: 5 }
-  ];
-  const far = [
-    { time: '2026-08-13T13:00', source: 'best_match', wind: 99 },
-    { time: '2026-08-13T15:00', source: 'best_match', wind: 6 }
-  ];
-  const stitched = SW.stitchHours(hrrr, far, 48);
-  assert.strictEqual(stitched.length, 3);
-  assert.strictEqual(stitched[0].source, 'hrrr');
-  assert.strictEqual(stitched[1].source, 'hrrr');
-  assert.strictEqual(stitched[2].time, '2026-08-13T15:00');
-  assert.strictEqual(stitched[2].source, 'best_match');
-});
-
 check('backup clone strips forecast caches', () => {
   const payload = SW.backupClone({
     meta: { trialStartedAt: 1, forecastByField: { a: {} }, forecastCache: { hours: [1] } },
@@ -191,6 +138,25 @@ check('backup clone strips forecast caches', () => {
   assert.strictEqual(payload.meta.trialStartedAt, 1);
   assert.ok(!payload.meta.forecastByField);
   assert.ok(!payload.meta.forecastCache);
+});
+
+check('NWS grid entry carries pin, grid id, model, and at most 48 hours', () => {
+  const hours = Array.from({ length: 60 }, (_, i) => ({ time: `h${i}`, wind: 5, source: 'nws' }));
+  const e = SW.buildGridEntry('north-40', { lat: 44.310612, lng: -69.779511 }, hours, 'GYX 82,91', 1000);
+  assert.strictEqual(e.fieldId, 'north-40');
+  assert.strictEqual(e.lat, 44.3106);
+  assert.strictEqual(e.lng, -69.7795);
+  assert.strictEqual(e.gridId, 'GYX 82,91');
+  assert.strictEqual(e.model, 'nws_grid');
+  assert.strictEqual(e.fetchedAt, 1000);
+  assert.strictEqual(e.hours.length, 48);
+  assert.ok(SW.getCached({ 'north-40': e }, 'north-40', { lat: 44.3106, lng: -69.7795 }));
+});
+
+check('model label names NWS; a cached entry from an older source asks for refresh', () => {
+  assert.strictEqual(SW.modelLabel('nws_grid'), 'NWS forecast grid (~2.5 km)');
+  assert.ok(/refresh/.test(SW.modelLabel('hrrr_conus+best_match')));
+  assert.ok(!/HRRR|Open-Meteo/.test(SW.modelLabel('hrrr_conus')));
 });
 
 check('chunk batch size', () => {

@@ -28,14 +28,6 @@
     return alat != null && alng != null && alat === blat && alng === blng;
   }
 
-  // NOAA HRRR CONUS domain (approx). Alaska, Hawaii, territories: not HRRR.
-  function isConus(lat, lng) {
-    const la = Number(lat);
-    const lo = Number(lng);
-    return Number.isFinite(la) && Number.isFinite(lo)
-      && la >= 24.5 && la <= 49.5 && lo >= -125 && lo <= -66.5;
-  }
-
   // Area-weighted polygon centroid. Shoelace uses lng as x, lat as y.
   // Vertex average is the fallback when the ring has no area (line / duplicate points).
   function ringCentroid(boundary) {
@@ -188,53 +180,6 @@
     return { score, reasons };
   }
 
-  function hoursFromHourly(hourly, nowMs, source, maxHours) {
-    const cap = maxHours || HORIZON_HOURS;
-    if (!hourly || !Array.isArray(hourly.time)) return [];
-    const hours = [];
-    const now = new Date(nowMs);
-    for (let i = 0; i < hourly.time.length && hours.length < cap; i++) {
-      const t = new Date(hourly.time[i]);
-      if (Number.isNaN(t.getTime()) || t < now) continue;
-      const wind = hourly.wind_speed_10m ? hourly.wind_speed_10m[i] : null;
-      const gustRaw = hourly.wind_gusts_10m ? hourly.wind_gusts_10m[i] : null;
-      hours.push({
-        time: hourly.time[i],
-        temp: hourly.temperature_2m ? hourly.temperature_2m[i] : null,
-        rh: hourly.relative_humidity_2m ? hourly.relative_humidity_2m[i] : null,
-        precipProb: hourly.precipitation_probability ? hourly.precipitation_probability[i] : null,
-        precip: hourly.precipitation ? hourly.precipitation[i] : 0,
-        wind,
-        gusts: gustRaw != null ? gustRaw : wind,
-        windDir: hourly.wind_direction_10m ? hourly.wind_direction_10m[i] : null,
-        weatherCode: hourly.weather_code ? hourly.weather_code[i] : null,
-        source: source || 'best_match'
-      });
-    }
-    return hours;
-  }
-
-  function stitchHours(hrrrHours, fallbackHours, maxHours) {
-    const cap = maxHours || HORIZON_HOURS;
-    const near = Array.isArray(hrrrHours) ? hrrrHours : [];
-    const far = Array.isArray(fallbackHours) ? fallbackHours : [];
-    const out = near.slice();
-    const hrrrEnd = near.length ? near[near.length - 1].time : null;
-    far.forEach((h) => {
-      if (out.length >= cap) return;
-      if (hrrrEnd && h.time <= hrrrEnd) return;
-      out.push(h);
-    });
-    return out.slice(0, cap);
-  }
-
-  function parseOpenMeteoPayload(json) {
-    if (!json) return [];
-    if (Array.isArray(json)) return json;
-    if (json.hourly || json.latitude != null) return [json];
-    return [];
-  }
-
   function chunk(list, size) {
     const n = size || BATCH_SIZE;
     const out = [];
@@ -244,18 +189,9 @@
   }
 
   function modelLabel(model) {
-    if (model === 'hrrr_conus') return 'NOAA HRRR (~3 km)';
-    if (model === 'hrrr_conus+best_match') return 'NOAA HRRR near-term, longer-range after that';
-    if (model === 'best_match') return 'Open-Meteo best match';
-    return model || 'forecast model unknown';
-  }
-
-  function hrrrEndLabel(hours) {
-    const last = (hours || []).filter((h) => h.source === 'hrrr').pop();
-    if (!last) return null;
-    const t = new Date(last.time);
-    if (Number.isNaN(t.getTime())) return null;
-    return t.toLocaleString(undefined, { weekday: 'short', hour: 'numeric' });
+    if (model === 'nws_grid') return 'NWS forecast grid (~2.5 km)';
+    if (model) return 'earlier forecast source — refresh';
+    return 'forecast model unknown';
   }
 
   const GLANCE_MS = 12 * 3600000;
@@ -370,35 +306,17 @@
     return payload;
   }
 
-  function buildEntry(fieldId, pin, hrrrJson, fallbackJson, nowMs) {
-    const fallbackHours = hoursFromHourly(
-      fallbackJson && fallbackJson.hourly,
-      nowMs,
-      'best_match',
-      HORIZON_HOURS
-    );
-    const hrrrHours = hoursFromHourly(
-      hrrrJson && hrrrJson.hourly,
-      nowMs,
-      'hrrr',
-      HORIZON_HOURS
-    );
-    const hours = stitchHours(hrrrHours, fallbackHours, HORIZON_HOURS);
-    let model = 'best_match';
-    if (hrrrHours.length && fallbackHours.some((h) => !hrrrHours.length || h.time > hrrrHours[hrrrHours.length - 1].time)) {
-      model = 'hrrr_conus+best_match';
-    } else if (hrrrHours.length) {
-      model = 'hrrr_conus';
-    }
+  // One field's cached outlook. hours come from NwsWeather.gridHours; gridId is
+  // the NWS office + cell ("GYX 82,91") shown as evidence next to the pin.
+  function buildGridEntry(fieldId, pin, hours, gridId, nowMs) {
     return {
       fieldId,
       lat: roundCoord(pin.lat),
       lng: roundCoord(pin.lng),
-      gridLat: fallbackJson && fallbackJson.latitude != null ? fallbackJson.latitude : (hrrrJson && hrrrJson.latitude),
-      gridLng: fallbackJson && fallbackJson.longitude != null ? fallbackJson.longitude : (hrrrJson && hrrrJson.longitude),
-      model,
+      gridId: gridId || null,
+      model: 'nws_grid',
       fetchedAt: Number(nowMs),
-      hours
+      hours: (hours || []).slice(0, HORIZON_HOURS)
     };
   }
 
@@ -410,7 +328,6 @@
     BATCH_SIZE,
     roundCoord,
     coordsMatch,
-    isConus,
     ringCentroid,
     fieldPin,
     resolveWeatherPin,
@@ -420,12 +337,8 @@
     freshnessCopy,
     isRainWeatherCode,
     scoreSprayHour,
-    hoursFromHourly,
-    stitchHours,
-    parseOpenMeteoPayload,
     chunk,
     modelLabel,
-    hrrrEndLabel,
     GLANCE_MS,
     hoursInHorizon,
     ageLabel,
@@ -434,7 +347,7 @@
     nextWindowSummary,
     stripForecastMeta,
     backupClone,
-    buildEntry
+    buildGridEntry
   };
 
   if (typeof module !== 'undefined' && module.exports) {

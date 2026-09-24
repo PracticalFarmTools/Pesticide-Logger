@@ -3128,19 +3128,55 @@
     box.innerHTML = parts.join(' &nbsp;·&nbsp; ');
   }
 
-  // ---- weather auto-fill (Open-Meteo: keyless, no API key) ----
+  // ---- weather (National Weather Service api.weather.gov: public domain, no key) ----
 
   const COMPASS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+  const NWS_POINTS_KEY = 'pesticide-logger.nwsPoints';
+  const NWS_OBS_MAX_AGE_MS = 2 * 3600000;
 
-  function skyDesc(code) {
-    if (code === 0) return 'Clear';
-    if (code <= 2) return 'Partly cloudy';
-    if (code === 3) return 'Overcast';
-    if (code <= 48) return 'Fog';
-    if (code <= 67) return 'Rain';
-    if (code <= 77) return 'Snow';
-    if (code <= 82) return 'Showers';
-    return 'Thunderstorm';
+  function compassFor(deg) {
+    if (deg == null || !Number.isFinite(Number(deg))) return '';
+    return COMPASS[Math.round(Number(deg) / 22.5) % 16];
+  }
+
+  // One retry on a 5xx: the gridpoint service returns transient 500/503s.
+  async function nwsJson(url) {
+    for (let attempt = 0; ; attempt++) {
+      const res = await fetch(url);
+      if (res.ok) return res.json();
+      if (res.status >= 500 && attempt === 0) continue;
+      const err = new Error('NWS ' + res.status);
+      err.status = res.status;
+      throw err;
+    }
+  }
+
+  // /points is stable for a location, so the grid and station URLs are kept
+  // on this device (not in the farm file or backups).
+  async function nwsPoint(lat, lng) {
+    const key = `${SprayWindow.roundCoord(lat)},${SprayWindow.roundCoord(lng)}`;
+    let cache = {};
+    try { cache = JSON.parse(localStorage.getItem(NWS_POINTS_KEY) || '{}') || {}; } catch (e) { cache = {}; }
+    if (cache[key] && cache[key].gridUrl) return cache[key];
+    const point = NwsWeather.parsePoint(await nwsJson(NwsWeather.pointsUrl(lat, lng)));
+    if (!point) throw new Error('NWS point');
+    if (Object.keys(cache).length >= 300) cache = {};
+    cache[key] = point;
+    try { localStorage.setItem(NWS_POINTS_KEY, JSON.stringify(cache)); } catch (e) { /* quota */ }
+    return point;
+  }
+
+  // Nearest station with a report under two hours old; the record names it.
+  async function nwsNearestObservation(point, c) {
+    if (!point.stationsUrl) return null;
+    const stations = NwsWeather.parseStations(await nwsJson(point.stationsUrl + '?limit=3'), c.lat, c.lng);
+    for (const st of stations) {
+      let obs = null;
+      try { obs = NwsWeather.parseObservation(await nwsJson(NwsWeather.observationUrl(st.id))); } catch (e) { obs = null; }
+      const age = obs && obs.observedAt ? Date.now() - Date.parse(obs.observedAt) : Infinity;
+      if (obs && obs.tempF != null && obs.windMph != null && age <= NWS_OBS_MAX_AGE_MS) return { obs, station: st };
+    }
+    return null;
   }
 
   // Coordinates for the weather lookup: forecast pin, mapped-field centroid, else device GPS.
@@ -3168,19 +3204,34 @@
     try {
       const c = await appCoords();
       if (!c) { toast('Select a mapped field or allow location access to fetch weather'); return; }
-      const res = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${c.lat.toFixed(4)}&longitude=${c.lng.toFixed(4)}` +
-        `&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,weather_code` +
-        `&temperature_unit=fahrenheit&wind_speed_unit=mph`);
-      const cur = (await res.json()).current;
-      $('#app-wind').value = Math.round(cur.wind_speed_10m * 10) / 10;
-      $('#app-wind-dir').value = COMPASS[Math.round(cur.wind_direction_10m / 22.5) % 16];
-      $('#app-temp').value = Math.round(cur.temperature_2m);
-      syncTempC();
-      $('#app-sky').value = `${skyDesc(cur.weather_code)}, ${cur.relative_humidity_2m}% RH`;
+      const point = await nwsPoint(c.lat, c.lng);
+      const found = await nwsNearestObservation(point, c);
+      if (found) {
+        const { obs, station } = found;
+        $('#app-wind').value = obs.windMph;
+        $('#app-wind-dir').value = compassFor(obs.windDeg);
+        $('#app-temp').value = obs.tempF;
+        syncTempC();
+        const miles = station.miles != null ? `, ${station.miles} mi` : '';
+        $('#app-sky').value = [obs.text, obs.rh != null ? `${obs.rh}% RH` : ''].filter(Boolean).join(', ')
+          + ` (NWS ${station.id}${miles})`;
+      } else {
+        const hours = NwsWeather.gridHours(await nwsJson(point.gridUrl), Date.now() - 3600000,
+          { maxHours: 1, timeZone: point.timeZone });
+        const h = hours[0];
+        if (!h) throw new Error('NWS grid empty');
+        $('#app-wind').value = h.wind;
+        $('#app-wind-dir').value = compassFor(h.windDir);
+        $('#app-temp').value = h.temp;
+        syncTempC();
+        $('#app-sky').value = [NwsWeather.skyFromCover(h.skyCover), h.rh != null ? `${h.rh}% RH` : ''].filter(Boolean).join(', ')
+          + ' (NWS forecast grid — no station report)';
+      }
       toast('Weather stamped — change it if the boom differs');
     } catch (e) {
-      toast('Could not fetch weather — check your connection');
+      toast(e && e.status === 404
+        ? 'No NWS weather for this spot — U.S. locations only'
+        : 'Could not fetch weather — check your connection');
     } finally {
       btns.forEach((b) => { b.disabled = false; });
       if (stamp) stamp.textContent = 'Stamp weather';
@@ -7454,65 +7505,31 @@
       .filter((t) => t.pin);
   }
 
-  function bestMatchUrl(lats, lngs) {
-    return `https://api.open-meteo.com/v1/forecast?latitude=${lats.join(',')}&longitude=${lngs.join(',')}`
-      + `&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,wind_speed_10m,wind_gusts_10m,wind_direction_10m,weather_code`
-      + `&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&forecast_days=3&timezone=auto&cell_selection=land`;
-  }
-
-  function hrrrUrl(lats, lngs) {
-    return `https://api.open-meteo.com/v1/gfs?latitude=${lats.join(',')}&longitude=${lngs.join(',')}`
-      + `&hourly=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m,wind_direction_10m,weather_code`
-      + `&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&forecast_hours=48&timezone=auto&models=hrrr_conus`;
-  }
-
-  async function fetchOpenMeteoJson(url) {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('Open-Meteo ' + res.status);
-    return res.json();
-  }
-
+  // Pins in the same ~2.5 km NWS cell share one gridpoint request.
   async function fetchForecastTargets(targets, seq) {
     const store = forecastStore();
     const nowMs = Date.now();
+    const grids = new Map();
     for (const group of SprayWindow.chunk(targets, SprayWindow.BATCH_SIZE)) {
       if (seq !== forecastSeq) return;
-      const lats = group.map((t) => SprayWindow.roundCoord(t.pin.lat));
-      const lngs = group.map((t) => SprayWindow.roundCoord(t.pin.lng));
-      let fallbackList = [];
-      try {
-        fallbackList = SprayWindow.parseOpenMeteoPayload(await fetchOpenMeteoJson(bestMatchUrl(lats, lngs)));
-      } catch (err) {
-        group.forEach((t) => { forecastErrors[t.key] = 'Could not fetch the forecast — check your connection'; });
-        continue;
-      }
-      const conusIdx = [];
-      group.forEach((t, i) => {
-        if (SprayWindow.isConus(t.pin.lat, t.pin.lng)) conusIdx.push(i);
-      });
-      let hrrrList = [];
-      if (conusIdx.length) {
+      await Promise.all(group.map(async (t) => {
         try {
-          const hlats = conusIdx.map((i) => lats[i]);
-          const hlngs = conusIdx.map((i) => lngs[i]);
-          hrrrList = SprayWindow.parseOpenMeteoPayload(await fetchOpenMeteoJson(hrrrUrl(hlats, hlngs)));
+          const point = await nwsPoint(t.pin.lat, t.pin.lng);
+          if (!grids.has(point.gridUrl)) grids.set(point.gridUrl, nwsJson(point.gridUrl));
+          const hours = NwsWeather.gridHours(await grids.get(point.gridUrl), nowMs,
+            { maxHours: SprayWindow.HORIZON_HOURS, timeZone: point.timeZone });
+          if (!hours.length) {
+            forecastErrors[t.key] = 'No forecast returned for this pin.';
+            return;
+          }
+          store[t.key] = SprayWindow.buildGridEntry(t.key, t.pin, hours, point.gridId, nowMs);
+          delete forecastErrors[t.key];
         } catch (err) {
-          hrrrList = [];
+          forecastErrors[t.key] = err && err.status === 404
+            ? 'No NWS forecast for this pin — U.S. locations only.'
+            : 'Could not fetch the forecast — check your connection';
         }
-      }
-      group.forEach((t, i) => {
-        const fallback = fallbackList[i];
-        if (!fallback || !fallback.hourly) {
-          forecastErrors[t.key] = 'No forecast returned for this pin.';
-          return;
-        }
-        const slot = conusIdx.indexOf(i);
-        const hrrrJson = slot >= 0 ? hrrrList[slot] : null;
-        const hrrrOk = hrrrJson && hrrrJson.hourly && Array.isArray(hrrrJson.hourly.time)
-          && hrrrJson.hourly.time.length;
-        store[t.key] = SprayWindow.buildEntry(t.key, t.pin, hrrrOk ? hrrrJson : null, fallback, nowMs);
-        delete forecastErrors[t.key];
-      });
+      }));
     }
     if (seq !== forecastSeq) return;
     persistForecastStore();
@@ -7549,7 +7566,7 @@
           return;
         }
         await prefetchFieldForecasts(true);
-        toast(navigator.onLine ? 'Outlook updated from Open-Meteo' : 'Offline — showing saved outlook');
+        toast(navigator.onLine ? 'Outlook updated from the National Weather Service' : 'Offline — showing saved outlook');
         return;
       }
       const field = getField(key);
@@ -7561,7 +7578,7 @@
       }
       const seq = ++forecastSeq;
       await fetchForecastTargets([{ key, pin }], seq);
-      if (!forecastErrors[key]) toast('Outlook updated from Open-Meteo');
+      if (!forecastErrors[key]) toast('Outlook updated from the National Weather Service');
       else toast(forecastErrors[key]);
     } catch (e) {
       toast('Could not fetch the forecast — check your connection');
@@ -7757,19 +7774,16 @@
         const { score, reasons } = SprayWindow.scoreSprayHour(h);
         const hr = new Date(h.time).getHours();
         const detail = `${label} ${hr}:00 — ${reasons.join('; ')} · ${fmtTempPair(h.temp)}, RH ${h.rh}%`
-          + (h.source === 'hrrr' ? ' · HRRR' : h.source ? ` · ${h.source}` : '');
+          + (h.source === 'nws' ? ' · NWS' : '');
         return `<button type="button" class="fc-block fc-${score}${stale ? ' fc-stale' : ''}"
           data-fc-detail="${esc(detail)}" aria-label="${esc(`${label} ${hr}:00 ${score}`)}">${hr}</button>`;
       }).join('');
       return `<div class="fc-day"><span class="fc-day-label">${label}</span><div class="fc-blocks">${blocks}</div></div>`;
     }).join('');
-    const seam = SprayWindow.hrrrEndLabel(cache.hours);
     const coords = pin
       ? `${Number(pin.lat).toFixed(4)}, ${Number(pin.lng).toFixed(4)}`
       : `${cache.lat}, ${cache.lng}`;
-    const grid = (cache.gridLat != null && cache.gridLng != null)
-      ? ` · model point ${Number(cache.gridLat).toFixed(4)}, ${Number(cache.gridLng).toFixed(4)}`
-      : '';
+    const grid = cache.gridId ? ` · NWS grid ${cache.gridId}` : '';
     const banner = copy.banner
       ? `<p class="fc-banner fc-banner-${copy.banner}">${esc(copy.text)}</p>`
       : '';
@@ -7780,7 +7794,6 @@
       </div>
       <p class="fc-evidence">Pin ${esc(coords)}${esc(grid)} · ${esc(SprayWindow.modelLabel(cache.model))}</p>
       ${banner}
-      ${seam ? `<p class="fc-seam">High-resolution (HRRR) through ${esc(seam)} · longer-range model after that.</p>` : ''}
       ${dayHtml}
       <p class="fc-legend"><span class="fc-key fc-good"></span> go
         <span class="fc-key fc-fair"></span> wait

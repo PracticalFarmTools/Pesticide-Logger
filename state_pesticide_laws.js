@@ -3379,16 +3379,16 @@ const STATE_LAWS = {
     "privateDutyScope": "rupOnly"
   },
   "NV": {
-    "reviewedAt": "2026-08-14",
+    "reviewedAt": "2026-09-24",
     "agency": "Nevada Department of Agriculture",
     "citation": {
-      "reference": "NAC 555.410",
+      "reference": "NAC 555.410, 555.413, 555.700, 555.705",
       "url": "https://www.leg.state.nv.us/NAC/NAC-555.html#NAC555Sec410"
     },
     "retentionYears": 2,
-    "appliesTo": "Persons subject to NAC 555.400/custom application license categories; aerial/agricultural ground and urban/structural fields have different records. Aerial/agricultural monthly pest-control operation reports are required.",
+    "appliesTo": "For-hire applicators (NAC 555.400/.410); non-private applicators keep general-use records (555.413); commercial, non-private and private applicators keep restricted-use records (555.700).",
     "verification": "researched",
-    "notes": "For aerial/agricultural ground: date, person/county, pilot/applicator, crop/site, units, field number/name/site ID, brand/generic + EPA + dosage, purpose, start/finish time, start/finish temperature and wind. Urban/structural records are narrower, with extra weather/area fields for ornamental/turf/right-of-way/aquatic/fumigation.",
+    "notes": "For aerial/agricultural ground: date, person/county, pilot/applicator, crop/site, units, field number/name/site ID, brand/generic + EPA + dosage, purpose, start/finish time, start/finish temperature and wind. Urban/structural records are narrower, with extra weather/area fields for ornamental/turf/right-of-way/aquatic/fumigation. 2026-09-24 primary-text audit: R6 scope quote: “any authorized commercial applicator, certified non-private applicator or private applicator applying or supervising the application of a restricted-use pesticide shall ... 1. Keep and maintain an accurate and legible record of each property treated with a restricted-use pesticide for 2 years” General-use private sprays keep the core boxes. Private RUP list needs time and date only; purpose and start/finish times apply to private only in fumigation categories. The only 24-hour items are telephone reports of spills and aircraft accidents; no clock to make the record.",
     "fields": [
       {
         "name": "date",
@@ -3406,7 +3406,10 @@ const STATE_LAWS = {
         "name": "county",
         "label": "County of application",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "applicator_name",
@@ -3430,7 +3433,10 @@ const STATE_LAWS = {
         "name": "site_id",
         "label": "Site ID",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "brand_name",
@@ -3448,64 +3454,104 @@ const STATE_LAWS = {
         "name": "rate",
         "label": "Application rate",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "target_pest",
-        "label": "Target pest",
+        "label": "Purpose / target of the treatment",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "start_time",
         "label": "Start time",
         "type": "time",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "end_time",
         "label": "End time",
         "type": "time",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "temperature",
-        "label": "Temperature",
+        "label": "Temperature (start and finish)",
         "type": "number",
-        "required": false
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "wind_speed",
-        "label": "Wind speed",
+        "label": "Wind speed (start and finish)",
         "type": "number",
-        "required": false
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "wind_direction",
-        "label": "Wind direction",
+        "label": "Wind direction (start and finish)",
         "type": "string",
-        "required": false
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "total_mix_applied",
-        "label": "Total diluted mix applied",
+        "label": "Total concentrated and diluted amount applied",
         "type": "string",
-        "required": false
+        "required": true
       },
       {
         "name": "concentration",
         "label": "Application concentration",
         "type": "string",
         "required": false
+      },
+      {
+        "name": "applicator_license",
+        "label": "Applicator certification / license #",
+        "type": "string",
+        "required": true
+      },
+      {
+        "name": "customer_address",
+        "label": "Customer address",
+        "type": "string",
+        "required": true
+      },
+      {
+        "name": "noncertified_applicator_name",
+        "label": "Noncertified / trainee applicator",
+        "type": "string",
+        "required": false
       }
     ],
-    "recordWithinHours": 24,
+    "recordWithinHours": null,
     "customerCopyDays": null,
     "privateDuty": "required",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
-    }
+      "count": null,
+      "unit": "none"
+    },
+    "privateDutyScope": "rupOnly"
   },
   "NH": {
     "reviewedAt": "2026-09-24",

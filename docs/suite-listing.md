@@ -29,6 +29,19 @@ never rates, REI, or PHI.
 **Not:** “& Database.” Not “Syncs when connected” as a cloud. Not a chemical
 encyclopedia.
 
+## Ready-made change (still Coming soon)
+
+`docs/catalog-card.patch` applies this copy to
+`fsma-calculator-2026/practical-farm-tools-home/index.html` (title, blurb,
+keywords; badge and disabled button unchanged). The EPA sentence is left off
+the catalog: “this host” means the logger's origin, not the catalog page.
+
+```bash
+cd fsma-calculator-2026
+git am ../Pesticide-Logger/docs/catalog-card.patch   # adjust the path
+git push
+```
+
 ## Delete from the live catalog card
 
 - “Pesticide Logger **& Database**”

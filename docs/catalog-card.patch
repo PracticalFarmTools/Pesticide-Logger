@@ -1,0 +1,46 @@
+From 0344dbaa7d82ffc0ba00c0cc3c8df5fbc60367d1 Mon Sep 17 00:00:00 2001
+From: Cursor Agent <cursoragent@cursor.com>
+Date: Thu, 24 Sep 2026 15:08:35 +0000
+Subject: [PATCH] Catalog card: Pesticide Logger (drop '& Database' and
+ 'Syncs'); stays Coming soon
+
+---
+ practical-farm-tools-home/index.html | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/practical-farm-tools-home/index.html b/practical-farm-tools-home/index.html
+index 2f78b05..15d27ce 100644
+--- a/practical-farm-tools-home/index.html
++++ b/practical-farm-tools-home/index.html
+@@ -7,7 +7,7 @@
+   <!-- SEO Meta Tags -->
+   <title>Practical Farm Tools — Software for Farmers and Growers</title>
+   <meta name="description" content="Practical, local-first software utilities for farmers. Tools that work in the field without a signal and keep your data on your device.">
+-  <meta name="keywords" content="farm software, offline-first PWA, FSMA exemption calculator, pesticide logging, agriculture database, rural tech">
++  <meta name="keywords" content="farm software, offline-first PWA, FSMA exemption calculator, pesticide spray records, pesticide logging, rural tech">
+   <meta name="author" content="Practical Farm Tools">
+   
+   <!-- Open Graph / Facebook -->
+@@ -141,7 +141,7 @@
+           <div class="card-top">
+             <div class="card-header-row">
+               <div class="card-icon-container">
+-                <!-- SVG Icon: Clipboard + Database -->
++                <!-- SVG Icon: Clipboard -->
+                 <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                   <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                   <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+@@ -153,8 +153,8 @@
+               </div>
+               <span class="badge pending">Coming Soon</span>
+             </div>
+-            <h3>Pesticide Logger &amp; Database</h3>
+-            <p>State-aware pesticide application records stored locally on your device. Syncs when connected — no signal required in the field.</p>
++            <h3>Pesticide Logger</h3>
++            <p>State-shaped spray records on your device. No account. Hand the inspector a file that opens on any laptop. Cab and shop catch up by a file (AirDrop, USB, or a folder you already sync). We do not store your book. The label is the law.</p>
+           </div>
+           <div class="card-action">
+             <button class="btn btn-disabled" disabled aria-disabled="true">In Development</button>
+-- 
+2.43.0
+

@@ -307,16 +307,16 @@ const STATE_LAWS = {
     "privateDutyScope": "rupOnly"
   },
   "AZ": {
-    "reviewedAt": "2026-07-31",
+    "reviewedAt": "2026-09-24",
     "agency": "Arizona Department of Agriculture",
     "citation": {
       "reference": "Ariz. Admin. Code R3-3-402; Form 1080/R3-3-302 for custom applications",
       "url": "https://www.law.cornell.edu/regulations/arizona/Ariz-Admin-Code-SS-R3-3-402"
     },
-    "retentionYears": 3,
+    "retentionYears": 2,
     "appliesTo": "Private and golf applicators for RUP, FIFRA section 18, and experimental-use pesticide applications; custom applicators use Form 1080/application report process.",
     "verification": "researched",
-    "notes": "Private field records include seller name/permit number, regulated grower, crop/site acres, rate per acre of active ingredient or formulation, total volume per acre, and county/township/range/section. Form 1080 for custom work captures start/end times, equipment tag, wind direction/velocity, operator/pilot, weekly submission to ADA, and deviations. Official AZSOS Title 3 PDF returned 403 on 2026-08-14; Cornell LII remains the citation watch until a primary host is found.",
+    "notes": "Private field records include seller name/permit number, regulated grower, crop/site acres, rate per acre of active ingredient or formulation, total volume per acre, and county/township/range/section. Form 1080 for custom work captures start/end times, equipment tag, wind direction/velocity, operator/pilot, weekly submission to ADA, and deviations. Official AZSOS Title 3 PDF returned 403 on 2026-08-14; Cornell LII remains the citation watch until a primary host is found. 2026-09-24 primary-text audit: Retention: “C. A private applicator and golf applicator shall retain records required by this Section for at least two years from the date of the private application” (R3-3-402); custom Form 1080 copies and disposal records are also 2 years. Private record “Following an application” has no clock; custom Form 1080 is due by the Thursday after the application week (R3-3-404). Custom: start and end time, wind direction and velocity, business name + credential # (R3-3-302(D)). Official AZSOS host blocks automated readers; LII mirror used.",
     "fields": [
       {
         "name": "applicator_name",
@@ -332,9 +332,12 @@ const STATE_LAWS = {
       },
       {
         "name": "permit_number",
-        "label": "Permit / operator ID",
+        "label": "Seller name & permit # (as required)",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "private"
+        ]
       },
       {
         "name": "brand_name",
@@ -412,15 +415,60 @@ const STATE_LAWS = {
         "name": "start_time",
         "label": "Start time",
         "type": "time",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
+      },
+      {
+        "name": "end_time",
+        "label": "End time",
+        "type": "time",
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
+      },
+      {
+        "name": "wind_speed",
+        "label": "Wind speed",
+        "type": "number",
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
+      },
+      {
+        "name": "wind_direction",
+        "label": "Wind direction",
+        "type": "string",
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
+      },
+      {
+        "name": "company_license",
+        "label": "Grower or custom applicator business name & credential #",
+        "type": "string",
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
+      },
+      {
+        "name": "noncertified_applicator_name",
+        "label": "Noncertified / trainee applicator",
+        "type": "string",
+        "required": false
       }
     ],
-    "recordWithinHours": 24,
+    "recordWithinHours": null,
     "customerCopyDays": null,
     "privateDuty": "required",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
+      "count": null,
+      "unit": "none"
     }
   },
   "AR": {

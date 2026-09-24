@@ -1403,6 +1403,15 @@ check('v2.9.46: product library opens the editor from a row and stacks as cards 
   assert.ok(phone && phone.includes('display: block'), 'rows become cards under 640px');
 });
 
+check('v2.9.48: first blocked save leads with the one-step Next line, not a count', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const blocked = app.split("if (!asDraft && data.settings.strictCompliance !== false && !result.complete) {")[1].split('return;')[0];
+  assert.ok(blocked.includes('const step = nextLogStep();'));
+  assert.ok(blocked.indexOf('tr(step.text)') < blocked.indexOf('Strict mode: fill'), 'Next line first; count only as a fallback');
+  assert.ok(blocked.includes("tr('Or save as incomplete draft.')"));
+  assert.ok(blocked.includes('showSaveMissingChips(result)'), 'strict refusal unchanged');
+});
+
 check('v2.9.47: weather is NWS (public domain) — no Open-Meteo free tier in a paid app', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');

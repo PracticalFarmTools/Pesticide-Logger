@@ -3440,7 +3440,11 @@
     if (!asDraft && data.settings.strictCompliance !== false && !result.complete) {
       updateCompliancePreview();
       showSaveMissingChips(result);
-      toast(`Strict mode: fill ${result.missing.length} required field(s), or save as incomplete draft`);
+      // One step, not a count: the chips under the form carry the full list.
+      const step = nextLogStep();
+      toast(step && !step.ready
+        ? `${tr(step.text)}${step.where ? ' — ' + tr(step.where) : ''}. ${tr('Or save as incomplete draft.')}`
+        : `Strict mode: fill ${result.missing.length} required field(s), or save as incomplete draft`);
       return;
     }
     if (!asDraft && data.settings.strictCompliance !== false && !result.intervalsOk) {

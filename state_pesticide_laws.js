@@ -2945,7 +2945,7 @@ const STATE_LAWS = {
     }
   },
   "MO": {
-    "reviewedAt": "2026-08-14",
+    "reviewedAt": "2026-09-24",
     "agency": "Missouri Department of Agriculture",
     "citation": {
       "reference": "2 CSR 70-25.120 (effective Jan. 1, 2025)",
@@ -2954,7 +2954,7 @@ const STATE_LAWS = {
     "retentionYears": 3,
     "appliesTo": "Certified commercial applicators/employers: all pesticides; certified noncommercial applicators and public operators/employers: RUPs.",
     "verification": "researched",
-    "notes": "Records completed within three business days. Outdoor weather required except specified structural/termite applications within 10 feet of buildings. Notes should capture agricultural producer request for less-than-label concentration if applicable.",
+    "notes": "Records completed within three business days. Outdoor weather required except specified structural/termite applications within 10 feet of buildings. Notes should capture agricultural producer request for less-than-label concentration if applicable. 2026-09-24 primary-text audit: Who-clause: 2 CSR 70-25.120 binds commercial applicators, “(2) Certified noncommercial applicators and certified public operators or their employers shall keep and maintain records for the use of restricted use pesticides (RUP).” RSMo 281.040 and 2 CSR 70-25.130 (private) impose no record. Outdoor applications record air temperature, measured wind speed and direction; SLN # if applicable. The SOS PDF blocks automated readers; text verified on the LII mirror (effective Jan. 1, 2025).",
     "fields": [
       {
         "name": "applicator_name",
@@ -3042,15 +3042,15 @@ const STATE_LAWS = {
       },
       {
         "name": "dilution_rate",
-        "label": "Dilution rate",
+        "label": "Mixture rate (if applicable)",
         "type": "string",
-        "required": true
+        "required": false
       },
       {
         "name": "total_mix_applied",
-        "label": "Total diluted mix applied",
+        "label": "Total mixture used (if applicable)",
         "type": "string",
-        "required": true
+        "required": false
       },
       {
         "name": "rate",
@@ -3066,32 +3066,38 @@ const STATE_LAWS = {
       },
       {
         "name": "temperature",
-        "label": "Temperature",
+        "label": "Temperature (outdoor; not structural/termite within 10 ft)",
         "type": "number",
-        "required": false
+        "required": true
       },
       {
         "name": "wind_speed",
-        "label": "Wind speed",
+        "label": "Wind speed (outdoor; not structural/termite within 10 ft)",
         "type": "number",
-        "required": false
+        "required": true
       },
       {
         "name": "wind_direction",
-        "label": "Wind direction",
+        "label": "Wind direction (outdoor; not structural/termite within 10 ft)",
         "type": "string",
-        "required": false
+        "required": true
       },
       {
         "name": "notes",
         "label": "Notes / unexpected occurrences",
         "type": "string",
         "required": false
+      },
+      {
+        "name": "state_registration_no",
+        "label": "State registration / SLN number",
+        "type": "string",
+        "required": false
       }
     ],
     "recordWithinHours": 72,
     "customerCopyDays": null,
-    "privateDuty": "required",
+    "privateDuty": "none",
     "recordDeadline": {
       "count": 3,
       "unit": "businessDays"

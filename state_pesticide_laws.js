@@ -829,7 +829,7 @@ const STATE_LAWS = {
     "privateDutyScope": "rupOnly"
   },
   "CT": {
-    "reviewedAt": "2026-08-14",
+    "reviewedAt": "2026-09-24",
     "agency": "Connecticut Department of Energy and Environmental Protection",
     "citation": {
       "reference": "Conn. Gen. Stat. §22a-58(c)–(d)",
@@ -838,13 +838,16 @@ const STATE_LAWS = {
     "retentionYears": 5,
     "appliesTo": "Commercial applicators: use and supervision of pesticides (§22a-58(d), five-year retention). Private applicators: each use of restricted-use pesticides (§22a-58(c)). Annual summaries to DEEP by January 31 are reports, not this log.",
     "verification": "researched",
-    "notes": "Official CGA Chapter 441 (read 2026-08-14). Commercial records include supervisor and operator names and certification numbers, kind and amount of pesticide, date and place, pest, and crop or site. Private RUP records include applicator name, kind and amount, date and place, crop or site, and acreage; private also files a copy with the commissioner by January 31. This matrix uses the commercial list so commercial sprays are not under-asked; a private RUP spray may show supervisor/pest boxes the private subsection does not name. No customer-copy day count in §22a-58. Statute does not set an hours clock (24-hour fallback is operational).",
+    "notes": "Official CGA Chapter 441 (read 2026-08-14). Commercial records include supervisor and operator names and certification numbers, kind and amount of pesticide, date and place, pest, and crop or site. Private RUP records include applicator name, kind and amount, date and place, crop or site, and acreage; private also files a copy with the commissioner by January 31. This matrix uses the commercial list so commercial sprays are not under-asked; a private RUP spray may show supervisor/pest boxes the private subsection does not name. No customer-copy day count in §22a-58. Statute does not set an hours clock (24-hour fallback is operational). 2026-09-24 primary-text audit: R6 scope quote: “(c) Private applicators shall maintain a record with respect to each use of restricted use pesticides” General-use private sprays keep the core boxes. 22a-58(c) private list: applicator name, kind and amount, date and place, crop/site and acreage. 22a-58(d) commercial list: supervisor and operator names + certification #, kind and amount, date and place, pest, crop/site; commercial keeps written operator instructions with the record (RCSA 22a-66-5). Five years is the commercial period; 22a-58(c) states none for private (annual copy to DEEP by January 31). No clock to make the record.",
     "fields": [
       {
         "name": "supervisor_name",
         "label": "Supervising applicator",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "applicator_name",
@@ -856,7 +859,10 @@ const STATE_LAWS = {
         "name": "applicator_license",
         "label": "Applicator certification / license #",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "brand_name",
@@ -874,7 +880,10 @@ const STATE_LAWS = {
         "name": "area_treated",
         "label": "Area treated",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "private"
+        ]
       },
       {
         "name": "date",
@@ -892,7 +901,10 @@ const STATE_LAWS = {
         "name": "target_pest",
         "label": "Target pest",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "crop_treated",
@@ -901,13 +913,14 @@ const STATE_LAWS = {
         "required": true
       }
     ],
-    "recordWithinHours": 24,
+    "recordWithinHours": null,
     "customerCopyDays": null,
     "privateDuty": "required",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
-    }
+      "count": null,
+      "unit": "none"
+    },
+    "privateDutyScope": "rupOnly"
   },
   "DE": {
     "reviewedAt": "2026-07-31",

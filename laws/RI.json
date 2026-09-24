@@ -1,6 +1,6 @@
 {
   "code": "RI",
-  "reviewedAt": "2026-08-14",
+  "reviewedAt": "2026-09-24",
   "agency": "Rhode Island Department of Environmental Management",
   "citation": {
     "reference": "250-RICR-40-15-2.6(B) commercial; 2.6(C) private RUP / state-limited-use",
@@ -9,7 +9,7 @@
   "retentionYears": 2,
   "appliesTo": "Commercial applicators: general-use, restricted-use, and state-limited-use applications (§2.6(B)). Certified private applicators: yearly use of each restricted-use and state-limited-use pesticide (§2.6(C)).",
   "verification": "researched",
-  "notes": "Official RICR (read 2026-08-14). Commercial §2.6(B) is the field list on this row (formulation, % AI, invoice at the property, persons who participated). Private §2.6(C) names a shorter RUP/state-limited-use list (brand, EPA number, amount, purpose/target, farm name/address and field, date, applicator name and certification number) recorded within 14 days, kept two calendar years. Do not treat the commercial invoice extras as the private statute. RUP applications recorded no later than 14 days.",
+  "notes": "Official RICR (read 2026-08-14). Commercial §2.6(B) is the field list on this row (formulation, % AI, invoice at the property, persons who participated). Private §2.6(C) names a shorter RUP/state-limited-use list (brand, EPA number, amount, purpose/target, farm name/address and field, date, applicator name and certification number) recorded within 14 days, kept two calendar years. Do not treat the commercial invoice extras as the private statute. RUP applications recorded no later than 14 days. 2026-09-24 primary-text audit: 250-RICR-40-10-1 §2.6(C)(9): private restricted-use applications “must be recorded no later than 14 days following pesticide applications”; §2.6(B) commercial sets no clock. Private list: farm name and address, field, size of area, purpose or target pest. Private scope is restricted-use and state-limited-use products, so the full private list stays (the app cannot tell a state-limited-use product).",
   "fields": [
     {
       "name": "brand_name",
@@ -21,13 +21,16 @@
       "name": "pesticide_formulation",
       "label": "Pesticide formulation",
       "type": "string",
-      "required": true
+      "required": true,
+      "classes": [
+        "commercial"
+      ]
     },
     {
       "name": "active_ingredient",
       "label": "Active ingredient",
       "type": "string",
-      "required": true
+      "required": false
     },
     {
       "name": "amount_applied",
@@ -37,9 +40,12 @@
     },
     {
       "name": "total_mix_applied",
-      "label": "Total diluted mix applied",
+      "label": "Total dilution spray applied (when listed on the label)",
       "type": "string",
-      "required": true
+      "required": true,
+      "classes": [
+        "commercial"
+      ]
     },
     {
       "name": "epa_reg_no",
@@ -51,7 +57,10 @@
       "name": "application_purpose",
       "label": "Purpose of application",
       "type": "string",
-      "required": true
+      "required": true,
+      "classes": [
+        "commercial"
+      ]
     },
     {
       "name": "target_pest",
@@ -75,13 +84,19 @@
       "name": "customer_name",
       "label": "Customer / person for whom applied",
       "type": "string",
-      "required": true
+      "required": true,
+      "classes": [
+        "commercial"
+      ]
     },
     {
       "name": "customer_address",
       "label": "Customer address",
       "type": "string",
-      "required": true
+      "required": true,
+      "classes": [
+        "commercial"
+      ]
     },
     {
       "name": "applicator_name",
@@ -99,14 +114,27 @@
       "name": "notes",
       "label": "Notes / unexpected occurrences",
       "type": "string",
-      "required": true
+      "required": false
+    },
+    {
+      "name": "area_treated",
+      "label": "Area treated",
+      "type": "string",
+      "required": true,
+      "classes": [
+        "private"
+      ]
     }
   ],
-  "recordWithinHours": 24,
+  "recordWithinHours": null,
   "customerCopyDays": null,
   "privateDuty": "required",
   "recordDeadline": {
-    "count": 24,
-    "unit": "hours"
+    "count": null,
+    "unit": "none"
+  },
+  "privateRecordDeadline": {
+    "count": 14,
+    "unit": "calendarDays"
   }
 }

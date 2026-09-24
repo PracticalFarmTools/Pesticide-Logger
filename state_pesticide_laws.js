@@ -2846,7 +2846,7 @@ const STATE_LAWS = {
     }
   },
   "MS": {
-    "reviewedAt": "2026-08-18",
+    "reviewedAt": "2026-09-24",
     "agency": "Mississippi Department of Agriculture and Commerce, Bureau of Plant Industry",
     "citation": {
       "reference": "Title 2, Part 1, Subpart 3, Chapter 09 §104 (private RUP) and §206 (other certified RUP applicators)",
@@ -2855,7 +2855,7 @@ const STATE_LAWS = {
     "retentionYears": 2,
     "appliesTo": "Certified private applicators using restricted-use pesticides to produce an agricultural commodity (Chapter 09 §104). Certified applicators under Subchapter 02 / §206 (RUP work not required by other Mississippi licensing to be licensed). Not professional-services Chapter 11.",
     "verification": "researched",
-    "notes": "Official MDAC Chapter 09 PDF (uploads/1639.pdf, read 2026-08-18; source Miss. Code Ann. §69-23-109; amended Nov 2, 2024). Index: https://www.mdac.ms.gov/agency-info/laws-regulations/regulation-subpart-3/ item 09. §104 certified private applicators shall keep complete and accurate records of all work performed for at least two years: brand or product name; EPA registration number; total amount applied; size of the area treated; crop, commodity, stored product or site; date; location. That shared agricultural list is this row. §206 (Subchapter 02 certified applicators) adds name and address of the person for whom the RUP is applied; time as well as date; name and certification number of the certified applicator — do not treat those for-hire extras as required private boxes, and do not paste Chapter 11 professional-services WDI extras (PSI, nozzle, vehicle ID) onto a farm row. No completion clock in Chapter 09 (24-hour fallback is operational).",
+    "notes": "Official MDAC Chapter 09 PDF (uploads/1639.pdf, read 2026-08-18; source Miss. Code Ann. §69-23-109; amended Nov 2, 2024). Index: https://www.mdac.ms.gov/agency-info/laws-regulations/regulation-subpart-3/ item 09. §104 certified private applicators shall keep complete and accurate records of all work performed for at least two years: brand or product name; EPA registration number; total amount applied; size of the area treated; crop, commodity, stored product or site; date; location. That shared agricultural list is this row. §206 (Subchapter 02 certified applicators) adds name and address of the person for whom the RUP is applied; time as well as date; name and certification number of the certified applicator — do not treat those for-hire extras as required private boxes, and do not paste Chapter 11 professional-services WDI extras (PSI, nozzle, vehicle ID) onto a farm row. No completion clock in Chapter 09 (24-hour fallback is operational). 2026-09-24 primary-text audit: §206 (Subchapter 02 certified applicators): name and address of the person for whom applied, time and date, name and certification #. §104 private: “all work performed” — the full private list stays (not narrowed to RUP) because the text is ambiguous. No clock.",
     "fields": [
       {
         "name": "brand_name",
@@ -2898,14 +2898,50 @@ const STATE_LAWS = {
         "label": "Location / field / site description",
         "type": "string",
         "required": true
+      },
+      {
+        "name": "customer_name",
+        "label": "Customer / person for whom applied",
+        "type": "string",
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
+      },
+      {
+        "name": "customer_address",
+        "label": "Customer address",
+        "type": "string",
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
+      },
+      {
+        "name": "application_time",
+        "label": "Application time",
+        "type": "time",
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
+      },
+      {
+        "name": "applicator_license",
+        "label": "Applicator certification / license #",
+        "type": "string",
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       }
     ],
-    "recordWithinHours": 24,
+    "recordWithinHours": null,
     "customerCopyDays": null,
     "privateDuty": "required",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
+      "count": null,
+      "unit": "none"
     }
   },
   "MO": {

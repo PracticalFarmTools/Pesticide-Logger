@@ -260,7 +260,9 @@ check('each state keeps its own citation URL and field list; no mixed matrices',
   assert.ok(!names('MS').includes('sprayer_pressure'), 'Mississippi farm row must not require WDI PSI');
   assert.ok(!names('MS').includes('nozzle_type'), 'Mississippi farm row must not require termiticide nozzles');
   assert.ok(names('MS').includes('area_treated*'), 'Mississippi Chapter 09 §104 names size of the area treated');
-  assert.ok(!names('MS').includes('customer_name'), 'Mississippi farm row must not require §206 customer boxes for private');
+  (states.MS.fields || []).filter((f) => /^customer_/.test(f.name)).forEach((f) => {
+    assert.deepStrictEqual(Array.from(f.classes || []), ['commercial'], 'Mississippi §206 customer boxes are commercial-only, never private');
+  });
   assert.ok(names('OK').includes('area_treated*'), 'Oklahoma 35:30-17-21 names size of area treated');
   assert.ok(!names('OK').includes('sprayer_pressure'), 'Oklahoma farm row must not require WDI PSI');
   assert.strictEqual(states.HI.customerCopyDays, null, 'HI employer copy is before application, not a 30-day clock');

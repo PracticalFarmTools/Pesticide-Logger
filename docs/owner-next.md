@@ -1,6 +1,6 @@
 # Owner next — what only you can do
 
-**App is v2.9.45.** Product grade (2026-08-19 against v2.9.37, URL/payment out
+**App is v2.9.46.** Product grade (2026-08-19 against v2.9.37, URL/payment out
 of scope): `docs/seller-grade-report.md` — **A−**. Listing paste:
 `docs/suite-listing.md`. Merchant: **Lemon Squeezy** (`docs/lemonsqueezy.md`).
 This file is the **order**. Do not skip. Do not attach

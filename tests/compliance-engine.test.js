@@ -345,6 +345,45 @@ check('NY private matrix skips commercial 325.25 rows; commercial and both keep 
   assert.ok(Compliance.fieldClassListed({}, 'private') === true);
 });
 
+check('R6: rupOnly scope relaxes the state list only for a known general-use private mix', () => {
+  const law = Object.assign({}, STATE_LAWS.PA, { privateDutyScope: 'rupOnly', privateDuty: 'required' });
+  const laws = Object.assign({}, STATE_LAWS, { PA: law });
+  const run = (app, cls) => Compliance.evaluateCompliance(app, {
+    stateLaws: laws, settings: { state: 'PA', applicatorClass: cls || 'private' },
+    now: new Date('2026-07-02T12:00:00Z'), deadlineUtils: DeadlineUtils
+  });
+  const gup = coreApp({ products: [{ productName: 'Glyphosate 4', total: 2, reiHours: 12, phiDays: 14, rup: false }] });
+  const relaxed = run(gup);
+  assert.strictEqual(relaxed.rupScopeRelaxed, true);
+  assert.strictEqual(relaxed.status, 'fields_complete');
+  assert.ok(relaxed.warnings.some(w => /covers RUPs/.test(w)));
+
+  const withRup = coreApp({ products: [
+    { productName: 'Glyphosate 4', total: 2, reiHours: 12, phiDays: 14, rup: false },
+    { productName: 'Atrazine 4L', total: 1, reiHours: 12, phiDays: 60, rup: true }
+  ] });
+  const full = run(withRup);
+  assert.strictEqual(full.rupScopeRelaxed, false);
+  assert.ok(full.missingFields.length > 0, 'RUP mix keeps the state list');
+
+  const unknown = coreApp();
+  assert.strictEqual(run(unknown).rupScopeRelaxed, false, 'unset rup never relaxes');
+  assert.strictEqual(Compliance.mixMayIncludeRup({ products: [] }), true);
+  assert.strictEqual(run(gup, 'commercial').rupScopeRelaxed, false);
+  assert.strictEqual(run(gup, 'both').rupScopeRelaxed, false);
+
+  const coreMissing = run(Object.assign({}, gup, { crop: '' }));
+  assert.strictEqual(coreMissing.complete, false, 'core stays required');
+  const noPhi = run(coreApp({ products: [{ productName: 'Glyphosate 4', total: 2, reiHours: 12, rup: false }] }));
+  assert.notStrictEqual(noPhi.status, 'fields_complete', 'PHI honesty stays');
+
+  const unflagged = Compliance.evaluateCompliance(gup, {
+    stateLaws: STATE_LAWS, settings: { state: 'PA', applicatorClass: 'private' },
+    now: new Date('2026-07-02T12:00:00Z'), deadlineUtils: DeadlineUtils
+  });
+  assert.strictEqual(unflagged.rupScopeRelaxed, !!STATE_LAWS.PA.privateDutyScope);
+});
+
 if (failed) {
   console.error(`\n${failed} compliance-engine check(s) failed.`);
   process.exit(1);

@@ -25,6 +25,11 @@
  *   none      — state sources indicate no private applicator record duty
  *   uncertain — private-applicator duty not verified after Part 110 rescission
  *
+ * privateDutyScope (optional, private applicators only):
+ *   rupOnly — the private record duty covers restricted-use pesticides; a mix
+ *             with every product known general-use keeps only the core boxes
+ *   absent  — the duty covers every pesticide
+ *
  * customerCopyDays:
  *   number — researched commercial customer-copy window (days)
  *   null   — no researched customer-copy duty encoded (do not invent one)

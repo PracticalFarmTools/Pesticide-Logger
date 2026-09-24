@@ -5,6 +5,7 @@
  * not a legal determination. Missing REI/PHI is unknown, never "clear".
  * Private-applicator duty of `none` skips the state matrix; the operational
  * core (date, crop, location, applicator, product amount) still applies.
+ * privateDutyScope `rupOnly` does the same for a private mix with no RUP.
  */
 (function (root) {
   'use strict';
@@ -154,11 +155,32 @@
     return true;
   }
 
+  function privateDutyScopeFor(law) {
+    return (law && law.privateDutyScope) || 'all';
+  }
+
+  // Unknown RUP status counts as RUP: never relax the state list on missing data.
+  function mixMayIncludeRup(app) {
+    const prods = (app && app.products) || [];
+    if (app && app.rup) return true;
+    if (!prods.length) return true;
+    return prods.some(p => p.rup !== false);
+  }
+
+  function rupScopeRelaxed(app, law, settings) {
+    if (!law) return false;
+    return applicatorClassFor(app, settings) === 'private'
+      && privateDutyFor(law) === 'required'
+      && privateDutyScopeFor(law) === 'rupOnly'
+      && !mixMayIncludeRup(app);
+  }
+
   function stateFieldsApply(app, law, settings) {
     if (!law) return false;
     const cls = applicatorClassFor(app, settings);
     if (cls !== 'private') return true;
-    return privateDutyFor(law) !== 'none';
+    if (privateDutyFor(law) === 'none') return false;
+    return !rupScopeRelaxed(app, law, settings);
   }
 
   function complianceValuePresent(app, name, settings) {
@@ -270,6 +292,10 @@
     if (!applyStateMatrix && cls === 'private' && privateDuty === 'none') {
       warnings.push('This state’s sources indicate no private-applicator recordkeeping duty — still follow the label and keep good farm records');
     }
+    const rupRelaxed = rupScopeRelaxed(app, law, settings);
+    if (rupRelaxed) {
+      warnings.push('No restricted-use pesticide in this mix — this state’s private-applicator record duty covers RUPs, so its list is good practice here');
+    }
 
     const rup = !!(app.rup || (app.products || []).some(p => p.rup));
     if (rup && !hasText(app.certNumber) && !missing.some(m => m.name === 'applicator_license')) {
@@ -329,7 +355,9 @@
       verification: law.verification,
       stateCode: code,
       intervalsOk: intervals.ok,
-      privateDuty
+      privateDuty,
+      privateDutyScope: privateDutyScopeFor(law),
+      rupScopeRelaxed: rupRelaxed
     };
   }
 
@@ -386,6 +414,9 @@
     applicatorClassFor,
     lawFor,
     privateDutyFor,
+    privateDutyScopeFor,
+    mixMayIncludeRup,
+    rupScopeRelaxed,
     fieldClassListed,
     fieldAppliesToApp,
     stateFieldsApply,

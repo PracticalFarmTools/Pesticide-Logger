@@ -293,6 +293,19 @@ check('dataset census: verification and privateDuty buckets', () => {
   assert.strictEqual(states.SD.privateDuty, 'uncertain');
 });
 
+check('R6 privateDutyScope: rupOnly only with required duty and a quoted RUP who-clause', () => {
+  const states = bundle.loadAllStates();
+  bundle.US_STATES.forEach((code) => {
+    const s = states[code];
+    if (s.privateDutyScope === undefined) return;
+    assert.strictEqual(s.privateDutyScope, 'rupOnly', code + ' privateDutyScope');
+    assert.strictEqual(s.privateDuty, 'required', code + ' rupOnly needs privateDuty required');
+    assert.strictEqual(s.verification, 'researched', code);
+    assert.ok(/R6 scope quote: “[^”]*restricted[^”]*”/i.test(s.notes || ''),
+      code + ' notes must carry an R6 scope quote naming restricted-use pesticides');
+  });
+});
+
 check('maintainer playbook is event-driven and refuses in-app scrape', () => {
   const play = fs.readFileSync(path.join(root, 'docs', 'state-maintainer-playbook.md'), 'utf8');
   assert.ok(play.includes('Track 1 — citation hygiene'));

@@ -950,7 +950,8 @@
       usedNoncertified: !!( $('#app-used-trainee') && $('#app-used-trainee').checked ),
       method: ($('#app-method') && $('#app-method').value) || '',
       noncertifiedApplicatorName: ($('#app-noncertified') && $('#app-noncertified').value) || '',
-      aircraftId: ($('#app-aircraft-id') && $('#app-aircraft-id').value) || ''
+      aircraftId: ($('#app-aircraft-id') && $('#app-aircraft-id').value) || '',
+      products: collectMixRows()
     };
   }
 
@@ -1225,7 +1226,12 @@
           : ''}
         ${applyMatrix
           ? `<p>Applicable required fields for ${esc(STATE_NAMES[code])} as a <strong>${esc(applicatorClassFor(ctx))}</strong> applicator (${req.length}):</p>
-        <ul>${req.map(r => `<li>${esc(r.label)}</li>`).join('')}</ul>`
+        <ul>${req.map(r => `<li>${esc(r.label)}</li>`).join('')}</ul>
+        ${applicatorClassFor(ctx) === 'private' && Compliance.privateDutyScopeFor(law) === 'rupOnly'
+          ? `<p class="card-hint" id="state-rup-scope">${esc(tr('Private duty in this state covers restricted-use pesticides. General-use sprays keep the core boxes.'))}</p>`
+          : ''}`
+          : Compliance.rupScopeRelaxed(ctx, law, settingsForCompliance())
+          ? `<p class="card-hint" id="state-rup-scope">${esc(tr('Private duty in this state covers restricted-use pesticides. General-use sprays keep the core boxes.'))}</p>`
           : `<p class="card-hint">This state's sources indicate no private-applicator recordkeeping duty — still follow the label and keep the operational core (date, crop, field, applicator, amount).</p>
         <p class="card-hint keep-anyway">Keep records anyway: some labels (dicamba, for one) require them, organic certifiers want 5 years, WPS farms keep application info 2 years, and a record is your defense in a drift complaint.</p>`}
         ${law.notes ? `<p class="card-hint">${esc(law.notes)}</p>` : ''}
@@ -1268,6 +1274,7 @@
     });
   }
 
+  let lastRupScopeRelaxed = false;
   function updateCompliancePreview() {
     const status = $('#app-compliance-status');
     const missingBox = $('#app-missing-fields');
@@ -1279,7 +1286,13 @@
     status.className = 'compliance-status';
     missingBox.hidden = true;
     missingBox.innerHTML = '';
-    const { law } = lawFor(formContextApp());
+    const formCtx = formContextApp();
+    const { law } = lawFor(formCtx);
+    const relaxed = !!law && Compliance.rupScopeRelaxed(formCtx, law, settingsForCompliance());
+    if (relaxed !== lastRupScopeRelaxed) {
+      lastRupScopeRelaxed = relaxed;
+      reshapeAppFormForState();
+    }
     if (!law) {
       updateLogSectionNavDots([]);
       updateLogSectionCollapse();
@@ -3671,6 +3684,9 @@
       out.push('<span class="badge-pill badge-incomplete">Needs review</span>');
     } else if (result.status === 'fields_complete') {
       out.push('<span class="badge-pill badge-complete">Fields complete</span>');
+    }
+    if (result.rupScopeRelaxed) {
+      out.push(`<span class="badge-pill badge-ok" title="${esc(tr('No restricted-use pesticide in this mix. This state’s private record list is good practice here.'))}">${esc(tr('No RUP: core list'))}</span>`);
     }
     if (!result.intervalsOk) {
       out.push('<span class="badge-pill badge-incomplete">REI/PHI missing</span>');

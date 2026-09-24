@@ -182,6 +182,19 @@ node tests/csv-import.test.js
 node tests/field-map.test.js
 ```
 
+Browser smoke test (maintainer tooling in `tools/smoke/`, its own lockfile; the app
+itself still has no npm). Phone viewport, fresh profile, iPhone Safari user agent:
+start page → Maine → first run → product with brand + EPA # only → strict refusal
+names REI with an unobstructed Missing chip → AI chip opens the product editor →
+Fields complete → Products Edit on screen → Safari storage banner → inspector packet
+carries the ME citation. A failure blocks a release tag.
+
+```bash
+(cd tools/smoke && npm ci)
+python3 -m http.server 8000 &
+node tools/smoke/smoke.js   # CHROME_PATH=/path/to/chrome, SMOKE_SHOTS=dir for screenshots
+```
+
 ## Intentional non-goals
 
 These are scope boundaries, not unfinished work:

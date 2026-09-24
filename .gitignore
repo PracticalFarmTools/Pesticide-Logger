@@ -4,3 +4,4 @@ keys/
 watch-cache/
 node_modules/
 .DS_Store
+tools/smoke/smoke-failure.png

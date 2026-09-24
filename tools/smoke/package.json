@@ -1,0 +1,11 @@
+{
+  "name": "pesticide-logger-smoke",
+  "private": true,
+  "description": "Browser smoke test for Pesticide Logger. Maintainer tooling only: not shipped, not precached, no npm at the app root.",
+  "scripts": {
+    "smoke": "node smoke.js"
+  },
+  "devDependencies": {
+    "playwright-core": "1.49.1"
+  }
+}

@@ -31,7 +31,7 @@ trust rules (no auto-filled rate / REI / PHI, ever).
 | **S2** | Browser smoke test (first run → refusal → complete → packet) | Test gap | No | Code (`tools/`) |
 | **S3** | App Store / Play presence | Distribution | No | Owner, later |
 | **O1–O5** | Hostname, catalog card, signing-key backup, merchant + `BUY_URL`, mailbox + hasher | Go-live | **Yes** | Owner |
-| R6, R9, R10 | Carried from the post-v2.9.41 blueprint | Various | No | See that file |
+| R6, R9, R10 | Carried from the post-v2.9.41 blueprint (`docs/revision-blueprint-v2.9.41.md`) | Various | No | See that file |
 
 ## Status (2026-09-24, v2.9.48, laws edition 2026-09-24)
 
@@ -49,7 +49,13 @@ Every code item has shipped on this branch; what remains is the owner's.
 | G4 | Done v2.9.47: Settings → Credits & data sources; `start.html` footer; `vendor/leaflet/LICENSE`. |
 | S1 | Done v2.9.48: iPhone Safari tab only (not Home Screen, not Chrome iOS), first in the Home queue; dismissal is a timestamp, and the line comes back after a new spray when there has been no backup in 14 days. |
 | S2 | Done: `tools/smoke/smoke.js` (10 steps, including the S1 banner and the G1 sheet). |
-| G3, S3, O1–O5 | Owner. Unchanged. |
+| Maine (and 18 others) | Done: one time chip when a state lists both `application_time` and `start_time`. |
+| R6 | Design note `docs/r6-rup-scope-design.md`; engine change waits on per-state quotes. |
+| R9 | Done: `node tools/watch-citations.js --diff XX`. |
+| R10 | File moved here. Owner: archive `Pesticide-Log`, drop the old import branch. |
+| O1 | Patch ready: `docs/catalog-card.patch` (agent has no push access to `fsma-calculator-2026`). |
+| SD | Letter ready: `docs/sd-danr-inquiry.md`. |
+| G3, S3, O2–O5 | Owner. |
 
 ---
 

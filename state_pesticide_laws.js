@@ -2735,7 +2735,7 @@ const STATE_LAWS = {
     }
   },
   "MN": {
-    "reviewedAt": "2026-08-18",
+    "reviewedAt": "2026-09-24",
     "agency": "Minnesota Department of Agriculture",
     "citation": {
       "reference": "Minn. Stat. §18B.37, subd. 2",

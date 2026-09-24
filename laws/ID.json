@@ -1,6 +1,6 @@
 {
   "code": "ID",
-  "reviewedAt": "2026-08-14",
+  "reviewedAt": "2026-09-24",
   "agency": "Idaho State Department of Agriculture",
   "citation": {
     "reference": "IDAPA 02.03.03.101",
@@ -9,7 +9,7 @@
   "retentionYears": 2,
   "appliesTo": "Professional applicators; pesticide application records for applications they make. RUP records must be provided to the customer within 30 days.",
   "verification": "researched",
-  "notes": "2024/current IDAPA no longer includes dilution/rate in the main current field list, though prior/transition guidance showed dilution or rate. WPS information exchange is required when applicable before application.",
+  "notes": "2024/current IDAPA no longer includes dilution/rate in the main current field list, though prior/transition guidance showed dilution or rate. WPS information exchange is required when applicable before application. 2026-09-24 primary-text audit: Who-clause: rule 101 is “PROFESSIONAL APPLICATOR RECORD KEEPING REQUIREMENTS”; Idaho Code 22-3404(6) lets the director require records of professional applicators only. Customer copy: professional applicators who made an RUP application provide a copy of the records within thirty (30) days (RUP applications). Keep 2 years; no clock to make the record.",
   "fields": [
     {
       "name": "customer_name",
@@ -97,13 +97,13 @@
     },
     {
       "name": "supervisor_name",
-      "label": "Supervising applicator",
+      "label": "Supervising professional applicator + license # (Apprentice Category)",
       "type": "string",
       "required": false
     },
     {
       "name": "notes",
-      "label": "Notes / unexpected occurrences",
+      "label": "WPS information exchange: grower contacted, date and time (if required)",
       "type": "string",
       "required": false
     },
@@ -114,11 +114,11 @@
       "required": true
     }
   ],
-  "recordWithinHours": 24,
-  "customerCopyDays": null,
-  "privateDuty": "required",
+  "recordWithinHours": null,
+  "customerCopyDays": 30,
+  "privateDuty": "none",
   "recordDeadline": {
-    "count": 24,
-    "unit": "hours"
+    "count": null,
+    "unit": "none"
   }
 }

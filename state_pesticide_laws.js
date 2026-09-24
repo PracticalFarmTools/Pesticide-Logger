@@ -1269,16 +1269,16 @@ const STATE_LAWS = {
     }
   },
   "HI": {
-    "reviewedAt": "2026-08-14",
+    "reviewedAt": "2026-09-24",
     "agency": "Hawaii Department of Agriculture and Biosecurity, Pesticides Branch",
     "citation": {
-      "reference": "HAR §4-66-62; HRS 149A-26 annual RUP reports",
-      "url": "https://dab.hawaii.gov/wp-content/uploads/2018/10/HAR-Title-4-Chap-66-RAMSEYER-revised-10-1-2018.pdf"
+      "reference": "HAR §4-66-62(a)–(c) records, (d)–(e) employer record, (f) annual RUP report",
+      "url": "https://dab.hawaii.gov/wp-content/uploads/2019/09/HAR-4-66-2019-Pesticides.pdf"
     },
     "retentionYears": 2,
     "appliesTo": "Certified pesticide applicators; restricted-use pesticide applications kept at the principal place of business. Commercial applicators applying any pesticide in agricultural operations must also furnish a written record to the agricultural employer before the application (HAR §4-66-62(d)/(e)).",
     "verification": "researched",
-    "notes": "HAR §4-66-62(c) (read 2026-08-14 from the department HAR chapter 66 PDF): brand or common name; EPA registration number; type of formulation; percent active ingredient; target pest; dilution rate; total amount used; total area covered; time and date; address or location; certified applicator name and certification number; crop/commodity/stored product/site; REI and whether posting/oral notification are required; TMK (mapped to site ID). County is on the annual RUP declaration (HRS 149A-26 / Form P-45), due January 30 — that report is e-file, out of this app. The employer copy is before application, not a 30-day customer-copy clock. Do not use the RUP-report explainer page as the watch URL.",
+    "notes": "HAR §4-66-62(c) (read 2026-08-14 from the department HAR chapter 66 PDF): brand or common name; EPA registration number; type of formulation; percent active ingredient; target pest; dilution rate; total amount used; total area covered; time and date; address or location; certified applicator name and certification number; crop/commodity/stored product/site; REI and whether posting/oral notification are required; TMK (mapped to site ID). County is on the annual RUP declaration (HRS 149A-26 / Form P-45), due January 30 — that report is e-file, out of this app. The employer copy is before application, not a 30-day customer-copy clock. Do not use the RUP-report explainer page as the watch URL. 2026-09-24 primary-text audit: R6 scope quote: “(a) Certified pesticide applicators shall keep records of all restricted use pesticide applications at the applicator's principal place of business.” General-use private sprays keep the core boxes. TMK is §4-66-62(f)(8) (annual RUP report). No clock to make the record; keep 2 years. A 2026 proposal would add 40 CFR 171.201(e) noncertified-applicator records — watch.",
     "fields": [
       {
         "name": "brand_name",
@@ -1300,7 +1300,7 @@ const STATE_LAWS = {
       },
       {
         "name": "active_ingredient",
-        "label": "Active ingredient",
+        "label": "Percent active ingredient",
         "type": "string",
         "required": true
       },
@@ -1378,18 +1378,19 @@ const STATE_LAWS = {
       },
       {
         "name": "rei_hours",
-        "label": "Restricted-entry interval (REI)",
+        "label": "REI and whether posting / oral notification is required",
         "type": "string",
         "required": true
       }
     ],
-    "recordWithinHours": 24,
+    "recordWithinHours": null,
     "customerCopyDays": null,
     "privateDuty": "required",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
-    }
+      "count": null,
+      "unit": "none"
+    },
+    "privateDutyScope": "rupOnly"
   },
   "ID": {
     "reviewedAt": "2026-08-14",

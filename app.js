@@ -1314,6 +1314,7 @@
     if (!bits.length) { missingBox.hidden = true; return; }
     missingBox.hidden = false;
     missingBox.innerHTML = bits.join('<br>');
+    if (missingBox.scrollIntoView) missingBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   // Canonical compliance field name -> where to send focus. Most top-level
@@ -2350,12 +2351,19 @@
   function initLogSectionNav() {
     const nav = $('#log-section-nav');
     if (!nav) return;
+    // The nav sits inside #app-shell, which is hidden until the license gate
+    // runs. A 0px reading there would pin the sticky Save bar (and the
+    // Missing chips above it) under the nav, so a 0 falls back to the CSS
+    // default instead of being written.
+    const wrap = $('.tab-nav-wrap');
     const setNavOffset = () => {
-      const wrap = $('.tab-nav-wrap');
-      document.documentElement.style.setProperty('--tab-nav-h', (wrap ? wrap.offsetHeight : 70) + 'px');
+      const h = wrap ? wrap.offsetHeight : 0;
+      if (h > 0) document.documentElement.style.setProperty('--tab-nav-h', h + 'px');
+      else document.documentElement.style.removeProperty('--tab-nav-h');
     };
     setNavOffset();
     window.addEventListener('resize', setNavOffset);
+    if (wrap && typeof ResizeObserver !== 'undefined') new ResizeObserver(setNavOffset).observe(wrap);
     nav.addEventListener('click', (e) => {
       const more = e.target.closest('#log-more-record');
       if (more) {

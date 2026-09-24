@@ -1381,6 +1381,18 @@ check('v2.9.42: Next line names product-record boxes and jumps to that box in th
   assert.ok(css.includes('.log-next:not(.is-ready) .log-next-go::after'));
 });
 
+check('v2.9.46: tab-nav offset never pins the sticky Save bar under the nav', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  const nav = app.split('function initLogSectionNav()')[1].split("nav.addEventListener('click'")[0];
+  assert.ok(nav.includes('new ResizeObserver(setNavOffset).observe(wrap)'), 're-measures when #app-shell un-hides');
+  assert.ok(nav.includes("removeProperty('--tab-nav-h')"), 'a hidden nav falls back to the CSS default');
+  assert.ok(!/setProperty\('--tab-nav-h',\s*\(wrap \? wrap\.offsetHeight/.test(nav), 'no unconditional write of a 0px height');
+  assert.ok(/:root[^}]*--tab-nav-h:\s*4\.35rem/.test(css), 'CSS default exists for the fallback');
+  const chips = app.split('function showSaveMissingChips(result)')[1].split('\n  }\n')[0];
+  assert.ok(chips.includes('missingBox.scrollIntoView'), 'blocked save brings the Missing chips into view');
+});
+
 if (failed) {
   console.error(`\n${failed} check(s) failed`);
   process.exit(1);

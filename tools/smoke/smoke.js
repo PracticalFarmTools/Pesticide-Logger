@@ -120,7 +120,8 @@ async function fillFocused(page) {
       const t = await toast();
       must(/REI/.test(t) && /incomplete draft/.test(t), 'refusal leads with the REI step: ' + t);
       const c = await chips();
-      must(c.includes('rei_hours') && c.includes('active_ingredient'), 'chips name REI and AI: ' + c);
+      must(c.includes('active_ingredient') && c.includes('sky') && !c.includes('rei_hours'),
+        'chips name AI and Maine outdoor sky; REI is “where applicable”, not a chip: ' + c);
       const hit = await page.evaluate(() => {
         const chip = document.querySelector('.missing-field-chip');
         const r = chip.getBoundingClientRect();

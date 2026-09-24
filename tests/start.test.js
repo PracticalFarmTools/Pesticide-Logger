@@ -44,6 +44,18 @@ check('Alabama private stays quiet; does not invent a field list', () => {
   assert.strictEqual(s.quiet, true);
   assert.deepStrictEqual(s.requiredLabels, []);
   assert.ok(s.holes.some((h) => /private-applicator record duty/i.test(h)));
+  assert.ok(s.holes.some((h) => /^Keep records anyway/.test(h)));
+});
+
+check('none-state keep-anyway line: only for private, every none state', () => {
+  ['AL', 'IA', 'KS', 'MI', 'MN', 'SC', 'VA'].forEach((code) => {
+    const priv = StartPage.summarizeLaw(STATE_LAWS[code], 'private', code);
+    const comm = StartPage.summarizeLaw(STATE_LAWS[code], 'commercial', code);
+    assert.ok(priv.holes.some((h) => /Keep records anyway/.test(h)), code);
+    assert.ok(!comm.holes.some((h) => /Keep records anyway/.test(h)), code + ' commercial');
+  });
+  const me = StartPage.summarizeLaw(STATE_LAWS.ME, 'private', 'ME');
+  assert.ok(!me.holes.some((h) => /Keep records anyway/.test(h)));
 });
 
 check('Iowa private is quiet; commercial lists 1/1/2026 office-record extras', () => {

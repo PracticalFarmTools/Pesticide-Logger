@@ -50,6 +50,8 @@
     return '?state=' + encodeURIComponent(code) + '&class=' + encodeURIComponent(cls);
   }
 
+  const KEEP_ANYWAY = 'Keep records anyway: some labels (dicamba, for one) require them, organic certifiers want 5 years, WPS farms keep application info 2 years, and a record is your defense in a drift complaint.';
+
   function privateDutyNote(law, applicatorClass) {
     const duty = (law && law.privateDuty) || 'required';
     const cls = applicatorClass || 'private';
@@ -131,6 +133,7 @@
     if (ver === 'uncertain') holes.push('Field list is uncertain — confirm with the agency.');
     const dutyNote = privateDutyNote(law, cls);
     if (dutyNote) holes.push(dutyNote);
+    if (quiet) holes.push(KEEP_ANYWAY);
     return {
       code: code || '',
       name: STATE_NAMES[code] || code || '',

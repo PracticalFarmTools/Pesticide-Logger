@@ -1412,6 +1412,17 @@ check('v2.9.48: first blocked save leads with the one-step Next line, not a coun
   assert.ok(blocked.includes('showSaveMissingChips(result)'), 'strict refusal unchanged');
 });
 
+check('v2.9.48: privateDuty-none states still tell private applicators to keep records', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const i18n = fs.readFileSync(path.join(root, 'i18n.js'), 'utf8');
+  const honesty = app.split('function datasetHonestyLine(law, cls) {')[1].split('return bits')[0];
+  assert.ok(honesty.includes('Keep records anyway'), 'Home / Log honesty line');
+  const keep = 'Keep records anyway: some labels (dicamba, for one) require them, organic certifiers want 5 years, WPS farms keep application info 2 years, and a record is your defense in a drift complaint.';
+  assert.ok(app.includes(`<p class="card-hint keep-anyway">${keep}</p>`), 'Settings state card');
+  assert.ok(i18n.includes(`["${keep}", "`), 'translated');
+  assert.ok(i18n.includes('["No private-applicator record duty in this state’s sources. Keep records anyway'), 'honesty line translated');
+});
+
 check('v2.9.47: weather is NWS (public domain) — no Open-Meteo free tier in a paid app', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');

@@ -1184,7 +1184,7 @@
       bits.push('Private-applicator duty is unverified.');
     }
     if (cls === 'private' && law.privateDuty === 'none') {
-      bits.push('No private-applicator record duty in this state’s sources; keep the operational core.');
+      bits.push('No private-applicator record duty in this state’s sources. Keep records anyway — labels, organic certifiers, WPS and drift complaints still ask for them.');
     }
     return bits.join(' ');
   }
@@ -1226,7 +1226,8 @@
         ${applyMatrix
           ? `<p>Applicable required fields for ${esc(STATE_NAMES[code])} as a <strong>${esc(applicatorClassFor(ctx))}</strong> applicator (${req.length}):</p>
         <ul>${req.map(r => `<li>${esc(r.label)}</li>`).join('')}</ul>`
-          : `<p class="card-hint">This state's sources indicate no private-applicator recordkeeping duty — still follow the label and keep the operational core (date, crop, field, applicator, amount).</p>`}
+          : `<p class="card-hint">This state's sources indicate no private-applicator recordkeeping duty — still follow the label and keep the operational core (date, crop, field, applicator, amount).</p>
+        <p class="card-hint keep-anyway">Keep records anyway: some labels (dicamba, for one) require them, organic certifiers want 5 years, WPS farms keep application info 2 years, and a record is your defense in a drift complaint.</p>`}
         ${law.notes ? `<p class="card-hint">${esc(law.notes)}</p>` : ''}
         <p class="card-hint">Completion means required fields are filled for this context — not a legal determination.
         This app does not file electronic reports (CA PUR, NY PRL, etc.) and does not replace WPS employer duties.</p>

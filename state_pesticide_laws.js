@@ -3508,16 +3508,16 @@ const STATE_LAWS = {
     }
   },
   "NH": {
-    "reviewedAt": "2026-07-31",
+    "reviewedAt": "2026-09-24",
     "agency": "New Hampshire Department of Agriculture, Markets & Food, Division of Pesticide Control",
     "citation": {
       "reference": "N.H. Admin. Code Pes 901.02; Pes 901.04 annual reporting",
-      "url": "https://gencourt.state.nh.us/rules/state_agencies/pes900.html"
+      "url": "https://gc.nh.gov/rules/state_agencies/pes900.html"
     },
     "retentionYears": 2,
     "appliesTo": "Registrants and permittees; all pesticide applications by personnel working from registered firms/branches/subsidiaries; records maintained by both commercial and private applicators.",
     "verification": "researched",
-    "notes": "Pes 901.02 has seven daily-use record elements. Annual reporting under Pes 901.04 requires additional product/EPA/active/acreage/amount information; include EPA and amount in the logger although not in the seven daily record elements.",
+    "notes": "Pes 901.02 has seven daily-use record elements. Annual reporting under Pes 901.04 requires additional product/EPA/active/acreage/amount information; include EPA and amount in the logger although not in the seven daily record elements. 2026-09-24 primary-text audit: Pes 901.02 is titled “Daily Record Keeping”; the text says records “shall be recorded simply and accurately” with no hour count — the 24-hour clock is kept from the title; confirm with the Division. Private permittees (general-use or restricted-use permits) keep records for all pesticides. The official filing history lists a 2022 readoption (#13363, eff 6-1-22) whose text was not retrievable.",
     "fields": [
       {
         "name": "crop_treated",

@@ -230,7 +230,7 @@ check('watch-list prints 50 local citation URLs and does not fetch', () => {
   const ms = data.find((line) => line.indexOf('MS\t') === 0);
   assert.ok(ms.indexOf('pdf\tagnet.mdac.ms.gov\tno\tno\thttps://agnet.mdac.ms.gov/agManage/uploads/1639.pdf') >= 0, ms);
   const ok = data.find((line) => line.indexOf('OK\t') === 0);
-  assert.ok(ok.indexOf('ag.ok.gov') >= 0, ok);
+  assert.ok(ok.indexOf('oscn.net') >= 0, ok);
   assert.ok(ok.indexOf('elaws') < 0, ok);
   const la = data.find((line) => line.indexOf('LA\t') === 0);
   assert.ok(la.indexOf('doa.la.gov') >= 0, la);

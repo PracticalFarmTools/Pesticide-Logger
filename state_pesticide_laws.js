@@ -4419,16 +4419,16 @@ const STATE_LAWS = {
     }
   },
   "OK": {
-    "reviewedAt": "2026-08-14",
+    "reviewedAt": "2026-09-24",
     "agency": "Oklahoma Department of Agriculture, Food, and Forestry",
     "citation": {
-      "reference": "2 O.S. §3-83; OAC 35:30-17-21",
-      "url": "https://ag.ok.gov/wp-content/uploads/2025/09/2025-Combined-Pesticide-Manual-Final.pdf"
+      "reference": "2 O.S. 3-83; OAC 35:30-17-21",
+      "url": "https://www.oscn.net/applications/oscn/DeliverDocument.asp?CiteID=74503"
     },
     "retentionYears": 2,
     "appliesTo": "Commercial and noncommercial applicators under 35:30-17-21(a); private applicators of restricted-use pesticides under 35:30-17-21(b).",
     "verification": "researched",
-    "notes": "ODAFF Combined Pesticide Manual (2025 reprint of OAC 35:30-17-21, read 2026-08-14): commercial/noncommercial (a) is this row's field list (start/stop, amount, company, applicator/cert, customer, legal description, date, rate, dilution, tank mix, trade name, EPA number, pest, site, area, REI). Adjuvants and drift agents when the label requires them, a copy of the label, contracts, and wood-infestation reports stay in notes — WDI is not a required farm box. Private RUP (b) is shorter (applicator name/address instead of customer; no contracts/WDI). The matrix uses (a) so commercial is not under-asked. No hours completion clock in 35:30-17-21 (24-hour fallback is operational). Do not watch okrules.elaws.us.",
+    "notes": "ODAFF Combined Pesticide Manual (2025 reprint of OAC 35:30-17-21, read 2026-08-14): commercial/noncommercial (a) is this row's field list (start/stop, amount, company, applicator/cert, customer, legal description, date, rate, dilution, tank mix, trade name, EPA number, pest, site, area, REI). Adjuvants and drift agents when the label requires them, a copy of the label, contracts, and wood-infestation reports stay in notes — WDI is not a required farm box. Private RUP (b) is shorter (applicator name/address instead of customer; no contracts/WDI). The matrix uses (a) so commercial is not under-asked. No hours completion clock in 35:30-17-21 (24-hour fallback is operational). Do not watch okrules.elaws.us. 2026-09-24 primary-text audit: R6 scope quote: “(b) Private applicators of restricted use pesticides shall keep accurate records pertaining to applications, which, at a minimum, show:” General-use private sprays keep the core boxes. Retention is 2 years for commercial and noncommercial (3-83); 35:30-17-21(b) states no private period, so 2 is encoded. No clock. The ODAFF compilation calls itself an unofficial copy; rules.ok.gov blocks automated readers.",
     "fields": [
       {
         "name": "start_time",
@@ -4452,19 +4452,28 @@ const STATE_LAWS = {
         "name": "business_name_address",
         "label": "Business / operator name & address",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "customer_name",
         "label": "Customer / person for whom applied",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "customer_address",
         "label": "Customer address",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "location",
@@ -4537,15 +4546,37 @@ const STATE_LAWS = {
         "label": "Restricted-entry interval (REI)",
         "type": "string",
         "required": true
+      },
+      {
+        "name": "applicator_license",
+        "label": "Certification # and expiration date",
+        "type": "string",
+        "required": true
+      },
+      {
+        "name": "noncertified_applicator_name",
+        "label": "Non-certified applicator under direct supervision (if any)",
+        "type": "string",
+        "required": false
+      },
+      {
+        "name": "owner_operator_name",
+        "label": "Private applicator name & address",
+        "type": "string",
+        "required": true,
+        "classes": [
+          "private"
+        ]
       }
     ],
-    "recordWithinHours": 24,
+    "recordWithinHours": null,
     "customerCopyDays": null,
     "privateDuty": "required",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
-    }
+      "count": null,
+      "unit": "none"
+    },
+    "privateDutyScope": "rupOnly"
   },
   "OR": {
     "reviewedAt": "2026-07-31",

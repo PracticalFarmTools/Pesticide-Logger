@@ -216,6 +216,34 @@ check('unit none: a rule with no clock claims no due date; the app prefers the c
   assert.ok(appJs.includes('recordDueFor: recordDueFor'));
 });
 
+check('privateRecordDeadline replaces the clock for private applicators only', () => {
+  const law = {
+    recordDeadline: { count: 48, unit: 'hours' }, recordWithinHours: 48,
+    privateRecordDeadline: { count: 14, unit: 'calendarDays' }
+  };
+  const app = { date: '2026-07-01', endTime: '09:00' };
+  assert.strictEqual(DeadlineUtils.computeRecordDueAtFromLaw(law, app, 'private').slice(0, 10), '2026-07-15');
+  assert.strictEqual(new Date(DeadlineUtils.computeRecordDueAtFromLaw(law, app, 'commercial')).toISOString().slice(0, 13), '2026-07-03T09');
+  assert.strictEqual(new Date(DeadlineUtils.computeRecordDueAtFromLaw(law, app)).toISOString().slice(0, 13), '2026-07-03T09');
+  const noCommercialClock = { recordDeadline: { count: null, unit: 'none' }, recordWithinHours: null,
+    privateRecordDeadline: { count: 14, unit: 'calendarDays' } };
+  assert.strictEqual(DeadlineUtils.computeRecordDueAtFromLaw(noCommercialClock, app, 'commercial'), null);
+  assert.ok(DeadlineUtils.computeRecordDueAtFromLaw(noCommercialClock, app, 'private'));
+  const appJs = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  assert.ok(appJs.includes('computeRecordDueAtFromLaw(law, app, applicatorClassFor(app))'));
+});
+
+check('privateDutyException rides along with a none duty as a warning', () => {
+  const law = Object.assign({}, STATE_LAWS.AL, { privateDutyException: 'Class F and H products need records.' });
+  const Compliance = require(path.join(root, 'compliance.js'));
+  const r = Compliance.evaluateCompliance(
+    { date: '2026-07-01', crop: 'corn', fieldName: 'N', applicatorName: 'J', products: [{ productName: 'X', total: 1, reiHours: 12, phiDays: 1 }] },
+    { stateLaws: { AL: law }, settings: { state: 'AL', applicatorClass: 'private' }, now: new Date('2026-07-02T00:00:00Z') });
+  assert.ok(r.warnings.some(w => w === 'Exception: Class F and H products need records.'));
+  const appJs = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  assert.ok(appJs.includes('id="state-private-exception"'));
+});
+
 check('HH:MM:SS application times still produce record deadlines', () => {
   const app = { date: '2026-07-31', endTime: '16:00:00' };
   const due = DeadlineUtils.computeRecordDueAtFromLaw(

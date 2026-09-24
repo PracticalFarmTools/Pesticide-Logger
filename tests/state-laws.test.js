@@ -306,6 +306,21 @@ check('R6 privateDutyScope: rupOnly only with required duty and a quoted RUP who
   });
 });
 
+check('privateRecordDeadline and privateDutyException shapes', () => {
+  const states = bundle.loadAllStates();
+  bundle.US_STATES.forEach((code) => {
+    const s = states[code];
+    if (s.privateRecordDeadline !== undefined) {
+      assert.ok(['hours', 'calendarDays', 'businessDays', 'sameDay', 'none'].includes(s.privateRecordDeadline.unit), code);
+      assert.notStrictEqual(s.privateDuty, 'none', code + ' private clock with no private duty');
+    }
+    if (s.privateDutyException !== undefined) {
+      assert.strictEqual(s.privateDuty, 'none', code + ' exception belongs to a none duty');
+      assert.ok(s.privateDutyException.length > 20, code);
+    }
+  });
+});
+
 check('maintainer playbook is event-driven and refuses in-app scrape', () => {
   const play = fs.readFileSync(path.join(root, 'docs', 'state-maintainer-playbook.md'), 'utf8');
   assert.ok(play.includes('Track 1 — citation hygiene'));

@@ -291,6 +291,7 @@
 
     if (!applyStateMatrix && cls === 'private' && privateDuty === 'none') {
       warnings.push('This state’s sources indicate no private-applicator recordkeeping duty — still follow the label and keep good farm records');
+      if (hasText(law.privateDutyException)) warnings.push('Exception: ' + law.privateDutyException);
     }
     const rupRelaxed = rupScopeRelaxed(app, law, settings);
     if (rupRelaxed) {

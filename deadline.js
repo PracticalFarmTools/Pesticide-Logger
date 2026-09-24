@@ -51,16 +51,18 @@
    *   law.recordDeadline = { count, unit: 'hours'|'calendarDays'|'businessDays'|'sameDay'|'none' }
    * unit 'none': the state rule sets no clock, so no due date is claimed.
    * Fallback: law.recordWithinHours (0 ⇒ sameDay, else hours).
+   * law.privateRecordDeadline (same shape) replaces recordDeadline for private applicators.
    */
-  function computeRecordDueAtFromLaw(law, app) {
+  function computeRecordDueAtFromLaw(law, app, applicatorClass) {
     if (!law || !app || !app.date) return null;
-    const deadline = law.recordDeadline;
+    const priv = applicatorClass === 'private' && !!(law.privateRecordDeadline && law.privateRecordDeadline.unit);
+    const deadline = priv ? law.privateRecordDeadline : law.recordDeadline;
     if (deadline && deadline.unit === 'none') return null;
     const base = parseAppBase(app, '23:59');
     if (!base) return null;
 
     let unit = 'hours';
-    let count = law.recordWithinHours != null ? Number(law.recordWithinHours) : 72;
+    let count = !priv && law.recordWithinHours != null ? Number(law.recordWithinHours) : 72;
     if (deadline && deadline.unit) {
       unit = deadline.unit;
       count = deadline.count != null ? Number(deadline.count) : count;

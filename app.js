@@ -1233,6 +1233,7 @@
           : Compliance.rupScopeRelaxed(ctx, law, settingsForCompliance())
           ? `<p class="card-hint" id="state-rup-scope">${esc(tr('Private duty in this state covers restricted-use pesticides. General-use sprays keep the core boxes.'))}</p>`
           : `<p class="card-hint">This state's sources indicate no private-applicator recordkeeping duty — still follow the label and keep the operational core (date, crop, field, applicator, amount).</p>
+        ${law.privateDutyException ? `<p class="card-hint state-law-stale" id="state-private-exception"><strong>${esc(tr('Exception:'))}</strong> ${esc(law.privateDutyException)}</p>` : ''}
         <p class="card-hint keep-anyway">Keep records anyway: some labels (dicamba, for one) require them, organic certifiers want 5 years, WPS farms keep application info 2 years, and a record is your defense in a drift complaint.</p>`}
         ${law.notes ? `<p class="card-hint">${esc(law.notes)}</p>` : ''}
         <p class="card-hint">Completion means required fields are filled for this context — not a legal determination.
@@ -1242,9 +1243,17 @@
 
   function recordDeadlineDisplay(law) {
     if (!law) return '—';
-    if (law.recordDeadline && law.recordDeadline.unit === 'none') {
+    const main = recordDeadlineText(law.recordDeadline, law.recordWithinHours);
+    const p = law.privateRecordDeadline;
+    if (!p || !p.unit) return main;
+    return main + ' · ' + esc(tr('private:')) + ' ' + recordDeadlineText(p, null);
+  }
+
+  function recordDeadlineText(deadline, withinHours) {
+    if (deadline && deadline.unit === 'none') {
       return esc(tr('No state clock — record promptly'));
     }
+    const law = { recordDeadline: deadline, recordWithinHours: withinHours };
     let count = null;
     let unit = null;
     if (law.recordDeadline && law.recordDeadline.count != null) {
@@ -3390,7 +3399,7 @@
   function computeRecordDueAt(app) {
     const { law } = lawFor(app);
     if (typeof DeadlineUtils === 'undefined') return null;
-    return DeadlineUtils.computeRecordDueAtFromLaw(law, app);
+    return DeadlineUtils.computeRecordDueAtFromLaw(law, app, applicatorClassFor(app));
   }
 
   // The current law wins over a stored due date so a corrected rule clears old clocks.

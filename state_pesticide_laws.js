@@ -2531,7 +2531,7 @@ const STATE_LAWS = {
     }
   },
   "MA": {
-    "reviewedAt": "2026-07-31",
+    "reviewedAt": "2026-09-24",
     "agency": "Massachusetts Department of Agricultural Resources",
     "citation": {
       "reference": "333 CMR 10.14; 333 CMR 10.07(9)",
@@ -2540,7 +2540,7 @@ const STATE_LAWS = {
     "retentionYears": 3,
     "appliesTo": "All certified commercial applicators, certified private applicators, and licensed applicators or their employers; each pesticide application.",
     "verification": "researched",
-    "notes": "Operational records must also include pollution incidents, liability insurance amount/insurer, and pesticide-related illnesses/injuries reported to applicator. RUP/state-limited applications require specific site description and supervising applicator signature/license review within 72 hours where applicable. mass.gov 333 CMR 10.14 returned 403 on 2026-08-14; Cornell LII remains the citation watch until a primary host is found.",
+    "notes": "Operational records must also include pollution incidents, liability insurance amount/insurer, and pesticide-related illnesses/injuries reported to applicator. RUP/state-limited applications require specific site description and supervising applicator signature/license review within 72 hours where applicable. mass.gov 333 CMR 10.14 returned 403 on 2026-08-14; Cornell LII remains the citation watch until a primary host is found. 2026-09-24 primary-text audit: 333 CMR 10.14(1)(i)–(k): pollution incidents, liability insurance and insurer, illnesses or injuries. Supervised RUP/state-limited-use records need the supervisor's signature and license # within 72 hours. Keep 3 years; no clock. Official page: mass.gov/regulations/333-CMR-1000.",
     "fields": [
       {
         "name": "location",
@@ -2592,7 +2592,7 @@ const STATE_LAWS = {
       },
       {
         "name": "supervisor_name",
-        "label": "Supervising applicator",
+        "label": "Supervising certified applicator + license # (supervised RUP / state-limited-use)",
         "type": "string",
         "required": false
       },
@@ -2604,17 +2604,17 @@ const STATE_LAWS = {
       },
       {
         "name": "notes",
-        "label": "Notes / unexpected occurrences",
+        "label": "Pollution incidents, illnesses or injuries; liability insurance amount and insurer (licensees)",
         "type": "string",
         "required": false
       }
     ],
-    "recordWithinHours": 24,
+    "recordWithinHours": null,
     "customerCopyDays": null,
     "privateDuty": "required",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
+      "count": null,
+      "unit": "none"
     }
   },
   "MI": {

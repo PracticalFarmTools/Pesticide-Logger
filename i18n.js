@@ -225,6 +225,7 @@
     ["REI (hours)", "REI (horas)", "REI (heures)", "REI (horas)"],
     ["PHI (days)", "PHI (días)", "PHI (jours)", "PHI (dias)"],
     ["Label rate", "Dosis de etiqueta", "Dose d’étiquette", "Dose do rótulo"],
+    ["Credits & data sources", "Créditos y fuentes de datos", "Crédits et sources de données", "Créditos e fontes de dados"],
     ["Add from label", "Agregar de la etiqueta", "Ajouter d’après l’étiquette", "Adicionar do rótulo"],
     ["EPA Reg #", "N.º EPA", "N° EPA", "Nº EPA"],
     ["Manufacturer / registrant", "Fabricante / registrante", "Fabricant / titulaire", "Fabricante / registrante"],

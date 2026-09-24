@@ -1432,6 +1432,21 @@ check('v2.9.47: satellite imagery is USGS public domain, not unauthenticated Esr
   assert.ok(!sw.includes('nationalmap') && !sw.includes('tile.openstreetmap'), 'third-party tiles are never precached');
 });
 
+check('v2.9.47: persistent credits for every data source and vendored license', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');
+  const credits = html.split('id="credits-details"')[1].split('</details>')[0];
+  ['National Weather Service', 'USGS The National Map', 'OpenStreetMap', 'EPA', 'Leaflet', 'Tesseract.js', 'ZXing', 'Inter']
+    .forEach((name) => assert.ok(credits.includes(name), name + ' credited in Settings'));
+  ['vendor/leaflet/LICENSE', 'vendor/tesseract/LICENSE', 'vendor/zxing/LICENSE', 'vendor/fonts/OFL-Inter.txt']
+    .forEach((f) => {
+      assert.ok(credits.includes(f), f + ' linked');
+      assert.ok(fs.existsSync(path.join(root, f)), f + ' ships');
+    });
+  const footer = start.split('<footer class="public-footer">')[1];
+  assert.ok(/National Weather Service/.test(footer) && /USGS/.test(footer) && /OpenStreetMap/.test(footer));
+});
+
 if (failed) {
   console.error(`\n${failed} check(s) failed`);
   process.exit(1);

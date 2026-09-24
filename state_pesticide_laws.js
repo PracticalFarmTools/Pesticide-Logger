@@ -30,6 +30,12 @@
  *             with every product known general-use keeps only the core boxes
  *   absent  — the duty covers every pesticide
  *
+ * privateDutyException (optional, privateDuty none only): quoted narrow private
+ *   duty (e.g. one product class) shown as a warning; the state list stays off.
+ *
+ * privateRecordDeadline (optional): same shape as recordDeadline; replaces it
+ *   for private applicators when the rule sets a separate private clock.
+ *
  * customerCopyDays:
  *   number — researched commercial customer-copy window (days)
  *   null   — no researched customer-copy duty encoded (do not invent one)

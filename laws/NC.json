@@ -1,15 +1,15 @@
 {
   "code": "NC",
-  "reviewedAt": "2026-07-31",
+  "reviewedAt": "2026-09-24",
   "agency": "North Carolina Department of Agriculture and Consumer Services",
   "citation": {
     "reference": "02 NCAC 09L .1402",
-    "url": "http://ncrules.state.nc.us/ncac/title%2002%20-%20agriculture%20and%20consumer%20services/chapter%2009%20-%20food%20and%20drug%20protection/subchapter%20l/02%20ncac%2009l%20.1402.html"
+    "url": "http://reports.oah.state.nc.us/ncac/title%2002%20-%20agriculture%20and%20consumer%20services/chapter%2009%20-%20food%20and%20drug%20protection/subchapter%20l/02%20ncac%2009l%20.1402.html"
   },
   "retentionYears": 3,
-  "appliesTo": "All pesticide applicators using ground equipment; RUP applications. Records created within 72 hours.",
+  "appliesTo": "Licensed pesticide applicators and public operators as defined in G.S. 143-460 using ground equipment; restricted-use applications. Records within 72 hours, kept 3 years. Growers applying on their own or employer's land are excluded.",
   "verification": "researched",
-  "notes": "Amount may be formulation or active ingredient per unit of measure. Each day of application is a separate record. Weather is not required by this rule.",
+  "notes": "Amount may be formulation or active ingredient per unit of measure. Each day of application is a separate record. Weather is not required by this rule. 2026-09-24 primary-text audit: Who-clause: 02 NCAC 09L .1402 applies to “pesticide applicators, as defined in G.S. 143-460”, which “does not include: a. Any person who uses or supervises the use of a pesticide (i) only for the purpose of producing an agricultural commodity on property owned or rented by him or his employer”. The aerial rule .1002(c) binds all agricultural aircraft operations separately.",
   "fields": [
     {
       "name": "applicator_name",
@@ -21,7 +21,7 @@
       "name": "applicator_license",
       "label": "Applicator certification / license #",
       "type": "string",
-      "required": true
+      "required": false
     },
     {
       "name": "customer_name",
@@ -63,7 +63,7 @@
       "name": "application_time",
       "label": "Application time",
       "type": "time",
-      "required": true
+      "required": false
     },
     {
       "name": "brand_name",
@@ -93,12 +93,30 @@
       "name": "start_time",
       "label": "Start time",
       "type": "time",
+      "required": false
+    },
+    {
+      "name": "end_time",
+      "label": "Time the application was completed",
+      "type": "time",
       "required": true
+    },
+    {
+      "name": "rate",
+      "label": "Amount of formulation or AI per unit (acre, 1,000 sq ft)",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "noncertified_applicator_name",
+      "label": "Other person(s) applying",
+      "type": "string",
+      "required": false
     }
   ],
   "recordWithinHours": 72,
   "customerCopyDays": null,
-  "privateDuty": "required",
+  "privateDuty": "none",
   "recordDeadline": {
     "count": 72,
     "unit": "hours"

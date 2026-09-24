@@ -489,6 +489,21 @@
     return '';
   }
 
+  function fieldAppliesToChecklist(field, cls) {
+    const classes = field && Array.isArray(field.classes) ? field.classes : null;
+    if (classes && classes.length) {
+      const listed = cls === 'both'
+        ? (classes.indexOf('private') >= 0 || classes.indexOf('commercial') >= 0)
+        : classes.indexOf(cls) >= 0;
+      if (!listed) return false;
+    }
+    if (cls === 'private' && (
+      field.name === 'business_name_address' || field.name === 'company_license' ||
+      field.name === 'customer_copy_provided' || field.name === 'customer_copy_date'
+    )) return false;
+    return true;
+  }
+
   function statuteChecklist(law, settings) {
     if (!law || !Array.isArray(law.fields)) return [];
     const cls = (settings && settings.applicatorClass) || 'private';
@@ -502,7 +517,9 @@
         'At least one product with amount applied'
       ];
     }
-    return law.fields.filter((f) => f && f.required && f.label).map((f) => f.label);
+    return law.fields
+      .filter((f) => f && f.required && f.label && fieldAppliesToChecklist(f, cls))
+      .map((f) => f.label);
   }
 
   async function buildInspectPayload(opts) {

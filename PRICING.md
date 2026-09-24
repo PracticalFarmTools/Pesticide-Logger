@@ -47,19 +47,20 @@ offline, private. Paper is $0 and has no clocks, search, or backup.
 
 ## How selling works with $0 infrastructure
 
-Order: honest catalog card → live `pesticide.practicalfarmtools.com` →
-merchant listing → then `BUY_URL`. Full checklist: `docs/owner-next.md`.
-Do not set `BUY_URL` while the homepage still says Database / Syncs /
-Coming Soon.
+Order: honest catalog card (Coming soon, no Open link) → Lemon Squeezy
+product → hostname → then `BUY_URL`. Full checklist: `docs/owner-next.md`
+and `docs/lemonsqueezy.md`. Do not set `BUY_URL` until that product page
+can take a card. Do not mark the catalog Active first.
 
 1. **One-time setup:** already done if `license.js` has a public key.
    `keys/license-signing-key.json` is gitignored — **back it up offline**
    (two copies). Losing it means you cannot issue new keys. Do not run
    `generate-signing-keys.js` again unless you are rotating; it refuses to
-   overwrite.
-2. **List the product** on a merchant-of-record checkout (Gumroad,
-   Lemon Squeezy, or a Stripe Payment Link). They handle cards, receipts,
-   and sales tax. No monthly fee; they take ~5–10% per sale.
+   overwrite. That private file is not in git and was not in the cloud
+   agent workspace.
+2. **List the product** on Lemon Squeezy. They handle cards, receipts,
+   and sales tax. No monthly fee; they take a percent of each sale.
+   Do not turn on Lemon Squeezy’s own license keys.
 3. **Issue keys:** for each order, run
    `node tools/sign-license.js --name "Jane Farmer" --email jane@example.com --mail`
    and paste the printed letter into the order-delivery email. Add

@@ -309,6 +309,30 @@ await check('inspector packet v2 cover, checklist, incomplete, and print CSS', a
   assert.ok(!payload.checklist.includes('Customer address'),
     'Iowa privateDuty none must not paste commercial 45.26 boxes onto a private packet');
   assert.ok(!payload.checklist.includes('Company / business license #'));
+  const nyPrivate = await FarmFile.buildInspectPayload({
+    farm: farm({ settings: { farmName: 'Hudson', state: 'NY', applicatorClass: 'private' } }),
+    records: [],
+    photos: [],
+    generatedAt: '2026-09-21T12:00:00.000Z',
+    period: 'All records',
+    stateName: 'New York',
+    ...packetOpts
+  });
+  assert.ok(nyPrivate.checklist.includes('Method / equipment'));
+  assert.ok(nyPrivate.checklist.includes('Brand / product name'));
+  assert.ok(!nyPrivate.checklist.includes('Application rate'));
+  assert.ok(!nyPrivate.checklist.includes('Target pest'));
+  const nyCommercial = await FarmFile.buildInspectPayload({
+    farm: farm({ settings: { farmName: 'Hudson', state: 'NY', applicatorClass: 'commercial' } }),
+    records: [],
+    photos: [],
+    generatedAt: '2026-09-21T12:00:00.000Z',
+    period: 'All records',
+    stateName: 'New York',
+    ...packetOpts
+  });
+  assert.ok(nyCommercial.checklist.includes('Application rate'));
+  assert.ok(nyCommercial.checklist.includes('Target pest'));
   assert.strictEqual(payload.counts.total, 4);
   assert.strictEqual(payload.counts.filled, 2);
   assert.strictEqual(payload.counts.incomplete, 2);

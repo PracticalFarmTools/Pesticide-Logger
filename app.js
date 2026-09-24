@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.44 — Practical Farm Tools
+/* Pesticide Logger v2.9.45 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -933,8 +933,8 @@
       typeof STATE_LAWS !== 'undefined' ? STATE_LAWS : {});
   }
 
-  function fieldAppliesToApp(app, fieldName) {
-    return Compliance.fieldAppliesToApp(app, fieldName, settingsForCompliance());
+  function fieldAppliesToApp(app, fieldName, field) {
+    return Compliance.fieldAppliesToApp(app, fieldName, settingsForCompliance(), field);
   }
 
   function stateFieldsApply(app, law) {
@@ -960,7 +960,7 @@
     if (!stateFieldsApply(ctx, law)) return new Set();
     return new Set(
       law.fields
-        .filter(f => f.required && fieldAppliesToApp(ctx, f.name))
+        .filter(f => f.required && fieldAppliesToApp(ctx, f.name, f))
         .map(f => f.name)
     );
   }
@@ -1200,7 +1200,7 @@
     const ctx = formContextApp();
     const applyMatrix = stateFieldsApply(ctx, law);
     const req = applyMatrix
-      ? law.fields.filter(f => f.required && fieldAppliesToApp(ctx, f.name))
+      ? law.fields.filter(f => f.required && fieldAppliesToApp(ctx, f.name, f))
       : [];
     const verLabel = law.verification === 'researched' ? 'Researched from state sources'
       : law.verification === 'partial' ? 'Partially verified — confirm private/commercial nuances'
@@ -5018,12 +5018,16 @@
       toast('Select a state in Settings before downloading a state compliance pack');
       return;
     }
-    const matrix = (law.fields || []).map(f => ({
-      name: f.name,
-      label: f.label,
-      required: !!f.required,
-      type: f.type || 'string'
-    }));
+    const matrix = (law.fields || []).map(f => {
+      const row = {
+        name: f.name,
+        label: f.label,
+        required: !!f.required,
+        type: f.type || 'string'
+      };
+      if (Array.isArray(f.classes) && f.classes.length) row.classes = f.classes;
+      return row;
+    });
     const records = apps.map(a => {
       const result = evaluateCompliance(a);
       return {
@@ -7845,10 +7849,11 @@
 
   // -------------------------------------------------------------- licensing
 
-  // $0-overhead sales: point this at a Gumroad / Lemon Squeezy / Stripe
-  // Payment Link product that emails buyers a key from tools/sign-license.js.
-  // Empty until a real checkout URL exists — Buy buttons stay in the DOM
-  // (tests look for the ids) but are hidden so they don't open a placeholder.
+  // Merchant is Lemon Squeezy. Paste the real product URL here only after
+  // that page can take a card. Empty keeps logging open and hides Buy.
+  // Do not put a placeholder, a coming-soon page, or the catalog URL here.
+  // Key delivery is tools/sign-license.js --mail, not Lemon Squeezy's own
+  // license-key generator. See docs/lemonsqueezy.md.
   const BUY_URL = '';
 
   const licenseState = { pro: false, mode: 'checking', daysLeft: 0, holder: '' };
@@ -8169,7 +8174,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.44';
+  const APP_VERSION = 'v2.9.45';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {

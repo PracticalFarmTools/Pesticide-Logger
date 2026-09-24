@@ -3531,13 +3531,16 @@ const STATE_LAWS = {
     "retentionYears": 3,
     "appliesTo": "Commercial applicators, technicians, commercial permittees: all pesticide applications; private applicators: restricted pesticides purchased/crop/method/date records.",
     "verification": "researched",
-    "notes": "Commercial annual PRL reports are due electronically by Feb. 1 for prior calendar year; paper is no longer accepted. Commercial records also need address including five-digit ZIP and sufficiently precise place. Private applicator minimum records are restricted pesticides purchased, crops treated, application method, and dates; less complete than commercial records.",
+    "notes": "Commercial annual PRL reports are due electronically by Feb. 1 for prior calendar year; paper is no longer accepted. Commercial records also need address including five-digit ZIP and sufficiently precise place. Private applicator minimum records are restricted pesticides purchased, crops treated, application method, and dates; less complete than commercial records. Class split encoded from that note (reviewedAt unchanged, 2026-08-14): brand, date, and method stay on the private list; EPA number, amount, location, rate, and target pest are classes commercial (6 NYCRR 325.25). The operational core still asks date, crop, field, applicator, and product amount on every log. This app does not file PRL.",
     "fields": [
       {
         "name": "epa_reg_no",
         "label": "EPA registration number",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "brand_name",
@@ -3549,7 +3552,10 @@ const STATE_LAWS = {
         "name": "amount_applied",
         "label": "Total amount applied",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "date",
@@ -3561,13 +3567,19 @@ const STATE_LAWS = {
         "name": "location",
         "label": "Location / field / site description",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "rate",
         "label": "Application rate",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "method",
@@ -3579,7 +3591,10 @@ const STATE_LAWS = {
         "name": "target_pest",
         "label": "Target pest",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "crop_treated",

@@ -105,6 +105,18 @@
     'customer_copy_provided', 'customer_copy_date'
   ];
 
+  function fieldAppliesOnStart(field, cls) {
+    const classes = field && Array.isArray(field.classes) ? field.classes : null;
+    if (classes && classes.length) {
+      const listed = cls === 'both'
+        ? (classes.indexOf('private') >= 0 || classes.indexOf('commercial') >= 0)
+        : classes.indexOf(cls) >= 0;
+      if (!listed) return false;
+    }
+    if (cls === 'private' && COMMERCIAL_ONLY_FIELDS.indexOf(field.name) >= 0) return false;
+    return true;
+  }
+
   function summarizeLaw(law, applicatorClass, code) {
     const cls = applicatorClass || 'private';
     const duty = (law && law.privateDuty) || 'required';
@@ -112,8 +124,7 @@
     const fields = (law && law.fields) || [];
     const labels = quiet
       ? []
-      : fields.filter((f) => f && f.required &&
-        !(cls === 'private' && COMMERCIAL_ONLY_FIELDS.indexOf(f.name) >= 0))
+      : fields.filter((f) => f && f.required && fieldAppliesOnStart(f, cls))
         .map((f) => f.label).filter(Boolean);
     const ver = (law && law.verification) || '';
     const holes = [];

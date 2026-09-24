@@ -305,6 +305,24 @@ check('classPickHint maps privateDuty without inventing AR fields or a third cla
   assert.ok(/strictest boxes for Maine/.test(both.sentence));
 });
 
+check('NY private matrix skips commercial 325.25 rows; commercial and both keep them', () => {
+  const names = (result) => result.missingFields.map((m) => m.name);
+  const priv = evaluate(coreApp(), { state: 'NY', applicatorClass: 'private' });
+  const comm = evaluate(coreApp(), { state: 'NY', applicatorClass: 'commercial' });
+  const both = evaluate(coreApp(), { state: 'NY', applicatorClass: 'both' });
+  assert.ok(names(priv).includes('method'));
+  assert.ok(!names(priv).includes('rate'));
+  assert.ok(!names(priv).includes('target_pest'));
+  assert.ok(!names(priv).includes('epa_reg_no'));
+  ['rate', 'target_pest', 'epa_reg_no', 'method'].forEach((name) => {
+    assert.ok(names(comm).includes(name), 'commercial missing ' + name);
+    assert.ok(names(both).includes(name), 'both missing ' + name);
+  });
+  assert.ok(Compliance.fieldClassListed({ classes: ['commercial'] }, 'private') === false);
+  assert.ok(Compliance.fieldClassListed({ classes: ['commercial'] }, 'both') === true);
+  assert.ok(Compliance.fieldClassListed({}, 'private') === true);
+});
+
 if (failed) {
   console.error(`\n${failed} compliance-engine check(s) failed.`);
   process.exit(1);

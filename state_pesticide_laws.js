@@ -3239,28 +3239,34 @@ const STATE_LAWS = {
     }
   },
   "NE": {
-    "reviewedAt": "2026-07-31",
+    "reviewedAt": "2026-09-24",
     "agency": "Nebraska Department of Agriculture",
     "citation": {
       "reference": "25 Neb. Admin. Code ch. 2 §006",
-      "url": "https://www.law.cornell.edu/regulations/nebraska/25-Neb-Admin-Code-ch-2-SS-006"
+      "url": "https://nda.nebraska.gov/regulations/plant/PesticideRegulations.pdf"
     },
     "retentionYears": 3,
-    "appliesTo": "Commercial and noncommercial applicators for RUP applications and structural general-use applications; private RUP records are addressed separately but retention after rescission needs direct state confirmation.",
+    "appliesTo": "Private applicators: all restricted-use applications, recorded within 14 days, kept 3 years (25 NAC 2-006.01). Commercial and noncommercial: restricted-use (and structural general-use) applications, recorded within 48 hours, kept 3 years (006.02); copy to the customer within four business days of a request.",
     "verification": "researched",
-    "notes": "Commercial/noncommercial records must be created within 48 hours and kept at the principal place of business. Department guidance recommends wind direction/velocity, temperature, and REI for outdoor applications but does not require them in the cited section. nebraska.gov Title-25 Chapter-02 PDF was not hash-stable on 2026-08-14; Cornell LII remains the citation watch until a primary host is found.",
+    "notes": "Commercial/noncommercial records must be created within 48 hours and kept at the principal place of business. Department guidance recommends wind direction/velocity, temperature, and REI for outdoor applications but does not require them in the cited section. nebraska.gov Title-25 Chapter-02 PDF was not hash-stable on 2026-08-14; Cornell LII remains the citation watch until a primary host is found. 2026-09-24 primary-text audit: R6 scope quote: “006.01 Sufficient record keeping for private applicators includes all of the following information on the application of all restricted-use pesticides” General-use private sprays keep the core boxes. Private retention is stated directly in state rule — no federal dependency.",
     "fields": [
       {
         "name": "customer_name",
         "label": "Customer / person for whom applied",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "customer_address",
         "label": "Customer address",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "applicator_name",
@@ -3308,7 +3314,10 @@ const STATE_LAWS = {
         "name": "start_time",
         "label": "Start time",
         "type": "time",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "brand_name",
@@ -3345,6 +3354,15 @@ const STATE_LAWS = {
         "label": "Disposal of unused pesticide",
         "type": "string",
         "required": false
+      },
+      {
+        "name": "noncertified_applicator_name",
+        "label": "Noncertified / trainee applicator",
+        "type": "string",
+        "required": false,
+        "classes": [
+          "commercial"
+        ]
       }
     ],
     "recordWithinHours": 48,
@@ -3353,7 +3371,12 @@ const STATE_LAWS = {
     "recordDeadline": {
       "count": 48,
       "unit": "hours"
-    }
+    },
+    "privateRecordDeadline": {
+      "count": 14,
+      "unit": "calendarDays"
+    },
+    "privateDutyScope": "rupOnly"
   },
   "NV": {
     "reviewedAt": "2026-08-14",

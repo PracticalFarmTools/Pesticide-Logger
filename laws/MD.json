@@ -1,6 +1,6 @@
 {
   "code": "MD",
-  "reviewedAt": "2026-08-14",
+  "reviewedAt": "2026-09-24",
   "agency": "Maryland Department of Agriculture",
   "citation": {
     "reference": "COMAR 15.05.01.07(F), 15.05.01.12",
@@ -9,11 +9,11 @@
   "retentionYears": 2,
   "appliesTo": "Certified private applicators: each general-use or RUP application; licensees and permit holders: pest identification, recommendations, and pesticide applications.",
   "verification": "researched",
-  "notes": "Private applicator records include name/address, treated location including county/farm/field, date, brand/common name and EPA number, rate, total amount, area/units, and crop/site. Commercial/licensee records additionally include pest, owner/tenant, equipment, time of day, and wind direction/velocity except baits or applications in/within 3 feet of structures.",
+  "notes": "Private applicator records include name/address, treated location including county/farm/field, date, brand/common name and EPA number, rate, total amount, area/units, and crop/site. Commercial/licensee records additionally include pest, owner/tenant, equipment, time of day, and wind direction/velocity except baits or applications in/within 3 feet of structures. 2026-09-24 primary-text audit: COMAR 15.05.01: private records name and address of the certified applicator (and the actual applicator if different), county, farm address and field. Licensee records add owner or tenant, pest, equipment type, time of day, and wind (except baits or within 3 feet of a structure). Keep 2 years; no clock.",
   "fields": [
     {
       "name": "applicator_name",
-      "label": "Applicator name",
+      "label": "Certified applicator name & address",
       "type": "string",
       "required": true
     },
@@ -21,13 +21,16 @@
       "name": "applicator_license",
       "label": "Applicator certification / license #",
       "type": "string",
-      "required": true
+      "required": false
     },
     {
       "name": "customer_name",
       "label": "Customer / person for whom applied",
       "type": "string",
-      "required": false
+      "required": true,
+      "classes": [
+        "commercial"
+      ]
     },
     {
       "name": "location",
@@ -39,7 +42,10 @@
       "name": "county",
       "label": "County of application",
       "type": "string",
-      "required": true
+      "required": true,
+      "classes": [
+        "private"
+      ]
     },
     {
       "name": "date",
@@ -69,7 +75,10 @@
       "name": "concentration",
       "label": "Application concentration",
       "type": "string",
-      "required": true
+      "required": true,
+      "classes": [
+        "commercial"
+      ]
     },
     {
       "name": "amount_applied",
@@ -93,38 +102,53 @@
       "name": "target_pest",
       "label": "Target pest",
       "type": "string",
-      "required": false
+      "required": true,
+      "classes": [
+        "commercial"
+      ]
     },
     {
       "name": "method",
       "label": "Method / equipment",
       "type": "string",
-      "required": false
+      "required": true,
+      "classes": [
+        "commercial"
+      ]
     },
     {
       "name": "application_time",
       "label": "Application time",
       "type": "time",
-      "required": false
+      "required": true,
+      "classes": [
+        "commercial"
+      ]
     },
     {
       "name": "wind_direction",
-      "label": "Wind direction",
+      "label": "Wind direction (not for bait stations or within 3 ft of a structure)",
       "type": "string",
-      "required": false
+      "required": true,
+      "classes": [
+        "commercial"
+      ]
     },
     {
       "name": "wind_speed",
-      "label": "Wind speed",
+      "label": "Wind speed (not for bait stations or within 3 ft of a structure)",
       "type": "number",
-      "required": false
+      "required": true,
+      "classes": [
+        "commercial"
+      ]
     }
   ],
-  "recordWithinHours": 24,
+  "recordWithinHours": null,
   "customerCopyDays": null,
   "privateDuty": "required",
   "recordDeadline": {
-    "count": 24,
-    "unit": "hours"
+    "count": null,
+    "unit": "none"
   }
 }

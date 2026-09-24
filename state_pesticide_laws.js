@@ -162,16 +162,16 @@ const STATE_LAWS = {
     }
   },
   "AK": {
-    "reviewedAt": "2026-07-31",
+    "reviewedAt": "2026-09-24",
     "agency": "Alaska Department of Environmental Conservation",
     "citation": {
       "reference": "18 AAC 90.410, .415, .420",
-      "url": "https://dec.alaska.gov/media/drgngwgy/18-aac-90.pdf"
+      "url": "https://www.akleg.gov/basis/aac.asp#18.90.410"
     },
     "retentionYears": 2,
     "appliesTo": "Private agricultural applicators must keep RUP use records; other RUP applicators keep purchase/use records; custom, commercial, or contract applicators also keep general-use records.",
     "verification": "researched",
-    "notes": "Private agricultural RUP records are a shorter subset: product/EPA, date, location, total amount, applicator/certification, crop/site, and area. Fumigants substitute temperature, exposure duration, and gas pounds per 1,000 cubic feet for rate/dilution.",
+    "notes": "Private agricultural RUP records are a shorter subset: product/EPA, date, location, total amount, applicator/certification, crop/site, and area. Fumigants substitute temperature, exposure duration, and gas pounds per 1,000 cubic feet for rate/dilution. 2026-09-24 primary-text audit: R6 scope quote: “A private applicator shall keep accurate records of all uses of restricted-use pesticides for at least two years after each use.” General-use private sprays keep the core boxes. 18 AAC 90.410 private list: brand + EPA #, date, location, total amount, applicator name + certification #, crop/site, size of area. Time, rate, dilution, target pest and customer are .415/.420 (non-private) elements. No clock to make the record. Official text: Alaska Legislature AAC host (the DEC PDF blocks automated readers). .420 also keeps a copy of instructions given to supervised technicians.",
     "fields": [
       {
         "name": "brand_name",
@@ -195,7 +195,10 @@ const STATE_LAWS = {
         "name": "application_time",
         "label": "Application time",
         "type": "time",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "location",
@@ -219,13 +222,19 @@ const STATE_LAWS = {
         "name": "rate",
         "label": "Application rate",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "dilution_rate",
         "label": "Dilution rate",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "amount_applied",
@@ -237,7 +246,10 @@ const STATE_LAWS = {
         "name": "target_pest",
         "label": "Target pest",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "applicator_name",
@@ -255,28 +267,44 @@ const STATE_LAWS = {
         "name": "customer_name",
         "label": "Customer / person for whom applied",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "customer_address",
         "label": "Customer address",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "start_time",
         "label": "Start time",
         "type": "time",
-        "required": true
+        "required": false
+      },
+      {
+        "name": "pesticide_supplier",
+        "label": "RUP seller (company name & address)",
+        "type": "string",
+        "required": false,
+        "classes": [
+          "commercial"
+        ]
       }
     ],
-    "recordWithinHours": 24,
+    "recordWithinHours": null,
     "customerCopyDays": null,
     "privateDuty": "required",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
-    }
+      "count": null,
+      "unit": "none"
+    },
+    "privateDutyScope": "rupOnly"
   },
   "AZ": {
     "reviewedAt": "2026-07-31",

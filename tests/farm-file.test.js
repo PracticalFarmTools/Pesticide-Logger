@@ -215,6 +215,45 @@ await check('REI board says it is not the official WPS sign', () => {
   assert.ok(html.includes('can still be edited'));
 });
 
+await check('WPS application-info sheet carries every 40 CFR 170.311(b) field and the employer-duty disclaimer', () => {
+  const rec = {
+    id: 'w1', date: '2026-09-20', startTime: '07:15', endTime: '08:40',
+    fieldName: 'North 40', fieldLocation: 'East of barn, Augusta ME',
+    products: [{ productName: 'Entrust SC', epaRegNo: '62719-621', activeIngredient: 'Spinosad 22.5%', reiHours: 4 },
+      { productName: 'Bravo Weather Stik', epaRegNo: '50534-188-100', activeIngredient: 'Chlorothalonil 54%', reiHours: 12 }]
+  };
+  const nowMs = Date.parse('2026-09-24T12:00:00');
+  const rows = FarmFile.wpsApplicationRows([rec], { nowMs, reiExpiry: Compliance.reiExpiry });
+  assert.strictEqual(rows.length, 1);
+  assert.strictEqual(rows[0].reiHours, 12, 'longest REI in the mix');
+  assert.strictEqual(rows[0].reiEndsMs, Date.parse('2026-09-20T20:40:00'));
+  const html = FarmFile.wpsApplicationInfoHtml({ farmName: 'Oak', generatedAt: 'today', rows });
+  ['North 40', 'East of barn, Augusta ME', 'Entrust SC', '62719-621', 'Spinosad 22.5%',
+    'Bravo Weather Stik', '50534-188-100', 'Chlorothalonil 54%', '2026-09-20', '07:15', '08:40', '12 h']
+    .forEach((v) => assert.ok(html.includes(v), v));
+  assert.ok(html.includes('40 CFR 170.311(b)'));
+  assert.ok(html.includes('Not WPS compliance software: employer duties are yours.'));
+  assert.ok(html.includes('No es software de cumplimiento WPS'));
+  assert.ok(html.includes('Área tratada') && html.includes('Ingrediente activo'), 'Spanish headers');
+  assert.ok(html.includes('class="wps-info-sheet"'), 'i18n walker skips the bilingual sheet');
+});
+
+await check('WPS sheet window: 30 days after the REI ends; missing facts are flagged, not invented', () => {
+  const nowMs = Date.parse('2026-09-24T12:00:00');
+  const old = { id: 'o', date: '2026-08-01', endTime: '09:00', fieldName: 'Old', products: [{ productName: 'X', reiHours: 12 }] };
+  const edge = { id: 'e', date: '2026-08-25', endTime: '09:00', fieldName: 'Edge', products: [{ productName: 'Y', reiHours: 12 }] };
+  const noRei = { id: 'n', date: '2026-09-10', fieldName: 'NoRei', products: [{ productName: 'Z' }] };
+  const gone = { id: 'g', date: '2026-09-22', fieldName: 'Gone', deletedAt: '2026-09-23', products: [] };
+  const rows = FarmFile.wpsApplicationRows([old, edge, noRei, gone], { nowMs, reiExpiry: Compliance.reiExpiry });
+  assert.deepStrictEqual(rows.map((r) => r.where), ['NoRei', 'Edge']);
+  const keep = new Date(rows[1].keepUntilMs);
+  assert.strictEqual(keep.getFullYear(), 2028, 'keep 2 years after the REI ends');
+  const html = FarmFile.wpsApplicationInfoHtml({ rows });
+  assert.ok(html.includes('REI not entered — read the label'));
+  assert.ok(html.includes('Not in the log — add it before posting'), 'blank EPA # / AI / times are called out');
+  assert.ok(FarmFile.wpsApplicationInfoHtml({ rows: [] }).includes('No applications need display today'));
+});
+
 await check('migrate keeps crew and device fields without freezing records', () => {
   const d = FarmStore.migrate({
     settings: { farmName: 'Oak', state: 'IA' },

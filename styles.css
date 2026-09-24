@@ -1870,6 +1870,11 @@ body:not(.map-fullscreen) .tab-nav-wrap {
   .posting-sheet .posting-sub { font-size: 22px; margin-bottom: 24px; }
   .posting-sheet table { margin: 0 auto 20px; max-width: 640px; }
   .posting-sheet th, .posting-sheet td { font-size: 16px !important; padding: 10px 12px !important; text-align: left; }
+
+  /* WPS application-information display — read on a wall at arm's length */
+  .wps-info-sheet th, .wps-info-sheet td { font-size: 12px; padding: 6px 8px; }
+  .wps-info-sheet hr { border: 0; border-top: 1px dashed #999; margin: 4px 0; }
+  .wps-info-sheet .print-footer { font-size: 10px; }
 }
 .app-dialog.gather-dialog-box { max-width: 640px; max-height: 90vh; overflow: auto; }
 .app-dialog h4 { margin: 1rem 0 0.35rem; color: var(--primary-green-dark); font-size: 0.95rem; }

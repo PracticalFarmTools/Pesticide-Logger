@@ -638,6 +638,10 @@
     ["US label units. After Calculate, metric equivalents appear as a reference — they are not stored on spray records.", "Unidades de etiqueta de EE. UU. Tras Calcular, aparecen equivalentes métricos de referencia — no se guardan en el registro.", "Unités d’étiquette américaines. Après Calculer, des équivalents métriques s’affichent en référence — ils ne sont pas enregistrés dans le registre.", "Unidades do rótulo dos EUA. Depois de Calcular, equivalentes métricos aparecem como referência — não entram no registro."],
     ["Metric reference — not the legal record", "Referencia métrica — no es el registro legal", "Référence métrique — pas le registre officiel", "Referência métrica — não é o registro legal"],
     ["Print today’s REI board", "Imprimir el tablero REI de hoy", "Imprimer le tableau REI du jour", "Imprimir o quadro de REI de hoje"],
+    ["Print WPS application info", "Imprimir información de aplicación WPS", "Imprimer les informations d’application WPS", "Imprimir informações de aplicação WPS"],
+    ["Print WPS application info (English / Spanish)", "Imprimir información de aplicación WPS (inglés / español)", "Imprimer les informations d’application WPS (anglais / espagnol)", "Imprimir informações de aplicação WPS (inglês / espanhol)"],
+    ["For workers (WPS)", "Para trabajadores (WPS)", "Pour les travailleurs (WPS)", "Para trabalhadores (WPS)"],
+    ["Product, EPA Reg. No., active ingredient, treated area, start and end times, and REI for every spray still inside its display window (30 days after the REI ends). Not WPS compliance software: posting, the Safety Data Sheet, training, and the 2-year keep are the employer’s duties.", "Producto, N.º de registro EPA, ingrediente activo, área tratada, horas de inicio y fin, y REI de cada aplicación aún dentro de su periodo de exhibición (30 días después de que termine el REI). No es software de cumplimiento WPS: exhibir, la Hoja de Datos de Seguridad, la capacitación y guardar 2 años son obligaciones del empleador.", "Produit, n° d’enregistrement EPA, matière active, zone traitée, heures de début et de fin, et REI pour chaque application encore dans sa période d’affichage (30 jours après la fin du REI). Pas un logiciel de conformité WPS : l’affichage, la fiche de données de sécurité, la formation et la conservation 2 ans sont les obligations de l’employeur.", "Produto, n.º de registro EPA, ingrediente ativo, área tratada, horários de início e fim, e REI de cada aplicação ainda dentro do período de exibição (30 dias após o fim do REI). Não é software de conformidade WPS: afixar, a Ficha de Dados de Segurança, o treinamento e guardar por 2 anos são deveres do empregador."],
     ["Save inspector packet (.html)", "Guardar paquete para inspector (.html)", "Enregistrer le dossier inspecteur (.html)", "Salvar pacote para fiscal (.html)"],
     ["Send logs to another device", "Enviar registros a otro dispositivo", "Envoyer les registres vers un autre appareil", "Enviar registros para outro aparelho"],
     ["Bring in logs from another device", "Traer registros de otro dispositivo", "Importer les registres d’un autre appareil", "Trazer registros de outro aparelho"],
@@ -819,7 +823,7 @@
   function makeTranslator(dict) {
     const ATTRS = ['placeholder', 'aria-label', 'title'];
     function translateTextNode(node) {
-      if (node.parentElement && node.parentElement.closest && node.parentElement.closest('.posting-sheet')) return;
+      if (node.parentElement && node.parentElement.closest && node.parentElement.closest('.posting-sheet, .wps-info-sheet')) return;
       const raw = node.nodeValue;
       const key = normalizeKey(raw);
       if (!key) return;
@@ -829,7 +833,7 @@
     function walk(el) {
       if (el.nodeType === Node.TEXT_NODE) { translateTextNode(el); return; }
       if (el.nodeType !== Node.ELEMENT_NODE) return;
-      if (el.closest && el.closest('.posting-sheet')) return;
+      if (el.closest && el.closest('.posting-sheet, .wps-info-sheet')) return;
       const tag = el.tagName;
       if (tag === 'SCRIPT' || tag === 'STYLE') return;
       ATTRS.forEach(a => {

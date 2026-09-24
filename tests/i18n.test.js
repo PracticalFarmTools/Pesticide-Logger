@@ -197,7 +197,7 @@ check('app.js applies any dictionary language, not only Spanish', () => {
   assert.ok(!/language === 'es'/.test(app), 'boot is not hardcoded to es');
   assert.ok(i18nSrc.includes('DICTS[lang]'), 'applyLanguage is dictionary-driven');
   assert.ok(!i18nSrc.includes("if (lang !== 'es')"), 'applyLanguage is not es-only');
-  assert.ok(i18nSrc.includes("closest('.posting-sheet')"), 'WPS posting skipped');
+  assert.ok(i18nSrc.includes("closest('.posting-sheet, .wps-info-sheet')"), 'bilingual WPS sheets skipped');
   assert.ok(html.includes('value="fr">Français'), 'French option');
   assert.ok(html.includes('value="pt-BR">Português (Brasil)'), 'Brazilian Portuguese option');
   assert.ok(!html.includes('id="header-language"'), 'language picker is not in the header');

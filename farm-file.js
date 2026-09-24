@@ -894,6 +894,91 @@
       '<p class="print-footer">Pesticide Logger — Practical Farm Tools. Hang in the shop. Live log can still be edited.</p>';
   }
 
+  // 40 CFR 170.311(b): display from 24 h after the application ends until 30
+  // days after the REI ends; keep the information 2 years after the REI ends.
+  const WPS_DISPLAY_DAYS = 30;
+  const WPS_KEEP_YEARS = 2;
+  const DAY_MS = 86400000;
+
+  function wpsReiHours(a) {
+    const ok = (v) => v != null && v !== '' && Number.isFinite(Number(v)) && Number(v) >= 0;
+    if (ok(a.reiHours)) return Number(a.reiHours);
+    const nums = (a.products || []).map((p) => p.reiHours).filter(ok).map(Number);
+    return nums.length ? Math.max.apply(null, nums) : null;
+  }
+
+  function wpsApplicationRows(apps, opts) {
+    opts = opts || {};
+    const nowMs = opts.nowMs != null ? opts.nowMs : Date.now();
+    const reiExpiry = opts.reiExpiry || (() => null);
+    return (apps || [])
+      .filter((a) => a && !a.deletedAt && a.date)
+      .map((a) => {
+        const exp = reiExpiry(a);
+        const reiEndsMs = exp ? exp.getTime() : null;
+        const basisMs = reiEndsMs != null ? reiEndsMs : new Date(a.date + 'T23:59').getTime();
+        const keep = new Date(basisMs);
+        keep.setFullYear(keep.getFullYear() + WPS_KEEP_YEARS);
+        return {
+          where: a.fieldName || '',
+          description: a.fieldLocation || '',
+          products: (a.products || []).map((p) => ({
+            name: p.productName || '', epa: p.epaRegNo || '', ai: p.activeIngredient || ''
+          })),
+          date: a.date,
+          startTime: a.startTime || '',
+          endTime: a.endTime || '',
+          reiHours: wpsReiHours(a),
+          reiEndsMs,
+          displayUntilMs: basisMs + WPS_DISPLAY_DAYS * DAY_MS,
+          keepUntilMs: keep.getTime()
+        };
+      })
+      .filter((r) => r.displayUntilMs >= nowMs)
+      .sort((x, y) => (y.date + y.startTime).localeCompare(x.date + x.startTime));
+  }
+
+  function wpsApplicationInfoHtml(opts) {
+    opts = opts || {};
+    const rows = opts.rows || [];
+    const when = opts.fmtWhen || ((ms) => new Date(ms).toLocaleString());
+    const day = opts.fmtDay || ((ms) => new Date(ms).toLocaleDateString());
+    const missing = '<em>Not in the log — add it before posting · Falta en el registro</em>';
+    const body = rows.length ? rows.map((r) =>
+      '<tr><td><strong>' + esc(r.where) + '</strong>' +
+        (r.description ? '<br>' + esc(r.description) : '') + '</td>' +
+      '<td>' + (r.products.length ? r.products.map((p) =>
+        esc(p.name) + '<br>EPA Reg. No. ' + (p.epa ? esc(p.epa) : missing) +
+        '<br>' + (p.ai ? esc(p.ai) : 'Active ingredient · Ingrediente activo: ' + missing)
+      ).join('<hr>') : missing) + '</td>' +
+      '<td>' + esc(r.date) + '<br>' +
+        (r.startTime ? esc(r.startTime) : missing) + ' – ' + (r.endTime ? esc(r.endTime) : missing) + '</td>' +
+      '<td>' + (r.reiHours != null
+        ? esc(String(r.reiHours)) + ' h<br>' + esc(when(r.reiEndsMs))
+        : 'REI not entered — read the label · REI no registrado — lea la etiqueta') + '</td>' +
+      '<td>' + esc(day(r.displayUntilMs)) + '<br><span class="hint">keep · guardar ' + esc(day(r.keepUntilMs)) + '</span></td></tr>'
+    ).join('') : '<tr><td colspan="5">No applications need display today · Ninguna aplicación requiere exhibición hoy</td></tr>';
+    return '<div class="wps-info-sheet">' +
+      '<h1>Pesticide application information · Información de aplicaciones de pesticidas</h1>' +
+      '<p class="print-meta">' + esc(opts.farmName || 'Farm') + ' · ' + esc(opts.generatedAt || '') +
+        ' · 40 CFR 170.311(b)</p>' +
+      '<table class="record-table"><thead><tr>' +
+        '<th>Treated area · Área tratada</th>' +
+        '<th>Product · EPA Reg. No. · Active ingredient<br>Producto · N.º de registro EPA · Ingrediente activo</th>' +
+        '<th>Applied (start – end) · Aplicado (inicio – fin)</th>' +
+        '<th>REI · Intervalo de reingreso</th>' +
+        '<th>Display until · Exhibir hasta</th>' +
+      '</tr></thead><tbody>' + body + '</tbody></table>' +
+      '<p class="print-footer">Display aid built from the spray log. Not WPS compliance software: employer duties are yours. ' +
+        'Post within 24 hours after the application ends and before workers enter, keep it up 30 days after the REI ends, ' +
+        'post the Safety Data Sheet with it, and keep this information 2 years after the REI ends. The product label is the law.</p>' +
+      '<p class="print-footer">Ayuda para exhibir, hecha con el registro de aplicaciones. No es software de cumplimiento WPS: ' +
+        'las obligaciones del empleador son suyas. Exhíbala dentro de 24 horas después de terminar la aplicación y antes de que ' +
+        'entren los trabajadores, manténgala 30 días después de que termine el REI, exhiba la Hoja de Datos de Seguridad con ella ' +
+        'y guarde esta información 2 años después de que termine el REI. La etiqueta del producto es la ley.</p>' +
+      '</div>';
+  }
+
   function restoreCardHtml(opts) {
     opts = opts || {};
     const farmName = opts.farmName || 'This farm';
@@ -1266,6 +1351,8 @@
     isIosSafariTab,
     shouldShowIosStorageWarning,
     reiBoardHtml,
+    wpsApplicationRows,
+    wpsApplicationInfoHtml,
     restoreCardHtml,
     clerkSnapshot,
     shouldShowClerkCard,

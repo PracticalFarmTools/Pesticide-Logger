@@ -65,6 +65,7 @@ async function fillFocused(page) {
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME, args: ['--no-sandbox'] });
   const ctx = await browser.newContext({ viewport: { width: 400, height: 850 }, userAgent: IPHONE_UA, acceptDownloads: true });
+  await ctx.addInitScript(() => { window.print = () => { window.__printed = (window.__printed || 0) + 1; }; });
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -187,6 +188,21 @@ async function fillFocused(page) {
       const cite = await page.evaluate(() => STATE_LAWS.ME.citation.reference);
       must(html.includes(cite), 'packet cites ' + cite);
       must(html.includes('Roundup PowerMAX') && html.includes('524-549'), 'packet lists the product');
+    });
+
+    await stage(page, 'Reports: WPS application info sheet (170.311) prints from the record', async () => {
+      await page.click('#report-wps-info');
+      const sheet = await page.textContent('#print-area .wps-info-sheet');
+      must(await page.evaluate(() => window.__printed) >= 1, 'print dialog opened');
+      ['North 40', 'Roundup PowerMAX', '524-549', 'Glyphosate 48.7%', '4 h', 'Not WPS compliance software']
+        .forEach((v) => must(sheet.includes(v), 'sheet shows ' + v));
+      if (SHOTS) {
+        await page.emulateMedia({ media: 'print' });
+        await page.setViewportSize({ width: 1000, height: 700 });
+        await page.screenshot({ path: path.join(SHOTS, 'wps-application-info-print.png'), fullPage: true });
+        await page.emulateMedia({ media: 'screen' });
+        await page.setViewportSize({ width: 400, height: 850 });
+      }
     });
 
     must(!errors.length, 'page errors: ' + errors.join(' | '));

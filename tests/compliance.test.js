@@ -1439,6 +1439,17 @@ check('v2.9.48: iOS Safari tab gets the Safari-can-clear-this-book line ahead of
   assert.ok(app.split('function markBackedUp() {')[1].split('}')[0].includes('renderIosStorageBanner()'));
 });
 
+check('v2.9.48: WPS application-info print in Reports and beside the REI board', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  assert.ok(html.includes('id="report-wps-info"') && html.includes('id="dash-wps-info"'));
+  assert.ok(html.indexOf('id="dash-wps-info"') - html.indexOf('id="dash-rei-board"') < 200, 'next to the REI board');
+  assert.ok(app.includes("$('#report-wps-info').addEventListener('click', printWpsApplicationInfo)"));
+  const fn = app.split('function printWpsApplicationInfo() {')[1].split('\n  }\n')[0];
+  assert.ok(fn.includes('FarmFile.wpsApplicationRows(sortedApps(), { nowMs: now().getTime(), reiExpiry: Compliance.reiExpiry })'));
+  assert.ok(fn.includes('window.print()'));
+});
+
 check('v2.9.47: weather is NWS (public domain) — no Open-Meteo free tier in a paid app', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');

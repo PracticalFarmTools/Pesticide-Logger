@@ -5767,6 +5767,19 @@
     window.print();
   }
 
+  function printWpsApplicationInfo() {
+    if (typeof FarmFile === 'undefined' || !FarmFile.wpsApplicationInfoHtml) return;
+    const rows = FarmFile.wpsApplicationRows(sortedApps(), { nowMs: now().getTime(), reiExpiry: Compliance.reiExpiry });
+    $('#print-area').innerHTML = FarmFile.wpsApplicationInfoHtml({
+      farmName: data.settings.farmName || 'Farm',
+      generatedAt: now().toLocaleString(),
+      rows,
+      fmtWhen: (ms) => new Date(ms).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
+      fmtDay: (ms) => new Date(ms).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+    });
+    window.print();
+  }
+
   // -------------------------------------------------------------- CSV import
 
   let importCsvRows = null;
@@ -8373,6 +8386,8 @@
     bindAutoBackupWatchers();
     initLaunchQueue();
     if ($('#dash-rei-board')) $('#dash-rei-board').addEventListener('click', printReiBoard);
+    if ($('#dash-wps-info')) $('#dash-wps-info').addEventListener('click', printWpsApplicationInfo);
+    if ($('#report-wps-info')) $('#report-wps-info').addEventListener('click', printWpsApplicationInfo);
     initInstallHint();
     initLanguageControls();
     applyUiLanguage();

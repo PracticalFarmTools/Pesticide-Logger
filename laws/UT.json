@@ -1,27 +1,33 @@
 {
   "code": "UT",
-  "reviewedAt": "2026-07-31",
+  "reviewedAt": "2026-09-24",
   "agency": "Utah Department of Agriculture and Food",
   "citation": {
-    "reference": "Utah Admin. Code R68-7-11(11), R68-7-12(8), R68-7-13(8)",
-    "url": "https://www.law.cornell.edu/regulations/utah/Utah-Admin-Code-R68-7-11"
+    "reference": "Utah Admin. Code R68-7-11(11), -12(8), -13(8)",
+    "url": "https://adminrules.utah.gov/public/rule/R68-7/Current%20Rules"
   },
   "retentionYears": 2,
-  "appliesTo": "Commercial applicators: any pesticide application; non-commercial applicators: RUP applications; private applicators: covered pesticide applications under R68-7-13, exact post-rescission private scope partially verified.",
+  "appliesTo": "Commercial applicators: any pesticide application; non-commercial applicators: restricted-use applications; private applicators: every restricted-use application and any application required by WPS (R68-7-13(8)).",
   "verification": "researched",
-  "notes": "Records created within 24 hours and kept in uniform format. Commercial records require business address and commercial applicator license number; noncommercial/private rules are similar but scope differs. adminrules.utah.gov R68-7 returned 404 on 2026-08-14; Cornell LII remains the citation watch until a primary host is found.",
+  "notes": "Records created within 24 hours and kept in uniform format. Commercial records require business address and commercial applicator license number; noncommercial/private rules are similar but scope differs. adminrules.utah.gov R68-7 returned 404 on 2026-08-14; Cornell LII remains the citation watch until a primary host is found. 2026-09-24 primary-text audit: Private scope: “Private pesticide applicators shall keep and maintain records of any restricted use pesticide applications, and of any pesticide applications required by WPS.” WPS reaches most farm employers, so the full private list stays.",
   "fields": [
     {
       "name": "customer_name",
       "label": "Customer / person for whom applied",
       "type": "string",
-      "required": true
+      "required": true,
+      "classes": [
+        "commercial"
+      ]
     },
     {
       "name": "customer_address",
       "label": "Customer address",
       "type": "string",
-      "required": true
+      "required": true,
+      "classes": [
+        "commercial"
+      ]
     },
     {
       "name": "location",
@@ -99,7 +105,7 @@
       "name": "business_name_address",
       "label": "Business / operator name & address",
       "type": "string",
-      "required": false
+      "required": true
     },
     {
       "name": "applicator_license",
@@ -112,6 +118,51 @@
       "label": "Start time",
       "type": "time",
       "required": true
+    },
+    {
+      "name": "end_time",
+      "label": "End time",
+      "type": "time",
+      "required": true,
+      "classes": [
+        "private"
+      ]
+    },
+    {
+      "name": "active_ingredient",
+      "label": "Active ingredient",
+      "type": "string",
+      "required": true,
+      "classes": [
+        "private"
+      ]
+    },
+    {
+      "name": "rate",
+      "label": "Application rate",
+      "type": "string",
+      "required": true,
+      "classes": [
+        "private"
+      ]
+    },
+    {
+      "name": "rei_hours",
+      "label": "Restricted-entry interval (REI)",
+      "type": "string",
+      "required": true,
+      "classes": [
+        "private"
+      ]
+    },
+    {
+      "name": "noncertified_applicator_name",
+      "label": "Person applying under R68-7-13(1)(a) exemptions",
+      "type": "string",
+      "required": true,
+      "classes": [
+        "private"
+      ]
     }
   ],
   "recordWithinHours": 24,

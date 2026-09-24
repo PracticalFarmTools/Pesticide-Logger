@@ -394,11 +394,11 @@ await check('inspector packet v2 cover, checklist, incomplete, and print CSS', a
   assert.ok(html.includes('12 hr'));
   assert.ok(html.includes('The label is the law'));
   assert.ok(html.includes('not a filing') || html.includes('not the agency'));
-  assert.ok(html.includes('Rules last checked 2026-08-18'));
-  assert.ok(html.includes('check again by 2027-08-18'));
+  assert.ok(html.includes('Rules last checked 2026-09-24'));
+  assert.ok(html.includes('check again by 2027-09-24'));
   assert.ok(html.includes('matrix edition 2026-09-24'));
-  assert.strictEqual(payload.farm.reviewedAt, '2026-08-18');
-  assert.strictEqual(payload.farm.reviewBy, '2027-08-18');
+  assert.strictEqual(payload.farm.reviewedAt, '2026-09-24');
+  assert.strictEqual(payload.farm.reviewBy, '2027-09-24');
   assert.ok(!html.includes('privateKey'));
   const completeRow = html.includes('INCOMPLETE') && html.includes('Complete');
   assert.ok(completeRow);

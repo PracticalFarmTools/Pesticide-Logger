@@ -1684,7 +1684,7 @@ const STATE_LAWS = {
     }
   },
   "IA": {
-    "reviewedAt": "2026-08-18",
+    "reviewedAt": "2026-09-24",
     "agency": "Iowa Department of Agriculture and Land Stewardship",
     "citation": {
       "reference": "Iowa Admin. Code r. 21-45.26(206)",
@@ -1693,11 +1693,11 @@ const STATE_LAWS = {
     "retentionYears": 3,
     "appliesTo": "Commercial applicators and retail dealers. 45.26(3) is commercial applicator office records of each pesticide applied. Private applicators are not named in 45.26; follow the label.",
     "verification": "researched",
-    "notes": "Official IAC ch. 21-45 PDF dated 7/22/2026 (read 2026-08-18; ARC 9145C, IAB 4/30/25, effective 1/1/26). Opening sentence: commercial applicators and retail dealers shall maintain records for three years. Private applicators are not in 45.26 — privateDuty none; still follow the label. 45.26(3) commercial office records: licensee name and license number; landowner/customer name and address; place of RUP application; date; trade name and EPA registration number; quantity, concentration or rate, and treatment-area size; outdoor temperature and wind direction/velocity if applicable; RUP use including crop/commodity/stored product/site; start and end time; certified applicator name and certification number; noncertified applicator name if applicable under 45.22(15). Weather stays optional (if applicable). Location and crop stay required on this commercial matrix because office records need a site and the operational core already requires them; 45.26(3)(c) and (h) name those elements for RUP. Do not paste 45.26(1)–(2) dealer RUP-sale lists, or 45.22(15) supervision-qualification extras (signature, issuing unit, expiration), onto a field-crop spray. No customer-copy day count and no completion clock in 45.26 (24-hour fallback is operational). Cornell reprint of 45.26: https://www.law.cornell.edu/regulations/iowa/Iowa-Admin-Code-r-21-45-26",
+    "notes": "Official IAC ch. 21-45 PDF dated 7/22/2026 (read 2026-08-18; ARC 9145C, IAB 4/30/25, effective 1/1/26). Opening sentence: commercial applicators and retail dealers shall maintain records for three years. Private applicators are not in 45.26 — privateDuty none; still follow the label. 45.26(3) commercial office records: licensee name and license number; landowner/customer name and address; place of RUP application; date; trade name and EPA registration number; quantity, concentration or rate, and treatment-area size; outdoor temperature and wind direction/velocity if applicable; RUP use including crop/commodity/stored product/site; start and end time; certified applicator name and certification number; noncertified applicator name if applicable under 45.22(15). Weather stays optional (if applicable). Location and crop stay required on this commercial matrix because office records need a site and the operational core already requires them; 45.26(3)(c) and (h) name those elements for RUP. Do not paste 45.26(1)–(2) dealer RUP-sale lists, or 45.22(15) supervision-qualification extras (signature, issuing unit, expiration), onto a field-crop spray. No customer-copy day count and no completion clock in 45.26 (24-hour fallback is operational). Cornell reprint of 45.26: https://www.law.cornell.edu/regulations/iowa/Iowa-Admin-Code-r-21-45-26 2026-09-24 primary-text audit: 45.26(3)(g): “If applicable, the temperature and the direction and estimated velocity of wind at time of application to any outdoor area.” (a) asks for the licensee name and license number, not an address. No clock.",
     "fields": [
       {
         "name": "business_name_address",
-        "label": "Business / operator name & address",
+        "label": "Licensee name",
         "type": "string",
         "required": true
       },
@@ -1763,21 +1763,30 @@ const STATE_LAWS = {
       },
       {
         "name": "temperature",
-        "label": "Temperature",
+        "label": "Temperature (outdoor applications)",
         "type": "number",
-        "required": false
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "wind_direction",
-        "label": "Wind direction",
+        "label": "Wind direction (outdoor applications)",
         "type": "string",
-        "required": false
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "wind_speed",
-        "label": "Wind speed",
+        "label": "Wind speed (outdoor applications)",
         "type": "number",
-        "required": false
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "restricted_use_flag",
@@ -1822,12 +1831,12 @@ const STATE_LAWS = {
         "required": false
       }
     ],
-    "recordWithinHours": 24,
+    "recordWithinHours": null,
     "customerCopyDays": null,
     "privateDuty": "none",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
+      "count": null,
+      "unit": "none"
     }
   },
   "KS": {

@@ -173,7 +173,7 @@ check('Home and Settings surface check-again dates', () => {
     encoding: 'utf8', cwd: root
   });
   assert.strictEqual(status.status, 0, status.stderr);
-  assert.ok(status.stdout.includes('IA\tresearched\tnone\t2026-08-18\t2027-08-18\tno'));
+  assert.ok(status.stdout.includes('IA\tresearched\tnone\t2026-09-24\t2027-09-24\tno'));
   assert.ok(status.stdout.includes('0 stale'));
 });
 

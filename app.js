@@ -3702,7 +3702,7 @@
       out.push('<span class="badge-pill badge-incomplete">REI/PHI missing</span>');
     }
     if (a.customerCopyProvided) out.push('<span class="badge-pill badge-ok">Copy given</span>');
-    const due = a.recordDueAt || computeRecordDueAt(a);
+    const due = recordDueFor(a);
     if (due && !a.deletedAt && (a.draft || !result.complete)) {
       if (new Date(due) < now()) out.push('<span class="badge-pill badge-incomplete">Past due</span>');
     }
@@ -4118,7 +4118,7 @@
     const items = [];
     sortedApps().forEach(a => {
       const result = evaluateCompliance(a);
-      const due = a.recordDueAt || computeRecordDueAt(a);
+      const due = recordDueFor(a);
       const incomplete = a.draft || !result.complete || !result.intervalsOk;
       if (due && incomplete) {
         items.push({
@@ -4991,7 +4991,7 @@
           a.applicatorName, a.certNumber, a.supervisorName || '', a.noncertifiedApplicatorName || '',
           a.ownerOperatorName || '', a.customerName || '', a.customerAddress || '', a.customerPhone || '',
           a.customerCopyProvided ? 'Yes' : 'No', a.customerCopyDate || '', computeCustomerCopyDueAt(a) || '',
-          a.recordDueAt || computeRecordDueAt(a) || '',
+          recordDueFor(a) || '',
           a.businessNameAddress || '', a.companyLicense || '', a.pesticideSupplier || '', a.disposalMethod || '',
           pr.reiHours ?? '', pr.phiDays ?? '', a.reiHours ?? '', a.phiDays ?? '', result.retentionYears,
           result.missing.join('; '), (result.warnings || []).join('; '), (a.history || []).length, a.notes
@@ -5165,7 +5165,7 @@
         customerCopyProvided: !!a.customerCopyProvided,
         customerCopyDate: a.customerCopyDate || '',
         customerCopyDueAt: computeCustomerCopyDueAt(a),
-        recordDueAt: a.recordDueAt || computeRecordDueAt(a),
+        recordDueAt: recordDueFor(a),
         boomHeight: a.boomHeight || '',
         groundSpeed: a.groundSpeed || '',
         bufferDistance: a.bufferDistance || '',

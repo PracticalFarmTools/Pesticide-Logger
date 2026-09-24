@@ -1046,7 +1046,7 @@ const STATE_LAWS = {
     }
   },
   "FL": {
-    "reviewedAt": "2026-08-14",
+    "reviewedAt": "2026-09-24",
     "agency": "Florida Department of Agriculture and Consumer Services",
     "citation": {
       "reference": "Fla. Admin. Code r. 5E-9.032",
@@ -1055,7 +1055,7 @@ const STATE_LAWS = {
     "retentionYears": 2,
     "appliesTo": "Licensed pesticide applicators; all restricted-use pesticide applications. Some special property-owner/leaseholder records are indefinite under §487.081(6)(b).",
     "verification": "researched",
-    "notes": "Records must be made within two working days. Commercial/licensed applicator making or supervising for another person must provide copy within 30 days. Florida does not require weather in this agricultural RUP rule, but it is recommended.",
+    "notes": "Records must be made within two working days. Commercial/licensed applicator making or supervising for another person must provide copy within 30 days. Florida does not require weather in this agricultural RUP rule, but it is recommended. 2026-09-24 primary-text audit: R6 scope quote: “(1) Licensed pesticide applicators shall maintain records relating to the application of all restricted use pesticides.” General-use private sprays keep the core boxes. Customer/authority element applies only “if the application was made to property not owned or leased by the licensee”; a statement of authority may substitute. The license # is the responsible licensee's; the person who applied may be unlicensed.",
     "fields": [
       {
         "name": "applicator_name",
@@ -1065,7 +1065,7 @@ const STATE_LAWS = {
       },
       {
         "name": "applicator_license",
-        "label": "Applicator certification / license #",
+        "label": "License # of the licensee responsible",
         "type": "string",
         "required": true
       },
@@ -1143,9 +1143,9 @@ const STATE_LAWS = {
       },
       {
         "name": "customer_name",
-        "label": "Customer / person for whom applied",
+        "label": "Person requesting / authorizing (if not your own or leased land)",
         "type": "string",
-        "required": true
+        "required": false
       }
     ],
     "recordWithinHours": 48,
@@ -1154,7 +1154,8 @@ const STATE_LAWS = {
     "recordDeadline": {
       "count": 2,
       "unit": "businessDays"
-    }
+    },
+    "privateDutyScope": "rupOnly"
   },
   "GA": {
     "reviewedAt": "2026-07-31",

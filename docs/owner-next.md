@@ -4,6 +4,9 @@
 of scope): `docs/seller-grade-report.md` — **A−**. Listing paste:
 `docs/suite-listing.md`. This file is the **order**. Do not skip. Do not go
 live until step 2 answers. Do not set `BUY_URL` until step 4.
+Fixes from the 2026-09-24 audit (licensing, phone layout, NY/SD) are in
+`docs/audit-v2.9.44-fix-blueprint.md`; its L1, L2, U1, U2 and NY items ship
+before step 4.
 
 Sell to **growers**. Keep applicator class in the app (private is the farmer;
 commercial boxes stay for farms that hold that license). Catch-up is still a

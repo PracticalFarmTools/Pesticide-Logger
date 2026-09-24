@@ -4626,16 +4626,16 @@ const STATE_LAWS = {
     "privateDutyScope": "rupOnly"
   },
   "OR": {
-    "reviewedAt": "2026-07-31",
+    "reviewedAt": "2026-09-24",
     "agency": "Oregon Department of Agriculture",
     "citation": {
       "reference": "ORS 634.146; OAR 603-057-0130",
       "url": "https://www.oregonlegislature.gov/bills_laws/ors/ors634.html"
     },
     "retentionYears": 3,
-    "appliesTo": "Pesticide operators; public and noncommercial applicators maintain operator-style records. Private farm applicator state field list not verified.",
+    "appliesTo": "Pesticide operators, commercial, public and noncommercial applicators (ORS 634.146; OAR 603-057-0130). No state record duty for private applicators.",
     "verification": "researched",
-    "notes": "ORS text uses date and approximate time; ODA guidance says beginning and ending time. Field-crop owner can request a written statement within 40 days. Apprentice/trainee applications require both trainee/apprentice and supervisor names/license numbers.",
+    "notes": "ORS text uses date and approximate time; ODA guidance says beginning and ending time. Field-crop owner can request a written statement within 40 days. Apprentice/trainee applications require both trainee/apprentice and supervisor names/license numbers. 2026-09-24 primary-text audit: Who-clause: “(1) Pesticide operators shall prepare and maintain records on forms approved by the State Department of Agriculture” (ORS 634.146); OAR 603-057-0130 extends it to public and noncommercial applicators. No ORS 634 or OAR 603-057 text requires private applicators to keep application records. Field-crop owners may request a written statement; the operator gives it within 40 days after the application (on request). Date and approximate time; no clock.",
     "fields": [
       {
         "name": "customer_name",
@@ -4653,7 +4653,7 @@ const STATE_LAWS = {
         "name": "customer_phone",
         "label": "Customer phone",
         "type": "string",
-        "required": true
+        "required": false
       },
       {
         "name": "location",
@@ -4677,7 +4677,7 @@ const STATE_LAWS = {
         "name": "end_time",
         "label": "End time",
         "type": "time",
-        "required": true
+        "required": false
       },
       {
         "name": "pesticide_supplier",
@@ -4713,7 +4713,7 @@ const STATE_LAWS = {
         "name": "carrier_volume",
         "label": "Carrier / finished spray volume",
         "type": "string",
-        "required": true
+        "required": false
       },
       {
         "name": "crop_treated",
@@ -4729,9 +4729,9 @@ const STATE_LAWS = {
       },
       {
         "name": "aircraft_id",
-        "label": "Aircraft ID",
+        "label": "FAA number (if applied by aircraft)",
         "type": "string",
-        "required": true
+        "required": false
       },
       {
         "name": "applicator_name",
@@ -4747,17 +4747,17 @@ const STATE_LAWS = {
       },
       {
         "name": "supervisor_name",
-        "label": "Supervising applicator",
+        "label": "Supervising applicator + license # (apprentice / trainee applications)",
         "type": "string",
-        "required": true
+        "required": false
       }
     ],
-    "recordWithinHours": 24,
+    "recordWithinHours": null,
     "customerCopyDays": null,
-    "privateDuty": "required",
+    "privateDuty": "none",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
+      "count": null,
+      "unit": "none"
     }
   },
   "PA": {

@@ -283,7 +283,7 @@ check('dataset census: verification and privateDuty buckets', () => {
   assert.deepStrictEqual(ver.partial, []);
   assert.deepStrictEqual(ver.uncertain, []);
   assert.strictEqual(ver.researched.length, 50);
-  assert.deepStrictEqual(duty.none, ['AL', 'AR', 'DE', 'GA', 'ID', 'IL', 'IA', 'KS', 'MI', 'MN', 'MO', 'MT', 'NC', 'SC', 'VA']);
+  assert.deepStrictEqual(duty.none, ['AL', 'AR', 'DE', 'GA', 'ID', 'IL', 'IA', 'KS', 'MI', 'MN', 'MO', 'MT', 'NC', 'OR', 'SC', 'VA']);
   assert.deepStrictEqual(duty.uncertain, ['SD']);
   assert.strictEqual(states.AL.verification, 'researched');
   assert.strictEqual(states.AL.privateDuty, 'none');

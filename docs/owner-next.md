@@ -169,7 +169,7 @@ Do not advertise against named platforms.
 - You can restore a dead phone from the shop file + restore card, not from
   us.
 - Someone answers mail the same week.
-- `--holes` is still AR and SD.
+- `--holes` is still SD only (DANR letter: `docs/sd-danr-inquiry.md`).
 
 Full scorecard: `docs/seller-grade-report.md`. Class picker is shipped
 (not a sale blocker): `docs/class-picker-blueprint.md`.

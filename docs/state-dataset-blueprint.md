@@ -4,9 +4,11 @@
 freshness in **v2.9.5**. Playbook Tracks 1 and 3: official citation URLs
 where a primary host answered; hole states researched or frozen from that
 state's source only (`docs/state-maintainer-playbook.md`). Matrix edition
-is **2026-09-24**. Remaining work is leftover Cornell URLs that 403/404,
-Arkansas and South Dakota private duty, and the external hasher (Track 2)
-— not a new engine.
+is **2026-09-24**. On 2026-09-24 all 50 rows were re-read against primary
+text (quotes checked word-for-word against the downloaded source). Remaining
+work is South Dakota private duty (DANR letter), five Cornell citations whose
+official host blocks readers, and the external hasher (Track 2) — not a new
+engine.
 
 Job to be done: a grower in **any of the 50 states** can pick that state in
 Settings and get a spray log, completeness badge, and inspector packet that
@@ -20,7 +22,8 @@ citation URL, a retention period, a field list, `privateDuty`, and a
 `recordDeadline`. Completeness still means “required fields were filled,”
 never a legal determination. Iowa private stays quiet because 45.26 does
 not name private applicators. Mississippi private has a named Chapter 09
-§104 RUP list. Arkansas and South Dakota private duty stay `uncertain`.
+§104 RUP list. Arkansas private is `none` with a visible Class E/F
+exception; South Dakota private duty stays `uncertain`.
 
 This is **not** 50 official PDF templates, not CA PUR / NY PRL / HI annual
 RUP e-file, and not WPS employer software.
@@ -56,21 +59,27 @@ Research date in the file header: **2026-09-24**.
 | `verification: researched` | 50 | All |
 | `verification: partial` | 0 | — |
 | `verification: uncertain` | 0 | — |
-| `privateDuty: required` | 41 | Default (RI private RUP/SLU is named in 250-RICR-40-15-2.6(C); MS private RUP is named in Chapter 09 §104) |
-| `privateDuty: none` | 7 | AL, IA, KS, MI, MN, SC, VA |
-| `privateDuty: uncertain` | 2 | AR, SD |
-| Customer-copy days encoded | 6 | FL, KS, ND, NM, PA, WA (commercial; KS is the 30-day statute; HI employer copy is before application; IN 30-day copy was in voided 355 IAC 4-4) |
-| Citation host = Cornell LII | 9 | AZ, CA, IL, MA, MI, NE, TN, UT, WY (official host 403/404/redirect on 2026-08-14) |
+| `privateDuty: required` | 33 | 18 all-pesticide scope + 15 `privateDutyScope: rupOnly` |
+| `privateDutyScope: rupOnly` | 15 | AK, CO, CT, FL, HI, IN, NE, NV, NY, ND, OK, PA, TN, WV, WY (quoted RUP who-clause in notes) |
+| `privateDuty: none` | 16 | AL, AR, DE, GA, ID, IL, IA, KS, MI, MN, MO, MT, NC, OR, SC, VA (AR, MT carry `privateDutyException`) |
+| `privateDuty: uncertain` | 1 | SD |
+| Private-only record clock | 3 | CO, NE, RI (14 days, `privateRecordDeadline`) |
+| No state record clock | 30 | `recordDeadline.unit: none` — “record promptly” |
+| Customer-copy days encoded | 8 | CA, FL, ID, KS, ND, OH, PA, WI (30 days; “on request” with no day count is not encoded) |
+| Citation host = Cornell LII | 5 | AZ, CA, MA, TX, WY (official host blocks automated readers) |
 
 `evaluateCompliance` already treats dataset quality as a **warning**, not a
 pass:
 
 - `partial` / `uncertain` → warning; status cannot be `fields_complete`
   (`datasetOk` is false). Badge is **Needs review**.
-- `privateDuty: none` (AL, IA, KS, MI, MN, SC, or VA private) → skip the state matrix; operational core
-  still required (date, crop, location, applicator, product amount).
+- `privateDuty: none` (16 states, see table) private → skip the state matrix; operational core
+  still required (date, crop, location, applicator, product amount). A
+  `privateDutyException` (AR Class E/F, MT aquatic herbicides) is shown as a warning.
+- `privateDutyScope: rupOnly` private + no RUP in the mix → state matrix off
+  (“good practice” hint); any RUP row turns it back on.
 - `privateDuty: uncertain` + private class → extra warning; same `datasetOk`
-  block. A private spray in Arkansas or South Dakota with every box filled is **Needs review**,
+  block. A private spray in South Dakota with every box filled is **Needs review**,
   not Complete.
 
 That is the correct product behavior. The remaining work is to **narrow** how
@@ -83,7 +92,7 @@ without ever flipping a state to Complete by inventing fields.
 |---|---|---|
 | Iowa (`researched` / `none`) | No 45.26 matrix; operational core still required; **Fields complete** is possible | 45.26(3) commercial office-record matrix; Complete is possible |
 | Mississippi (`researched` / `required`) | Chapter 09 §104 RUP list (no §206 customer extras); Complete is possible | Same §104 agricultural list; §206 customer/time/cert extras stay in notes |
-| Arkansas (`researched` / `uncertain`) | Commercial §20-20-215 list shown; Needs review because general private duty is unverified (Class E/F is a special class) | Complete is possible |
+| Arkansas (`researched` / `none`) | Operational core; Class E/F (2,4-D / dicamba) exception shown as a warning | Complete is possible |
 | South Dakota (`researched` / `uncertain`) | Commercial-style 12:56:07 list shown; Needs review until “applicator” includes or excludes private | Complete is possible |
 
 A grower in a `partial` state can still save drafts, save complete-looking

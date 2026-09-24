@@ -87,6 +87,15 @@ Do not mix a Kansas field-list change with an Iowa confirmation.
 }
 ```
 
+Optional keys (see the `tools/bundle-state-laws.js` header):
+
+- `"privateDutyScope": "rupOnly"` — only with `privateDuty: required`; `notes`
+  must quote the clause as `R6 scope quote: “…restricted…”`.
+- `"privateDutyException": "…"` — only with `privateDuty: none` (e.g. AR Class E/F).
+- `"privateRecordDeadline": { "count": 14, "unit": "calendarDays" }` — private clock.
+- `"recordDeadline": { "count": null, "unit": "none" }` + `"recordWithinHours": null`
+  — the rule sets no clock to make the record.
+
 `_meta.json` holds the matrix edition date and the Settings stale window
 (`staleDays`, 365 ≈ 12 months). `_base_fields.json` is the recommended
 extras list, not a per-state rule.

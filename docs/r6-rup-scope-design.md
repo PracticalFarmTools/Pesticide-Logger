@@ -1,7 +1,10 @@
 # R6 — RUP-scoped private duty (design note)
 
-**Status:** design only. No engine change until each state below has its
-own quoted who-clause (same rule as AR/SD). Not a sale blocker.
+**Status:** shipped 2026-09-24 (engine + schema test). 15 states carry
+`privateDutyScope: "rupOnly"`, each with its quoted who-clause in `notes`
+(AK, CO, CT, FL, HI, IN, NE, NV, NY, ND, OK, PA, TN, WV, WY). States whose
+private scope is wider or ambiguous (AZ, KY, MS, NM, OH, RI, TX, UT, VT, WI)
+keep the full list.
 
 ## Problem
 

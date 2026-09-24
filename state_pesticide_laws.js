@@ -5602,7 +5602,7 @@ const STATE_LAWS = {
     }
   },
   "VT": {
-    "reviewedAt": "2026-07-31",
+    "reviewedAt": "2026-09-24",
     "agency": "Vermont Agency of Agriculture, Food & Markets",
     "citation": {
       "reference": "Vermont Rule for Control of Pesticides §§8.01, 8.02, 8.04",
@@ -5611,19 +5611,25 @@ const STATE_LAWS = {
     "retentionYears": 3,
     "appliesTo": "Certified private applicators: Class A/RUP applications; certified commercial and non-commercial applicators: any pesticide used; licensed companies retain operational records.",
     "verification": "researched",
-    "notes": "Private applicator summary includes REI and active ingredients for 8.01; commercial/noncommercial routine records include customer and ten core items. Annual usage/reporting obligations continue for certain licensees/companies.",
+    "notes": "Private applicator summary includes REI and active ingredients for 8.01; commercial/noncommercial routine records include customer and ten core items. Annual usage/reporting obligations continue for certain licensees/companies. 2026-09-24 primary-text audit: Vermont rule 8: routine operational records “shall be maintained on a daily basis” — same day. Private Class A means federally or State restricted, so the full private list stays.",
     "fields": [
       {
         "name": "customer_name",
         "label": "Customer / person for whom applied",
         "type": "string",
-        "required": false
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "customer_address",
         "label": "Customer address",
         "type": "string",
-        "required": false
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "target_pest",
@@ -5695,19 +5701,25 @@ const STATE_LAWS = {
         "name": "noncertified_applicator_name",
         "label": "Noncertified / trainee applicator",
         "type": "string",
-        "required": false
+        "required": true
       },
       {
         "name": "rei_hours",
         "label": "Restricted-entry interval (REI)",
         "type": "string",
-        "required": false
+        "required": true,
+        "classes": [
+          "private"
+        ]
       },
       {
         "name": "active_ingredient",
         "label": "Active ingredient",
         "type": "string",
-        "required": false
+        "required": true,
+        "classes": [
+          "private"
+        ]
       },
       {
         "name": "start_time",
@@ -5716,12 +5728,12 @@ const STATE_LAWS = {
         "required": true
       }
     ],
-    "recordWithinHours": 24,
+    "recordWithinHours": 0,
     "customerCopyDays": null,
     "privateDuty": "required",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
+      "count": 0,
+      "unit": "sameDay"
     }
   },
   "VA": {

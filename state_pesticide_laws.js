@@ -683,16 +683,16 @@ const STATE_LAWS = {
     }
   },
   "CO": {
-    "reviewedAt": "2026-08-14",
+    "reviewedAt": "2026-09-24",
     "agency": "Colorado Department of Agriculture",
     "citation": {
-      "reference": "C.R.S. §35-10-111; 8 CCR 1203-2 Part 6.05",
+      "reference": "C.R.S. 35-10-111; 8 CCR 1203-2 Parts 6.01–6.03 (commercial) and 6.05 (private)",
       "url": "https://leg.colorado.gov/sites/default/files/images/olls/crs2024-title-35.pdf"
     },
     "retentionYears": 3,
     "appliesTo": "Commercial, limited commercial, private, and public applicators maintain application records; private applicator rule incorporates the old 7 CFR Part 110 elements for RUP records.",
     "verification": "researched",
-    "notes": "Colorado statute requires records in the form/manner designated by the commissioner. CSU guidance lists the classic RUP elements and recommends start/end time, REI, active ingredient, rate, GPA, nozzle, wind, and temperature for WPS/drift defense.",
+    "notes": "Colorado statute requires records in the form/manner designated by the commissioner. CSU guidance lists the classic RUP elements and recommends start/end time, REI, active ingredient, rate, GPA, nozzle, wind, and temperature for WPS/drift defense. 2026-09-24 primary-text audit: R6 scope quote: “records of each restricted use pesticide application in accordance with all regulations of the United States Department of Agriculture's federal pesticide recordkeeping requirements set forth in the Code of Federal Regulations at 7 C.F.R. Part 110 (2017)” General-use private sprays keep the core boxes. Retention: “three years after the date of the pesticide application; except that the record retention period for private applicators is two years” — 3 is encoded as the longest class period. Private records within 14 days (7 CFR 110.3(c) 2017, incorporated); Part 6.03 commercial list sets no clock and adds customer, target pest, dilution, rate, and time within half an hour. Official SOS CCR host blocks automated readers; LII mirror used.",
     "fields": [
       {
         "name": "brand_name",
@@ -734,7 +734,10 @@ const STATE_LAWS = {
         "name": "area_treated",
         "label": "Area treated",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "private"
+        ]
       },
       {
         "name": "applicator_name",
@@ -747,15 +750,83 @@ const STATE_LAWS = {
         "label": "Applicator certification / license #",
         "type": "string",
         "required": true
+      },
+      {
+        "name": "customer_name",
+        "label": "Customer / person for whom applied",
+        "type": "string",
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
+      },
+      {
+        "name": "customer_address",
+        "label": "Customer address",
+        "type": "string",
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
+      },
+      {
+        "name": "target_pest",
+        "label": "Target pest",
+        "type": "string",
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
+      },
+      {
+        "name": "dilution_rate",
+        "label": "Dilution rate",
+        "type": "string",
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
+      },
+      {
+        "name": "rate",
+        "label": "Application rate",
+        "type": "string",
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
+      },
+      {
+        "name": "application_time",
+        "label": "Application time",
+        "type": "time",
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
+      },
+      {
+        "name": "supervisor_name",
+        "label": "On-site qualified supervisor (RUP by a technician)",
+        "type": "string",
+        "required": false,
+        "classes": [
+          "commercial"
+        ]
       }
     ],
-    "recordWithinHours": 24,
+    "recordWithinHours": null,
     "customerCopyDays": null,
     "privateDuty": "required",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
-    }
+      "count": null,
+      "unit": "none"
+    },
+    "privateRecordDeadline": {
+      "count": 14,
+      "unit": "calendarDays"
+    },
+    "privateDutyScope": "rupOnly"
   },
   "CT": {
     "reviewedAt": "2026-08-14",

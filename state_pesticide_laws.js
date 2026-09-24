@@ -6263,28 +6263,34 @@ const STATE_LAWS = {
     }
   },
   "WY": {
-    "reviewedAt": "2026-07-31",
+    "reviewedAt": "2026-09-24",
     "agency": "Wyoming Department of Agriculture",
     "citation": {
-      "reference": "010-62 Wyo. Code R. §62-4; Chapter 28 §14",
+      "reference": "010-62 Wyo. Code R. §62-4; Chapter 28 §12(c)",
       "url": "https://www.law.cornell.edu/regulations/wyoming/010-62-Wyo-Code-R-SS-62-4"
     },
     "retentionYears": 2,
-    "appliesTo": "Commercial applicators must maintain records for any commercial pesticide application; rule also states commercial and private applicators retain required accurate records for pesticides applied, but private field list was partially verified.",
+    "appliesTo": "Commercial applicators: every commercial application (§62-4(a)). Private applicators: restricted-use applications only, with a shorter list (§62-4(c)).",
     "verification": "researched",
-    "notes": "Records include state special local need number if applicable and names/certification numbers of commercial applicator or supervising applicator plus apprentice applicators. Weather required at time of application. rules.wyo.gov had no stable Chapter 62 file on 2026-08-14; Cornell LII remains the citation watch until a primary host is found.",
+    "notes": "Records include state special local need number if applicable and names/certification numbers of commercial applicator or supervising applicator plus apprentice applicators. Weather required at time of application. rules.wyo.gov had no stable Chapter 62 file on 2026-08-14; Cornell LII remains the citation watch until a primary host is found. 2026-09-24 primary-text audit: R6 scope quote: “(c) Private applicators must maintain records for restricted use pesticide applications that include all of the following:” General-use private sprays keep the core boxes. §62-4(c) private list: brand + EPA #, total amount, location, area, crop/site, date, applicator name + license. No clock.",
     "fields": [
       {
         "name": "customer_name",
         "label": "Customer / person for whom applied",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "customer_address",
         "label": "Customer address",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "location",
@@ -6308,7 +6314,10 @@ const STATE_LAWS = {
         "name": "target_pest",
         "label": "Target pest",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "brand_name",
@@ -6324,9 +6333,9 @@ const STATE_LAWS = {
       },
       {
         "name": "state_registration_no",
-        "label": "State registration / SLN number",
+        "label": "State SLN registration # (if applicable)",
         "type": "string",
-        "required": true
+        "required": false
       },
       {
         "name": "amount_applied",
@@ -6338,13 +6347,19 @@ const STATE_LAWS = {
         "name": "rate",
         "label": "Application rate",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "method",
         "label": "Method / equipment",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "date",
@@ -6356,25 +6371,37 @@ const STATE_LAWS = {
         "name": "application_time",
         "label": "Application time",
         "type": "time",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "temperature",
         "label": "Temperature",
         "type": "number",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "wind_direction",
         "label": "Wind direction",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "wind_speed",
         "label": "Wind speed",
         "type": "number",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "applicator_name",
@@ -6392,22 +6419,29 @@ const STATE_LAWS = {
         "name": "noncertified_applicator_name",
         "label": "Noncertified / trainee applicator",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "start_time",
         "label": "Start time",
         "type": "time",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       }
     ],
-    "recordWithinHours": 24,
+    "recordWithinHours": null,
     "customerCopyDays": null,
     "privateDuty": "required",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
-    }
+      "count": null,
+      "unit": "none"
+    },
+    "privateDutyScope": "rupOnly"
   }
 };
 

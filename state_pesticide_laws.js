@@ -3902,16 +3902,16 @@ const STATE_LAWS = {
     }
   },
   "NY": {
-    "reviewedAt": "2026-08-14",
+    "reviewedAt": "2026-09-24",
     "agency": "New York State Department of Environmental Conservation",
     "citation": {
-      "reference": "ECL §33-1205; 6 NYCRR 325.25; PRL electronic reporting",
-      "url": "https://dec.ny.gov/regulatory/regulations/pesticide-statutes-regulations-and-policies"
+      "reference": "ECL 33-1205; 6 NYCRR 325.25",
+      "url": "https://www.nysenate.gov/legislation/laws/ENV/33-1205"
     },
     "retentionYears": 3,
     "appliesTo": "Commercial applicators, technicians, commercial permittees: all pesticide applications; private applicators: restricted pesticides purchased/crop/method/date records.",
     "verification": "researched",
-    "notes": "Commercial annual PRL reports are due electronically by Feb. 1 for prior calendar year; paper is no longer accepted. Commercial records also need address including five-digit ZIP and sufficiently precise place. Private applicator minimum records are restricted pesticides purchased, crops treated, application method, and dates; less complete than commercial records. Class split encoded from that note (reviewedAt unchanged, 2026-08-14): brand, date, and method stay on the private list; EPA number, amount, location, rate, and target pest are classes commercial (6 NYCRR 325.25). The operational core still asks date, crop, field, applicator, and product amount on every log. This app does not file PRL.",
+    "notes": "Commercial annual PRL reports are due electronically by Feb. 1 for prior calendar year; paper is no longer accepted. Commercial records also need address including five-digit ZIP and sufficiently precise place. Private applicator minimum records are restricted pesticides purchased, crops treated, application method, and dates; less complete than commercial records. Class split encoded from that note (reviewedAt unchanged, 2026-08-14): brand, date, and method stay on the private list; EPA number, amount, location, rate, and target pest are classes commercial (6 NYCRR 325.25). The operational core still asks date, crop, field, applicator, and product amount on every log. This app does not file PRL. 2026-09-24 primary-text audit: R6 scope quote: “b. All private applicators shall maintain, at a minimum, records of the restricted pesticides purchased, crop treated by such, method of application, and date of application or applications.” General-use private sprays keep the core boxes. Neither ECL 33-1205 nor 6 NYCRR 325.25 sets a time to make the record. dec.ny.gov blocks automated readers; the statute is on nysenate.gov.",
     "fields": [
       {
         "name": "epa_reg_no",
@@ -3980,16 +3980,17 @@ const STATE_LAWS = {
         "name": "crop_treated",
         "label": "Crop / commodity / site treated",
         "type": "string",
-        "required": false
+        "required": true
       }
     ],
-    "recordWithinHours": 24,
+    "recordWithinHours": null,
     "customerCopyDays": null,
     "privateDuty": "required",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
-    }
+      "count": null,
+      "unit": "none"
+    },
+    "privateDutyScope": "rupOnly"
   },
   "NC": {
     "reviewedAt": "2026-07-31",

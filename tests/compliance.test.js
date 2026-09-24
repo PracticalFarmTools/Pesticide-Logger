@@ -1468,6 +1468,14 @@ check('v2.9.47: satellite imagery is USGS public domain, not unauthenticated Esr
   assert.ok(!sw.includes('nationalmap') && !sw.includes('tile.openstreetmap'), 'third-party tiles are never precached');
 });
 
+check('v2.9.48: Vercel CSP header matches the page CSP (both are enforced; the stricter wins)', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const vercel = JSON.parse(fs.readFileSync(path.join(root, 'vercel.json'), 'utf8'));
+  const header = vercel.headers.flatMap((h) => h.headers).find((h) => h.key === 'Content-Security-Policy').value;
+  const meta = html.match(/http-equiv="Content-Security-Policy" content="([^"]*)"/)[1];
+  assert.strictEqual(header, meta);
+});
+
 check('v2.9.47: persistent credits for every data source and vendored license', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');

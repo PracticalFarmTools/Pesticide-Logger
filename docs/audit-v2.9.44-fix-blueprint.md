@@ -33,6 +33,24 @@ trust rules (no auto-filled rate / REI / PHI, ever).
 | **O1–O5** | Hostname, catalog card, signing-key backup, merchant + `BUY_URL`, mailbox + hasher | Go-live | **Yes** | Owner |
 | R6, R9, R10 | Carried from the post-v2.9.41 blueprint | Various | No | See that file |
 
+## Status (2026-09-24, v2.9.48, laws edition 2026-09-24)
+
+Every code item has shipped on this branch; what remains is the owner's.
+
+| ID | Status |
+|---|---|
+| L1 | Done v2.9.47: `nws-weather.js` (api.weather.gov, public domain). The Vercel CSP header was fixed in v2.9.48; it still allowed only Open-Meteo/Esri and would have blocked NWS/USGS in production. |
+| L2 | Done v2.9.47: USGS The National Map imagery (public domain), `maxNativeZoom: 16`. |
+| L3 | NY done v2.9.45. SD reread 2026-09-24: neither SDCL 38-21-14 nor ARSD 12:56:01:01 defines the bare word "applicator"; no private who-clause, so it stays `uncertain` (notes updated, `--stamp SD`). |
+| U1, U2 | Done v2.9.46; the smoke test checks both at 400 px. |
+| U3 | Done v2.9.48: refusal toast leads with the Next line + "Or save as incomplete draft." |
+| G1 | Done v2.9.48: Reports → For workers (WPS), and next to the REI board. English/Spanish, flags missing facts, no new data entry. |
+| G2 | Done v2.9.48: keep-records-anyway line on Home/Log, Settings state card, `start.html`. |
+| G4 | Done v2.9.47: Settings → Credits & data sources; `start.html` footer; `vendor/leaflet/LICENSE`. |
+| S1 | Done v2.9.48: iPhone Safari tab only (not Home Screen, not Chrome iOS), first in the Home queue; dismissal is a timestamp, and the line comes back after a new spray when there has been no backup in 14 days. |
+| S2 | Done: `tools/smoke/smoke.js` (10 steps, including the S1 banner and the G1 sheet). |
+| G3, S3, O1–O5 | Owner. Unchanged. |
+
 ---
 
 ## L1 — Weather: replace or license Open-Meteo

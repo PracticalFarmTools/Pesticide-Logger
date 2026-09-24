@@ -3583,7 +3583,7 @@ const STATE_LAWS = {
     }
   },
   "NJ": {
-    "reviewedAt": "2026-09-15",
+    "reviewedAt": "2026-09-24",
     "agency": "New Jersey Department of Environmental Protection, Pesticide Control Program",
     "citation": {
       "reference": "N.J.A.C. 7:30-6.8(c) (commercial), 7:30-7.3, 7:30-8.8(c) (private)",
@@ -3592,7 +3592,7 @@ const STATE_LAWS = {
     "retentionYears": 3,
     "appliesTo": "Licensed private and commercial pesticide applicators/businesses; any pesticide application. Termiticide records (commercial, 7:30-6.8(c)) keep five years; that is out of scope for a farm spray record.",
     "verification": "researched",
-    "notes": "Retention is three years: 7:30-8.8(c) (private) and 7:30-6.8(c) (commercial) both say a minimum of three years; the five-year term in 7:30-6.8(c) applies only to termiticide applications, so do not raise this row back to 5. Read 2026-09-15 (as amended by 52 N.J.R. 756(a), eff. 4/6/2020); the DEP host blocks non-browser fetches, convenience reprints at https://www.law.cornell.edu/regulations/new-jersey/N-J-A-C-7-30-8-8 and https://www.law.cornell.edu/regulations/new-jersey/N-J-A-C-7-30-6-8. Records must be written as soon as possible and no later than 24 hours. For agricultural commodity applications, place includes farm name/address, specific field/greenhouse/land area, municipality/county, crop/commodity/stored product, and treated size. Product list/symbol correlation allowed.",
+    "notes": "Retention is three years: 7:30-8.8(c) (private) and 7:30-6.8(c) (commercial) both say a minimum of three years; the five-year term in 7:30-6.8(c) applies only to termiticide applications, so do not raise this row back to 5. Read 2026-09-15 (as amended by 52 N.J.R. 756(a), eff. 4/6/2020); the DEP host blocks non-browser fetches, convenience reprints at https://www.law.cornell.edu/regulations/new-jersey/N-J-A-C-7-30-8-8 and https://www.law.cornell.edu/regulations/new-jersey/N-J-A-C-7-30-6-8. Records must be written as soon as possible and no later than 24 hours. For agricultural commodity applications, place includes farm name/address, specific field/greenhouse/land area, municipality/county, crop/commodity/stored product, and treated size. Product list/symbol correlation allowed. 2026-09-24 primary-text audit: N.J.A.C. 7:30-8.8/8.10: products with a label REI record the hour completed and the re-entry time; agricultural place of application is the farm name and address; handler names; EUP / Section 18 / 24(c) records are designated.",
     "fields": [
       {
         "name": "date",
@@ -3602,15 +3602,15 @@ const STATE_LAWS = {
       },
       {
         "name": "end_time",
-        "label": "End time",
+        "label": "Hour completed (starts the REI)",
         "type": "time",
         "required": true
       },
       {
         "name": "rei_hours",
-        "label": "Restricted-entry interval (REI)",
+        "label": "REI and re-entry time (when the label sets an REI)",
         "type": "string",
-        "required": false
+        "required": true
       },
       {
         "name": "location",
@@ -3626,13 +3626,13 @@ const STATE_LAWS = {
       },
       {
         "name": "customer_name",
-        "label": "Customer / person for whom applied",
+        "label": "Farm name (ag) / person for whom applied",
         "type": "string",
         "required": true
       },
       {
         "name": "customer_address",
-        "label": "Customer address",
+        "label": "Farm address (ag) / site address",
         "type": "string",
         "required": true
       },
@@ -3695,6 +3695,18 @@ const STATE_LAWS = {
         "label": "Applicator certification / license #",
         "type": "string",
         "required": true
+      },
+      {
+        "name": "noncertified_applicator_name",
+        "label": "Handler full name (if a handler applied)",
+        "type": "string",
+        "required": false
+      },
+      {
+        "name": "permit_number",
+        "label": "SLN #, Section 18 file symbol, or EUP # (if used)",
+        "type": "string",
+        "required": false
       }
     ],
     "recordWithinHours": 24,

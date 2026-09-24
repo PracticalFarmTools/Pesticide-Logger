@@ -233,7 +233,7 @@ check('watch-list prints 50 local citation URLs and does not fetch', () => {
   assert.ok(ok.indexOf('ag.ok.gov') >= 0, ok);
   assert.ok(ok.indexOf('elaws') < 0, ok);
   const la = data.find((line) => line.indexOf('LA\t') === 0);
-  assert.ok(la.indexOf('doa.louisiana.gov') >= 0, la);
+  assert.ok(la.indexOf('doa.la.gov') >= 0, la);
   assert.ok(la.indexOf('ctfassets') < 0, la);
 });
 

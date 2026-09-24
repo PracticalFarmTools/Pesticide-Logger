@@ -2105,20 +2105,20 @@ const STATE_LAWS = {
     }
   },
   "LA": {
-    "reviewedAt": "2026-08-14",
+    "reviewedAt": "2026-09-24",
     "agency": "Louisiana Department of Agriculture and Forestry",
     "citation": {
-      "reference": "LAC Title 7, Part XXIII, §2101 and LDAF Certified Pesticide Applicator Record Keeping form AES-41-06",
-      "url": "https://wwwcfprd.doa.louisiana.gov/boardsandcommissions/RulesAndRegulations/404_TITLE%207%20PESTICIDE%20RULES.pdf"
+      "reference": "LAC 7:XXIII.2101 (amended LR 51:775, June 2025)",
+      "url": "https://www.doa.la.gov/media/pzcl1u45/2506.pdf"
     },
-    "retentionYears": 2,
+    "retentionYears": 3,
     "appliesTo": "Any person applying pesticides for a fee, private applicators described in §709, and commercial applicators described in §711 except Category 7; records within three days at the employer or owner/operator-license address.",
     "verification": "researched",
-    "notes": "Official LAC Title 7 Part XXIII (April 2024 compilation on doa.louisiana.gov, read 2026-08-14): §2101 names who must keep records, two-year retention, and a three-day clock on a director-approved form. It does not enumerate columns. The field list on this row is LDAF form AES-41-06 (owner/operator, card number, customer, applicator, product, EPA number, RUP flag, date, crop/type, location, size, rate, concentrate), not copied from another state. Dealer §2103 and consultant §2105 are not this agricultural spray matrix. Some LDEQ permit language uses three-year retention; LDAF §2101 is two years.",
+    "notes": "Official LAC Title 7 Part XXIII (April 2024 compilation on doa.louisiana.gov, read 2026-08-14): §2101 names who must keep records, two-year retention, and a three-day clock on a director-approved form. It does not enumerate columns. The field list on this row is LDAF form AES-41-06 (owner/operator, card number, customer, applicator, product, EPA number, RUP flag, date, crop/type, location, size, rate, concentrate), not copied from another state. Dealer §2103 and consultant §2105 are not this agricultural spray matrix. Some LDEQ permit language uses three-year retention; LDAF §2101 is two years. 2026-09-24 primary-text audit: Retention: “shall accurately maintain, for a period of three years, records of pesticide applications” (LR 51:775). §2101.A enumerates items 1–15 directly. Records within three days of application.",
     "fields": [
       {
         "name": "owner_operator_name",
-        "label": "Owner / operator name",
+        "label": "Owner / operator name & address",
         "type": "string",
         "required": true
       },
@@ -2126,7 +2126,10 @@ const STATE_LAWS = {
         "name": "company_license",
         "label": "Company / business license #",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "customer_name",
@@ -2142,7 +2145,7 @@ const STATE_LAWS = {
       },
       {
         "name": "applicator_name",
-        "label": "Applicator name",
+        "label": "Certified applicator name & address",
         "type": "string",
         "required": true
       },
@@ -2223,8 +2226,8 @@ const STATE_LAWS = {
     "customerCopyDays": null,
     "privateDuty": "required",
     "recordDeadline": {
-      "count": 72,
-      "unit": "hours"
+      "count": 3,
+      "unit": "calendarDays"
     }
   },
   "ME": {

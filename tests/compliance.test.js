@@ -870,7 +870,7 @@ check('frontier UI: thumb tabs, inspector handoff, one home message, cab glare',
     'app update check is not a header chip');
   assert.ok(html.includes('id="set-cab-glare"') && app.includes('CAB_GLARE_KEY'));
   assert.ok(app.includes('function queueHomeMessages'));
-  assert.ok(app.includes("['dash-keep-book', 'backup-banner', 'send-nag-banner', 'gather-hint', 'install-banner']"));
+  assert.ok(app.includes("['ios-storage-banner', 'dash-keep-book', 'backup-banner', 'send-nag-banner', 'gather-hint', 'install-banner']"));
   assert.ok(app.includes('el.hidden = false;\n    queueHomeMessages();'),
     'install banner re-queues so Keep this book stays the one Home message');
   assert.ok(app.includes("=== 'uncertain'\n          ? 'duty unverified'"),
@@ -1421,6 +1421,22 @@ check('v2.9.48: privateDuty-none states still tell private applicators to keep r
   assert.ok(app.includes(`<p class="card-hint keep-anyway">${keep}</p>`), 'Settings state card');
   assert.ok(i18n.includes(`["${keep}", "`), 'translated');
   assert.ok(i18n.includes('["No private-applicator record duty in this state’s sources. Keep records anyway'), 'honesty line translated');
+});
+
+check('v2.9.48: iOS Safari tab gets the Safari-can-clear-this-book line ahead of every other Home message', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const i18n = fs.readFileSync(path.join(root, 'i18n.js'), 'utf8');
+  const banner = html.split('id="ios-storage-banner"')[1].split('</div>\n    </div>')[0];
+  const msg = 'Safari can clear this book if the app is not on your Home Screen. Tap Share, then Add to Home Screen, and keep a backup file.';
+  assert.ok(banner.includes(msg) && banner.includes('id="ios-storage-download"') && banner.includes('id="ios-storage-dismiss"'));
+  assert.ok(i18n.includes(`["${msg}", "`));
+  assert.ok(app.includes("const order = ['ios-storage-banner', 'dash-keep-book', 'backup-banner',"), 'outranks keep-book, backup and install');
+  const render = app.split('function renderIosStorageBanner() {')[1].split('\n  }\n')[0];
+  assert.ok(render.includes('standalone: isStandaloneDisplay()'));
+  assert.ok(render.includes('FarmFile.shouldShowIosStorageWarning'));
+  assert.ok(!app.includes("localStorage.setItem('pesticide-logger.iosStorageDismissed', '1')"), 'dismissal is a timestamp, never permanent');
+  assert.ok(app.split('function markBackedUp() {')[1].split('}')[0].includes('renderIosStorageBanner()'));
 });
 
 check('v2.9.47: weather is NWS (public domain) — no Open-Meteo free tier in a paid app', () => {

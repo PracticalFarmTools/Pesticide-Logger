@@ -4396,6 +4396,7 @@
       return;
     }
     renderClerk();
+    renderIosStorageBanner();
     renderBackupBanner();
     renderGatherHint();
     renderSendNagBanner();
@@ -4870,6 +4871,22 @@
       shareBtn.addEventListener('click', shareBackup);
     }
     $('#backup-banner-download').addEventListener('click', downloadBackup);
+    const ackIosStorage = () => {
+      try { localStorage.setItem(IOS_STORAGE_DISMISSED_KEY, new Date().toISOString()); } catch (e) { /* */ }
+    };
+    if ($('#ios-storage-download')) $('#ios-storage-download').addEventListener('click', () => {
+      ackIosStorage();
+      downloadBackup();
+    });
+    if ($('#ios-storage-dismiss')) $('#ios-storage-dismiss').addEventListener('click', () => {
+      ackIosStorage();
+      renderIosStorageBanner();
+      renderKeepBook();
+      renderBackupBanner();
+      renderSendNagBanner();
+      renderGatherHint();
+      renderInstallBanner();
+    });
     if ($('#backup-banner-restore-card')) {
       $('#backup-banner-restore-card').addEventListener('click', printRestoreCard);
     }
@@ -5289,6 +5306,7 @@
     data.meta.lastBackupAt = new Date().toISOString();
     save();
     renderKeepBook();
+    renderIosStorageBanner();
     renderBackupBanner();
     queueHomeMessages();
   }
@@ -5916,6 +5934,25 @@
     return !!window.navigator.standalone;
   }
 
+  const IOS_STORAGE_DISMISSED_KEY = 'pesticide-logger.iosStorageDismissedAt';
+
+  function renderIosStorageBanner() {
+    const el = $('#ios-storage-banner');
+    if (!el || typeof FarmFile === 'undefined' || !FarmFile.shouldShowIosStorageWarning) return;
+    let dismissedAt = '';
+    try { dismissedAt = localStorage.getItem(IOS_STORAGE_DISMISSED_KEY) || ''; } catch (e) { /* */ }
+    const live = (data.applications || []).filter((a) => !a.deletedAt);
+    el.hidden = !FarmFile.shouldShowIosStorageWarning({
+      userAgent: navigator.userAgent,
+      maxTouchPoints: navigator.maxTouchPoints,
+      standalone: isStandaloneDisplay(),
+      hasSprays: live.length > 0,
+      newestSprayAt: live.reduce((m, a) => ((a.createdAt || '') > m ? a.createdAt : m), ''),
+      dismissedAt: dismissedAt,
+      lastBackupAt: data.meta.lastBackupAt
+    });
+  }
+
   function renderInstallBanner() {
     const el = $('#install-banner');
     if (!el) return;
@@ -5933,7 +5970,7 @@
   }
 
   function queueHomeMessages() {
-    const order = ['dash-keep-book', 'backup-banner', 'send-nag-banner', 'gather-hint', 'install-banner'];
+    const order = ['ios-storage-banner', 'dash-keep-book', 'backup-banner', 'send-nag-banner', 'gather-hint', 'install-banner'];
     let shown = false;
     order.forEach((id) => {
       const el = $('#' + id);

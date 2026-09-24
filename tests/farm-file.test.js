@@ -507,6 +507,33 @@ await check('gather hint respects device role; send nag is now, not 14 days', ()
   }), true);
 });
 
+await check('iOS Safari tab warns that Safari can clear the book; re-shows after a new spray with a stale backup', () => {
+  const iphone = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
+  const ipad = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15';
+  const chromeIos = iphone.replace('Version/18.0', 'CriOS/129.0');
+  const android = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Mobile Safari/537.36';
+  const nowMs = Date.parse('2026-09-24T12:00:00.000Z');
+  const base = { userAgent: iphone, hasSprays: true, nowMs };
+  assert.strictEqual(FarmFile.isIosSafariTab({ userAgent: iphone }), true);
+  assert.strictEqual(FarmFile.isIosSafariTab({ userAgent: ipad, maxTouchPoints: 5 }), true, 'iPadOS desktop UA');
+  assert.strictEqual(FarmFile.isIosSafariTab({ userAgent: ipad, maxTouchPoints: 0 }), false, 'real Mac');
+  assert.strictEqual(FarmFile.isIosSafariTab({ userAgent: chromeIos }), false);
+  assert.strictEqual(FarmFile.isIosSafariTab({ userAgent: android }), false);
+  assert.strictEqual(FarmFile.isIosSafariTab({ userAgent: iphone, standalone: true }), false, 'Home Screen app is safe');
+  assert.strictEqual(FarmFile.shouldShowIosStorageWarning({ ...base, hasSprays: false }), false, 'empty book: nothing to lose');
+  assert.strictEqual(FarmFile.shouldShowIosStorageWarning(base), true, 'first spray, never dismissed');
+  const dismissed = { ...base, dismissedAt: '2026-09-01T00:00:00.000Z' };
+  assert.strictEqual(FarmFile.shouldShowIosStorageWarning({ ...dismissed, newestSprayAt: '2026-08-30T00:00:00.000Z' }), false,
+    'dismissed and no newer spray');
+  assert.strictEqual(FarmFile.shouldShowIosStorageWarning({ ...dismissed, newestSprayAt: '2026-09-20T00:00:00.000Z' }), true,
+    'new spray, never backed up');
+  assert.strictEqual(FarmFile.shouldShowIosStorageWarning({ ...dismissed, newestSprayAt: '2026-09-20T00:00:00.000Z',
+    lastBackupAt: '2026-09-15T00:00:00.000Z' }), false, 'backup within 14 days');
+  assert.strictEqual(FarmFile.shouldShowIosStorageWarning({ ...dismissed, newestSprayAt: '2026-09-20T00:00:00.000Z',
+    lastBackupAt: '2026-09-02T00:00:00.000Z' }), true, 'backup older than 14 days');
+  assert.strictEqual(FarmFile.shouldShowIosStorageWarning({ ...base, standalone: true }), false);
+});
+
 await check('AND-token search matches EPA × field and misses the other field', () => {
   const a = iaApp({ fieldName: 'North', products: [{ productName: 'Roundup', epaRegNo: '42750-61', lotNumber: 'L1' }] });
   const b = iaApp({ id: 'b', fieldName: 'South', products: [{ productName: 'Roundup', epaRegNo: '42750-61' }] });

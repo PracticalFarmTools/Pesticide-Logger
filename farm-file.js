@@ -1110,6 +1110,25 @@
     return !!opts.hasNewerSprays;
   }
 
+  // Safari evicts script-written storage for sites not added to the Home Screen.
+  function isIosSafariTab(opts) {
+    opts = opts || {};
+    if (opts.standalone) return false;
+    const ua = String(opts.userAgent || '');
+    const ios = /iP(hone|ad|od)/.test(ua) || (/Macintosh/.test(ua) && Number(opts.maxTouchPoints) > 1);
+    return ios && !/CriOS|FxiOS|EdgiOS/.test(ua);
+  }
+
+  function shouldShowIosStorageWarning(opts) {
+    opts = opts || {};
+    if (!isIosSafariTab(opts) || !opts.hasSprays) return false;
+    if (!opts.dismissedAt) return true;
+    if (!opts.newestSprayAt || opts.newestSprayAt <= opts.dismissedAt) return false;
+    const nowMs = opts.nowMs != null ? opts.nowMs : Date.now();
+    if (!opts.lastBackupAt) return true;
+    return nowMs - new Date(opts.lastBackupAt).getTime() > 14 * 86400000;
+  }
+
   function receiptSummary(receipt) {
     const r = receipt || {};
     const parts = [];
@@ -1244,6 +1263,8 @@
     fieldOutlinesHtml,
     shouldShowGatherHint,
     shouldShowSendNag,
+    isIosSafariTab,
+    shouldShowIosStorageWarning,
     reiBoardHtml,
     restoreCardHtml,
     clerkSnapshot,

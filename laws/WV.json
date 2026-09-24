@@ -1,15 +1,15 @@
 {
   "code": "WV",
-  "reviewedAt": "2026-08-14",
+  "reviewedAt": "2026-09-24",
   "agency": "West Virginia Department of Agriculture",
   "citation": {
     "reference": "W. Va. C.S.R. §§61-12A-9 and 61-12B-7",
-    "url": "https://apps.sos.wv.gov/adlaw/csr/rule.aspx?rule=61-12A"
+    "url": "https://apps.sos.wv.gov/adlaw/csr/ruleview.aspx?document=17917"
   },
   "retentionYears": 2,
   "appliesTo": "Commercial and certified public applicators: all pesticides; private applicators: RUP applications; pesticide businesses: all pesticide applications as licensing condition.",
   "verification": "researched",
-  "notes": "Private RUP records include certified and noncertified applicator names/certification numbers and records required for noncertified applicator supervision. Weather is not required by cited sections.",
+  "notes": "Private RUP records include certified and noncertified applicator names/certification numbers and records required for noncertified applicator supervision. Weather is not required by cited sections. 2026-09-24 primary-text audit: R6 scope quote: “9.3. Private Applicator - A private applicator shall keep records for a period of two years detailing the use of RUPs [§3.5: restricted use pesticides].” General-use private sprays keep the core boxes. 61CSR12A §9 and 61CSR12B §7 set no clock to make the record.",
   "fields": [
     {
       "name": "brand_name",
@@ -114,11 +114,12 @@
       "required": true
     }
   ],
-  "recordWithinHours": 24,
+  "recordWithinHours": null,
   "customerCopyDays": null,
   "privateDuty": "required",
   "recordDeadline": {
-    "count": 24,
-    "unit": "hours"
-  }
+    "count": null,
+    "unit": "none"
+  },
+  "privateDutyScope": "rupOnly"
 }

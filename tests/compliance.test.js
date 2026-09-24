@@ -1450,6 +1450,16 @@ check('v2.9.48: WPS application-info print in Reports and beside the REI board',
   assert.ok(fn.includes('window.print()'));
 });
 
+check('v2.9.49: spray history stacks as cards on phones; Edit / Delete never scroll off', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  assert.ok(app.includes('<table class="record-table history-table">'));
+  ['Date', 'Product', 'Field / crop', 'Area', 'Total applied', 'Applicator']
+    .forEach((l) => assert.ok(app.includes(`data-label="\${esc(tr('${l}'))}"`), l));
+  const phone = css.split('@media (max-width: 640px) {\n  .history-table thead')[1];
+  assert.ok(phone && phone.includes('display: block') && phone.includes('.history-table td.row-actions { display: flex;'));
+});
+
 check('v2.9.47: weather is NWS (public domain) — no Open-Meteo free tier in a paid app', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');

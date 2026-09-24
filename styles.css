@@ -1005,6 +1005,32 @@ input:hover, select:hover, textarea:hover { border-color: var(--border-color-hov
   .product-table .row-actions .icon-btn { flex: 1; min-height: 2.75rem; }
 }
 
+/* Phones: spray history as cards too, so Edit / Delete stay on screen. */
+@media (max-width: 640px) {
+  .history-table thead { display: none; }
+  .history-table, .history-table tbody, .history-table tr, .history-table td { display: block; width: 100%; }
+  .history-table tbody tr {
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    margin: 0 0 0.7rem;
+    padding: 0.35rem 0.2rem;
+    background: var(--bg-white);
+  }
+  .history-table td { border-bottom: none; padding: 0.3rem 0.7rem; }
+  .history-table td:first-child { font-weight: 700; }
+  .history-table td[data-label]:not(:first-child)::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+  }
+  .history-table td.row-actions { display: flex; padding-top: 0.5rem; }
+  .history-table .row-actions .icon-btn { flex: 1; min-height: 2.75rem; }
+}
+
 .row-actions { display: flex; gap: 0.35rem; white-space: nowrap; }
 .icon-btn {
   background: transparent;

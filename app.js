@@ -3764,15 +3764,15 @@
     }
     const rows = apps.map(a => `
       <tr class="${a.deletedAt ? 'row-deleted' : ''}">
-        <td>${fmtDate(a.date)}${a.startTime ? `<br><span class="card-hint">${esc(a.startTime)}${a.endTime ? '–' + esc(a.endTime) : ''}</span>` : ''}${a.deletedAt ? `<br><span class="card-hint">Deleted ${fmtDate(a.deletedAt.slice(0, 10))}</span>` : ''}</td>
-        <td>${(a.products || []).map(p =>
+        <td data-label="${esc(tr('Date'))}">${fmtDate(a.date)}${a.startTime ? `<br><span class="card-hint">${esc(a.startTime)}${a.endTime ? '–' + esc(a.endTime) : ''}</span>` : ''}${a.deletedAt ? `<br><span class="card-hint">Deleted ${fmtDate(a.deletedAt.slice(0, 10))}</span>` : ''}</td>
+        <td data-label="${esc(tr('Product'))}">${(a.products || []).map(p =>
           `<strong>${esc(p.productName)}</strong> <span class="card-hint">${esc(p.epaRegNo)}</span>${p.lotNumber ? ` <span class="card-hint">lot ${esc(p.lotNumber)}</span>` : ''}${p.omri ? ' <span class="badge-pill badge-ok">OMRI</span>' : ''}`).join('<br>')}
           <br>${appStatusBadges(a)}
           ${(a.history || []).length ? `<br><button type="button" class="icon-btn" data-history-app="${a.id}">History</button>` : ''}</td>
-        <td>${esc(a.fieldName)}<br><span class="card-hint">${esc(a.crop)}</span></td>
-        <td>${fmtNum(a.area)} ${a.areaUnit === 'sqft' ? 'sq ft' : a.areaUnit === '1000sqft' ? '× 1,000 sq ft' : 'ac'}</td>
-        <td>${(a.products || []).map(p => fmtAmount(p.total, p.totalUnit)).join('<br>')}</td>
-        <td>${esc(a.applicatorName)}${a.certNumber ? `<br><span class="card-hint">#${esc(a.certNumber)}</span>` : ''}${a.deviceLabel || a.loggedBy ? `<br><span class="card-hint">${esc([a.loggedBy && a.loggedBy !== a.applicatorName ? a.loggedBy : '', a.deviceLabel].filter(Boolean).join(' · '))}</span>` : ''}</td>
+        <td data-label="${esc(tr('Field / crop'))}">${esc(a.fieldName)}<br><span class="card-hint">${esc(a.crop)}</span></td>
+        <td data-label="${esc(tr('Area'))}">${fmtNum(a.area)} ${a.areaUnit === 'sqft' ? 'sq ft' : a.areaUnit === '1000sqft' ? '× 1,000 sq ft' : 'ac'}</td>
+        <td data-label="${esc(tr('Total applied'))}">${(a.products || []).map(p => fmtAmount(p.total, p.totalUnit)).join('<br>')}</td>
+        <td data-label="${esc(tr('Applicator'))}">${esc(a.applicatorName)}${a.certNumber ? `<br><span class="card-hint">#${esc(a.certNumber)}</span>` : ''}${a.deviceLabel || a.loggedBy ? `<br><span class="card-hint">${esc([a.loggedBy && a.loggedBy !== a.applicatorName ? a.loggedBy : '', a.deviceLabel].filter(Boolean).join(' · '))}</span>` : ''}</td>
         <td class="row-actions">
           ${a.deletedAt
             ? `<button class="icon-btn" data-restore-app="${a.id}">Restore</button>`
@@ -3780,7 +3780,7 @@
                <button class="icon-btn danger" data-del-app="${a.id}">Delete</button>`}
         </td>
       </tr>`).join('');
-    host.innerHTML = `<div class="table-wrap"><table class="record-table">
+    host.innerHTML = `<div class="table-wrap"><table class="record-table history-table">
       <thead><tr><th>Date</th><th>Product</th><th>Field / crop</th><th>Area</th><th>Total applied</th><th>Applicator</th><th></th></tr></thead>
       <tbody>${rows}</tbody></table></div>`;
     host.querySelectorAll('[data-edit-app]').forEach(b =>

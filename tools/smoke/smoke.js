@@ -142,7 +142,7 @@ async function fillFocused(page) {
       must(await page.isVisible('#app-save-btn'), 'returned to the spray log');
     });
 
-    await stage(page, 'fill every remaining chip, save FIELDS COMPLETE', async () => {
+    await stage(page, 'fill every remaining chip, save FIELDS COMPLETE, history Edit on screen', async () => {
       for (let i = 0; i < 20; i += 1) {
         await page.click('#app-save-btn');
         await page.waitForTimeout(600);
@@ -157,6 +157,11 @@ async function fillFocused(page) {
       await page.click('#log-mode-history');
       await page.waitForTimeout(400);
       must(await page.locator('.badge-complete', { hasText: 'Fields complete' }).first().isVisible(), 'Fields complete badge');
+      const edit = await page.evaluate(() => {
+        const b = document.querySelector('[data-edit-app]').getBoundingClientRect();
+        return { left: b.left, right: b.right, w: innerWidth, scroll: document.documentElement.scrollWidth };
+      });
+      must(edit.left >= 0 && edit.right <= edit.w && edit.scroll <= edit.w, 'history Edit on screen: ' + JSON.stringify(edit));
     });
 
     await stage(page, 'Products Edit is on screen at 400px', async () => {

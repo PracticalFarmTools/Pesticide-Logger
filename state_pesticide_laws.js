@@ -35,7 +35,8 @@
  *   null   — no researched customer-copy duty encoded (do not invent one)
  *
  * recordDeadline:
- *   { count, unit: 'hours'|'calendarDays'|'businessDays'|'sameDay' }
+ *   { count, unit: 'hours'|'calendarDays'|'businessDays'|'sameDay'|'none' }
+ *   'none' (count null, recordWithinHours null): the rule sets no clock.
  *   Business days are Mon–Fri only (no holiday calendar). Confirm with agency.
  *   recordWithinHours is retained as a coarse fallback / display hint.
  *

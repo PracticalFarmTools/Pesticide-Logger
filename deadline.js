@@ -48,12 +48,14 @@
   /**
    * Resolve due timestamp from state law.
    * Supports:
-   *   law.recordDeadline = { count, unit: 'hours'|'calendarDays'|'businessDays'|'sameDay' }
+   *   law.recordDeadline = { count, unit: 'hours'|'calendarDays'|'businessDays'|'sameDay'|'none' }
+   * unit 'none': the state rule sets no clock, so no due date is claimed.
    * Fallback: law.recordWithinHours (0 ⇒ sameDay, else hours).
    */
   function computeRecordDueAtFromLaw(law, app) {
     if (!law || !app || !app.date) return null;
     const deadline = law.recordDeadline;
+    if (deadline && deadline.unit === 'none') return null;
     const base = parseAppBase(app, '23:59');
     if (!base) return null;
 

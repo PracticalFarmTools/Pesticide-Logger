@@ -165,8 +165,12 @@ check('missing REI/PHI fails intervalsOk', () => {
 check('every state has a recordDeadline unit', () => {
   Object.entries(STATE_LAWS).forEach(([code, law]) => {
     assert.ok(law.recordDeadline && law.recordDeadline.unit, `${code} recordDeadline`);
-    assert.ok(['hours', 'calendarDays', 'businessDays', 'sameDay'].includes(law.recordDeadline.unit),
+    assert.ok(['hours', 'calendarDays', 'businessDays', 'sameDay', 'none'].includes(law.recordDeadline.unit),
       `${code} unit ${law.recordDeadline.unit}`);
+    if (law.recordDeadline.unit === 'none') {
+      assert.strictEqual(law.recordDeadline.count, null, `${code} none has no count`);
+      assert.strictEqual(law.recordWithinHours, null, `${code} none has no hour fallback`);
+    }
   });
   // Compare via JSON — STATE_LAWS objects live in a vm realm.
   assert.strictEqual(JSON.stringify(STATE_LAWS.FL.recordDeadline),
@@ -199,6 +203,17 @@ check('same-day and hours deadlines', () => {
     app
   );
   assert.strictEqual(new Date(hourly).toISOString().slice(0, 13), '2026-08-01T09');
+});
+
+check('unit none: a rule with no clock claims no due date; the app prefers the current law', () => {
+  const app = { date: '2026-07-31', endTime: '09:00' };
+  assert.strictEqual(DeadlineUtils.computeRecordDueAtFromLaw(
+    { recordDeadline: { count: null, unit: 'none' }, recordWithinHours: null }, app), null);
+  const appJs = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  assert.ok(appJs.includes('function recordDueFor(a)'));
+  assert.ok(!appJs.includes('a.recordDueAt || computeRecordDueAt(a)'), 'stored 24h clocks must not outlive a corrected rule');
+  assert.ok(appJs.includes("No state clock — record promptly"));
+  assert.ok(appJs.includes('recordDueFor: recordDueFor'));
 });
 
 check('HH:MM:SS application times still produce record deadlines', () => {

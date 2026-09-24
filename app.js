@@ -1242,6 +1242,9 @@
 
   function recordDeadlineDisplay(law) {
     if (!law) return '—';
+    if (law.recordDeadline && law.recordDeadline.unit === 'none') {
+      return esc(tr('No state clock — record promptly'));
+    }
     let count = null;
     let unit = null;
     if (law.recordDeadline && law.recordDeadline.count != null) {
@@ -3390,6 +3393,13 @@
     return DeadlineUtils.computeRecordDueAtFromLaw(law, app);
   }
 
+  // The current law wins over a stored due date so a corrected rule clears old clocks.
+  function recordDueFor(a) {
+    const { law } = lawFor(a);
+    if (law && typeof DeadlineUtils !== 'undefined') return computeRecordDueAt(a);
+    return a.recordDueAt || null;
+  }
+
   function computeCustomerCopyDueAt(app) {
     const { law } = lawFor(app);
     if (typeof DeadlineUtils === 'undefined') return null;
@@ -5270,6 +5280,7 @@
     const y = year || String(d.getFullYear());
     return FarmFile.clerkSnapshot(data.applications, data.settings, law, {
       evaluateCompliance: evaluateCompliance,
+      recordDueFor: recordDueFor,
       nowMs: d.getTime(),
       year: y
     });

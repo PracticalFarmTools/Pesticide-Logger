@@ -1257,7 +1257,8 @@
       const result = evaluate ? evaluate(a) : null;
       const missing = recordIsIncomplete(a, result);
       if (missing) incomplete += 1;
-      const dueMs = a.recordDueAt ? Date.parse(a.recordDueAt) : NaN;
+      const due = opts.recordDueFor ? opts.recordDueFor(a) : a.recordDueAt;
+      const dueMs = due ? Date.parse(due) : NaN;
       if (missing && Number.isFinite(dueMs) && dueMs < nowMs) overdue += 1;
     });
     const years = law && law.retentionYears != null ? Number(law.retentionYears) : null;

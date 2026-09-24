@@ -5275,16 +5275,16 @@ const STATE_LAWS = {
     "privateDutyScope": "rupOnly"
   },
   "TX": {
-    "reviewedAt": "2026-07-31",
+    "reviewedAt": "2026-09-24",
     "agency": "Texas Department of Agriculture",
     "citation": {
-      "reference": "TDA pesticide applicator record requirements; 4 TAC §7.144 for structural pest-control records",
-      "url": "https://texasagriculture.gov/portals/0/forms/pest/applicator/pesticide_applicator_record_requirements.pdf"
+      "reference": "4 TAC §7.33; TDA record-requirements guidance (supporting)",
+      "url": "https://www.law.cornell.edu/regulations/texas/4-Tex-Admin-Code-SS-7-33"
     },
     "retentionYears": 2,
-    "appliesTo": "Agricultural/private/commercial pesticide applicators have TDA record requirements; 4 TAC §7.144 separately governs structural pest-control use records. Exact agricultural TAC citation partially verified.",
+    "appliesTo": "Commercial and noncommercial applicators: every application. Private applicators and licensed veterinarians: each restricted-use, state-limited-use, or regulated herbicide application (4 TAC §7.33(a)).",
     "verification": "researched",
-    "notes": "TDA record-requirements PDF lists wind direction/velocity and air temperature, equipment IDs/FAA N-number, and spray permit number for regulated herbicides in regulated counties. Structural §7.144 requires customer/service address, pesticide/device, amounts, mixing rate, target pest/purpose, date, and applicator/license/TPCL numbers.",
+    "notes": "TDA record-requirements PDF lists wind direction/velocity and air temperature, equipment IDs/FAA N-number, and spray permit number for regulated herbicides in regulated counties. Structural §7.144 requires customer/service address, pesticide/device, amounts, mixing rate, target pest/purpose, date, and applicator/license/TPCL numbers. 2026-09-24 primary-text audit: §7.33(d): records “kept current” — no hour or day clock. Private scope includes state-limited-use pesticides and regulated herbicides, so the full private list stays.",
     "fields": [
       {
         "name": "date",
@@ -5380,7 +5380,7 @@ const STATE_LAWS = {
         "name": "equipment_id",
         "label": "Equipment ID",
         "type": "string",
-        "required": true
+        "required": false
       },
       {
         "name": "applicator_name",
@@ -5405,14 +5405,26 @@ const STATE_LAWS = {
         "label": "Start time",
         "type": "time",
         "required": true
+      },
+      {
+        "name": "method",
+        "label": "Application method or type of equipment",
+        "type": "string",
+        "required": true
+      },
+      {
+        "name": "noncertified_applicator_name",
+        "label": "Person actually applying (if different)",
+        "type": "string",
+        "required": true
       }
     ],
-    "recordWithinHours": 24,
+    "recordWithinHours": null,
     "customerCopyDays": null,
     "privateDuty": "required",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
+      "count": null,
+      "unit": "none"
     }
   },
   "UT": {

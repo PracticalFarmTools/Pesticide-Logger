@@ -1,6 +1,6 @@
 {
   "code": "SD",
-  "reviewedAt": "2026-08-18",
+  "reviewedAt": "2026-09-24",
   "agency": "South Dakota Department of Agriculture and Natural Resources",
   "citation": {
     "reference": "ARSD 12:56:07:01 and 12:56:07:03",
@@ -9,7 +9,7 @@
   "retentionYears": 3,
   "appliesTo": "ARSD 12:56:07:01 says each applicator shall keep records of each pesticide application. Whether certified private applicators are in that definition is not verified. Commercial-style field list is encoded on this row.",
   "verification": "researched",
-  "notes": "ARSD 12:56:07:01–:03 (official rule URL on sdlegislature.gov, read 2026-08-18) lists commercial-style application records due by close of business, kept three years. Weather excludes bait stations and applications in or next to structures. The opening sentence is “Each applicator shall keep records…” DANR’s 2024 fillable form header describes records for GUP, RUP, and 25(b); SDSU Extension still splits private RUP as the old federal Farm Bill list and commercial as 12:56:07:01. Until the chapter’s definition of applicator is read as including or excluding certified private applicators, private duty stays uncertain. Do not promote on the 2020 SDSU PDF. Do not paste 12:56:07 customer/weather boxes onto a private spray while this is uncertain.",
+  "notes": "ARSD 12:56:07:01–:03 (official rule URL on sdlegislature.gov, read 2026-08-18) lists commercial-style application records due by close of business, kept three years. Weather excludes bait stations and applications in or next to structures. The opening sentence is “Each applicator shall keep records…” DANR’s 2024 fillable form header describes records for GUP, RUP, and 25(b); SDSU Extension still splits private RUP as the old federal Farm Bill list and commercial as 12:56:07:01. Until the chapter’s definition of applicator is read as including or excluding certified private applicators, private duty stays uncertain. Do not promote on the 2020 SDSU PDF. Do not paste 12:56:07 customer/weather boxes onto a private spray while this is uncertain. Reread 2026-09-24 on sdlegislature.gov: SDCL 38-21-24 lets the secretary require records of “private and commercial applicators”; ARSD 12:56:01:01 adopts SDCL 38-21-14 terms, and neither list defines the bare word “applicator” (only “certified”, “commercial”, and “private” applicator). 12:56:07:04 says “Commercial applicator” where 12:56:07:01 says “Each applicator”, which suggests the record rule reaches private applicators, but no sentence says so. Still no quoted who-clause: privateDuty stays uncertain. Ask DANR in writing whether 12:56:07:01 applies to certified private applicators.",
   "fields": [
     {
       "name": "customer_name",

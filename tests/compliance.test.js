@@ -51,7 +51,7 @@ check('each state has agency, citation, retention, verification, fields, private
       assert.strictEqual(typeof f.required, 'boolean', `${code}.${f.name} required`);
     });
   });
-  assert.strictEqual(ctx.STATE_LAWS_RESEARCH_DATE, '2026-09-15');
+  assert.strictEqual(ctx.STATE_LAWS_RESEARCH_DATE, '2026-09-24');
 });
 
 check('customerCopyDays only set when researched (not invented for all states)', () => {
@@ -249,7 +249,7 @@ check('source files advertise v2.9.47 + deadline/license wiring', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert.ok(app.includes('v2.9.47'));
   assert.ok(sw.includes('pesticide-logger-v2.9.47'));
-  assert.ok(sw.includes("const LAWS_EDITION = '2026-09-15'"));
+  assert.ok(sw.includes("const LAWS_EDITION = '2026-09-24'"));
   assert.ok(!html.includes('v2.9.47'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));

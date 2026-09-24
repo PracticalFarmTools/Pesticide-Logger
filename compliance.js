@@ -36,6 +36,10 @@
     location_note: ['location']
   };
 
+  // Aliases whose target box satisfies them too: when both are missing, one
+  // chip is enough (Maine lists application_time and start_time; one entry fills both).
+  const SATISFIED_BY_TARGET = new Set(['application_time', 'total_mix_applied']);
+
   const commercialOnly = new Set(COMMERCIAL_ONLY_FIELDS);
 
   function hasText(v) {
@@ -257,6 +261,11 @@
             && !complianceValuePresent(app, f.name, settings))
           .map(f => ({ name: f.name, label: f.label }))
       : [];
+    const missingNames = new Set(missing.map(m => m.name));
+    for (let i = missing.length - 1; i >= 0; i--) {
+      const name = missing[i].name;
+      if (SATISFIED_BY_TARGET.has(name) && FIELD_ALIASES[name].some(t => missingNames.has(t))) missing.splice(i, 1);
+    }
 
     if (!applyStateMatrix && cls === 'private' && privateDuty === 'none') {
       warnings.push('This state’s sources indicate no private-applicator recordkeeping duty — still follow the label and keep good farm records');

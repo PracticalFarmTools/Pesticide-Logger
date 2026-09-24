@@ -67,6 +67,28 @@ check('no state is incomplete, not a silent pass', () => {
   assert.ok(r.missingFields.some(f => f.name === 'state_select'));
 });
 
+check('one time chip when a state lists both application_time and start_time (ME)', () => {
+  const settings = { state: 'ME', applicatorClass: 'private' };
+  const base = { complianceState: 'ME', complianceApplicatorClass: 'private' };
+  const blank = evaluate(coreApp(base), settings);
+  const names = blank.missingFields.map(f => f.name);
+  assert.ok(names.includes('start_time'));
+  assert.ok(!names.includes('application_time'), 'no second chip for the same box');
+  const filled = evaluate(coreApp(Object.assign({ startTime: '08:30' }, base)), settings);
+  assert.ok(!filled.missingFields.some(f => f.name === 'start_time' || f.name === 'application_time'));
+  const endOnly = evaluate(coreApp(Object.assign({ endTime: '09:10' }, base)), settings);
+  assert.deepStrictEqual(Array.from(endOnly.missingFields.filter(f => /time/.test(f.name)), f => f.name), ['start_time'],
+    'an end time alone still leaves Start time, never both');
+});
+
+check('location_note keeps its own chip; a field name does not fill it', () => {
+  const law = Object.values(STATE_LAWS).find(l => l.fields.some(f => f.name === 'location_note' && f.required));
+  if (!law) return;
+  const code = Object.keys(STATE_LAWS).find(k => STATE_LAWS[k] === law);
+  const r = evaluate(coreApp({ complianceState: code, complianceApplicatorClass: 'commercial' }), { state: code, applicatorClass: 'commercial' });
+  assert.ok(r.missingFields.some(f => f.name === 'location_note'));
+});
+
 check('AL privateDuty none still requires the operational core', () => {
   const { ok } = evaluatePrivateNoneCore('AL');
   assert.strictEqual(ok.intervalsOk, true);

@@ -3104,16 +3104,16 @@ const STATE_LAWS = {
     }
   },
   "MT": {
-    "reviewedAt": "2026-07-31",
+    "reviewedAt": "2026-09-24",
     "agency": "Montana Department of Agriculture",
     "citation": {
-      "reference": "ARM 4.10.207",
-      "url": "https://agr.mt.gov/_docs/pesticides-docs/licensing-pesticides/14pesticidelic_MTLaws_Pesticides.pdf"
+      "reference": "ARM 4.10.207 (eff. 1/25/2025); ARM 4.10.315",
+      "url": "https://rules.mt.gov/browse/collections/aec52c46-128e-4279-9068-8af5d5432d74/policies/abf96d23-e219-4430-8b54-d9f95376c797"
     },
     "retentionYears": 2,
-    "appliesTo": "Certified commercial, public utility, government, and noncommercial applicators and operators; operational records for every application. Private RUP state duty partially verified only through extension/federal materials.",
+    "appliesTo": "Commercial, public utility, government, and noncommercial applicators and operators; every application. Private farm applicators are exempt (ARM 4.10.207(9)) except restricted-use aquatic herbicide records (ARM 4.10.315).",
     "verification": "researched",
-    "notes": "Application records must be completed within 24 hours. Weather is required if applicable; seed and wood-product applicators have exceptions for pests/site/weather under ARM guidance.",
+    "notes": "Application records must be completed within 24 hours. Weather is required if applicable; seed and wood-product applicators have exceptions for pests/site/weather under ARM guidance. 2026-09-24 primary-text audit: Who-clause: “(9) Private farm applicators are exempt from the requirements of this rule, unless a specific reporting requirement is established in another rule.” No clock.",
     "fields": [
       {
         "name": "applicator_name",
@@ -3236,13 +3236,14 @@ const STATE_LAWS = {
         "required": false
       }
     ],
-    "recordWithinHours": 24,
+    "recordWithinHours": null,
     "customerCopyDays": null,
-    "privateDuty": "required",
+    "privateDuty": "none",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
-    }
+      "count": null,
+      "unit": "none"
+    },
+    "privateDutyException": "Restricted-use aquatic herbicides (ditch/canal): all applicators, including private farm applicators, keep and submit a record of each application (ARM 4.10.315)."
   },
   "NE": {
     "reviewedAt": "2026-09-24",

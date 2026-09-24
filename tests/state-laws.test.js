@@ -177,15 +177,14 @@ check('Home and Settings surface check-again dates', () => {
   assert.ok(status.stdout.includes('0 stale'));
 });
 
-check('maintainer --holes queue is Arkansas and South Dakota only', () => {
+check('maintainer --holes queue is South Dakota only', () => {
   const holes = spawnSync(process.execPath, [path.join(root, 'tools', 'bundle-state-laws.js'), '--holes'], {
     encoding: 'utf8', cwd: root
   });
   assert.strictEqual(holes.status, 0, holes.stderr);
-  assert.ok(holes.stdout.includes('2 row(s)'));
-  assert.ok(holes.stdout.includes('AR\tresearched\tuncertain'));
+  assert.ok(holes.stdout.includes('1 row(s)'));
   assert.ok(holes.stdout.includes('SD\tresearched\tuncertain'));
-  ['AL', 'IA', 'KS', 'MI', 'MN', 'MS', 'RI', 'SC', 'VA'].forEach((code) => {
+  ['AL', 'AR', 'IA', 'KS', 'MI', 'MN', 'MS', 'RI', 'SC', 'VA'].forEach((code) => {
     assert.ok(!holes.stdout.includes(code + '\t'), code + ' is not a hole');
   });
   const show = spawnSync(process.execPath, [path.join(root, 'tools', 'bundle-state-laws.js'), '--show', 'MS'], {
@@ -282,14 +281,15 @@ check('dataset census: verification and privateDuty buckets', () => {
   assert.deepStrictEqual(ver.partial, []);
   assert.deepStrictEqual(ver.uncertain, []);
   assert.strictEqual(ver.researched.length, 50);
-  assert.deepStrictEqual(duty.none, ['AL', 'IA', 'KS', 'MI', 'MN', 'SC', 'VA']);
-  assert.deepStrictEqual(duty.uncertain, ['AR', 'SD']);
+  assert.deepStrictEqual(duty.none, ['AL', 'AR', 'IA', 'KS', 'MI', 'MN', 'SC', 'VA']);
+  assert.deepStrictEqual(duty.uncertain, ['SD']);
   assert.strictEqual(states.AL.verification, 'researched');
   assert.strictEqual(states.AL.privateDuty, 'none');
   assert.strictEqual(states.MS.verification, 'researched');
   assert.strictEqual(states.MS.privateDuty, 'required');
   assert.strictEqual(states.MN.privateDuty, 'none');
-  assert.strictEqual(states.AR.privateDuty, 'uncertain');
+  assert.strictEqual(states.AR.privateDuty, 'none');
+  assert.ok(/Class F/.test(states.AR.privateDutyException), 'AR 2,4-D / dicamba private duty stays visible');
   assert.strictEqual(states.SD.privateDuty, 'uncertain');
 });
 

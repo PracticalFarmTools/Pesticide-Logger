@@ -424,16 +424,16 @@ const STATE_LAWS = {
     }
   },
   "AR": {
-    "reviewedAt": "2026-08-18",
+    "reviewedAt": "2026-09-24",
     "agency": "Arkansas Department of Agriculture, State Plant Board",
     "citation": {
-      "reference": "Ark. Code Ann. §20-20-215",
+      "reference": "Ark. Code 20-20-215; 2 CAR 70-110, 70-113, 72-102",
       "url": "https://media.ark.org/agri/Pesticide-Use-and-Application-Law-and-Rules.pdf"
     },
     "retentionYears": 2,
-    "appliesTo": "Commercial and noncommercial applicator licensees: routine operational records of pesticide applications (kinds, amounts, uses, dates, and places). Private applicator application-record fields are not named in §20-20-215. Class E/F (auxin / new-technology) private records in 2 CAR § 70 are a special-class list, not every private spray.",
+    "appliesTo": "Commercial and noncommercial applicator licensees: routine operational records (kinds, amounts, uses, dates, places). Private applicators: no general record duty; Class F (2,4-D, MCPA), Class H (dicamba) and Class J products carry a 2-year private record duty.",
     "verification": "researched",
-    "notes": "§20-20-215 (read 2026-08-18 in the Plant Board compilation): commercial and noncommercial licensees keep kinds, amounts, uses, dates, and places of application for two years. That is the agricultural matrix. Do not paste Arkansas Pest Control Law / structural lists (customer, EPA number, certified vs noncertified names) onto a field-crop spray. 2 CAR § 70 (https://webftp.blr.arkansas.gov/Home/FTPDocument?path=CAR%2FParts%2F2CARpt70.pdf; Class E at codeofarrules.arkansas.gov 2 CAR § 70-110) requires private applicators to keep records of Class E and Class F products for three years (person in control, location, date/start/end, wind, brand + EPA number, acres + crop, equipment, nearby susceptible crops). That is not a general private GUP list — do not paste Class F weather/GPS extras onto every private spray. Private duty stays uncertain until a general private application-record who-clause is named. No customer-copy day count and no completion clock in §20-20-215 (24-hour fallback is operational).",
+    "notes": "§20-20-215 (read 2026-08-18 in the Plant Board compilation): commercial and noncommercial licensees keep kinds, amounts, uses, dates, and places of application for two years. That is the agricultural matrix. Do not paste Arkansas Pest Control Law / structural lists (customer, EPA number, certified vs noncertified names) onto a field-crop spray. 2 CAR § 70 (https://webftp.blr.arkansas.gov/Home/FTPDocument?path=CAR%2FParts%2F2CARpt70.pdf; Class E at codeofarrules.arkansas.gov 2 CAR § 70-110) requires private applicators to keep records of Class E and Class F products for three years (person in control, location, date/start/end, wind, brand + EPA number, acres + crop, equipment, nearby susceptible crops). That is not a general private GUP list — do not paste Class F weather/GPS extras onto every private spray. Private duty stays uncertain until a general private application-record who-clause is named. No customer-copy day count and no completion clock in §20-20-215 (24-hour fallback is operational). 2026-09-24 primary-text audit: Who-clause: “(a) Commercial and noncommercial applicator licensees shall keep and maintain routine operational records” (20-20-215). Private exception: “(3)(A) The private applicator must maintain records of each application of products with this and the Class F designation. (B) Said records must be: (i) Retained for a period of two (2) years” (2 CAR 70-110, eff. 2026-06-29). Earlier “three years” for Class E/F private records is superseded by the two-year text. No record-making clock.",
     "fields": [
       {
         "name": "brand_name",
@@ -464,15 +464,34 @@ const STATE_LAWS = {
         "label": "Place of application",
         "type": "string",
         "required": true
+      },
+      {
+        "name": "temperature",
+        "label": "Temperature (herbicide sprays to field crops)",
+        "type": "number",
+        "required": false
+      },
+      {
+        "name": "wind_speed",
+        "label": "Wind speed (Class F / H products)",
+        "type": "number",
+        "required": false
+      },
+      {
+        "name": "wind_direction",
+        "label": "Wind direction (Class F / H products)",
+        "type": "string",
+        "required": false
       }
     ],
-    "recordWithinHours": 24,
+    "recordWithinHours": null,
     "customerCopyDays": null,
-    "privateDuty": "uncertain",
+    "privateDuty": "none",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
-    }
+      "count": null,
+      "unit": "none"
+    },
+    "privateDutyException": "Class F (2,4-D, MCPA) and Class H (dicamba) products: private applicators must record each application and keep it 2 years (2 CAR 70-110(d)(3), 70-113(c)(5)); start/end time, wind speed and direction, and temperature per 2 CAR 72-102 apply to those sprays."
   },
   "CA": {
     "reviewedAt": "2026-07-31",

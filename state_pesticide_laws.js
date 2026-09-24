@@ -1982,7 +1982,7 @@ const STATE_LAWS = {
     }
   },
   "KY": {
-    "reviewedAt": "2026-07-31",
+    "reviewedAt": "2026-09-24",
     "agency": "Kentucky Department of Agriculture",
     "citation": {
       "reference": "302 KAR 26:030",
@@ -1991,7 +1991,7 @@ const STATE_LAWS = {
     "retentionYears": 3,
     "appliesTo": "Private applicators, dealers, structural pest management companies, licensed operators/applicators, and trainees who apply pesticides, as required by 302 KAR Chapter 26.",
     "verification": "researched",
-    "notes": "Trainee applications require trainee name and supervising applicator name/license. Label-required records must also be kept.",
+    "notes": "Trainee applications require trainee name and supervising applicator name/license. Label-required records must also be kept. 2026-09-24 primary-text audit: 302 KAR 26 sets no clock to make the record; keep 3 years.",
     "fields": [
       {
         "name": "customer_name",
@@ -2096,12 +2096,12 @@ const STATE_LAWS = {
         "required": true
       }
     ],
-    "recordWithinHours": 24,
+    "recordWithinHours": null,
     "customerCopyDays": null,
     "privateDuty": "required",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
+      "count": null,
+      "unit": "none"
     }
   },
   "LA": {

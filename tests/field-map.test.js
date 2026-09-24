@@ -96,6 +96,7 @@ check('inspector SVG draws named rings without live tiles', () => {
   assert.ok(svg.includes('Farm 12'));
   assert.ok(svg.includes('<path'));
   assert.ok(!svg.includes('arcgisonline'));
+  assert.ok(!svg.includes('nationalmap.gov'));
 });
 
 if (failed) process.exit(1);

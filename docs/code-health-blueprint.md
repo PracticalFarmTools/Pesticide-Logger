@@ -14,7 +14,7 @@ This is **not** a rewrite, not a bundler, not deleting `archive/`.
 | Grower needs | We take | We refuse |
 |---|---|---|
 | Same buttons tomorrow | Delete unused copies; one scan path | A new framework, npm, or build step |
-| Offline after first load | Keep `sw.js` APP_SHELL in lockstep with `index.html` scripts | Caching Esri/OSM tiles |
+| Offline after first load | Keep `sw.js` APP_SHELL in lockstep with `index.html` scripts | Caching USGS/OSM tiles |
 | Translated cab copy | Exact-key i18n that matches live English | Machine-translating the whole dictionary in one pass |
 | Tests that catch real breaks | Behavioral tests on modules (`compliance.js`, `camera-scan.js`, `mix-calc.js`, `epa-rank.js`) | Grep for `function foo` as the only proof of extracted math |
 

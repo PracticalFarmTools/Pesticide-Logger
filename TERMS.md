@@ -42,6 +42,9 @@ changes.
   EPA product lookups (via the stateless proxy) and weather fetches
   (U.S. National Weather Service, api.weather.gov — it receives the field
   pin's coordinates). Both send only the query, never your records.
+- The field map loads imagery from USGS The National Map and street tiles
+  from OpenStreetMap. Like any web map, those servers see which map tiles
+  (the area) you view. Field boundaries and records are never sent.
 - No analytics, no telemetry, no tracking. License keys are verified on your
   device.
 - Because we hold no copy of your data, **we cannot recover it for you.**

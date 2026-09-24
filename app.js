@@ -6052,9 +6052,12 @@
 
     fieldMap = L.map('field-map', { zoomControl: true }).setView([39.8, -98.6], 4);
 
+    // USGS The National Map orthoimagery (mostly USDA NAIP, 1 m): public
+    // domain, no account, fine in a paid app. Tiles stop at z16; Leaflet
+    // stretches them for closer corner-drawing.
     baseSatellite = L.tileLayer(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      { maxZoom: 19, attribution: 'Imagery © Esri, Maxar, Earthstar Geographics' });
+      'https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom: 19, maxNativeZoom: 16, attribution: 'Imagery: USGS The National Map (USDA NAIP)' });
     baseStreets = L.tileLayer(
       'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
       { maxZoom: 19, attribution: '© OpenStreetMap contributors' });

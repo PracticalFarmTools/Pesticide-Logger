@@ -1419,6 +1419,19 @@ check('v2.9.47: weather is NWS (public domain) — no Open-Meteo free tier in a 
   assert.ok(app.includes("' (NWS forecast grid — no station report)'"), 'grid fallback says so');
 });
 
+check('v2.9.47: satellite imagery is USGS public domain, not unauthenticated Esri', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
+  assert.ok(!app.includes('arcgisonline') && !html.includes('arcgisonline'));
+  assert.ok(app.includes("'https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}'"));
+  assert.ok(app.includes('maxNativeZoom: 16'), 'USGS tiles stop at z16; closer zoom stretches instead of 404');
+  assert.ok(app.includes("attribution: 'Imagery: USGS The National Map (USDA NAIP)'"));
+  assert.strictEqual(html.match(/img-src ([^;]*);/)[1].trim(),
+    "'self' data: blob: https://basemap.nationalmap.gov https://tile.openstreetmap.org");
+  assert.ok(!sw.includes('nationalmap') && !sw.includes('tile.openstreetmap'), 'third-party tiles are never precached');
+});
+
 if (failed) {
   console.error(`\n${failed} check(s) failed`);
   process.exit(1);

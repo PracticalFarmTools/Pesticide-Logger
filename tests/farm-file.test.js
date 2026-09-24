@@ -575,6 +575,7 @@ await check('inspector packet draws named rings as SVG, not live tiles', async (
   assert.ok(html.includes('Farm 88'));
   assert.ok(html.includes('<svg'));
   assert.ok(!html.includes('arcgisonline'));
+  assert.ok(!html.includes('nationalmap.gov'));
   const last = FarmFile.latestOnField([
     iaApp({ id: 'old', date: '2026-07-01' }),
     iaApp({ id: 'new', date: '2026-08-02', endTime: '09:00' })

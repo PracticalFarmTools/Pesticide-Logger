@@ -6139,16 +6139,16 @@ const STATE_LAWS = {
     }
   },
   "WI": {
-    "reviewedAt": "2026-07-31",
+    "reviewedAt": "2026-09-24",
     "agency": "Wisconsin Department of Agriculture, Trade and Consumer Protection",
     "citation": {
       "reference": "Wis. Admin. Code ATCP 29.21, 29.33; ATCP 30 atrazine records",
       "url": "https://docs.legis.wisconsin.gov/document/administrativecode/ATCP%2029.21(1)"
     },
-    "retentionYears": 3,
-    "appliesTo": "Commercial application businesses: each pesticide application; private agricultural producers applying RUPs; certified applicators where required.",
+    "retentionYears": 2,
+    "appliesTo": "Commercial application businesses: each application (ATCP 29.21). Individual commercial applicators: each licensed application (29.33(1)). Private applicators: each restricted-use application (29.33(2)). Anyone applying atrazine: every atrazine application, kept 3 years (ATCP 30.31(5)).",
     "verification": "researched",
-    "notes": "Records completed on day of application. Amount may be concentration+total quantity or rate+total area. Mix/load location is required if other than licensed business location, with small equipment/prepackaged exceptions. Products with atrazine or isoxaflutole should be retained three years per extension guidance.",
+    "notes": "Records completed on day of application. Amount may be concentration+total quantity or rate+total area. Mix/load location is required if other than licensed business location, with small equipment/prepackaged exceptions. Products with atrazine or isoxaflutole should be retained three years per extension guidance. 2026-09-24 primary-text audit: ATCP 29.21, 29.33: keep 2 years (atrazine 3 years); “complete the required record on the day of the application”; businesses give the customer the information within 30 days. Amount element is concentration + total quantity OR rate + total area. Mix/load site only when not at a licensed location. Atrazine records bind every person, so the private list is not narrowed to RUP.",
     "fields": [
       {
         "name": "applicator_name",
@@ -6160,13 +6160,19 @@ const STATE_LAWS = {
         "name": "customer_name",
         "label": "Customer / person for whom applied",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "customer_address",
         "label": "Customer address",
         "type": "string",
-        "required": true
+        "required": true,
+        "classes": [
+          "commercial"
+        ]
       },
       {
         "name": "crop_treated",
@@ -6214,7 +6220,7 @@ const STATE_LAWS = {
         "name": "concentration",
         "label": "Application concentration",
         "type": "string",
-        "required": true
+        "required": false
       },
       {
         "name": "amount_applied",
@@ -6226,27 +6232,33 @@ const STATE_LAWS = {
         "name": "rate",
         "label": "Application rate",
         "type": "string",
-        "required": true
+        "required": false
       },
       {
         "name": "area_treated",
         "label": "Area treated",
         "type": "string",
-        "required": true
+        "required": false
       },
       {
         "name": "mix_load_location",
         "label": "Mix / load location",
         "type": "string",
+        "required": false
+      },
+      {
+        "name": "applicator_license",
+        "label": "Certification # of the individual applying",
+        "type": "string",
         "required": true
       }
     ],
-    "recordWithinHours": 24,
-    "customerCopyDays": null,
+    "recordWithinHours": 0,
+    "customerCopyDays": 30,
     "privateDuty": "required",
     "recordDeadline": {
-      "count": 24,
-      "unit": "hours"
+      "count": 0,
+      "unit": "sameDay"
     }
   },
   "WY": {

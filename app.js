@@ -1951,9 +1951,11 @@
       host.innerHTML = `<p class="empty-note">No records match your search.</p>`;
       return;
     }
+    const addFromLabel = (p, field) =>
+      `<button type="button" class="text-btn prod-add-label" data-prod-fill="${p.id}" data-prod-fill-input="${field}">${esc(tr('Add from label'))}</button>`;
     const rows = list.map(p => `
-        <tr>
-          <td><strong>${esc(p.name)}</strong><br>
+        <tr class="product-row" data-open-product="${p.id}">
+          <td data-label="${esc(tr('Product'))}"><strong>${esc(p.name)}</strong><br>
             <span class="card-hint">${esc(p.activeIngredient || '')}</span>
             ${p.rup ? '<span class="badge-pill badge-rup">RUP</span>' : ''}
             ${p.omri ? '<span class="badge-pill badge-ok">OMRI</span>' : ''}
@@ -1963,24 +1965,39 @@
               p.epaActiveIngredient.toLowerCase() !== p.activeIngredient.toLowerCase()
               ? '<br><span class="epa-mismatch">Official active ingredient differs—review label</span>' : ''}
           </td>
-          <td>${esc(p.epaRegNo)}
+          <td data-label="${esc(tr('EPA Reg #'))}">${esc(p.epaRegNo)}
             ${safeUrl(p.epaLabelUrl) ? `<br><a class="epa-label-link" href="${esc(safeUrl(p.epaLabelUrl))}" target="_blank" rel="noopener">Official label ↗</a>` : ''}
             ${p.epaCheckedAt ? `<br><span class="card-hint">Checked ${fmtDate(p.epaCheckedAt.slice(0, 10))}</span>` : ''}
           </td>
-          <td>${esc(p.type)}</td>
-          <td>${p.reiHours != null ? fmtNum(p.reiHours) + ' hr' : '—'}</td>
-          <td>${p.phiDays != null ? fmtNum(p.phiDays) + ' d' : '—'}</td>
-          <td>${p.rateAmount != null ? `${fmtNum(p.rateAmount)} ${esc(p.rateUnit)} ${RATE_PER_LABEL[p.ratePer] || ''}` : '—'}</td>
+          <td data-label="${esc(tr('Type'))}">${esc(p.type)}</td>
+          <td data-label="REI">${p.reiHours != null ? fmtNum(p.reiHours) + ' hr' : `<span class="prod-missing">—</span> ${addFromLabel(p, 'prod-rei')}`}</td>
+          <td data-label="PHI">${p.phiDays != null ? fmtNum(p.phiDays) + ' d' : `<span class="prod-missing">—</span> ${addFromLabel(p, 'prod-phi')}`}</td>
+          <td data-label="${esc(tr('Label rate'))}">${p.rateAmount != null ? `${fmtNum(p.rateAmount)} ${esc(p.rateUnit)} ${RATE_PER_LABEL[p.ratePer] || ''}` : '—'}</td>
           <td class="row-actions">
             <button class="icon-btn" data-edit-product="${p.id}">Edit</button>
             <button class="icon-btn danger" data-del-product="${p.id}">Delete</button>
           </td>
         </tr>`).join('');
-    host.innerHTML = `<div class="table-wrap"><table class="record-table">
+    host.innerHTML = `<div class="table-wrap"><table class="record-table product-table">
       <thead><tr><th>Product</th><th>EPA Reg #</th><th>Type</th><th>REI</th><th>PHI</th><th>Label rate</th><th></th></tr></thead>
       <tbody>${rows}</tbody></table></div>`;
     host.querySelectorAll('[data-edit-product]').forEach(b =>
-      b.addEventListener('click', () => editProduct(b.dataset.editProduct)));
+      b.addEventListener('click', (e) => { e.stopPropagation(); editProduct(b.dataset.editProduct); }));
+    host.querySelectorAll('[data-prod-fill]').forEach(b =>
+      b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        editProduct(b.dataset.prodFill);
+        const input = $('#' + b.dataset.prodFillInput);
+        if (input) {
+          input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          input.focus({ preventScroll: true });
+        }
+      }));
+    host.querySelectorAll('[data-open-product]').forEach(row =>
+      row.addEventListener('click', (e) => {
+        if (e.target.closest('a, button, input, select, textarea')) return;
+        editProduct(row.dataset.openProduct);
+      }));
     host.querySelectorAll('[data-del-product]').forEach(b =>
       b.addEventListener('click', () => deleteProduct(b.dataset.delProduct)));
   }

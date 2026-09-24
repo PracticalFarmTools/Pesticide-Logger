@@ -225,6 +225,8 @@
     ["REI (hours)", "REI (horas)", "REI (heures)", "REI (horas)"],
     ["PHI (days)", "PHI (días)", "PHI (jours)", "PHI (dias)"],
     ["Label rate", "Dosis de etiqueta", "Dose d’étiquette", "Dose do rótulo"],
+    ["Add from label", "Agregar de la etiqueta", "Ajouter d’après l’étiquette", "Adicionar do rótulo"],
+    ["EPA Reg #", "N.º EPA", "N° EPA", "Nº EPA"],
     ["Manufacturer / registrant", "Fabricante / registrante", "Fabricant / titulaire", "Fabricante / registrante"],
     ["State registration / SLN #", "Registro estatal / SLN", "Homologation d’État / SLN", "Registro estadual / SLN"],
     ["OMRI Listed / organic-approved input", "Insumo OMRI / aprobado para orgánico", "Intrant inscrit OMRI / approuvé bio", "Insumo OMRI / aprovado para orgânico"],

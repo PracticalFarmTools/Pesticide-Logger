@@ -975,6 +975,35 @@ input:hover, select:hover, textarea:hover { border-color: var(--border-color-hov
 }
 .record-table tr:hover td { background: rgba(255, 255, 255, 0.7); }
 .table-wrap { overflow-x: auto; }
+.product-table .product-row { cursor: pointer; }
+.prod-missing { color: var(--warn); font-weight: 700; }
+.prod-add-label { font-size: 0.8rem; min-height: 2.25rem; }
+
+/* Phones: each product is a card so Edit is never scrolled off to the side. */
+@media (max-width: 640px) {
+  .product-table thead { display: none; }
+  .product-table, .product-table tbody, .product-table tr, .product-table td { display: block; width: 100%; }
+  .product-table .product-row {
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    margin: 0 0 0.7rem;
+    padding: 0.35rem 0.2rem;
+    background: var(--bg-white);
+  }
+  .product-table td { border-bottom: none; padding: 0.3rem 0.7rem; }
+  .product-table td[data-label]:not(:first-child)::before {
+    content: attr(data-label);
+    display: inline-block;
+    min-width: 6.5rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+  }
+  .product-table .row-actions { padding-top: 0.5rem; }
+  .product-table .row-actions .icon-btn { flex: 1; min-height: 2.75rem; }
+}
 
 .row-actions { display: flex; gap: 0.35rem; white-space: nowrap; }
 .icon-btn {

@@ -1393,6 +1393,16 @@ check('v2.9.46: tab-nav offset never pins the sticky Save bar under the nav', ()
   assert.ok(chips.includes('missingBox.scrollIntoView'), 'blocked save brings the Missing chips into view');
 });
 
+check('v2.9.46: product library opens the editor from a row and stacks as cards on phones', () => {
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  assert.ok(app.includes('<tr class="product-row" data-open-product="${p.id}">'));
+  assert.ok(app.includes("if (e.target.closest('a, button, input, select, textarea')) return;"), 'Delete and links do not also open the editor');
+  assert.ok(app.includes("addFromLabel(p, 'prod-rei')") && app.includes("addFromLabel(p, 'prod-phi')"), 'empty REI / PHI offer the label path');
+  const phone = css.split('@media (max-width: 640px) {\n  .product-table thead')[1];
+  assert.ok(phone && phone.includes('display: block'), 'rows become cards under 640px');
+});
+
 if (failed) {
   console.error(`\n${failed} check(s) failed`);
   process.exit(1);

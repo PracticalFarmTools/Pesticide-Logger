@@ -143,6 +143,10 @@ async function openLabelFinder(prefix) {
   try {
     const body = await fetchLabelIntervals(reg);
     if (seq !== labelSeq || host.hidden) return;
+    if (body.notFound) {
+      host.innerHTML = `<p class="label-finder-warn" role="status">${esc(tr('EPA has no product under {reg}. Check the number on the label (it looks like 524-549), or type the rest by hand.').replace('{reg}', reg))}</p>`;
+      return;
+    }
     renderLabelFinder(host, body, crop);
   } catch (e) {
     if (seq !== labelSeq || host.hidden) return;

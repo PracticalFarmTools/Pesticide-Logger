@@ -40,7 +40,8 @@ const EPA_ENTRUST = {
 };
 const LABEL_FILE = '062719-00621-20260611.pdf';
 const LABEL_ENTRUST = {
-  reg: '62719-621', name: 'Entrust® SC', newest: LABEL_FILE, source: 'EPA label PDF', checkedAt: '2026-09-26T12:00:00Z',
+  reg: '62719-621', name: 'Entrust® SC',
+  newest: { file: LABEL_FILE, date: 'June 11, 2026', url: 'https://www3.epa.gov/pesticides/chem_search/ppls/' + LABEL_FILE }, source: 'EPA label PDF', checkedAt: '2026-09-26T12:00:00Z',
   files: [{ file: LABEL_FILE, date: 'June 11, 2026', url: 'https://www3.epa.gov/pesticides/chem_search/ppls/' + LABEL_FILE, pages: 73, scanned: false }],
   rei: [{ text: 'Do not enter or allow worker entry into treated areas during the restricted entry interval (REI) of 4 hours.', page: 10, file: LABEL_FILE, date: 'June 11, 2026' }],
   phi: [
@@ -105,7 +106,9 @@ async function fillFocused(page) {
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ results, query: { reg } }) });
   });
   await page.route('**/api/label?*', (route) => {
-    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(LABEL_ENTRUST) });
+    const reg = new URL(route.request().url()).searchParams.get('reg');
+    const body = reg === '62719-621' ? LABEL_ENTRUST : { reg, files: [], rei: [], phi: [], notFound: true };
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
   });
   const chips = () => page.$$eval('.missing-field-chip', (cs) => cs.map((c) => c.dataset.missingField));
 
@@ -333,6 +336,7 @@ async function fillFocused(page) {
       must(await page.locator('#prod-label-finder mark', { hasText: '4 hours' }).count() === 1, 'amount marked');
       const href = await page.getAttribute('#prod-label-finder .label-finder-list a', 'href');
       must(href && href.endsWith(LABEL_FILE + '#page=10'), 'links the label page: ' + href);
+      must(await page.locator('#prod-label-finder .label-finder-links a').count() === 2, 'links the newest label and EPA’s list');
       await page.fill('#prod-label-finder .label-finder-crop-input', 'Grapes');
       const phi = await page.$$eval('#prod-label-finder .label-finder-phi li', (li) => li.map((x) => x.textContent));
       must(phi.length === 1 && /7 days/.test(phi[0]), 'PHI list narrowed to the crop: ' + phi.join(' | '));
@@ -341,6 +345,12 @@ async function fillFocused(page) {
         await page.locator('#prod-label-finder .label-finder-links').scrollIntoViewIfNeeded();
         await page.screenshot({ path: path.join(SHOTS, 'label-finder.png') });
       }
+      await page.fill('#prod-epa', '999999-1');
+      must(await page.isHidden('#prod-label-finder'), 'a new number closes the old sentences');
+      await page.click('#prod-label-find');
+      await page.waitForSelector('#prod-label-finder .label-finder-warn');
+      must(/EPA has no product under 999999-1/.test(await page.textContent('#prod-label-finder')), 'unknown number says so');
+      await page.fill('#prod-epa', '62719-621');
     });
 
     await stage(page, 'Fields list fits a phone without sideways scroll', async () => {

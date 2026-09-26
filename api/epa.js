@@ -7,44 +7,10 @@
  * upstream URL.
  */
 
-const EPA_BASE = 'https://ordspub.epa.gov/ords/pesticides/cswu';
 const { rankEpaResults, fallbackQueries, normalizeRegQuery, regBase } = require('../epa-rank.js');
+const { makeLimiter, clientIp, cleanText, fetchPpls } = require('./_lib.js');
 
-const UPSTREAM_TIMEOUT_MS = 9000;
-
-// In-memory per-IP rate limit. This only protects a single warm function
-// instance (it resets on cold start and isn't shared across regions), so it
-// is a speed bump rather than a hard guarantee — for real enforcement, add a
-// Vercel Firewall rate-limit rule on /api/epa in the project dashboard.
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 30;
-const rateLimitHits = new Map();
-
-function isRateLimited(ip) {
-  const now = Date.now();
-  const hit = rateLimitHits.get(ip);
-  if (!hit || now - hit.windowStart >= RATE_LIMIT_WINDOW_MS) {
-    rateLimitHits.set(ip, { windowStart: now, count: 1 });
-    if (rateLimitHits.size > 5000) {
-      for (const [key, value] of rateLimitHits) {
-        if (now - value.windowStart >= RATE_LIMIT_WINDOW_MS) rateLimitHits.delete(key);
-      }
-    }
-    return false;
-  }
-  hit.count += 1;
-  return hit.count > RATE_LIMIT_MAX;
-}
-
-function clientIp(req) {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string' && forwarded.length) return forwarded.split(',')[0].trim();
-  return req.socket?.remoteAddress || 'unknown';
-}
-
-function cleanText(s) {
-  return String(s || '').replace(/\s+/g, ' ').trim();
-}
+const isRateLimited = makeLimiter(30);
 
 // `wantReg` is the basic registration the grower typed (from the jug). When
 // EPA answers with a successor registration, say so and keep the label and
@@ -102,30 +68,6 @@ function normalize(item, wantReg) {
   return out;
 }
 
-async function fetchUpstream(pplsPath) {
-  const started = Date.now();
-  let lastError = null;
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      const upstream = await fetch(EPA_BASE + pplsPath, {
-        headers: { Accept: 'application/json', 'User-Agent': 'PracticalFarmTools-PesticideLogger/2.3' },
-        signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)
-      });
-      if (upstream.status === 404) return { status: 404, items: [] };
-      if (!upstream.ok) throw new Error(`EPA returned ${upstream.status}`);
-      const payload = await upstream.json();
-      return { status: upstream.status, items: payload.items || [] };
-    } catch (error) {
-      lastError = error;
-      // One quick retry for a reset or 5xx; a slow timeout is not retried
-      // here (the browser retries once) so the function stays under its limit.
-      if (Date.now() - started > 3000) break;
-      await new Promise((r) => setTimeout(r, 400));
-    }
-  }
-  throw lastError || new Error('EPA lookup failed');
-}
-
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET');
@@ -156,7 +98,7 @@ module.exports = async function handler(req, res) {
   const base = reg ? regBase(reg) : '';
 
   async function collectUnique(pplsPath, wantReg) {
-    const upstream = await fetchUpstream(pplsPath);
+    const upstream = await fetchPpls(pplsPath);
     const seen = new Set();
     const unique = [];
     for (const item of upstream.items) {

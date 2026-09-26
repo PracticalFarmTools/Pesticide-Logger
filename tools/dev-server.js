@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Local static server plus the same /api/epa handler Vercel uses.
+ * Local static server plus the same /api/epa and /api/label handlers Vercel uses.
  * python3 -m http.server has no EPA proxy; this does, so cab Products
  * search can be checked against live PPLS.
  *
@@ -13,7 +13,10 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { URL } = require('url');
-const handler = require('../api/epa.js');
+const API = {
+  '/api/epa': require('../api/epa.js'),
+  '/api/label': require('../api/label.js')
+};
 
 const ROOT = path.join(__dirname, '..');
 const PORT = Number(process.env.PORT || 8080);
@@ -58,7 +61,8 @@ function sendFile(res, filePath) {
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url || '/', `http://127.0.0.1:${PORT}`);
-  if (url.pathname === '/api/epa' || url.pathname === '/api/epa/') {
+  const handler = API[url.pathname.replace(/\/$/, '')];
+  if (handler) {
     const fake = {
       statusCode: 200,
       setHeader(k, v) { res.setHeader(k, v); },
@@ -79,7 +83,7 @@ const server = http.createServer(async (req, res) => {
     } catch (e) {
       res.statusCode = 500;
       res.setHeader('Content-Type', 'application/json; charset=utf-8');
-      res.end(JSON.stringify({ error: 'EPA proxy failed' }));
+      res.end(JSON.stringify({ error: 'API handler failed' }));
     }
     return;
   }
@@ -87,5 +91,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log('Pesticide Logger with live /api/epa at http://127.0.0.1:' + PORT);
+  console.log('Pesticide Logger with live /api/epa and /api/label at http://127.0.0.1:' + PORT);
 });

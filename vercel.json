@@ -2,6 +2,9 @@
   "redirects": [
     { "source": "/", "destination": "/start.html", "permanent": false }
   ],
+  "functions": {
+    "api/label.js": { "maxDuration": 30, "includeFiles": "api/_vendor/pdfjs/**" }
+  },
   "headers": [
     {
       "source": "/sw.js",

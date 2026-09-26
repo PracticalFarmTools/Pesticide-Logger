@@ -56,9 +56,14 @@
     return { lat: cy / (3 * area2), lng: cx / (3 * area2) };
   }
 
+  // Number(null) is 0, which would put an unpinned field at 0,0.
+  function isCoord(v) {
+    return v != null && v !== '' && Number.isFinite(Number(v));
+  }
+
   function fieldPin(field) {
     if (!field) return null;
-    if (Number.isFinite(Number(field.weatherLat)) && Number.isFinite(Number(field.weatherLng))) {
+    if (isCoord(field.weatherLat) && isCoord(field.weatherLng)) {
       return {
         lat: Number(field.weatherLat),
         lng: Number(field.weatherLng),
@@ -72,8 +77,8 @@
   // Manual pin wins. Otherwise the ring centroid. No pin if there is no ring.
   function resolveWeatherPin(field) {
     if (field && field.weatherPinManual
-      && Number.isFinite(Number(field.weatherLat))
-      && Number.isFinite(Number(field.weatherLng))) {
+      && isCoord(field.weatherLat)
+      && isCoord(field.weatherLng)) {
       return {
         weatherLat: Number(field.weatherLat),
         weatherLng: Number(field.weatherLng),
@@ -330,6 +335,7 @@
     coordsMatch,
     ringCentroid,
     fieldPin,
+    isCoord,
     resolveWeatherPin,
     cacheMatches,
     getCached,

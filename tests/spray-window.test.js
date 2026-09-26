@@ -57,6 +57,9 @@ check('resolveWeatherPin keeps a manual pin and otherwise uses the centroid', ()
 
 check('unmapped field with no pin cannot be forecasted', () => {
   assert.strictEqual(SW.fieldPin({ name: 'East of barn' }), null);
+  assert.strictEqual(SW.fieldPin({ name: 'Unpinned', weatherLat: null, weatherLng: null }), null, 'null is not 0,0');
+  assert.strictEqual(SW.fieldPin({ weatherLat: '', weatherLng: '' }), null);
+  assert.deepStrictEqual(SW.fieldPin({ weatherLat: 0, weatherLng: 0 }).lat, 0, 'a real 0 still counts');
   assert.strictEqual(SW.fieldPin({ boundary: [[1, 2]] }), null);
 });
 

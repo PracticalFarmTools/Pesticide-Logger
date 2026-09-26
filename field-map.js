@@ -171,7 +171,8 @@
   }
 
   function isPlaceholderView(view) {
-    if (!view || !Number.isFinite(Number(view.lat)) || !Number.isFinite(Number(view.lng))) return true;
+    if (!view || view.lat == null || view.lng == null) return true;
+    if (!Number.isFinite(Number(view.lat)) || !Number.isFinite(Number(view.lng))) return true;
     const z = Number(view.zoom);
     if (!Number.isFinite(z)) return true;
     // Stock CONUS start (initFieldMap), not a grower who zoomed to their farm.

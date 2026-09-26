@@ -1592,16 +1592,53 @@
     $('#epa-verify-all').addEventListener('click', verifyProductLibrary);
   }
 
+  const epaCache = new Map();
+  const EPA_CLIENT_TIMEOUT_MS = 20000;
+
   async function fetchEpa(params) {
-    let response;
-    try {
-      response = await fetch(`/api/epa?${new URLSearchParams(params)}`, {
-        headers: { Accept: 'application/json' }
-      });
-    } catch (e) {
-      const err = new Error(tr('EPA lookup is unavailable. Type the EPA number from the jug or Scan label. The label is the law.'));
+    const clean = Object.assign({}, params);
+    if (clean.reg) clean.reg = EpaRank.normalizeRegQuery(clean.reg) || String(clean.reg).trim();
+    const key = new URLSearchParams(clean).toString();
+    if (epaCache.has(key)) return epaCache.get(key);
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      const err = new Error(tr('No signal — EPA lookup needs a connection. Type the EPA number from the jug and save; Products → Verify my library checks it later.'));
       err.status = 0;
       throw err;
+    }
+    let lastError = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const body = await fetchEpaOnce(key);
+        epaCache.set(key, body);
+        return body;
+      } catch (e) {
+        lastError = e;
+        const retryable = e.status === 0 || e.status === 502 || e.status === 503 || e.status === 504;
+        if (!retryable || attempt === 1) break;
+        await new Promise((r) => setTimeout(r, 1500));
+      }
+    }
+    throw lastError;
+  }
+
+  async function fetchEpaOnce(key) {
+    let response;
+    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = ctrl ? setTimeout(() => ctrl.abort(), EPA_CLIENT_TIMEOUT_MS) : null;
+    try {
+      response = await fetch(`/api/epa?${key}`, {
+        headers: { Accept: 'application/json' },
+        signal: ctrl ? ctrl.signal : undefined
+      });
+    } catch (e) {
+      const slow = e && e.name === 'AbortError';
+      const err = new Error(slow
+        ? tr('EPA is slow to answer right now. Type the EPA number from the jug and save; Products → Verify my library checks it later.')
+        : tr('EPA lookup is unavailable. Type the EPA number from the jug or Scan label. The label is the law.'));
+      err.status = 0;
+      throw err;
+    } finally {
+      if (timer) clearTimeout(timer);
     }
     const text = await response.text();
     let body = {};
@@ -1627,33 +1664,24 @@
     const status = $('#epa-search-status');
     const host = $('#epa-search-results');
     const hint = $('#epa-search-hint');
-    status.textContent = tr('Searching the official EPA database…');
     host.innerHTML = '';
     if (hint) hint.hidden = true;
+    const reg = EpaRank.normalizeRegQuery(query);
+    const isReg = !!reg;
+    status.textContent = isReg
+      ? tr('Looking up EPA # {reg}…').replace('{reg}', reg)
+      : tr('Searching the official EPA database…');
     try {
-      const isReg = typeof EpaRank !== 'undefined' && EpaRank.isEpaRegQuery
-        ? EpaRank.isEpaRegQuery(query)
-        : /^\d{1,6}-\d{1,6}(?:-\d{1,6})?$/.test(query);
-      const payload = await fetchEpa(isReg ? { reg: query } : { q: query });
+      const payload = await fetchEpa(isReg ? { reg } : { q: query });
       if (seq !== epaSearchSeq) return;
-      let rows = payload.results || [];
-      if (!isReg && !rows.length && typeof EpaRank !== 'undefined' && EpaRank.fallbackQueries) {
-        const retry = EpaRank.fallbackQueries(query);
-        for (let i = 0; i < retry.length && !rows.length; i++) {
-          const again = await fetchEpa({ q: retry[i] });
-          if (seq !== epaSearchSeq) return;
-          rows = again.results || [];
-        }
-      }
-      const ranked = (!isReg && typeof EpaRank !== 'undefined' && EpaRank.rankEpaResults)
-        ? EpaRank.rankEpaResults(query, rows)
-        : rows;
-      const library = (!isReg && typeof EpaRank !== 'undefined' && EpaRank.libraryHits)
-        ? EpaRank.libraryHits(query, data.products)
-        : [];
+      const rows = payload.results || [];
+      const ranked = isReg ? rows : EpaRank.rankEpaResults(query, rows);
+      const library = EpaRank.libraryHits(isReg ? reg : query, data.products);
       status.textContent = ranked.length
         ? `${ranked.length} EPA record${ranked.length === 1 ? '' : 's'} found.`
-        : tr('No matching EPA records found. Try the brand name or the EPA number on the jug.');
+        : isReg
+          ? tr('EPA has no product under {reg}. Check the number on the label (it looks like 524-549), or type the rest by hand.').replace('{reg}', reg)
+          : tr('No EPA product by that name. Brand names change; the EPA Reg. No. on the label always works.');
       if (hint) {
         hint.hidden = !(typeof EpaRank !== 'undefined' && EpaRank.needsNameSearchHint
           ? EpaRank.needsNameSearchHint(query) && ranked.length
@@ -1687,7 +1715,10 @@
       </article>`).join('');
     const epaHtml = results.map((result, index) => {
       const active = result.status === 'Active' && !result.cancelled;
-      const inLib = data.products.some(p => p.epaRegNo === result.epaRegNo);
+      const jugReg = EpaRank.jugRegNo(result);
+      const inLib = data.products.some(p => p.epaRegNo === jugReg || p.epaRegNo === result.epaRegNo);
+      const notice = EpaRank.jugNotice(result);
+      const alts = (result.altBrandNames || []).filter(n => EpaRank.fold(n) !== EpaRank.fold(result.name));
       return `<article class="epa-result ${active ? '' : 'epa-result-alert'}">
         <div class="epa-result-main">
           <div>
@@ -1695,9 +1726,12 @@
             <span class="badge-pill ${active ? 'badge-signal-caution' : 'badge-rup'}">${esc(result.status)}</span>
             ${result.rup ? '<span class="badge-pill badge-rup">RUP</span>' : ''}
           </div>
+          ${notice ? `<p class="epa-result-notice" role="note">${esc(tr(notice))}</p>` : ''}
           <div class="epa-result-meta">
-            EPA ${esc(result.epaRegNo)} · ${esc(result.company || 'Registrant not listed')}
+            EPA ${esc(jugReg)} · ${esc(EpaRank.jugCompany(result) || 'Registrant not listed')}
           </div>
+          ${alts.length ? `<div class="epa-result-meta epa-result-alts">${esc(tr('Also sold as'))}: ${alts.map((n, k) =>
+            `<button type="button" class="text-btn" data-epa-import="${index}" data-epa-alt="${k}">${esc(n)}</button>`).join(', ')}</div>` : ''}
           <div class="epa-result-meta">${esc(EpaRank.epaAiText(result) || 'Active ingredients: see label')}</div>
           <div class="epa-result-meta">
             Signal word: ${esc(result.signalWord || 'not listed')}
@@ -1719,8 +1753,22 @@
       button.addEventListener('click', () => editProduct(button.dataset.libOpen));
     });
     host.querySelectorAll('[data-epa-import]').forEach((button) => {
-      button.addEventListener('click', () => importEpaProduct(results[Number(button.dataset.epaImport)]));
+      button.addEventListener('click', () => {
+        const result = results[Number(button.dataset.epaImport)];
+        const alts = (result.altBrandNames || []).filter(n => EpaRank.fold(n) !== EpaRank.fold(result.name));
+        const alt = button.dataset.epaAlt != null ? alts[Number(button.dataset.epaAlt)] : '';
+        importEpaProduct(result, { name: alt });
+      });
     });
+  }
+
+  function epaTransferOf(result) {
+    if (!result || result.matchedBy !== 'transfer') return null;
+    return {
+      toRegNo: result.epaRegNo,
+      toCompany: result.company || '',
+      date: result.transferredDate || null
+    };
   }
 
   function verifiedFields(result) {
@@ -1730,23 +1778,26 @@
       epaCheckedAt: new Date().toISOString(),
       epaLabelUrl: result.labelUrl,
       epaLabelAcceptedDate: result.labelAcceptedDate,
-      epaCompany: result.company,
+      epaCompany: EpaRank.jugCompany(result),
       epaActiveIngredient: EpaRank.epaAiText(result),
+      epaTransfer: epaTransferOf(result),
       epaSource: result.source || 'EPA PPLS'
     };
   }
 
-  function importEpaProduct(result) {
-    const existing = data.products.find(p => p.epaRegNo === result.epaRegNo);
+  function importEpaProduct(result, opts) {
+    const jugReg = EpaRank.jugRegNo(result);
+    const existing = data.products.find(p => p.epaRegNo === jugReg) ||
+      data.products.find(p => p.epaRegNo === result.epaRegNo);
     if (existing) editProduct(existing.id); else resetProductForm();
 
-    $('#prod-name').value = result.name;
-    $('#prod-epa').value = result.epaRegNo;
+    $('#prod-name').value = (opts && opts.name) || (existing && existing.name) || result.name;
+    $('#prod-epa').value = jugReg;
     $('#prod-ai').value = EpaRank.epaAiText(result);
     $('#prod-signal').value = normalizedSignalWord(result.signalWord);
     $('#prod-rup').checked = !!result.rup;
-    if ($('#prod-company')) $('#prod-company').value = result.company || '';
-    pendingEpaImport = { ...result, ...verifiedFields(result) };
+    if ($('#prod-company')) $('#prod-company').value = EpaRank.jugCompany(result);
+    pendingEpaImport = { ...result, ...verifiedFields(result), epaRegNo: jugReg };
 
     $('#product-form-title').textContent = existing
       ? `Update verified product — ${result.name}`
@@ -1756,14 +1807,17 @@
     setProductsMode('add');
     $('#product-form').scrollIntoView({ behavior: 'smooth' });
     $('#prod-rei').focus();
-    toast('EPA identity imported. Copy REI, PHI, and crop-specific rate from the official label.');
+    const notice = EpaRank.jugNotice(result);
+    toast(notice
+      ? tr(notice)
+      : tr('EPA identity imported. Copy REI, PHI, and crop-specific rate from the official label.'));
   }
 
   async function verifyProductLibrary() {
     const button = $('#epa-verify-all');
     if (!data.products.length) { toast('Add products before verifying the library'); return; }
     button.disabled = true;
-    let verified = 0, failed = 0, cancelled = 0, skipped = 0;
+    let verified = 0, failed = 0, cancelled = 0, skipped = 0, transferred = 0, mismatched = 0;
     // Stay under the /api/epa 30 req/min speed bump: ~2.1s between lookups.
     const GAP_MS = 2100;
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -1771,7 +1825,7 @@
       for (let i = 0; i < data.products.length; i++) {
         if (i > 0) await sleep(GAP_MS);
         const product = data.products[i];
-        if (!/^\d{1,6}-\d{1,6}(?:-\d{1,6})?$/.test(String(product.epaRegNo || '').trim())) {
+        if (!EpaRank.isEpaRegQuery(product.epaRegNo)) {
           skipped++;
           continue;
         }
@@ -1781,9 +1835,13 @@
           attempt += 1;
           try {
             const payload = await fetchEpa({ reg: product.epaRegNo });
-            const result = payload.results[0];
-            if (!result) { failed++; break; }
+            const result = (payload.results || []).find(r => EpaRank.resultMatchesReg(r, product.epaRegNo));
+            if (!result) {
+              if ((payload.results || []).length) mismatched++; else failed++;
+              break;
+            }
             Object.assign(product, verifiedFields(result));
+            if (result.matchedBy === 'transfer') transferred++;
             product.rup = !!result.rup;
             const signal = normalizedSignalWord(result.signalWord);
             if (signal) product.signalWord = signal;
@@ -1804,7 +1862,7 @@
       }
       save();
       renderProducts();
-      toast(`${verified} product${verified === 1 ? '' : 's'} verified${cancelled ? `; ${cancelled} cancelled/inactive` : ''}${skipped ? `; ${skipped} skipped (no EPA #)` : ''}${failed ? `; ${failed} unavailable` : ''}.`);
+      toast(`${verified} product${verified === 1 ? '' : 's'} verified${transferred ? `; ${transferred} moved to a new EPA # (see the product)` : ''}${cancelled ? `; ${cancelled} cancelled/inactive` : ''}${skipped ? `; ${skipped} skipped (no EPA #)` : ''}${mismatched ? `; ${mismatched} did not match the EPA # — check the jug` : ''}${failed ? `; ${failed} unavailable` : ''}.`);
     } finally {
       button.disabled = false;
       button.textContent = 'Verify my library';
@@ -1850,6 +1908,7 @@
         epaCompany: ($('#prod-company') && $('#prod-company').value.trim()) || verified?.epaCompany || '',
         epaActiveIngredient: verified?.epaActiveIngredient || null,
         epaSource: verified?.epaSource || null,
+        epaTransfer: verified?.epaTransfer || null,
         omri: !!( $('#prod-omri') && $('#prod-omri').checked ),
         lotHint: ($('#prod-lot-hint') && $('#prod-lot-hint').value.trim()) || '',
         barcode: ($('#prod-barcode') && $('#prod-barcode').value.trim()) || '',
@@ -1994,6 +2053,9 @@
           <td data-label="${esc(tr('EPA Reg #'))}">${esc(p.epaRegNo)}
             ${safeUrl(p.epaLabelUrl) ? `<br><a class="epa-label-link" href="${esc(safeUrl(p.epaLabelUrl))}" target="_blank" rel="noopener">Official label ↗</a>` : ''}
             ${p.epaCheckedAt ? `<br><span class="card-hint">Checked ${fmtDate(p.epaCheckedAt.slice(0, 10))}</span>` : ''}
+            ${p.epaTransfer && p.epaTransfer.toRegNo && p.epaTransfer.toRegNo !== p.epaRegNo
+              ? `<span class="product-transfer-note" role="note">${esc(tr('Now EPA # {reg} ({co}). Keep the number printed on your jug.')
+                .replace('{reg}', p.epaTransfer.toRegNo).replace('{co}', p.epaTransfer.toCompany || '—'))}</span>` : ''}
           </td>
           <td data-label="${esc(tr('Type'))}">${esc(p.type)}</td>
           <td data-label="REI">${p.reiHours != null ? fmtNum(p.reiHours) + ' hr' : `<span class="prod-missing">—</span> ${addFromLabel(p, 'prod-rei')}`}</td>
@@ -2474,6 +2536,18 @@
     }
     if ($('#quick-field-save')) $('#quick-field-save').addEventListener('click', saveQuickAddField);
     if ($('#quick-product-save')) $('#quick-product-save').addEventListener('click', saveQuickAddProduct);
+    if ($('#app-epa-find')) $('#app-epa-find').addEventListener('click', lookupLogFindAtEpa);
+    if ($('#app-product-filter')) $('#app-product-filter').addEventListener('keydown', (event) => {
+      const button = $('#app-epa-find');
+      if (event.key === 'Enter' && button && !button.hidden) { event.preventDefault(); lookupLogFindAtEpa(); }
+    });
+    if ($('#qp-epa-lookup')) $('#qp-epa-lookup').addEventListener('click', () => lookupQuickAddEpa({ barcode: $('#qp-barcode').value.trim() }));
+    ['#qp-epa', '#qp-name'].forEach((sel) => {
+      const input = $(sel);
+      if (input) input.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') { event.preventDefault(); lookupQuickAddEpa({ barcode: $('#qp-barcode').value.trim() }); }
+      });
+    });
 
     renderProductOptions();
     renderFieldOptions();
@@ -2534,6 +2608,7 @@
         else {
           renderProductOptions();
           renderRecentProducts();
+          renderLogEpaFind();
         }
       };
       el.addEventListener('input', apply);
@@ -2675,6 +2750,28 @@
       ? FarmScale.filterSelectOptions(all, q, '')
       : all;
     return shown.map((o) => `<option value="${esc(o.value)}">${esc(o.text)}</option>`).join('');
+  }
+
+  function renderLogEpaFind() {
+    const button = $('#app-epa-find');
+    if (!button) return;
+    const raw = String(($('#app-product-filter') || {}).value || '').trim();
+    const matches = raw.length >= 2 && typeof FarmScale !== 'undefined'
+      ? FarmScale.filterSelectOptions(productPickerOptions(false, ''), raw, '').filter(o => o.value && !o.reserved)
+      : [];
+    button.hidden = raw.length < 2 || matches.length > 0 || typeof fetchEpa !== 'function';
+    if (!button.hidden) button.textContent = tr('Look up “{q}” at EPA').replace('{q}', raw.length > 28 ? raw.slice(0, 27) + '…' : raw);
+  }
+
+  function lookupLogFindAtEpa() {
+    const find = $('#app-product-filter');
+    const raw = String((find && find.value) || '').trim();
+    if (!raw) return;
+    openQuickAddProduct(emptyMixRow());
+    const reg = EpaRank.normalizeRegQuery(raw);
+    if (reg) $('#qp-epa').value = reg; else $('#qp-name').value = raw;
+    if (find) { find.value = ''; renderProductOptions(); renderRecentProducts(); renderLogEpaFind(); }
+    lookupQuickAddEpa();
   }
 
   function mixFindQuery() {
@@ -2891,13 +2988,18 @@
     $('#qp-barcode').value = barcode || '';
     $('#qp-barcode-hint').hidden = !barcode;
     if (barcode) $('#qp-barcode-hint').textContent = `Linking scanned barcode ${barcode} to this product for next time.`;
+    qpVerified = null;
+    qpEpaSeq++;
+    setQpEpaStatus('');
+    if ($('#qp-epa-results')) $('#qp-epa-results').innerHTML = '';
     dlg.showModal();
-    $('#qp-name').focus();
+    $('#qp-epa').focus();
   }
 
   function saveQuickAddProduct() {
     const name = $('#qp-name').value.trim();
-    const epaRegNo = $('#qp-epa').value.trim();
+    const epaRegNo = EpaRank.normalizeRegQuery($('#qp-epa').value) || $('#qp-epa').value.trim();
+    const verified = qpVerified && qpVerified.epaRegNo === epaRegNo ? qpVerified : null;
     if (!name || !epaRegNo) {
       toast('Product name and EPA registration # are required');
       (name ? $('#qp-epa') : $('#qp-name')).focus();
@@ -2907,17 +3009,22 @@
       id: uid(), name, epaRegNo,
       activeIngredient: $('#qp-ai').value.trim(),
       type: $('#qp-type').value,
-      signalWord: '',
+      signalWord: verified ? verified.signalWord : '',
       rup: $('#qp-rup').checked,
       reiHours: $('#qp-rei').value === '' ? null : Number($('#qp-rei').value),
       phiDays: $('#qp-phi').value === '' ? null : Number($('#qp-phi').value),
       rateAmount: null, rateUnit: 'fl oz', ratePer: 'acre',
       notes: '',
       stateRegNo: $('#qp-state-reg').value.trim(),
-      epaStatus: null, epaCancelled: false, epaCheckedAt: null, epaLabelUrl: null,
-      epaLabelAcceptedDate: null,
+      epaStatus: verified ? verified.epaStatus : null,
+      epaCancelled: verified ? verified.epaCancelled : false,
+      epaCheckedAt: verified ? verified.epaCheckedAt : null,
+      epaLabelUrl: verified ? verified.epaLabelUrl : null,
+      epaLabelAcceptedDate: verified ? verified.epaLabelAcceptedDate : null,
       epaCompany: $('#qp-company').value.trim(),
-      epaActiveIngredient: null, epaSource: null,
+      epaActiveIngredient: verified ? verified.epaActiveIngredient : null,
+      epaTransfer: verified ? verified.epaTransfer : null,
+      epaSource: verified ? verified.epaSource : null,
       omri: false, lotHint: '', barcode: $('#qp-barcode').value.trim(), photoIds: [],
       createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
     };
@@ -2932,6 +3039,7 @@
       onRowProductChange(quickAddProductRow);
     }
     quickAddProductRow = null;
+    qpVerified = null;
     toast(`Product "${product.name}" added and selected`);
   }
 
@@ -7046,16 +7154,84 @@
     toast(`Scanned: ${product.name} — enter the label rate`);
   }
 
-  function applyEpaResultToQuickAdd(result, barcode) {
-    $('#qp-name').value = result.name || '';
-    $('#qp-epa').value = result.epaRegNo || '';
+  let qpVerified = null;
+
+  function applyEpaResultToQuickAdd(result, barcode, opts) {
+    const jugReg = EpaRank.jugRegNo(result);
+    $('#qp-name').value = (opts && opts.name) || result.name || '';
+    $('#qp-epa').value = jugReg || '';
     $('#qp-ai').value = EpaRank.epaAiText(result);
     $('#qp-rup').checked = !!result.rup;
-    if ($('#qp-company')) $('#qp-company').value = result.company || '';
+    if ($('#qp-company')) $('#qp-company').value = EpaRank.jugCompany(result) || '';
+    qpVerified = { ...verifiedFields(result), epaRegNo: jugReg, signalWord: normalizedSignalWord(result.signalWord) };
     if (barcode) {
       $('#qp-barcode').value = barcode;
       $('#qp-barcode-hint').hidden = false;
       $('#qp-barcode-hint').textContent = `Linking scanned barcode ${barcode} to this product for next time.`;
+    }
+    const host = $('#qp-epa-results');
+    if (host) host.innerHTML = '';
+    const notice = EpaRank.jugNotice(result);
+    setQpEpaStatus(notice
+      ? tr(notice)
+      : tr('Filled from EPA: {name}. Copy REI and PHI from the label, then Save & select.').replace('{name}', result.name));
+    const rei = $('#qp-rei');
+    if (rei) rei.focus();
+  }
+
+  function setQpEpaStatus(text) {
+    const status = $('#qp-epa-status');
+    if (status) { status.textContent = text || ''; status.hidden = !text; }
+  }
+
+  let qpEpaSeq = 0;
+
+  async function lookupQuickAddEpa(opts) {
+    const seq = ++qpEpaSeq;
+    const barcode = (opts && opts.barcode) || '';
+    const host = $('#qp-epa-results');
+    if (host) host.innerHTML = '';
+    const reg = EpaRank.normalizeRegQuery($('#qp-epa').value);
+    const name = $('#qp-name').value.trim();
+    if (!reg && name.length < 2) {
+      setQpEpaStatus(tr('Type the EPA Reg. No. from the label (it looks like 524-549) or the product name, then Look up.'));
+      ($('#qp-epa').value.trim() ? $('#qp-epa') : $('#qp-name')).focus();
+      return;
+    }
+    if (reg) $('#qp-epa').value = reg;
+    setQpEpaStatus(reg
+      ? tr('Looking up EPA # {reg}…').replace('{reg}', reg)
+      : tr('Searching the official EPA database…'));
+    try {
+      const payload = await fetchEpa(reg ? { reg } : { q: name });
+      if (seq !== qpEpaSeq) return;
+      const rows = payload.results || [];
+      const exact = reg ? rows.filter(r => EpaRank.resultMatchesReg(r, reg)) : [];
+      if (reg && (exact.length === 1 || (exact.length > 1 && exact.every(r => r.epaRegNo === exact[0].epaRegNo)))) {
+        applyEpaResultToQuickAdd(exact[0], barcode);
+        return;
+      }
+      const list = reg ? (exact.length ? exact : rows) : EpaRank.rankEpaResults(name, rows);
+      if (!list.length) {
+        setQpEpaStatus(reg
+          ? tr('EPA has no product under {reg}. Check the number on the label (it looks like 524-549), or type the rest by hand.').replace('{reg}', reg)
+          : tr('No EPA product by that name. Brand names change; the EPA Reg. No. on the label always works.'));
+        return;
+      }
+      const top = list.slice(0, 5);
+      setQpEpaStatus(tr('Pick the product that matches your jug:'));
+      if (host) {
+        host.innerHTML = top.map((r, i) => `<button type="button" class="qp-epa-pick" data-qp-pick="${i}">
+            <strong>${esc(r.name)}</strong>
+            <span>EPA ${esc(EpaRank.jugRegNo(r))} · ${esc(EpaRank.jugCompany(r) || '')}${r.status && r.status !== 'Active' ? ` · ${esc(r.status)}` : ''}</span>
+          </button>`).join('');
+        host.querySelectorAll('[data-qp-pick]').forEach((button) => {
+          button.addEventListener('click', () => applyEpaResultToQuickAdd(top[Number(button.dataset.qpPick)], barcode));
+        });
+      }
+    } catch (error) {
+      if (seq !== qpEpaSeq) return;
+      setQpEpaStatus(error.message || tr('EPA lookup is unavailable. You can still enter the product manually.'));
     }
   }
 
@@ -7079,20 +7255,7 @@
       openQuickAddProduct(row, barcode);
       $('#qp-epa').value = decision.epaRegNo;
       if (decision.activeIngredientGuess) $('#qp-ai').value = decision.activeIngredientGuess;
-      toast('Looking up EPA registration…');
-      try {
-        const payload = await fetchEpa({ reg: decision.epaRegNo });
-        if (payload.results && payload.results.length === 1) {
-          applyEpaResultToQuickAdd(payload.results[0], barcode);
-          toast(`Found: ${payload.results[0].name} — review and Save & select`);
-        } else if (payload.results && payload.results.length > 1) {
-          toast('EPA match was not unique — verify the details before saving');
-        } else {
-          toast('No EPA record for that number — verify it on the label and fill in the rest');
-        }
-      } catch (e) {
-        toast('Could not verify with EPA — fill in the rest and save');
-      }
+      await lookupQuickAddEpa({ barcode });
       return;
     }
     if (decision.action === 'new-barcode') {
@@ -7462,25 +7625,7 @@
         return;
       }
       $('#qp-epa').value = facts.epaRegNo;
-      toast('Looking up EPA registration…');
-      try {
-        const payload = await fetchEpa({ reg: facts.epaRegNo });
-        if (payload.results && payload.results.length === 1) {
-          const result = payload.results[0];
-          $('#qp-name').value = result.name;
-          $('#qp-epa').value = result.epaRegNo;
-          $('#qp-ai').value = EpaRank.epaAiText(result);
-          $('#qp-rup').checked = !!result.rup;
-          $('#qp-company').value = result.company || '';
-          toast(`Found: ${result.name} — review and Save & select`);
-        } else if (payload.results && payload.results.length > 1) {
-          toast('EPA match was not unique — verify the details before saving');
-        } else {
-          toast('No EPA record for that number — verify it on the label and fill in the rest');
-        }
-      } catch (e) {
-        toast('Could not verify with EPA — fill in the rest and save');
-      }
+      await lookupQuickAddEpa({ barcode: facts.barcode || '' });
     } catch (e) {
       toastOcrError(e);
     }

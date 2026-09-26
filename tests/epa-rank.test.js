@@ -13,6 +13,13 @@ const {
   needsNameSearchHint,
   fallbackQueries,
   epaAiText,
+  normalizeRegQuery,
+  regBase,
+  isEpaRegQuery,
+  jugRegNo,
+  jugCompany,
+  jugNotice,
+  resultMatchesReg,
   NAME_SEARCH_HINT
 } = require(path.join(__dirname, '..', 'epa-rank.js'));
 
@@ -176,6 +183,61 @@ check('brand + rate ranks the matching formulation first without inventing rows'
   ]);
   assert.ok(/^PYGANIC CROP PROTECTION EC 5\.0/.test(ranked[0].name));
   assert.strictEqual(ranked.length, 4);
+});
+
+check('label-style EPA numbers normalize to the bare PPLS form', () => {
+  const cases = {
+    '524-549': '524-549',
+    'EPA Reg. No. 524-549': '524-549',
+    'EPA Reg No: 000524-00549': '524-549',
+    'U.S. EPA Registration Number 62719–621': '62719-621',
+    '524 - 549 - 12345': '524-549-12345',
+    'reg # 1021-1750': '1021-1750'
+  };
+  for (const [raw, want] of Object.entries(cases)) assert.strictEqual(normalizeRegQuery(raw), want, raw);
+  for (const bad of ['Roundup', '524', '524-549-1-2', '1234567-1', '', '2,4-D']) {
+    assert.strictEqual(normalizeRegQuery(bad), '', bad);
+    assert.strictEqual(isEpaRegQuery(bad), false, bad);
+  }
+  assert.strictEqual(regBase('524-549-12345'), '524-549');
+});
+
+const transferred = {
+  name: 'ROUNDUP POWERMAX 3 HERBICIDE', epaRegNo: '105211-60', company: 'RUVEON LLC',
+  matchedBy: 'transfer', requestedRegNo: '524-549', previousCompany: 'BAYER CROPSCIENCE LP',
+  transferredDate: '07/01/2026', status: 'Active'
+};
+
+check('a transferred product keeps the jug number and registrant', () => {
+  assert.strictEqual(jugRegNo(transferred), '524-549');
+  assert.strictEqual(jugCompany(transferred), 'BAYER CROPSCIENCE LP');
+  assert.ok(/524-549.*moved to RUVEON LLC as 105211-60 on 07\/01\/2026/.test(jugNotice(transferred)));
+  assert.ok(resultMatchesReg(transferred, '524-549'));
+  assert.ok(resultMatchesReg(transferred, 'EPA Reg. No. 000524-00549'));
+  assert.ok(!resultMatchesReg(transferred, '105211-60'));
+});
+
+check('distributor numbers match only their own full number', () => {
+  const dist = { name: 'X', epaRegNo: '524-549', company: 'BAYER', distributorRegNo: '524-549-12345' };
+  assert.strictEqual(jugRegNo(dist), '524-549-12345');
+  assert.ok(resultMatchesReg(dist, '524-549-12345'));
+  assert.ok(!resultMatchesReg(dist, '524-549-99999'));
+  assert.ok(/Distributor product/.test(jugNotice(dist)));
+});
+
+check('a plain result matches its own registration or a distributor of it, nothing else', () => {
+  const plain = { name: 'ENTRUST SC', epaRegNo: '62719-621', company: 'CORTEVA' };
+  assert.strictEqual(jugRegNo(plain), '62719-621');
+  assert.strictEqual(jugNotice(plain), '');
+  assert.ok(resultMatchesReg(plain, '62719-621'));
+  assert.ok(resultMatchesReg(plain, '62719-621-5905'));
+  assert.ok(!resultMatchesReg(plain, '62719-62'));
+  assert.ok(!resultMatchesReg(plain, 'not a number'));
+});
+
+check('library hits find a product saved in label or padded form', () => {
+  const lib = [{ name: 'Roundup', epaRegNo: '000524-00549' }, { name: 'Dist', epaRegNo: '524-549-12345' }, { name: 'Other', epaRegNo: '524-5490' }];
+  assert.deepStrictEqual(libraryHits('524-549', lib).map(p => p.name), ['Roundup', 'Dist']);
 });
 
 if (failed) {

@@ -138,6 +138,66 @@ async function run() {
     }
   });
 
+  await check('a transferred registration answers with the jug number, old registrant and old label', async () => {
+    const orig = global.fetch;
+    const calls = [];
+    global.fetch = async (url) => {
+      calls.push(url);
+      return { ok: true, status: 200, json: async () => ({ items: [{
+        eparegno: '105211-60', productname: 'ROUNDUP POWERMAX 3 HERBICIDE', product_status: 'Active',
+        companyinfo: [{ name: 'RUVEON LLC' }],
+        transfer_history: [{ previous_eparegno: '524-549', previous_company: 'BAYER CROPSCIENCE LP', transferred_date: '07/01/2026' }],
+        altbrandnames: [{ altbrandname: 'ROUNDUP POWER MAX HERBICIDE' }],
+        pdffiles: [
+          { epa_reg_num: '105211-60', pdffile: '105211-00060-20260701.pdf' },
+          { epa_reg_num: '000524-00549', pdffile: '000524-00549-20230406.pdf', pdffile_accepted_date: '04/06/2023' }
+        ]
+      }] }) };
+    };
+    try {
+      const res = mockRes();
+      await handler(mockReq({ reg: 'EPA Reg. No. 000524-00549' }), res);
+      assert.strictEqual(res.statusCode, 200);
+      assert.ok(calls[0].endsWith('/ppls/524-549'), calls[0]);
+      const r = res.body.results[0];
+      assert.strictEqual(r.matchedBy, 'transfer');
+      assert.strictEqual(r.requestedRegNo, '524-549');
+      assert.strictEqual(r.previousCompany, 'BAYER CROPSCIENCE LP');
+      assert.strictEqual(r.epaRegNo, '105211-60');
+      assert.ok(r.labelUrl.endsWith('000524-00549-20230406.pdf'));
+      assert.deepStrictEqual(r.altBrandNames, ['ROUNDUP POWER MAX HERBICIDE']);
+    } finally {
+      global.fetch = orig;
+    }
+  });
+
+  await check('a distributor number falls back to the basic registration', async () => {
+    const orig = global.fetch;
+    const calls = [];
+    global.fetch = async (url) => {
+      calls.push(url);
+      const items = url.endsWith('/ppls/524-549')
+        ? [{ eparegno: '524-549', productname: 'BASE', product_status: 'Active', companyinfo: [{ name: 'BAYER' }] }]
+        : [];
+      return { ok: true, status: 200, json: async () => ({ items }) };
+    };
+    try {
+      const res = mockRes();
+      await handler(mockReq({ reg: '524-549-12345' }), res);
+      assert.strictEqual(calls.length, 2);
+      assert.strictEqual(res.body.results[0].distributorRegNo, '524-549-12345');
+    } finally {
+      global.fetch = orig;
+    }
+  });
+
+  await check('a non-number in reg is refused with the label hint', async () => {
+    const res = mockRes();
+    await handler(mockReq({ reg: 'Roundup' }), res);
+    assert.strictEqual(res.statusCode, 400);
+    assert.ok(/524-549/.test(res.body.error));
+  });
+
   if (failed) {
     console.error(`\n${failed} epa-proxy check(s) failed.`);
     process.exit(1);

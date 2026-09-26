@@ -434,6 +434,7 @@
           <label class="mix-find-label" id="app-mix-find-wrap">Find a product
             <input type="search" id="app-product-filter" class="select-filter mix-find" placeholder="Name, EPA #, or active ingredient…" autocomplete="off">
           </label>
+          <button type="button" class="btn btn-secondary btn-sm log-epa-find" id="app-epa-find" hidden>Look up at EPA</button>
           <div id="recent-products" class="recent-products" hidden></div>
           <div class="mix-scan-row" id="app-mix-scan-row">
             <label class="btn btn-secondary camera-file-btn" id="app-scan-label-btn" hidden>Scan label
@@ -1466,13 +1467,19 @@
   <input type="hidden" id="qp-barcode">
   <div class="form-grid">
     <div class="form-row form-row-2">
+      <label>EPA registration # <span class="req-star">*</span>
+        <input type="text" id="qp-epa" placeholder="e.g. 62719-621" inputmode="numeric" autocomplete="off">
+      </label>
       <label>Brand / product name <span class="req-star">*</span>
         <input type="text" id="qp-name" placeholder="e.g. Entrust SC">
       </label>
-      <label>EPA registration # <span class="req-star">*</span>
-        <input type="text" id="qp-epa" placeholder="e.g. 62719-621">
-      </label>
     </div>
+    <div class="qp-epa-row">
+      <button type="button" class="btn btn-primary btn-sm" id="qp-epa-lookup">Look up at EPA</button>
+      <p class="card-hint">Type the EPA Reg. No. from the jug (or the name) and press Look up — EPA fills the name, registrant, and active ingredient.</p>
+    </div>
+    <p class="qp-epa-status" id="qp-epa-status" role="status" aria-live="polite" hidden></p>
+    <div class="qp-epa-results" id="qp-epa-results"></div>
     <div class="form-row form-row-2">
       <label>Active ingredient
         <input type="text" id="qp-ai" placeholder="e.g. Spinosad 22.5%">

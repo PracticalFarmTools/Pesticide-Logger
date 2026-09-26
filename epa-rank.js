@@ -33,8 +33,33 @@
     return fold(text).split(/\s+/).filter(Boolean);
   }
 
+  // Labels print "EPA Reg. No. 524-549"; OCR and copy-paste bring dashes,
+  // label words, and zero-padded PPLS file numbers ("000524-00549"). PPLS
+  // only answers the bare, unpadded form.
+  const REG_LABEL_WORDS = /\b(?:u\.?\s*s\.?\s*)?(?:epa|reg(?:istration)?|no|nos|number|num)\b\.?/gi;
+
+  function normalizeRegQuery(text) {
+    const stripped = String(text || '')
+      .replace(/[\u2010-\u2015\u2212]/g, '-')
+      .replace(REG_LABEL_WORDS, ' ')
+      .replace(/[#:.]/g, ' ')
+      .trim();
+    const m = /^(\d{1,9})\s*-\s*(\d{1,9})(?:\s*-\s*(\d{1,9}))?$/.exec(stripped);
+    if (!m) return '';
+    const seg = [m[1], m[2], m[3]].filter(Boolean).map((s) => String(Number(s)));
+    if (seg.some((s) => s.length > 6)) return '';
+    return seg.join('-');
+  }
+
+  // A distributor product carries a third segment (524-549-12345). PPLS
+  // lists it under the basic registration (the first two segments).
+  function regBase(reg) {
+    const n = normalizeRegQuery(reg);
+    return n ? n.split('-').slice(0, 2).join('-') : '';
+  }
+
   function isEpaRegQuery(query) {
-    return EPA_REG_PATTERN.test(String(query || '').trim());
+    return !!normalizeRegQuery(query);
   }
 
   function scoreEpaResult(query, result) {
@@ -87,7 +112,12 @@
     const q = String(query || '').trim();
     if (q.length < 2) return [];
     if (isEpaRegQuery(q)) {
-      return list.filter((p) => String(p.epaRegNo || '').trim() === q);
+      const want = normalizeRegQuery(q);
+      const base = regBase(q);
+      return list.filter((p) => {
+        const have = normalizeRegQuery(p.epaRegNo);
+        return have && (have === want || regBase(have) === base);
+      });
     }
     const qTokens = tokens(q);
     return list
@@ -157,16 +187,65 @@
     ).filter(Boolean).join(', ');
   }
 
+  // The record carries the number printed on the jug the grower sprayed,
+  // even when EPA now files that product under a successor or basic number.
+  function jugRegNo(result) {
+    if (!result) return '';
+    if (result.distributorRegNo) return result.distributorRegNo;
+    if (result.matchedBy === 'transfer' && result.requestedRegNo) return result.requestedRegNo;
+    return result.epaRegNo || '';
+  }
+
+  function jugCompany(result) {
+    if (!result) return '';
+    return (result.matchedBy === 'transfer' && result.previousCompany) || result.company || '';
+  }
+
+  // True when an EPA answer is about the product filed under `reg` — the same
+  // registration, the basic registration of a distributor number, or its
+  // successor after a transfer. Anything else must not verify the row.
+  function resultMatchesReg(result, reg) {
+    const want = normalizeRegQuery(reg);
+    if (!result || !want) return false;
+    const base = regBase(want);
+    if (result.distributorRegNo) return normalizeRegQuery(result.distributorRegNo) === want;
+    if (result.matchedBy === 'transfer') return regBase(result.requestedRegNo) === base;
+    return regBase(result.epaRegNo) === base;
+  }
+
+  function jugNotice(result) {
+    if (!result) return '';
+    const bits = [];
+    if (result.matchedBy === 'transfer') {
+      bits.push('EPA # ' + result.requestedRegNo +
+        (result.previousCompany ? ' (' + result.previousCompany + ')' : '') +
+        ' moved to ' + (result.company || 'a new registrant') + ' as ' + result.epaRegNo +
+        (result.transferredDate ? ' on ' + result.transferredDate : '') +
+        '. Record the number printed on your jug.');
+    }
+    if (result.distributorRegNo) {
+      bits.push('Distributor product: EPA lists ' + result.distributorRegNo + ' under ' +
+        regBase(result.distributorRegNo) + '. Record the full number from your jug.');
+    }
+    return bits.join(' ');
+  }
+
   const api = {
     fold,
     tokens,
     isEpaRegQuery,
+    normalizeRegQuery,
+    regBase,
     scoreEpaResult,
     rankEpaResults,
     libraryHits,
     needsNameSearchHint,
     fallbackQueries,
     epaAiText,
+    jugRegNo,
+    jugCompany,
+    jugNotice,
+    resultMatchesReg,
     NAME_SEARCH_HINT,
     EPA_REG_PATTERN
   };

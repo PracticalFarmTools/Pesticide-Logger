@@ -644,7 +644,8 @@ check('cab scan / EPA ranking / mix chrome: whole-word ranker, state rules, add-
   assert.ok(epa.includes('rankEpaResults'), 'proxy ranks before the 25 cap');
   assert.ok(epa.includes('fallbackQueries'), 'proxy retries brand token when consecutive PPLS is empty');
   assert.ok(app.includes('EpaRank.rankEpaResults'), 'client re-ranks and joins library hits');
-  assert.ok(app.includes('EpaRank.fallbackQueries'), 'client retries brand token on hosts with an old proxy');
+  assert.ok(!app.includes('EpaRank.fallbackQueries'), 'the proxy owns the brand-token retry; the client asks once');
+  assert.ok(app.includes('EpaRank.normalizeRegQuery'), 'client sends the bare PPLS number');
   assert.ok(html.includes('id="epa-search-hint"'), 'name-search hint is in the page');
   assert.ok(html.includes('Whole-word names are listed first'));
   const productsFieldset = html.match(/<fieldset data-log-section="products">[\s\S]*?<\/fieldset>/);
@@ -706,7 +707,8 @@ check('code-pile hardening: trial merge, lock refresh, hidden Buy, interval fall
   assert.strictEqual(require(path.join(root, 'compliance.js')).effectiveIntervalValue(
     { products: [{ reiHours: 4 }, { reiHours: 24 }] }, 'reiHours'
   ), 24);
-  assert.ok(app.includes('/^\\d{1,6}-\\d{1,6}(?:-\\d{1,6})?$/'), 'library verify skips invalid EPA numbers');
+  assert.ok(/if \(!EpaRank\.isEpaRegQuery\(product\.epaRegNo\)\) \{\s*skipped\+\+/.test(app), 'library verify skips invalid EPA numbers');
+  assert.ok(app.includes('EpaRank.resultMatchesReg(r, product.epaRegNo)'), 'library verify only accepts an answer about that number');
 });
 
 check('effectiveIntervalValue falls back to the mix max when the record top-level is empty', () => {
@@ -1313,7 +1315,6 @@ check('v2.9.43: jug-style EPA fallback, shorter class copy, Inter titles', () =>
   const grower = 'I spray my crop on land I own or rent. Selling the harvest does not change this.';
   assert.ok(rank.includes('function fallbackQueries'));
   assert.ok(api.includes('fallbackQueries(query)'));
-  assert.ok(app.includes('EpaRank.fallbackQueries'));
   assert.ok(html.includes(grower) && start.includes(grower));
   assert.ok(!html.includes('whatever my state calls that card'));
   assert.ok(!html.includes('clients, signatures, a crew with roles'));

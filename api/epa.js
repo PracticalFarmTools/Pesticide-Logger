@@ -8,7 +8,9 @@
  */
 
 const EPA_BASE = 'https://ordspub.epa.gov/ords/pesticides/cswu';
-const { rankEpaResults, fallbackQueries } = require('../epa-rank.js');
+const { rankEpaResults, fallbackQueries, normalizeRegQuery, regBase } = require('../epa-rank.js');
+
+const UPSTREAM_TIMEOUT_MS = 9000;
 
 // In-memory per-IP rate limit. This only protects a single warm function
 // instance (it resets on cold start and isn't shared across regions), so it
@@ -40,17 +42,40 @@ function clientIp(req) {
   return req.socket?.remoteAddress || 'unknown';
 }
 
-function normalize(item) {
-  const pdf = Array.isArray(item.pdffiles) ? item.pdffiles[0] : null;
+function cleanText(s) {
+  return String(s || '').replace(/\s+/g, ' ').trim();
+}
+
+// `wantReg` is the basic registration the grower typed (from the jug). When
+// EPA answers with a successor registration, say so and keep the label and
+// registrant that belong to the number on the jug.
+function normalize(item, wantReg) {
+  const pdfs = Array.isArray(item.pdffiles) ? item.pdffiles : [];
   const ingredients = (item.active_ingredients || []).map((x) => ({
     name: x.active_ing || '',
     percent: x.active_ing_percent ?? null
   }));
-  const company = item.companyinfo?.[0]?.name || '';
+  const company = cleanText(item.companyinfo?.[0]?.name);
+  const transferredFrom = (Array.isArray(item.transfer_history) ? item.transfer_history : [])
+    .map((t) => ({
+      regNo: normalizeRegQuery(t.previous_eparegno),
+      company: cleanText(t.previous_company),
+      date: cleanText(t.transferred_date) || null
+    }))
+    .filter((t) => t.regNo);
+  const altBrandNames = [...new Set((Array.isArray(item.altbrandnames) ? item.altbrandnames : [])
+    .map((a) => cleanText(a && a.altbrandname))
+    .filter(Boolean))].slice(0, 10);
+  const itemReg = normalizeRegQuery(item.eparegno) || cleanText(item.eparegno);
+  const transfer = wantReg && wantReg !== itemReg
+    ? transferredFrom.find((t) => t.regNo === wantReg) || null
+    : null;
+  const labelReg = transfer ? transfer.regNo : itemReg;
+  const pdf = pdfs.find((p) => normalizeRegQuery(p.epa_reg_num) === labelReg) || pdfs[0] || null;
 
-  return {
-    name: item.productname || 'Unknown product',
-    epaRegNo: item.eparegno || '',
+  const out = {
+    name: cleanText(item.productname) || 'Unknown product',
+    epaRegNo: itemReg,
     status: item.product_status || 'Unknown',
     statusDate: item.product_status_date || null,
     cancelled: item.cancel_flag === 'Yes' || item.product_status === 'Cancelled',
@@ -62,8 +87,41 @@ function normalize(item) {
     labelUrl: pdf?.pdffile
       ? `https://www3.epa.gov/pesticides/chem_search/ppls/${pdf.pdffile.toLowerCase()}`
       : `https://ordspub.epa.gov/ords/pesticides/f?p=PPLS:102:::NO::P102_REG_NUM:${encodeURIComponent(item.eparegno || '')}`,
+    altBrandNames,
+    transferredFrom,
     source: 'EPA PPLS'
   };
+  if (transfer) {
+    out.matchedBy = 'transfer';
+    out.requestedRegNo = transfer.regNo;
+    out.previousCompany = transfer.company;
+    out.transferredDate = transfer.date;
+  }
+  return out;
+}
+
+async function fetchUpstream(pplsPath) {
+  const started = Date.now();
+  let lastError = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const upstream = await fetch(EPA_BASE + pplsPath, {
+        headers: { Accept: 'application/json', 'User-Agent': 'PracticalFarmTools-PesticideLogger/2.3' },
+        signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS)
+      });
+      if (upstream.status === 404) return { status: 404, items: [] };
+      if (!upstream.ok) throw new Error(`EPA returned ${upstream.status}`);
+      const payload = await upstream.json();
+      return { status: upstream.status, items: payload.items || [] };
+    } catch (error) {
+      lastError = error;
+      // One quick retry for a reset or 5xx; a slow timeout is not retried
+      // here (the browser retries once) so the function stays under its limit.
+      if (Date.now() - started > 3000) break;
+      await new Promise((r) => setTimeout(r, 400));
+    }
+  }
+  throw lastError || new Error('EPA lookup failed');
 }
 
 module.exports = async function handler(req, res) {
@@ -77,13 +135,14 @@ module.exports = async function handler(req, res) {
     return res.status(429).json({ error: 'Too many requests. Please wait a minute and try again.' });
   }
 
-  const reg = String(req.query.reg || '').trim();
+  const rawReg = String(req.query.reg || '').trim();
+  const reg = rawReg ? normalizeRegQuery(rawReg) : '';
   const query = String(req.query.q || '').trim();
-  if (!reg && query.length < 2) {
+  if (!rawReg && query.length < 2) {
     return res.status(400).json({ error: 'Enter at least two characters or an EPA registration number.' });
   }
-  if (reg && !/^\d{1,6}-\d{1,6}(?:-\d{1,6})?$/.test(reg)) {
-    return res.status(400).json({ error: 'Invalid EPA registration number format.' });
+  if (rawReg && !reg) {
+    return res.status(400).json({ error: 'That is not an EPA registration number. It looks like 524-549 on the label.' });
   }
   // Percent signs and hyphens are common in real product names
   // ("NEEM OIL 70%", "2,4-D"). Keep "-" at the end of the class so it is
@@ -92,24 +151,16 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid search text.' });
   }
 
-  const path = reg
-    ? `/ppls/${encodeURIComponent(reg)}`
-    : `/pplstxt/${encodeURIComponent(query)}`;
+  const base = reg ? regBase(reg) : '';
 
-  async function collectUnique(pplsPath) {
-    const upstream = await fetch(EPA_BASE + pplsPath, {
-      headers: { Accept: 'application/json', 'User-Agent': 'PracticalFarmTools-PesticideLogger/2.2' },
-      signal: AbortSignal.timeout(12000)
-    });
-    if (upstream.status === 404) return { status: 404, unique: [] };
-    if (!upstream.ok) throw new Error(`EPA returned ${upstream.status}`);
-    const payload = await upstream.json();
+  async function collectUnique(pplsPath, wantReg) {
+    const upstream = await fetchUpstream(pplsPath);
     const seen = new Set();
     const unique = [];
-    for (const item of payload.items || []) {
+    for (const item of upstream.items) {
       if (!item.eparegno || seen.has(item.eparegno)) continue;
       seen.add(item.eparegno);
-      unique.push(normalize(item));
+      unique.push(normalize(item, wantReg));
       if (unique.length >= 200) break;
     }
     return { status: upstream.status, unique };
@@ -118,18 +169,23 @@ module.exports = async function handler(req, res) {
   try {
     let unique = [];
     if (reg) {
-      const first = await collectUnique(path);
-      if (first.status === 404) {
+      const first = await collectUnique(`/ppls/${encodeURIComponent(reg)}`, base);
+      unique = first.unique;
+      if (!unique.length && base !== reg) {
+        const again = await collectUnique(`/ppls/${encodeURIComponent(base)}`, base);
+        unique = again.unique.map((r) => Object.assign(r, { distributorRegNo: reg }));
+      }
+      if (!unique.length) {
         res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=3600');
         return res.status(200).json({
           results: [],
+          query: { reg },
           source: 'U.S. EPA Pesticide Product Label System',
           checkedAt: new Date().toISOString()
         });
       }
-      unique = first.unique;
     } else {
-      const first = await collectUnique(path);
+      const first = await collectUnique(`/pplstxt/${encodeURIComponent(query)}`);
       unique = first.unique;
       if (!unique.length) {
         for (const q2 of fallbackQueries(query)) {
@@ -148,6 +204,7 @@ module.exports = async function handler(req, res) {
     res.setHeader('Cache-Control', 's-maxage=21600, stale-while-revalidate=86400');
     return res.status(200).json({
       results,
+      query: reg ? { reg } : { q: query },
       source: 'U.S. EPA Pesticide Product Label System',
       checkedAt: new Date().toISOString()
     });

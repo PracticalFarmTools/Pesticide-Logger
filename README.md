@@ -71,7 +71,7 @@ work on next (citation hygiene, hasher, holes): `docs/state-maintainer-playbook.
 ($0, no GitHub Action, no scrape-to-JSON). `--summary` prints counts only; `--diff XX` shows what changed in a citation since the last run.
 A human still `--stamp`s.
 Go-live order (card → origin → merchant → `BUY_URL`): `docs/owner-next.md`.
-Do not change `app.js` or `compliance.js` for a citation or field-list edit.
+Do not change the app scripts or `compliance.js` for a citation or field-list edit.
 
 **It does:**
 
@@ -139,7 +139,8 @@ node tools/live-epa-rank.js 'pyganic 5.0' Cease Star
 ## Checks
 
 ```bash
-node --check app.js
+for f in app*.js; do node --check "$f"; done
+node tests/app-source.test.js
 node --check state_pesticide_laws.js
 node --check deadline.js
 node --check license.js
@@ -216,7 +217,11 @@ extension.html             One-pager for extension / crop consultants
 start.js                   State-picker logic for the public page
 onepager.js                Print button for the one-pagers
 styles.css                 Theme + print stylesheet
-app.js                     UI shell
+app.js                     UI core: storage, helpers, tab nav (loads first)
+app-*.js                   UI by area: settings, products (EPA), fields, log,
+                           dashboard, calculator, reports, sync, map, reminders,
+                           photos, weather, license, boot (loads last). Plain
+                           scripts sharing one global scope; order is index.html
 mix-calc.js                Tank-mix / rate math (acres, gal, product amounts)
 csv-import.js              Spreadsheet parse + draft-record builder
 field-map.js               Geodesic field-ring area and perimeter

@@ -34,7 +34,7 @@ the reply. The public key already in `license.js` verifies it offline.
 
 ## Then, and only then
 
-1. Set `BUY_URL` in `app.js` to that checkout URL. Tests reject a placeholder.
+1. Set `BUY_URL` in `app-license.js` to that checkout URL. Tests reject a placeholder.
 2. Deploy this repo.
 3. Point `pesticide.practicalfarmtools.com` at that deployment.
 4. On `practicalfarmtools.com`, switch the logger card to Active and add

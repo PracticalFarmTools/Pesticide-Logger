@@ -110,7 +110,7 @@ node tools/sign-license.js --name "Jane Farmer" --email jane@example.com --mail
 block into the merchant’s delivery email. `--mail` prints the letter with
 the key inside. Without `--mail` you get the raw key only.
 
-**Only then** set `BUY_URL` in `app.js` to that real checkout URL, bump
+**Only then** set `BUY_URL` in `app-license.js` to that real checkout URL, bump
 `APP_VERSION` / `APP_CACHE`, and deploy **this origin**. Tests fail if you
 leave a placeholder. Empty `BUY_URL` is still the honest state.
 

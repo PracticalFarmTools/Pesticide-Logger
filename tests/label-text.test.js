@@ -84,6 +84,9 @@ check('long sentences are trimmed around the interval', () => {
   const r = LT.findIntervals([long]);
   assert.strictEqual(r.rei.length, 1);
   assert.ok(r.rei[0].text.length <= 330 && /REI\) of 12 hours/.test(r.rei[0].text));
+  const odd = 'Maximum ounces '.repeat(30) + 'do not apply within 7 days of harvest ' + 'Grain sorghum '.repeat(30) + '.';
+  const t = LT.findIntervals([odd]).phi[0].text;
+  assert.ok(/^…(Maximum|ounces) /.test(t) && / (sorghum|Grain)…$/.test(t), 'trimmed at whole words: ' + t);
 });
 
 check('label file names are the EPA pattern only', () => {

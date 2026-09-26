@@ -56,8 +56,16 @@
     if (s.length <= MAX_SENTENCE) return s;
     const m = re.exec(s);
     const at = m ? m.index : 0;
-    const start = Math.max(0, at - Math.floor(MAX_SENTENCE / 2));
-    const end = Math.min(s.length, start + MAX_SENTENCE);
+    let start = Math.max(0, at - Math.floor(MAX_SENTENCE / 2));
+    let end = Math.min(s.length, start + MAX_SENTENCE);
+    if (start > 0 && /\S/.test(s[start - 1])) {
+      const sp = s.indexOf(' ', start);
+      if (sp > 0 && sp < at) start = sp + 1;
+    }
+    if (end < s.length && /\S/.test(s[end])) {
+      const sp = s.lastIndexOf(' ', end);
+      if (sp > start) end = sp;
+    }
     return (start > 0 ? '…' : '') + s.slice(start, end).trim() + (end < s.length ? '…' : '');
   }
 

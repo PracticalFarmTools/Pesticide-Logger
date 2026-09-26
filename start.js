@@ -190,7 +190,10 @@
     const citeEl = doc.getElementById('start-class-pick-cite') ||
       (doc.querySelector && doc.querySelector('#start-class-pick .class-pick-cite'));
     const t = (k) => (typeof I18n !== 'undefined' && I18n.t) ? I18n.t(hintLang(), k) : k;
-    if (sentenceEl) sentenceEl.textContent = t(hint.template).replace(/\{State\}/g, hint.stateName);
+    if (sentenceEl) {
+      sentenceEl.textContent = hint.stateName ? t(hint.template).replace(/\{State\}/g, hint.stateName) : '';
+      sentenceEl.hidden = !hint.stateName;
+    }
     if (!citeEl) return;
     if (hint.agency && hint.citationUrl) {
       citeEl.hidden = false;

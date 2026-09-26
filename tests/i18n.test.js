@@ -215,7 +215,7 @@ check('app.js applies any dictionary language, not only Spanish', () => {
 
 check('class picker strings are translated and keep {State}', () => {
   assert.strictEqual(i18n.t('es', 'This log is for'), 'Este registro es para');
-  assert.strictEqual(i18n.t('fr', "This state's commercial record list"), 'Liste commerciale de cet État');
+  assert.strictEqual(i18n.t('fr', 'Commercial record list'), 'Registre commercial');
   assert.notStrictEqual(
     i18n.t('pt-BR', 'This book covers both'),
     'This book covers both'
@@ -241,8 +241,8 @@ check('v2.9.43 copy: device kicker, citation, grower spray, refuse line', () => 
   assert.strictEqual(i18n.t('es', 'Open citation'), 'Abrir la referencia');
   assert.ok(i18n.t('es', grower).startsWith('Aplico'));
   assert.ok(i18n.ES[grower].includes('rento'));
-  assert.ok(i18n.t('es', 'Office boxes, not a dispatch book. Not “I sell produce.”').includes('vendo la cosecha'));
-  const refuse = 'If you spray other people’s farms for a living, use a custom-applicator tool. This is the grower’s book.';
+  assert.ok(i18n.t('es', 'Not sure? Pick the first card. Settings can change it later.').startsWith('¿No'));
+  const refuse = 'Spraying other people’s farms for hire? Use a custom-applicator tool. This is the grower’s book.';
   assert.notStrictEqual(i18n.t('es', refuse), refuse);
   assert.ok(!i18n.t('es', 'Open the logger. Logging stays open until checkout is live — no card.').includes('host'));
   assert.notStrictEqual(i18n.t('fr', 'Pick your state. The form changes.'), 'Pick your state. The form changes.');

@@ -330,7 +330,7 @@
         done: products.length > 0,
         goto: 'products',
         where: 'Add a product',
-        what: 'REI, PHI, and rates come off the label',
+        what: 'Type the EPA # from the jug; EPA fills the name. REI and PHI come off the label',
         cta: 'Add a product'
       }
     ];

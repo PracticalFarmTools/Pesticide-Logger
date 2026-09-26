@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.50 — Practical Farm Tools
+/* Pesticide Logger v2.9.51 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -493,6 +493,12 @@
     toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
   }
 
+  function dismissToast() {
+    clearTimeout(toastTimer);
+    const el = $('#toast');
+    if (el) el.classList.remove('show');
+  }
+
   let i18nObserver = null;
   function applyUiLanguage() {
     const lang = uiLang();
@@ -701,12 +707,14 @@
         setLogMode(toHistory ? 'history' : 'new');
       }
       if (goto.dataset.goto === 'products') {
-        setProductsMode(goto.dataset.listMode === 'add' ? 'add' : 'library');
+        setProductsMode(goto.dataset.listMode === 'add' || goto.dataset.listMode === 'epa' ? goto.dataset.listMode : 'library');
       }
       if (goto.dataset.goto === 'fields') {
         setFieldsMode(goto.dataset.listMode === 'add' ? 'add' : 'list');
       }
       showTab(goto.dataset.goto);
+      if (goto.dataset.goto === 'products' && goto.dataset.listMode === 'epa') $('#epa-search-input')?.focus();
+      if (goto.dataset.goto === 'fields' && goto.dataset.listMode === 'add') $('#field-name')?.focus();
       if (goto.dataset.incompleteFilter) {
         logFilterIncomplete = true;
         logShowPriorYears = true;
@@ -1412,6 +1420,49 @@
     focusProductsSection();
   }
 
+  function firstRunActive() {
+    return !(data.applications || []).length && typeof FarmStore !== 'undefined' &&
+      !!FarmStore.stillFirstRun && FarmStore.stillFirstRun(data);
+  }
+
+  // During the first run each save hands the grower the next missing step
+  // (field, then product, then the log) instead of dropping them on a list.
+  function guideFirstRunNext(justSaved) {
+    const next = FarmStore.firstRunSteps(data).find(s => !s.done);
+    if (next && next.goto === 'fields') {
+      setFieldsMode('add');
+      showTab('fields');
+      $('#field-name')?.focus();
+      toast(tr('Step 2 of 3: add your first field.'));
+      return;
+    }
+    if (next && next.goto === 'products') {
+      setProductsMode('epa');
+      showTab('products');
+      $('#epa-search-input')?.focus();
+      toast(tr('Step 3 of 3: type the EPA Reg. No. from a jug and press Search EPA.'));
+      return;
+    }
+    if (next) return;
+    setLogMode('new');
+    showTab('log');
+    if (data.fields.length === 1 && $('#app-field')) {
+      $('#app-field').value = data.fields[0].id;
+      onAppFieldChange();
+    }
+    const product = justSaved && justSaved.productId ? getProduct(justSaved.productId) : null;
+    if (product) {
+      const row = emptyMixRow();
+      row.querySelector('.apr-product').value = product.id;
+      onRowProductChange(row);
+    }
+    updateCompliancePreview();
+    window.scrollTo({ top: 0 });
+    const nextBtn = $('#app-log-next-btn');
+    if (nextBtn && !$('#app-log-next').hidden) nextBtn.focus({ preventScroll: true });
+    toast(tr('Set up. Log your first spray — the Next line shows what is left.'));
+  }
+
   function returnToLogFromProductEditor() {
     if (!productEditorReturnToLog) return;
     productEditorReturnToLog = false;
@@ -1661,6 +1712,7 @@
 
   async function searchEpaProducts(query) {
     const seq = ++epaSearchSeq;
+    dismissToast();
     const status = $('#epa-search-status');
     const host = $('#epa-search-results');
     const hint = $('#epa-search-hint');
@@ -1917,6 +1969,7 @@
         updatedAt: new Date().toISOString()
       };
       const idx = data.products.findIndex(p => p.id === id);
+      const guided = idx < 0 && !productEditorReturnToLog && firstRunActive();
       if (idx >= 0) data.products[idx] = product; else data.products.push(product);
       save();
       resetProductForm();
@@ -1925,7 +1978,8 @@
       renderDashboard();
       setProductsMode('library');
       toast(idx >= 0 ? 'Product updated' : 'Product added to library');
-      returnToLogFromProductEditor();
+      if (guided) guideFirstRunNext({ productId: product.id });
+      else returnToLogFromProductEditor();
     });
     $('#prod-cancel-btn').addEventListener('click', () => {
       resetProductForm();
@@ -2134,6 +2188,7 @@
         updatedAt: new Date().toISOString()
       };
       const idx = data.fields.findIndex(f => f.id === id);
+      const guided = idx < 0 && firstRunActive();
       if (idx >= 0) data.fields[idx] = field; else data.fields.push(field);
       save();
       resetFieldForm();
@@ -2147,6 +2202,7 @@
       if (dup) toast(dup);
       else toast(idx >= 0 ? 'Field updated' : 'Field added');
       setFieldsMode('list');
+      if (guided && !dup) guideFirstRunNext();
     });
     $('#field-cancel-btn').addEventListener('click', () => {
       resetFieldForm();
@@ -4325,7 +4381,12 @@
     });
     const sentenceEl = pickEl.querySelector('.class-pick-sentence');
     const citeEl = pickEl.querySelector('.class-pick-cite');
-    if (sentenceEl) sentenceEl.textContent = tr(hint.template).replace(/\{State\}/g, hint.stateName);
+    if (sentenceEl) {
+      sentenceEl.textContent = code ? tr(hint.template).replace(/\{State\}/g, hint.stateName) : '';
+      sentenceEl.hidden = !code;
+    }
+    const bothHint = pickEl.querySelector('#class-pick-both-hint');
+    if (bothHint) bothHint.hidden = cls === 'private';
     if (citeEl) {
       if (hint.agency && hint.citationUrl) {
         citeEl.hidden = false;
@@ -4492,7 +4553,8 @@
       updateCompliancePreview();
       renderDashboard();
       maybeZoomMapToFarm();
-      toast('Farm saved — add a field next');
+      if (firstRunActive()) guideFirstRunNext();
+      else toast('Farm saved');
     });
   }
 
@@ -4502,7 +4564,7 @@
     syncFirstRunFarmForm();
     const steps = FarmStore.firstRunSteps(data);
     host.innerHTML = steps.map((s) => `
-      <button type="button" class="interval-item setup-step ${s.done ? 'clear' : ''}" data-goto="${s.goto}"${s.goto === 'fields' || s.goto === 'products' ? ' data-list-mode="add"' : ''}>
+      <button type="button" class="interval-item setup-step ${s.done ? 'clear' : ''}" data-goto="${s.goto}"${s.goto === 'fields' ? ' data-list-mode="add"' : s.goto === 'products' ? ' data-list-mode="epa"' : ''}>
         <div>
           <div class="where">${esc(s.where)}</div>
           <div class="what">${esc(s.what)}</div>
@@ -7158,11 +7220,17 @@
 
   function applyEpaResultToQuickAdd(result, barcode, opts) {
     const jugReg = EpaRank.jugRegNo(result);
-    $('#qp-name').value = (opts && opts.name) || result.name || '';
+    const typed = $('#qp-name').value.trim();
+    const typedIsAlt = typed && (result.altBrandNames || []).some(n => EpaRank.fold(n) === EpaRank.fold(typed));
+    $('#qp-name').value = (opts && opts.name) || (typedIsAlt ? typed : '') || result.name || '';
     $('#qp-epa').value = jugReg || '';
     $('#qp-ai').value = EpaRank.epaAiText(result);
     $('#qp-rup').checked = !!result.rup;
     if ($('#qp-company')) $('#qp-company').value = EpaRank.jugCompany(result) || '';
+    const named = [result.name].concat(result.altBrandNames || []).join(' ').toUpperCase();
+    const kind = ['Herbicide', 'Fungicide', 'Insecticide', 'Bactericide', 'Miticide', 'Nematicide']
+      .find(k => named.includes(k.toUpperCase()));
+    if (kind) $('#qp-type').value = kind;
     qpVerified = { ...verifiedFields(result), epaRegNo: jugReg, signalWord: normalizedSignalWord(result.signalWord) };
     if (barcode) {
       $('#qp-barcode').value = barcode;
@@ -7170,7 +7238,20 @@
       $('#qp-barcode-hint').textContent = `Linking scanned barcode ${barcode} to this product for next time.`;
     }
     const host = $('#qp-epa-results');
-    if (host) host.innerHTML = '';
+    const alts = (result.altBrandNames || []).filter(n => EpaRank.fold(n) !== EpaRank.fold(result.name));
+    if (host) {
+      host.innerHTML = alts.length
+        ? `<p class="card-hint">${esc(tr('Name on your jug different? Also sold as'))}:</p>` +
+          alts.map((n, i) => `<button type="button" class="qp-epa-pick" data-qp-alt="${i}"><strong>${esc(n)}</strong></button>`).join('')
+        : '';
+      host.querySelectorAll('[data-qp-alt]').forEach((button) => {
+        button.addEventListener('click', () => {
+          $('#qp-name').value = alts[Number(button.dataset.qpAlt)];
+          host.innerHTML = '';
+          $('#qp-rei')?.focus();
+        });
+      });
+    }
     const notice = EpaRank.jugNotice(result);
     setQpEpaStatus(notice
       ? tr(notice)
@@ -7188,6 +7269,7 @@
 
   async function lookupQuickAddEpa(opts) {
     const seq = ++qpEpaSeq;
+    dismissToast();
     const barcode = (opts && opts.barcode) || '';
     const host = $('#qp-epa-results');
     if (host) host.innerHTML = '';
@@ -8451,7 +8533,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.50';
+  const APP_VERSION = 'v2.9.51';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {

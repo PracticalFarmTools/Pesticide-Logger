@@ -286,14 +286,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.50 + deadline/license wiring', () => {
+check('source files advertise v2.9.51 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.50'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.50'));
+  assert.ok(app.includes('v2.9.51'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.51'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-09-24'"));
-  assert.ok(!html.includes('v2.9.50'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.51'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -462,8 +462,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.50'"));
-  assert.ok(!html.includes('v2.9.50'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.51'"));
+  assert.ok(!html.includes('v2.9.51'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -951,7 +951,7 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(start.includes('grower’s book') || start.includes("grower's book"));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(start), 'public page does not name other products');
   assert.ok(!start.includes('Names on those buttons'));
-  assert.ok(!start.includes('v2.9.50'), 'public page keeps version out of copy');
+  assert.ok(!start.includes('v2.9.51'), 'public page keeps version out of copy');
   assert.ok(start.includes('id="start-copy-link"'));
   assert.ok(start.includes('mailto:practicalfarmtools@gmail.com') && inspector.includes('mailto:practicalfarmtools@gmail.com') &&
     extension.includes('mailto:practicalfarmtools@gmail.com'), 'public human on all three pages');
@@ -1215,7 +1215,7 @@ check('v2.9.38: class picker asks which record list; hints stay honest', () => {
   const Compliance = require(path.join(root, 'compliance.js'));
   assert.ok(html.includes('This log is for'));
   assert.ok(html.includes('My crop on my land'));
-  assert.ok(html.includes('This state\'s commercial record list'));
+  assert.ok(html.includes('Commercial record list'));
   assert.ok(html.includes('id="class-pick-hint"'));
   assert.ok(html.includes('id="first-run-class"') && html.includes('id="set-applicator-class"'));
   const firstRun = html.split('id="first-run-class-pick"')[1].split('id="dash-setup-steps"')[0];
@@ -1235,7 +1235,7 @@ check('v2.9.38: class picker asks which record list; hints stay honest', () => {
   assert.ok(app.includes("$('#first-run-class')") && app.includes("$('#set-applicator-class')"));
   assert.ok(/value="private"|'private'/.test(app) && app.includes("'commercial'") && app.includes("'both'"));
   assert.ok(start.includes('This log is for') && start.includes('My crop on my land'));
-  assert.ok(start.includes('This state\'s commercial record list'));
+  assert.ok(start.includes('Commercial record list'));
   assert.ok(!start.includes('data-class="both"'));
   assert.ok(start.includes('Selling your crop wholesale or retail is still My crop on my land'));
   assert.ok(start.includes('custom-applicator CRM'));
@@ -1261,7 +1261,7 @@ check('v2.9.39: tablet form rows, device kicker, refuse next to class cards', ()
     'form rows collapse by 900px so iPad portrait is not four-across');
   assert.ok(start.includes('Your spray book, on this device'));
   assert.ok(!start.includes('Your spray book, on this phone'));
-  const refuse = 'If you spray other people’s farms for a living, use a custom-applicator tool. This is the grower’s book.';
+  const refuse = 'Spraying other people’s farms for hire? Use a custom-applicator tool. This is the grower’s book.';
   const startPick = start.split('id="start-class-pick"')[1].split('id="start-copy-link"')[0];
   assert.ok(startPick.includes(refuse), 'custom-applicator refusal sits on the class picker');
   assert.ok(startPick.includes('class-pick-refuse'));
@@ -1270,7 +1270,7 @@ check('v2.9.39: tablet form rows, device kicker, refuse next to class cards', ()
   const refuseIdx = start.indexOf('class-pick-refuse');
   assert.ok(refuseIdx > 0 && whoIdx > refuseIdx, 'refusal is next to the cards, not only later');
   const commCard = start.split('data-class="commercial"')[1].split('</button>')[0];
-  assert.ok(commCard.includes(refuse), 'v2.9.39 still has refuse on the picker');
+  assert.ok(!commCard.includes(refuse), 'v2.9.51: the refusal is a footnote, not the commercial card body');
   assert.strictEqual(i18n.ES['Open citation'], 'Abrir la referencia');
   assert.ok(i18n.ES['Pick your state. The form changes.']);
   assert.ok(i18n.ES['Add a field, add one jug, log this spray.']);
@@ -1282,25 +1282,26 @@ check('v2.9.40: refuse lives in the commercial card; farmer copy drops this host
   const start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   const i18n = require(path.join(root, 'i18n.js'));
-  const refuse = 'If you spray other people’s farms for a living, use a custom-applicator tool. This is the grower’s book.';
+  const refuse = 'Spraying other people’s farms for hire? Use a custom-applicator tool. This is the grower’s book.';
   const startComm = start.split('data-class="commercial"')[1].split('</button>')[0];
   const firstRun = html.split('id="first-run-class-pick"')[1].split('id="dash-setup-steps"')[0];
   const firstComm = firstRun.split('data-class="commercial"')[1].split('</button>')[0];
-  assert.ok(startComm.includes('class-pick-refuse') && startComm.includes(refuse));
-  assert.ok(firstComm.includes('class-pick-refuse') && firstComm.includes(refuse));
-  assert.ok(!start.includes('<p class="card-hint class-pick-refuse">'));
-  assert.ok(!html.includes('<p class="card-hint class-pick-refuse">'));
-  assert.ok(start.includes("This state's commercial record list"));
-  assert.ok(html.includes("This state's commercial record list"));
+  const foot = '<p class="card-hint class-pick-foot class-pick-refuse">' + refuse + '</p>';
+  assert.ok(!startComm.includes('class-pick-refuse') && !firstComm.includes('class-pick-refuse'));
+  assert.ok(start.includes(foot) && firstRun.includes(foot), 'refusal is a footnote under the cards');
+  assert.strictEqual(html.split(foot).length, 3, 'first run and Settings both carry the footnote');
+  assert.ok(start.includes('<strong>Commercial record list</strong>'));
+  assert.ok(firstComm.includes('commercial or public-agency license'));
+  assert.ok(!html.includes('Office boxes, not a dispatch book') && !start.includes('Office boxes, not a dispatch book'));
   assert.ok(!start.includes('Commercial applicator work'));
   assert.ok(!html.includes('Commercial applicator work'));
   assert.ok(start.includes('Logging stays open until checkout is live'));
   assert.ok(!start.includes('on this host until checkout'));
   assert.ok(html.includes('Logging stays open until checkout is live'));
   assert.ok(!html.includes('on this host until checkout'));
-  assert.ok(css.includes('.class-pick-card .class-pick-refuse'));
-  assert.ok(i18n.ES["This state's commercial record list"]);
-  assert.ok(i18n.t('es', 'Office boxes, not a dispatch book. Not “I sell produce.”').includes('vendo la cosecha'));
+  assert.ok(css.includes('.class-pick-refuse {'));
+  assert.ok(i18n.ES['Commercial record list']);
+  assert.notStrictEqual(i18n.t('es', refuse), refuse);
   assert.ok(!i18n.t('es', 'Open the logger. Logging stays open until checkout is live — no card.').includes('host'));
 });
 
@@ -1554,6 +1555,27 @@ check('v2.9.47: persistent credits for every data source and vendored license', 
     });
   const footer = start.split('<footer class="public-footer">')[1];
   assert.ok(/National Weather Service/.test(footer) && /USGS/.test(footer) && /OpenStreetMap/.test(footer));
+});
+
+check('v2.9.51: guided first run and an EPA lookup that finds the jug', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const store = require(path.join(root, 'store.js'));
+  assert.ok(app.includes('function guideFirstRunNext'), 'each first-run save hands over the next step');
+  assert.ok(/const guided = idx < 0 && firstRunActive\(\);/.test(app), 'first field save is guided');
+  assert.ok(/const guided = idx < 0 && !productEditorReturnToLog && firstRunActive\(\);/.test(app), 'first product save is guided');
+  assert.ok(!app.includes("toast('Farm saved — add a field next')"));
+  assert.ok(app.includes("sentenceEl.hidden = !code"), 'class sentence waits for a state');
+  const steps = store.firstRunSteps({ settings: {}, fields: [], products: [] });
+  assert.ok(/EPA #/.test(steps[2].what), 'product step says how: the EPA number');
+  assert.ok(app.includes(`s.goto === 'products' ? ' data-list-mode="epa"'`), 'product step opens EPA lookup');
+  assert.ok(html.includes('id="qp-epa-lookup"') && html.includes('id="qp-epa-results"'), 'quick add looks up EPA');
+  assert.ok(html.includes('id="app-epa-find"'), 'Log find offers EPA when the library has no match');
+  assert.ok(html.indexOf('id="qp-epa"') < html.indexOf('id="qp-name"'), 'quick add asks for the EPA # first');
+  assert.ok(app.includes('qpVerified = { ...verifiedFields(result)'), 'quick add saves the EPA verification');
+  assert.ok(app.includes('EpaRank.jugRegNo(result)') && app.includes('EpaRank.jugCompany(result)'), 'records keep the jug number');
+  assert.ok(app.includes('product-transfer-note'), 'library shows a transfer');
+  assert.ok(html.includes('<strong>Most reliable:</strong> the EPA Reg. No. on the label'));
 });
 
 if (failed) {

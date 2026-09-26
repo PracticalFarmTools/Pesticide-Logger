@@ -1,4 +1,4 @@
-# Pesticide Logger v2.9.52
+# Pesticide Logger v2.9.53
 
 **Offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite. Licensed software with
@@ -35,6 +35,7 @@ application at the repository root.
 | **Post–Part 110 framing** | USDA rescinded 7 CFR Part 110 (effective July 11, 2025). State pesticide acts, labels, and WPS control. |
 | **REI / PHI tracking** | Label REI/PHI countdown for worker re-entry and harvest timing. |
 | **Tank mix calculator** | Area, tank size, spray volume, multi-product rates, printable W-A-L-E worksheet. |
+| **Find REI & PHI in the label** | On the Vercel host, `/api/label` reads EPA's newest label PDF for the jug number and shows its REI and PHI sentences with page links, narrowed by crop. It never fills the boxes — the grower reads and types. |
 | **Live EPA product lookup** | Official EPA PPLS identity/status import when the host provides `/api/epa`. Name search ranks whole-word matches first so short queries are not trapped by a longer substring. USB, GitHub Pages, and local servers have no lookup — type the jug number or Scan label. Rates, REI, and PHI stay label-entered. |
 | **Field mapper** | Satellite corner tapping (USGS The National Map / USDA NAIP imagery — public domain) with geodesic acreage; boundaries stay local. **Add corners** is a toggle so dragging a handle or the amber forecast pin does not drop extra points. Tap a field line to insert a corner; tap the first corner to close. Saved rings show last spray / REI / PHI. **Fit all fields** when two or more rings exist. First open zooms toward the farm state, not CONUS. |
 | **Farm scale** | Same app for two tunnels or 150 named sites. Search appears on Fields/Products at 8+ rows; long pickers get a type-filter; Spray Log can default to this season on a long history — **Show prior years** is there for every farm size that has older logs. Optional field groups only if you actually named two. |
@@ -99,8 +100,8 @@ label.
   localStorage is a boot cache so a return visit can paint without waiting.
   Photos stay in a separate IndexedDB store and are packed into the JSON
   backup file as JPEG data URLs so a restore on another device keeps them.
-- **One optional lookup function.** `api/epa.js` proxies official EPA PPLS
-  queries (no CORS on EPA). It stores no farm data. That route only exists on
+- **Two optional lookup functions.** `api/epa.js` proxies official EPA PPLS
+  queries (no CORS on EPA); `api/label.js` reads label text from EPA's PDFs. It stores no farm data. That route only exists on
   a host that runs the serverless function (the Vercel deployment). GitHub
   Pages, a USB copy, and `python3 -m http.server` have no `/api/epa` — use the
   product library, Scan label / Scan barcode, or type the EPA number yourself.
@@ -146,6 +147,8 @@ node --check deadline.js
 node --check license.js
 node --check label-ocr.js
 node --check epa-rank.js
+node --check label-text.js
+node --check api/label.js
 node --check backup-merge.js
 node --check backup-pack.js
 node --check spray-window.js
@@ -169,6 +172,8 @@ node tests/epa-rank.test.js
 node tests/backup-merge.test.js
 node tests/backup-pack.test.js
 node tests/epa-proxy.test.js
+node tests/label-text.test.js
+node tests/label-proxy.test.js
 node tests/spray-window.test.js
 node tests/nws-weather.test.js
 node tests/store.test.js
@@ -219,7 +224,7 @@ onepager.js                Print button for the one-pagers
 styles.css                 Theme + print stylesheet
 app.js                     UI core: storage, helpers, tab nav (loads first)
 app-*.js                   UI by area: settings, products (EPA), fields, log,
-                           dashboard, calculator, reports, sync, map, reminders,
+                           label finder, dashboard, calculator, reports, sync, map, reminders,
                            photos, weather, license, boot (loads last). Plain
                            scripts sharing one global scope; order is index.html
 mix-calc.js                Tank-mix / rate math (acres, gal, product amounts)
@@ -239,6 +244,10 @@ license.js                 Offline license verification (WebCrypto)
 state_pesticide_laws.js    Generated 50-state runtime matrix (do not edit by hand)
 laws/                      One JSON file per state — edit here for legal changes
 api/epa.js                 Stateless Vercel proxy to official EPA PPLS
+api/label.js               Reads REI/PHI sentences from EPA label PDFs (never numbers to store)
+api/_lib.js                Shared EPA fetch, rate limit, and text helpers for api/
+api/_vendor/pdfjs/         pdf.js 5.4 (Apache-2.0), server only — never precached
+label-text.js              Label text → REI/PHI sentences, crop filter — pure functions
 tools/                     License signing (`--mail` delivery letter) + `bundle-state-laws.js` + citation hasher
 docs/owner-next.md         Owner go-live checklist (not a deploy)
 vendor/leaflet/            Leaflet 1.9.4 (vendored)

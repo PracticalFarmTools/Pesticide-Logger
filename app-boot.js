@@ -71,7 +71,7 @@ function showUpdateBanner() {
   el.hidden = false;
 }
 
-const APP_VERSION = 'v2.9.52';
+const APP_VERSION = 'v2.9.53';
 let updateStatusHideTimer = 0;
 
 function setUpdateStatus(msg, opts) {
@@ -183,6 +183,7 @@ function startFarmUi() {
   initCsvImport();
   initCrew();
   initInspectorView();
+  initLabelFinder();
   initGatherUi();
   bindAutoBackupWatchers();
   initLaunchQueue();

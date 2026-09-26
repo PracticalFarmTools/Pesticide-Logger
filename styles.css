@@ -877,6 +877,27 @@ input:hover, select:hover, textarea:hover { border-color: var(--border-color-hov
 .epa-result-alts .text-btn { font-size: inherit; padding: 0; text-decoration: underline; }
 .qp-epa-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
 .qp-epa-row .card-hint { flex: 1 1 14rem; margin: 0; }
+.label-find-row { margin: 0.2rem 0 0.6rem; }
+.label-finder {
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--primary-green);
+  border-radius: 10px;
+  background: #f6faf6;
+  padding: 0.75rem 0.9rem;
+  margin: 0 0 0.9rem;
+  font-size: 0.9rem;
+}
+.label-finder h4 { font-size: 0.8rem; letter-spacing: 0.04em; text-transform: uppercase; margin: 0.7rem 0 0.35rem; color: var(--text-dark); }
+.label-finder-status { margin: 0; }
+.label-finder-warn { margin: 0.3rem 0; color: var(--warn); }
+.label-finder-list { margin: 0.2rem 0 0.4rem; padding-left: 1.1rem; }
+.label-finder-list li { margin: 0.35rem 0; line-height: 1.4; }
+.label-finder-list mark { background: #fff1a8; color: inherit; padding: 0 0.12em; border-radius: 3px; font-weight: 700; }
+.label-finder-list a { white-space: nowrap; font-weight: 600; }
+.label-finder-older { color: var(--text-muted); font-size: 0.8rem; }
+.label-finder-crop { display: block; max-width: 22rem; }
+.label-finder-phi-note { margin: 0.35rem 0 0; }
+.label-finder-links { margin: 0.6rem 0 0; }
 .qp-epa-status { font-size: 0.85rem; margin: 0.4rem 0 0; }
 .qp-epa-results { display: grid; gap: 0.35rem; margin-top: 0.35rem; }
 .qp-epa-results:empty { display: none; }

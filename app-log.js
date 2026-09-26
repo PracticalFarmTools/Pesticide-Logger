@@ -701,6 +701,7 @@ function openQuickAddProduct(row, barcode) {
   if (barcode) $('#qp-barcode-hint').textContent = `Linking scanned barcode ${barcode} to this product for next time.`;
   qpVerified = null;
   qpEpaSeq++;
+  closeLabelFinder('qp');
   setQpEpaStatus('');
   if ($('#qp-epa-results')) $('#qp-epa-results').innerHTML = '';
   dlg.showModal();

@@ -482,6 +482,7 @@ function resetProductForm() {
   showOmriChecked(null);
   if ($('#prod-epa-status')) { $('#prod-epa-status').textContent = ''; $('#prod-epa-status').hidden = true; }
   pendingEpaImport = null;
+  closeLabelFinder('prod');
   $('#prod-id').value = '';
   productFormPhotoIds = [];
   renderPhotoThumbs(productFormPhotoIds, $('#prod-photo-thumbs'));
@@ -494,6 +495,7 @@ function editProduct(id) {
   const p = getProduct(id);
   if (!p) return;
   pendingEpaImport = null;
+  closeLabelFinder('prod');
   $('#prod-id').value = p.id;
   $('#prod-name').value = p.name;
   $('#prod-epa').value = p.epaRegNo;

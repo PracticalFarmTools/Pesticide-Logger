@@ -804,6 +804,11 @@
             <input type="number" id="prod-phi" step="any" min="0" placeholder="e.g. 1">
           </label>
         </div>
+        <div class="qp-epa-row label-find-row">
+          <button type="button" class="btn btn-secondary" id="prod-label-find">Find REI &amp; PHI in the label</button>
+          <p class="card-hint">Shows the label’s own REI and PHI sentences. You type the numbers.</p>
+        </div>
+        <div class="label-finder" id="prod-label-finder" hidden></div>
         <div class="form-row form-row-3">
           <label>Label rate
             <input type="number" id="prod-rate" step="any" min="0" placeholder="e.g. 6">
@@ -1314,11 +1319,12 @@
           <p><strong>Weather:</strong> U.S. National Weather Service (<a href="https://www.weather.gov/" target="_blank" rel="noopener">weather.gov</a>), public domain.</p>
           <p><strong>Satellite imagery:</strong> USGS The National Map, mostly USDA NAIP (<a href="https://www.usgs.gov/programs/national-geospatial-program/national-map" target="_blank" rel="noopener">usgs.gov</a>), public domain.</p>
           <p><strong>Street map:</strong> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors (ODbL).</p>
-          <p><strong>Product identity lookups:</strong> U.S. EPA Pesticide Product and Label System.</p>
+          <p><strong>Product identity and label text:</strong> U.S. EPA Pesticide Product and Label System.</p>
           <p><strong>Open-source components:</strong>
             Leaflet 1.9.4 (<a href="vendor/leaflet/LICENSE">BSD-2-Clause</a>) ·
             Tesseract.js 7 (<a href="vendor/tesseract/LICENSE">Apache-2.0</a>) ·
             ZXing (<a href="vendor/zxing/LICENSE">Apache-2.0</a>) ·
+            pdf.js 5.4, on the server that reads EPA label text (<a href="vendor/pdfjs/LICENSE">Apache-2.0</a>) ·
             Inter and Outfit fonts (<a href="vendor/fonts/OFL-Inter.txt">SIL OFL 1.1</a>, <a href="vendor/fonts/OFL-Outfit.txt">OFL</a>).</p>
         </div>
       </details>
@@ -1512,6 +1518,11 @@
         Restricted-use (RUP)
       </label>
     </div>
+    <div class="qp-epa-row label-find-row">
+      <button type="button" class="btn btn-secondary" id="qp-label-find">Find REI &amp; PHI in the label</button>
+      <p class="card-hint">Shows the label’s own REI and PHI sentences. You type the numbers.</p>
+    </div>
+    <div class="label-finder" id="qp-label-finder" hidden></div>
     <div class="omri-row">
       <label class="checkbox-label">
         <input type="checkbox" id="qp-omri">
@@ -1591,11 +1602,13 @@
 <script src="license.js"></script>
 <script src="label-ocr.js"></script>
 <script src="epa-rank.js"></script>
+<script src="label-text.js"></script>
 <script src="i18n.js"></script>
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="app.js"></script>
 <script src="app-settings.js"></script>
 <script src="app-products.js"></script>
+<script src="app-label.js"></script>
 <script src="app-fields.js"></script>
 <script src="app-log.js"></script>
 <script src="app-dashboard.js"></script>

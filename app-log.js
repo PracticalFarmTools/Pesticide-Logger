@@ -92,14 +92,6 @@ function labelIsRequired(label) {
   return !!(star && !star.hidden);
 }
 
-function sectionHasVisibleRequired(fs) {
-  if (!fs) return false;
-  return [...fs.querySelectorAll('label[data-log-field]')].some((l) => {
-    if (l.hidden) return false;
-    return labelIsRequired(l);
-  });
-}
-
 function sectionHasUnfilledRequired(fs) {
   if (!fs) return false;
   return [...fs.querySelectorAll('label[data-log-field]')].some((l) => {

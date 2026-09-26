@@ -144,7 +144,6 @@ function applySettings() {
 }
 
 const CORE_LOG_FIELDS = new Set(Compliance.CORE_LOG_FIELDS);
-const PRODUCT_SECTION_FIELDS = new Set(Compliance.PRODUCT_SECTION_FIELDS);
 const COMMERCIAL_ONLY_FIELDS = new Set(Compliance.COMMERCIAL_ONLY_FIELDS);
 const DRIFT_EXTRA_FIELDS = Compliance.DRIFT_EXTRA_FIELDS.slice();
 const FIELD_ALIASES = Compliance.FIELD_ALIASES;
@@ -524,10 +523,6 @@ function recordDeadlineText(deadline, withinHours) {
 }
 
 // -------- 50-state compliance engine --------
-
-function complianceValuePresent(app, name) {
-  return Compliance.complianceValuePresent(app, name, settingsForCompliance());
-}
 
 function evaluateCompliance(app) {
   return Compliance.evaluateCompliance(app, {

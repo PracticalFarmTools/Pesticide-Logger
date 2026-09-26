@@ -14,7 +14,6 @@
 
 const STORE_KEY = FarmStore.STORE_KEY;
 const defaultData = () => FarmStore.defaultData();
-const sanitizeId = FarmStore.sanitizeId;
 const safeUrl = FarmStore.safeUrl;
 const migrate = FarmStore.migrate;
 const normalizedSignalWord = FarmStore.normalizedSignalWord;

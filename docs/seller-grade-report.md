@@ -50,6 +50,8 @@ It is still not an A. An A means a grower who never met you finishes a **first**
 
 Ranked by damage to a paying grower.
 
+> **Status (v2.9.52):** all seven are fixed. #1–#2 shipped in v2.9.51; #3–#5 and #7 in v2.9.52 (toasts sit above the Save bar and ignore taps, Fields rows are cards on phones, Next jumps land below the banner, 0 orphaned i18n keys). v2.9.52 also adds an OMRI link and a dated OMRI mark on every EPA result, and Look up at EPA in the product form. The smoke runs 16/16.
+
 1. **EPA transfers look like a wrong answer.**
    - What happens: registration **524-549** (Roundup PowerMAX, the smoke-test product) was transferred Bayer → Ruveon as **105211-60** on 2026-07-01. EPA’s `/ppls/524-549` now returns “RD 1617 HERBICIDE 105211-60”.
    - The app ignores `transfer_history`:
@@ -115,11 +117,7 @@ The dataset re-read is now a real moat. No small competitor quotes 50 state who-
 
 ## Blueprint — what is left
 
-Code (in lane, small):
-1. EPA transfer handling (#1). Add a unit test with the real 524-549 → 105211-60 payload shape.
-2. First-run class card copy (#2).
-3. Toast placement, Fields table cards, Next-banner offset (#3–#5).
-4. Delete orphaned i18n keys after a hand check.
+Code: done (v2.9.51–52). Optional: OMRI data license for automatic flags (`docs/owner-next.md` step 8).
 
 Owner:
 1. Catalog card patch, then the owner-next order (Lemon Squeezy → hostname → `BUY_URL`).

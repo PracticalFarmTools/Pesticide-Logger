@@ -36,7 +36,7 @@ const EPA_ROUNDUP = {
 const EPA_ENTRUST = {
   name: 'ENTRUST SC NATURALYTE INSECT CONTROL', epaRegNo: '62719-621', status: 'Active', cancelled: false, rup: false,
   signalWord: 'Caution', activeIngredients: [{ name: 'Spinosad', percent: 22.5 }], company: 'CORTEVA AGRISCIENCE LLC',
-  labelUrl: 'https://www3.epa.gov/pesticides/chem_search/ppls/062719-00621.pdf', altBrandNames: [], source: 'EPA PPLS'
+  labelUrl: 'https://www3.epa.gov/pesticides/chem_search/ppls/062719-00621.pdf', altBrandNames: [], types: ['INSECTICIDE'], source: 'EPA PPLS'
 };
 
 let step = 0;
@@ -136,6 +136,8 @@ async function fillFocused(page) {
       must(epaCalls.some((u) => u.includes('reg=524-549')), 'client sent the bare number: ' + epaCalls.join(' '));
       const notice = await page.textContent('.epa-result-notice');
       must(/moved to RUVEON LLC as 105211-60/.test(notice), 'transfer notice: ' + notice);
+      const omri = await page.getAttribute('.epa-omri a', 'href');
+      must(/omri\.org\/omri-search\?query=ROUNDUP/.test(omri || ''), 'each EPA result links to OMRI’s own search: ' + omri);
       await page.click('.epa-result-alts [data-epa-alt="0"]');
       await page.waitForTimeout(300);
       must(await page.inputValue('#prod-epa') === '524-549', 'form keeps the jug number');
@@ -161,6 +163,13 @@ async function fillFocused(page) {
       await page.waitForTimeout(700);
       const t = await toast();
       must(/REI/.test(t) && /incomplete draft/.test(t), 'refusal leads with the REI step: ' + t);
+      const tg = await page.evaluate(() => {
+        const el = document.querySelector('#toast');
+        const tr = el.getBoundingClientRect();
+        const d = document.querySelector('#app-save-draft-btn').getBoundingClientRect();
+        return { pe: getComputedStyle(el).pointerEvents, clear: tr.bottom <= d.top || tr.top >= d.bottom };
+      });
+      must(tg.pe === 'none' && tg.clear, 'toast ignores taps and clears Save incomplete draft: ' + JSON.stringify(tg));
       const c = await chips();
       must(c.includes('active_ingredient') && c.includes('sky') && !c.includes('rei_hours'),
         'chips name AI and Maine outdoor sky; REI is “where applicable”, not a chip: ' + c);
@@ -267,6 +276,7 @@ async function fillFocused(page) {
       if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'quick-add-epa-filled.png') });
       await page.fill('#qp-rei', '4');
       await page.fill('#qp-phi', '1');
+      await page.check('#qp-omri');
       await page.click('#quick-product-save');
       await page.waitForTimeout(300);
       const saved = await page.evaluate(() => {
@@ -277,6 +287,35 @@ async function fillFocused(page) {
       await page.click('.tab-nav [data-tab="products"]');
       must(await page.locator('#products-library-pane', { hasText: 'ENTRUST' }).locator('text=EPA Active').first().isVisible(), 'saved as EPA-verified');
       must(await page.locator('.product-transfer-note').first().isVisible(), 'library shows the Roundup transfer note');
+    });
+
+    await stage(page, 'EPA results say OMRI Listed for products the farm marked', async () => {
+      await page.click('#products-mode-epa');
+      await page.fill('#epa-search-input', '62719-621');
+      await page.press('#epa-search-input', 'Enter');
+      await page.waitForSelector('.epa-result .epa-omri', { timeout: 10000 });
+      const line = await page.textContent('.epa-result .epa-omri');
+      must(/OMRI Listed/.test(line) && /in your library/.test(line), 'OMRI mark shown on the EPA result: ' + line);
+    });
+
+    await stage(page, 'Product form: Look up at EPA fills identity and keeps typed REI', async () => {
+      await page.click('#products-mode-add');
+      await page.fill('#prod-rei', '12');
+      await page.selectOption('#prod-type', 'Other');
+      await page.fill('#prod-epa', 'EPA Reg. No. 62719-621');
+      await page.click('#prod-epa-lookup');
+      for (let i = 0; i < 40 && !/ENTRUST/.test(await page.inputValue('#prod-name')); i += 1) await page.waitForTimeout(250);
+      must(/ENTRUST/.test(await page.inputValue('#prod-name')), 'name filled from EPA');
+      must(await page.inputValue('#prod-epa') === '62719-621', 'bare jug number');
+      must(await page.inputValue('#prod-rei') === '12', 'typed REI kept — the label is the law');
+      must(await page.inputValue('#prod-type') === 'Insecticide', 'type from EPA');
+    });
+
+    await stage(page, 'Fields list fits a phone without sideways scroll', async () => {
+      await page.click('.tab-nav [data-tab="fields"]');
+      await page.waitForTimeout(300);
+      must(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), 'no sideways scroll at 400px');
+      must(await page.locator('.field-table td[data-label]').first().isVisible(), 'field rows render as labeled cards');
     });
 
     must(!errors.length, 'page errors: ' + errors.join(' | '));

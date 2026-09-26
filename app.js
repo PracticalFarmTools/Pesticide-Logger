@@ -1,4 +1,4 @@
-/* Pesticide Logger v2.9.51 — Practical Farm Tools
+/* Pesticide Logger v2.9.52 — Practical Farm Tools
  * Offline-first spray record keeping, 50-state recordkeeping coverage,
  * tank mix calculator, REI/PHI tracking.
  * Farm records stay in IndexedDB on this device; localStorage is a boot cache.
@@ -483,15 +483,45 @@
     return (typeof I18n !== 'undefined' && I18n.t) ? I18n.t(uiLang(), msg) : msg;
   }
 
+  function countOf(n, word) {
+    return `${n} ${word}${Number(n) === 1 ? '' : 's'}`;
+  }
+
+  function plural(n, one, many) {
+    return Number(n) === 1 ? tr(one) : tr(many).replace('{n}', String(n));
+  }
+
   let toastTimer;
   let backupNudgeTimer;
   function toast(msg) {
     const el = $('#toast');
     el.textContent = tr(msg);
+    liftToastAboveSaveBar(el);
     el.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
   }
+
+  // A sticky Save bar sits just above the tab nav; the toast goes above it
+  // so "Save incomplete draft" and friends stay visible.
+  function liftToastAboveSaveBar(el) {
+    const bar = document.querySelector('.tab-panel.active .sticky-actions');
+    let lift = '';
+    if (bar && bar.offsetParent) {
+      const r = bar.getBoundingClientRect();
+      if (r.height && r.top < window.innerHeight && r.bottom > window.innerHeight * 0.5) {
+        lift = Math.max(0, Math.round(window.innerHeight - r.top)) + 8 + 'px';
+      }
+    }
+    el.style.bottom = lift;
+  }
+
+  document.addEventListener('pointerdown', (e) => {
+    if (!e.target.closest || !e.target.closest('#toast')) dismissToast();
+  }, true);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') dismissToast();
+  });
 
   function dismissToast() {
     clearTimeout(toastTimer);
@@ -596,13 +626,11 @@
     return (target.getTime() - now().getTime()) / 3600000;
   }
 
-  function plural(n, word) { return `${n} ${word}${n === 1 ? '' : 's'}`; }
-
   function fmtCountdown(hours) {
     if (hours <= 0) return 'clear';
     if (hours < 1) return `${Math.ceil(hours * 60)} min left`;
     if (hours < 48) return `${Math.ceil(hours)} hr left`;
-    return `${plural(Math.ceil(hours / 24), 'day')} left`;
+    return `${countOf(Math.ceil(hours / 24), 'day')} left`;
   }
 
   function getProduct(id) { return data.products.find(p => p.id === id); }
@@ -1148,7 +1176,7 @@
         ? ' Rules last checked more than 12 months ago — confirm with the citation. Source status does not change because a calendar moved.'
         : '';
       hint.innerHTML = stateName
-        ? `Showing the <strong>${esc(stateName)}</strong> / <strong>${esc(cls)}</strong> spray log: core fields + ${required.size} applicable required field(s)${$('#app-show-recommended') && $('#app-show-recommended').checked ? ' + extra boxes' : ''}. Extra boxes stay under More for the record.${verNote}${staleNote}`
+        ? `Showing the <strong>${esc(stateName)}</strong> / <strong>${esc(cls)}</strong> spray log: core fields + ${countOf(required.size, 'applicable required field')}${$('#app-show-recommended') && $('#app-show-recommended').checked ? ' + extra boxes' : ''}. Extra boxes stay under More for the record.${verNote}${staleNote}`
         : 'Select your state in Settings — the spray log will reshape to that state’s required record fields instead of using one national form.';
     }
     if (summary) {
@@ -1220,17 +1248,17 @@
         <p><strong>${esc(law.agency)}</strong></p>
         <p class="card-hint">Citation: ${esc(law.citation.reference)} ·
           <a href="${esc(law.citation.url)}" target="_blank" rel="noopener">${esc(tr('Open citation'))}</a></p>
-        <p><strong>Retain records ${esc(String(law.retentionYears))} year(s)</strong> from application date.</p>
+        <p><strong>${esc(plural(law.retentionYears, 'Keep records 1 year', 'Keep records {n} years'))}</strong> from the spray date.</p>
         <p class="card-hint">Applies to: ${esc(law.appliesTo || 'See state agency guidance')}</p>
         <p class="card-hint">Private-applicator duty: ${esc(law.privateDuty || 'required')} ·
           Record deadline: ${recordDeadlineDisplay(law)} ·
-          Customer-copy window: ${law.customerCopyDays != null ? esc(String(law.customerCopyDays)) + ' day(s)' : 'not encoded (no invented duty)'}</p>
+          Customer copy: ${law.customerCopyDays != null ? esc(plural(law.customerCopyDays, 'within 1 day', 'within {n} days')) : esc(tr('no state deadline on file'))}</p>
         <p class="card-hint">Source status: ${esc(verLabel)}</p>
-        <p class="card-hint"><span>This state's rules last checked:</span> <strong>${esc(law.reviewedAt || '—')}</strong>
+        <p class="card-hint"><span>This state’s rules last checked:</span> <strong>${esc(law.reviewedAt || '—')}</strong>
           · <span>Check again by:</span> <strong>${esc(lawFreshness(law).reviewBy || '—')}</strong>
-          · <span>Matrix edition:</span> <strong>${esc(typeof STATE_LAWS_RESEARCH_DATE !== 'undefined' ? STATE_LAWS_RESEARCH_DATE : '—')}</strong></p>
+          · <span>Rules edition:</span> <strong>${esc(typeof STATE_LAWS_RESEARCH_DATE !== 'undefined' ? STATE_LAWS_RESEARCH_DATE : '—')}</strong></p>
         ${typeof stateLawIsStale === 'function' && stateLawIsStale(law, now())
-          ? `<p class="state-law-stale" id="state-law-stale">This state's rules were last checked more than 12 months ago. Open the citation and compare. Reload the app if a newer edition has shipped. Source status does not change because a calendar moved.</p>`
+          ? `<p class="state-law-stale" id="state-law-stale">This state’s rules were last checked more than 12 months ago. Open the citation and compare. Reload the app if a newer edition has shipped. Source status does not change because a calendar moved.</p>`
           : ''}
         ${applyMatrix
           ? `<p>Applicable required fields for ${esc(STATE_NAMES[code])} as a <strong>${esc(applicatorClassFor(ctx))}</strong> applicator (${req.length}):</p>
@@ -1271,8 +1299,15 @@
       count = law.recordWithinHours;
       unit = 'hours';
     }
+    if (unit === 'sameDay') return esc(tr('same day as the spray'));
     if (count == null) return '—';
-    const base = esc(String(count)) + ' ' + esc(String(unit));
+    const n = Number(count);
+    const words = {
+      hours: n === 1 ? tr('within 1 hour') : tr('within {n} hours'),
+      calendarDays: n === 1 ? tr('within 1 day') : tr('within {n} days'),
+      businessDays: n === 1 ? tr('within 1 business day') : tr('within {n} business days')
+    };
+    const base = esc((words[unit] || (String(count) + ' ' + String(unit))).replace('{n}', String(count)));
     if (String(unit) === 'hours' && Number(count) === 24) {
       return base + ' (operational fallback — confirm with your agency)';
     }
@@ -1578,6 +1613,15 @@
     host.classList.toggle('is-ready', !!step.ready);
     btn.textContent = tr(step.text) + (step.where ? ' — ' + tr(step.where) : '');
     if (rest) rest.textContent = step.rest ? tr(step.rest) : '';
+    syncLogStickyHeight();
+  }
+
+  function syncLogStickyHeight() {
+    const next = $('#app-log-next');
+    const nav = $('#log-section-nav');
+    if (!next || next.hidden || !next.offsetHeight) return;
+    const top = parseFloat(getComputedStyle(next).top) || (nav ? nav.offsetHeight : 0);
+    document.documentElement.style.setProperty('--log-sticky-h', Math.ceil(top + next.offsetHeight) + 'px');
   }
 
   function goLogNext() {
@@ -1624,7 +1668,7 @@
         ? `${farmBytes} bytes of farm records`
         : `${fmtNum(farmBytes / 1024, 1)} KB of farm records`;
       const photos = referencedPhotoIds().size;
-      const photoBit = photos ? `; ${photos} photo(s) in IndexedDB` : '';
+      const photoBit = photos ? `; ${countOf(photos, 'photo')} in IndexedDB` : '';
       const stubBit = cacheIsStub ? '; boot cache is a stub, not the book' : '';
       el.textContent = size + photoBit + stubBit;
     } catch (e) { /* ignore */ }
@@ -1696,7 +1740,7 @@
     try {
       body = text ? JSON.parse(text) : {};
     } catch (e) {
-      const err = new Error(tr('Live EPA lookup is not on this host (USB, GitHub Pages, and local servers have no /api/epa). Type the EPA number from the jug or Scan label. The label is the law.'));
+      const err = new Error(tr('EPA lookup works in the online app, not in a USB or saved copy. Type the EPA number from the jug or Scan label. The label is the law.'));
       err.status = response.status;
       throw err;
     }
@@ -1785,6 +1829,7 @@
           ${alts.length ? `<div class="epa-result-meta epa-result-alts">${esc(tr('Also sold as'))}: ${alts.map((n, k) =>
             `<button type="button" class="text-btn" data-epa-import="${index}" data-epa-alt="${k}">${esc(n)}</button>`).join(', ')}</div>` : ''}
           <div class="epa-result-meta">${esc(EpaRank.epaAiText(result) || 'Active ingredients: see label')}</div>
+          <div class="epa-result-meta epa-omri">${omriLine(result, jugReg)}</div>
           <div class="epa-result-meta">
             Signal word: ${esc(result.signalWord || 'not listed')}
             ${result.labelAcceptedDate ? ` · Label accepted ${esc(result.labelAcceptedDate)}` : ''}
@@ -1812,6 +1857,35 @@
         importEpaProduct(result, { name: alt });
       });
     });
+  }
+
+  function libraryProductForReg(reg, fallbackReg) {
+    const want = EpaRank.normalizeRegQuery(reg);
+    const alt = EpaRank.normalizeRegQuery(fallbackReg);
+    return data.products.find(p => {
+      const have = EpaRank.normalizeRegQuery(p.epaRegNo);
+      return have && (have === want || (alt && have === alt));
+    }) || null;
+  }
+
+  function omriLine(result, jugReg) {
+    const lib = libraryProductForReg(jugReg, result.epaRegNo);
+    const link = `<a class="epa-label-link" href="${esc(EpaRank.omriSearchUrl((lib && lib.name) || result.name))}" target="_blank" rel="noopener">${esc(tr('Check OMRI listing ↗'))}</a>`;
+    if (lib && lib.omri) {
+      const when = lib.omriCheckedAt ? ' · ' + tr('checked {date}').replace('{date}', fmtDate(lib.omriCheckedAt.slice(0, 10))) : '';
+      return `<span class="badge-pill badge-ok">OMRI Listed</span> <span>${esc(tr('in your library'))}${esc(when)}</span> · ${link}`;
+    }
+    return `${esc(tr('Organic?'))} ${link}`;
+  }
+
+  function syncOmriLink(sel, name) {
+    const a = $(sel);
+    if (a) a.href = EpaRank.omriSearchUrl(name);
+  }
+
+  function nextOmriCheckedAt(checked, previous) {
+    if (!checked) return null;
+    return previous || new Date().toISOString();
   }
 
   function epaTransferOf(result) {
@@ -1848,21 +1922,89 @@
     $('#prod-ai').value = EpaRank.epaAiText(result);
     $('#prod-signal').value = normalizedSignalWord(result.signalWord);
     $('#prod-rup').checked = !!result.rup;
+    const kind = EpaRank.productTypeOf(result);
+    if (kind && $('#prod-type')) $('#prod-type').value = kind;
     if ($('#prod-company')) $('#prod-company').value = EpaRank.jugCompany(result);
+    syncOmriLink('#prod-omri-check', $('#prod-name').value);
     pendingEpaImport = { ...result, ...verifiedFields(result), epaRegNo: jugReg };
 
     $('#product-form-title').textContent = existing
       ? `Update verified product — ${result.name}`
       : `Finish label details — ${result.name}`;
     $('#prod-save-btn').textContent = existing ? 'Update product' : 'Save product';
+    $('#prod-cancel-btn').textContent = existing ? 'Cancel edit' : 'Cancel';
     $('#prod-cancel-btn').hidden = false;
     setProductsMode('add');
     $('#product-form').scrollIntoView({ behavior: 'smooth' });
     $('#prod-rei').focus();
     const notice = EpaRank.jugNotice(result);
-    toast(notice
-      ? tr(notice)
-      : tr('EPA identity imported. Copy REI, PHI, and crop-specific rate from the official label.'));
+    const status = $('#prod-epa-status');
+    dismissToast();
+    if (status) {
+      status.textContent = notice
+        ? tr(notice)
+        : tr('EPA identity imported. Copy REI, PHI, and crop-specific rate from the official label.');
+      status.hidden = false;
+    }
+  }
+
+  // "Look up at EPA" inside the product form: a registration number fills
+  // the identity fields in place (REI, PHI, rate the grower typed stay);
+  // a name opens the EPA pane with that search.
+  async function lookupProductFormEpa() {
+    const reg = EpaRank.normalizeRegQuery($('#prod-epa').value);
+    const name = $('#prod-name').value.trim();
+    const status = $('#prod-epa-status');
+    const say = (text) => { if (status) { status.textContent = text; status.hidden = !text; } };
+    if (!reg) {
+      if (name.length < 2) {
+        say(tr('Type the EPA Reg. No. from the label (it looks like 524-549) or the product name, then Look up.'));
+        $('#prod-epa').focus();
+        return;
+      }
+      say('');
+      setProductsMode('epa');
+      $('#epa-search-input').value = name;
+      await searchEpaProducts(name);
+      return;
+    }
+    $('#prod-epa').value = reg;
+    say(tr('Looking up EPA # {reg}…').replace('{reg}', reg));
+    dismissToast();
+    try {
+      const payload = await fetchEpa({ reg });
+      const match = (payload.results || []).filter(r => EpaRank.resultMatchesReg(r, reg));
+      if (!match.length) {
+        say(tr('EPA has no product under {reg}. Check the number on the label (it looks like 524-549), or type the rest by hand.').replace('{reg}', reg));
+        return;
+      }
+      if (match.length > 1 && !match.every(r => r.epaRegNo === match[0].epaRegNo)) {
+        say('');
+        setProductsMode('epa');
+        $('#epa-search-input').value = reg;
+        await searchEpaProducts(reg);
+        return;
+      }
+      const result = match[0];
+      const jugReg = EpaRank.jugRegNo(result);
+      if (!name) $('#prod-name').value = result.name;
+      $('#prod-epa').value = jugReg;
+      $('#prod-ai').value = EpaRank.epaAiText(result) || $('#prod-ai').value;
+      const signal = normalizedSignalWord(result.signalWord);
+      if (signal) $('#prod-signal').value = signal;
+      $('#prod-rup').checked = !!result.rup;
+      const kind = EpaRank.productTypeOf(result);
+      if (kind) $('#prod-type').value = kind;
+      if ($('#prod-company')) $('#prod-company').value = EpaRank.jugCompany(result);
+      syncOmriLink('#prod-omri-check', $('#prod-name').value);
+      pendingEpaImport = { ...result, ...verifiedFields(result), epaRegNo: jugReg };
+      const notice = EpaRank.jugNotice(result);
+      say(notice ? tr(notice) : tr('Filled from EPA: {name}. Copy REI and PHI from the label, then Save product.')
+        .replace('{name}', result.name));
+      if (!$('#prod-rei').value) $('#prod-rei').focus();
+    } catch (error) {
+      say(error.message || tr('EPA lookup is unavailable. You can still enter the product manually.'));
+    }
   }
 
   async function verifyProductLibrary() {
@@ -1925,6 +2067,11 @@
 
   function initProducts() {
     initEpaLookup();
+    if ($('#prod-name')) $('#prod-name').addEventListener('input', () => syncOmriLink('#prod-omri-check', $('#prod-name').value));
+    if ($('#prod-epa-lookup')) $('#prod-epa-lookup').addEventListener('click', lookupProductFormEpa);
+    if ($('#prod-epa')) $('#prod-epa').addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') { event.preventDefault(); lookupProductFormEpa(); }
+    });
     if ($('#prod-add-photo')) {
       $('#prod-add-photo').addEventListener('click', () =>
         capturePhotoInto(productFormPhotoIds, $('#prod-photo-thumbs'), 'product label'));
@@ -1962,6 +2109,8 @@
         epaSource: verified?.epaSource || null,
         epaTransfer: verified?.epaTransfer || null,
         omri: !!( $('#prod-omri') && $('#prod-omri').checked ),
+        omriCheckedAt: nextOmriCheckedAt(!!($('#prod-omri') && $('#prod-omri').checked),
+          existing && existing.omri ? existing.omriCheckedAt : null),
         lotHint: ($('#prod-lot-hint') && $('#prod-lot-hint').value.trim()) || '',
         barcode: ($('#prod-barcode') && $('#prod-barcode').value.trim()) || '',
         photoIds: productFormPhotoIds.slice(),
@@ -1993,8 +2142,18 @@
     renderProducts();
   }
 
+  function showOmriChecked(p) {
+    const el = $('#prod-omri-checked');
+    if (!el) return;
+    el.hidden = !(p && p.omri && p.omriCheckedAt);
+    el.textContent = el.hidden ? '' : tr('Marked {date}').replace('{date}', fmtDate(p.omriCheckedAt.slice(0, 10)));
+  }
+
   function resetProductForm() {
     $('#product-form').reset();
+    syncOmriLink('#prod-omri-check', '');
+    showOmriChecked(null);
+    if ($('#prod-epa-status')) { $('#prod-epa-status').textContent = ''; $('#prod-epa-status').hidden = true; }
     pendingEpaImport = null;
     $('#prod-id').value = '';
     productFormPhotoIds = [];
@@ -2023,6 +2182,8 @@
     if ($('#prod-company')) $('#prod-company').value = p.epaCompany || '';
     if ($('#prod-state-reg')) $('#prod-state-reg').value = p.stateRegNo || '';
     if ($('#prod-omri')) $('#prod-omri').checked = !!p.omri;
+    syncOmriLink('#prod-omri-check', p.name);
+    showOmriChecked(p);
     if ($('#prod-lot-hint')) $('#prod-lot-hint').value = p.lotHint || '';
     if ($('#prod-barcode')) $('#prod-barcode').value = p.barcode || '';
     productFormPhotoIds = (p.photoIds || []).slice();
@@ -2030,6 +2191,7 @@
     $('#prod-notes').value = p.notes;
     $('#product-form-title').textContent = `Edit — ${p.name}`;
     $('#prod-save-btn').textContent = 'Update product';
+    $('#prod-cancel-btn').textContent = 'Cancel edit';
     $('#prod-cancel-btn').hidden = false;
     setProductsMode('add');
     $('#product-form').scrollIntoView({ behavior: 'smooth' });
@@ -2097,7 +2259,7 @@
           <td data-label="${esc(tr('Product'))}"><strong>${esc(p.name)}</strong><br>
             <span class="card-hint">${esc(p.activeIngredient || '')}</span>
             ${p.rup ? '<span class="badge-pill badge-rup">RUP</span>' : ''}
-            ${p.omri ? '<span class="badge-pill badge-ok">OMRI</span>' : ''}
+            ${p.omri ? `<span class="badge-pill badge-ok"${p.omriCheckedAt ? ` title="${esc(tr('Marked {date}').replace('{date}', fmtDate(p.omriCheckedAt.slice(0, 10))))}"` : ''}>OMRI</span>` : ''}
             ${signalBadge(p)} ${epaStatusBadge(p)}
             ${p.lotHint ? `<br><span class="card-hint">Lot hint: ${esc(p.lotHint)}</span>` : ''}
             ${p.epaActiveIngredient && p.activeIngredient &&
@@ -2245,7 +2407,7 @@
     $('#field-save-btn').textContent = 'Update field';
     $('#field-cancel-btn').hidden = false;
     if (f.boundary && f.boundary.length >= 3) loadBoundaryForEdit(f.boundary);
-    if (Number.isFinite(Number(f.weatherLat)) && Number.isFinite(Number(f.weatherLng))) {
+    if (SprayWindow.isCoord(f.weatherLat) && SprayWindow.isCoord(f.weatherLng)) {
       setPendingWeatherPin(Number(f.weatherLat), Number(f.weatherLng), !!f.weatherPinManual);
     } else if (f.boundary && typeof SprayWindow !== 'undefined') {
       const c = SprayWindow.ringCentroid(f.boundary);
@@ -2328,16 +2490,16 @@
     const rows = list.map(f => `
         <tr>
           <td><strong>${esc(f.name)}</strong>${f.group ? ` <span class="badge-pill">${esc(f.group)}</span>` : ''}${f.boundary && f.boundary.length >= 3 ? ' <span class="badge-pill badge-signal-caution">Mapped</span>' : ''}${typeof SprayWindow !== 'undefined' && SprayWindow.fieldPin(f) ? ' <span class="badge-pill">Forecast pin</span>' : ''}${f.siteId ? `<br><span class="card-hint">${esc(f.siteId)}</span>` : ''}${typeof FarmFile !== 'undefined' && FarmFile.fsaLine(f) ? `<br><span class="card-hint">${esc(FarmFile.fsaLine(f))}</span>` : ''}</td>
-          <td>${f.size != null ? `${fmtNum(f.size)} ${f.sizeUnit === 'sqft' ? 'sq ft' : 'acres'}` : '—'}</td>
-          <td>${esc(f.crop || '—')}</td>
-          <td>${esc(f.location || '—')}</td>
-          <td class="field-last-spray">${fieldLastSprayHtml(f)}</td>
+          <td data-label="${esc(tr('Size'))}">${f.size != null ? `${fmtNum(f.size)} ${f.sizeUnit === 'sqft' ? 'sq ft' : 'acres'}` : '—'}</td>
+          <td data-label="${esc(tr('Usual crop'))}">${esc(f.crop || '—')}</td>
+          <td data-label="${esc(tr('Location'))}">${esc(f.location || '—')}</td>
+          <td class="field-last-spray" data-label="${esc(tr('Last spray'))}">${fieldLastSprayHtml(f)}</td>
           <td class="row-actions">
             <button class="icon-btn" data-edit-field="${f.id}">Edit</button>
             <button class="icon-btn danger" data-del-field="${f.id}">Delete</button>
           </td>
         </tr>`).join('');
-    host.innerHTML = `<div class="table-wrap"><table class="record-table">
+    host.innerHTML = `<div class="table-wrap"><table class="record-table field-table">
       <thead><tr><th>Field</th><th>Size</th><th>Usual crop</th><th>Location</th><th>Last spray</th><th></th></tr></thead>
       <tbody>${rows}</tbody></table></div>`;
     host.querySelectorAll('[data-edit-field]').forEach(b =>
@@ -2522,9 +2684,19 @@
       if (h > 0) document.documentElement.style.setProperty('--tab-nav-h', h + 'px');
       else document.documentElement.style.removeProperty('--tab-nav-h');
     };
+    const setLogNavH = () => {
+      if (nav.offsetHeight > 0) document.documentElement.style.setProperty('--log-nav-h', nav.offsetHeight + 'px');
+      syncLogStickyHeight();
+    };
     setNavOffset();
+    setLogNavH();
     window.addEventListener('resize', setNavOffset);
     if (wrap && typeof ResizeObserver !== 'undefined') new ResizeObserver(setNavOffset).observe(wrap);
+    if (typeof ResizeObserver !== 'undefined') {
+      const ro = new ResizeObserver(setLogNavH);
+      ro.observe(nav);
+      if ($('#app-log-next')) ro.observe($('#app-log-next'));
+    }
     nav.addEventListener('click', (e) => {
       const more = e.target.closest('#log-more-record');
       if (more) {
@@ -2597,6 +2769,7 @@
       const button = $('#app-epa-find');
       if (event.key === 'Enter' && button && !button.hidden) { event.preventDefault(); lookupLogFindAtEpa(); }
     });
+    if ($('#qp-name')) $('#qp-name').addEventListener('input', () => syncOmriLink('#qp-omri-check', $('#qp-name').value));
     if ($('#qp-epa-lookup')) $('#qp-epa-lookup').addEventListener('click', () => lookupQuickAddEpa({ barcode: $('#qp-barcode').value.trim() }));
     ['#qp-epa', '#qp-name'].forEach((sel) => {
       const input = $(sel);
@@ -3041,6 +3214,8 @@
       .forEach(sel => { $(sel).value = ''; });
     $('#qp-type').value = 'Insecticide';
     $('#qp-rup').checked = false;
+    if ($('#qp-omri')) $('#qp-omri').checked = false;
+    syncOmriLink('#qp-omri-check', '');
     $('#qp-barcode').value = barcode || '';
     $('#qp-barcode-hint').hidden = !barcode;
     if (barcode) $('#qp-barcode-hint').textContent = `Linking scanned barcode ${barcode} to this product for next time.`;
@@ -3081,7 +3256,9 @@
       epaActiveIngredient: verified ? verified.epaActiveIngredient : null,
       epaTransfer: verified ? verified.epaTransfer : null,
       epaSource: verified ? verified.epaSource : null,
-      omri: false, lotHint: '', barcode: $('#qp-barcode').value.trim(), photoIds: [],
+      omri: !!($('#qp-omri') && $('#qp-omri').checked),
+      omriCheckedAt: nextOmriCheckedAt(!!($('#qp-omri') && $('#qp-omri').checked), null),
+      lotHint: '', barcode: $('#qp-barcode').value.trim(), photoIds: [],
       createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
     };
     data.products.push(product);
@@ -3424,8 +3601,8 @@
         : 'Could not fetch weather — check your connection');
     } finally {
       btns.forEach((b) => { b.disabled = false; });
-      if (stamp) stamp.textContent = 'Stamp weather';
-      if (legend) legend.textContent = 'Fetch current weather';
+      if (stamp) stamp.textContent = tr('Stamp weather');
+      if (legend) legend.textContent = tr('Stamp weather');
     }
   }
 
@@ -3641,7 +3818,7 @@
       const step = nextLogStep();
       toast(step && !step.ready
         ? `${tr(step.text)}${step.where ? ' — ' + tr(step.where) : ''}. ${tr('Or save as incomplete draft.')}`
-        : `Strict mode: fill ${result.missing.length} required field(s), or save as incomplete draft`);
+        : `Strict mode: fill ${countOf(result.missing.length, 'required field')}, or save as incomplete draft`);
       return;
     }
     if (!asDraft && data.settings.strictCompliance !== false && !result.intervalsOk) {
@@ -3824,7 +4001,7 @@
     const a = data.applications.find(x => x.id === id);
     if (!a) return;
     const retain = a.retentionYears || (stateLaw() && stateLaw().retentionYears) || 2;
-    if (!confirm(`Move ${appProductsLabel(a)} (${fmtDate(a.date)}) to deleted? Soft-delete keeps an audit copy for ~${retain} year(s).`)) return;
+    if (!confirm(`Move ${appProductsLabel(a)} (${fmtDate(a.date)}) to deleted? Soft-delete keeps an audit copy for ~${retain} year${Number(retain) === 1 ? '' : 's'}.`)) return;
     a.history = pushHistory(a);
     a.deletedAt = new Date().toISOString();
     a.updatedAt = a.deletedAt;
@@ -3890,7 +4067,7 @@
       if (phi && phi > now()) out.push(`<span class="badge-pill badge-phi">PHI until ${phi.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>`);
     }
     if (a.rup) out.push('<span class="badge-pill badge-rup">RUP</span>');
-    if ((a.history || []).length) out.push(`<span class="badge-pill">${a.history.length} edit(s)</span>`);
+    if ((a.history || []).length) out.push(`<span class="badge-pill">${countOf(a.history.length, 'edit')}</span>`);
     return out.join(' ');
   }
 
@@ -4317,7 +4494,7 @@
     }).join('');
     host.hidden = false;
     host.innerHTML = `<strong>Completion &amp; customer-copy clocks</strong><ul>${top}</ul>
-      <p class="card-hint">${items.length} open item(s). Deadlines are guidance from state rules — confirm with your regulator.</p>`;
+      <p class="card-hint">${countOf(items.length, 'open item')}. Deadlines are guidance from state rules — confirm with your regulator.</p>`;
   }
 
   // -------------------------------------------------------------- dashboard
@@ -4458,6 +4635,8 @@
     const role = (data.settings && data.settings.deviceRole) || '';
     const roleBox = $('#keep-book-role');
     if (roleBox) roleBox.hidden = !!role;
+    const actions = $('#keep-book-actions');
+    if (actions) actions.hidden = !role;
     const send = $('#keep-book-send');
     const connect = $('#keep-book-connect');
     const download = $('#keep-book-download');
@@ -4630,7 +4809,7 @@
 
     const reiHost = $('#rei-list');
     if (missingIntervals.length && !reiActive.length) {
-      reiHost.innerHTML = `<p class="empty-note">REI unknown for ${missingIntervals.length} record(s) — enter label REI on each product. Do not assume areas are clear to enter.</p>`;
+      reiHost.innerHTML = `<p class="empty-note">REI unknown for ${countOf(missingIntervals.length, 'record')} — enter label REI on each product. Do not assume areas are clear to enter.</p>`;
     } else {
       reiHost.innerHTML = reiActive.length
         ? reiActive.map(({ a, exp }) => `
@@ -4644,7 +4823,7 @@
                 <span class="card-hint">${exp.toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}</span>
               </div>
             </div>`).join('') + (missingIntervals.length
-              ? `<p class="empty-note">${missingIntervals.length} other record(s) have missing REI — not shown as clear.</p>` : '')
+              ? `<p class="empty-note">${countOf(missingIntervals.length, 'other record')} ${missingIntervals.length === 1 ? 'has' : 'have'} missing REI — not shown as clear.</p>` : '')
         : `<p class="empty-note">No active REI countdowns from records that have label REI entered.</p>`;
       reiHost.querySelectorAll('[data-print-posting]').forEach(b =>
         b.addEventListener('click', () => printReiPosting(b.dataset.printPosting)));
@@ -4659,7 +4838,7 @@
 
     const phiHost = $('#phi-list');
     if (missingIntervals.length && !phiActive.length) {
-      phiHost.innerHTML = `<p class="empty-note">PHI unknown for ${missingIntervals.length} record(s) — enter label PHI on each product. Do not assume harvest is legal.</p>`;
+      phiHost.innerHTML = `<p class="empty-note">PHI unknown for ${countOf(missingIntervals.length, 'record')} — enter label PHI on each product. Do not assume harvest is legal.</p>`;
     } else {
       phiHost.innerHTML = phiActive.length
         ? phiActive.map(({ a, d }) => `
@@ -4669,7 +4848,7 @@
                 <div class="what">${esc(appProductsLabel(a))} · sprayed ${fmtDate(a.date)}</div>
               </div>
               <div class="when">harvest ${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}<br>
-                <span class="card-hint">${plural(Math.ceil((d - now()) / 86400000), 'day')}</span>
+                <span class="card-hint">${countOf(Math.ceil((d - now()) / 86400000), 'day')}</span>
               </div>
             </div>`).join('')
         : `<p class="empty-note">No PHI countdowns from records that have label PHI entered.</p>`;
@@ -4705,7 +4884,7 @@
       const summaryEl = $('#compliance-summary');
       if (summaryEl) {
         summaryEl.textContent =
-          `${STATE_NAMES[data.settings.state]} recordkeeping via ${law.agency}. Retain ${law.retentionYears} year(s). ${filled} record(s) have required fields + intervals filled; ${incompleteCount} incomplete; ${needsReview} need review. Not a legal determination.`;
+          `${STATE_NAMES[data.settings.state]} recordkeeping via ${law.agency}. ${plural(law.retentionYears, 'Keep records 1 year', 'Keep records {n} years')}. ${plural(filled, '1 record has', '{n} records have')} required fields and intervals filled; ${incompleteCount} incomplete; ${needsReview} need review. Not a legal determination.`;
         summaryEl.hidden = quiet;
       }
       const freshEl = $('#compliance-fresh');
@@ -4966,8 +5145,8 @@
     updateIntervalPreview();
     updateCompliancePreview();
     showTab('log');
-    let msg = `Copied ${library.length} product(s) onto the spray log`;
-    if (skipped) msg += `. Skipped ${skipped} mix row(s) not in your library`;
+    let msg = `Copied ${countOf(library.length, 'product')} onto the spray log`;
+    if (skipped) msg += `. Skipped ${countOf(skipped, 'mix row')} not in your library`;
     toast(msg);
   }
 
@@ -4993,7 +5172,7 @@
       ? Units.mixMetricCaption(c.acres, c.tank, c.gpaUnit === 'gal_acre' ? c.gpa : c.gpa * 43.56, c.totalSpray)
       : '';
     $('#print-area').innerHTML = `
-      <h1>Tank Mix Worksheet</h1>
+      <h1>Tank mix worksheet</h1>
       <p class="print-meta">${esc(s.farmName || '')} · Prepared ${now().toLocaleString()} · Pesticide Logger (Practical Farm Tools)</p>
       <table>
         <tr><th>Area treated</th><td>${fmtNum(c.area)} ${c.areaUnit === 'sqft' ? 'sq ft' : c.areaUnit === '1000sqft' ? '× 1,000 sq ft' : 'acres'} (${fmtNum(c.acres, 3)} ac)</td>
@@ -5036,7 +5215,7 @@
   }
 
   function updateReportCount() {
-    $('#report-count').textContent = `${reportApps().length} record(s) match the current filter.`;
+    $('#report-count').textContent = plural(reportApps().length, '1 record matches the current filter.', '{n} records match the current filter.');
   }
 
   function initReports() {
@@ -5179,7 +5358,7 @@
     });
     const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
     triggerDownload(blob, `pesticide-records-${new Date().toISOString().slice(0, 10)}.csv`);
-    toast(`Exported ${apps.length} record(s) to CSV`);
+    toast(`Exported ${countOf(apps.length, 'record')} to CSV`);
   }
 
   function reportPeriodLabel() {
@@ -5208,7 +5387,7 @@
     const apps = reportApps();
     if (!apps.length) { toast('No records match the filter'); return; }
     const incomplete = apps.filter(a => !evaluateCompliance(a).complete);
-    if (incomplete.length && !confirm(`${incomplete.length} record(s) are missing required state fields. Print anyway?`)) return;
+    if (incomplete.length && !confirm(`${countOf(incomplete.length, 'record')} ${incomplete.length === 1 ? 'is' : 'are'} missing required state fields. Print anyway?`)) return;
     if (typeof FarmFile === 'undefined' || !FarmFile.buildInspectPayload) {
       toast('Inspector packet is unavailable in this build');
       return;
@@ -5249,6 +5428,7 @@
           name: p.productName, epaRegNo: p.epaRegNo,
           ai: p.activeIngredient || (lib && lib.activeIngredient) || '',
           omri: !!(p.omri || (lib && lib.omri)),
+          omriCheckedAt: (lib && lib.omri && lib.omriCheckedAt) || '',
           rup: !!p.rup,
           uses: 0
         });
@@ -5262,7 +5442,7 @@
           <td>${esc(m.name)}${m.rup ? ' <strong>(RUP)</strong>' : ''}</td>
           <td>${esc(m.epaRegNo)}</td>
           <td>${esc(m.ai)}</td>
-          <td>${m.omri ? 'OMRI Listed (per farm records)' : '—'}</td>
+          <td>${m.omri ? `OMRI Listed (per farm records${m.omriCheckedAt ? ', marked ' + esc(fmtDate(m.omriCheckedAt.slice(0, 10))) : ''})` : '—'}</td>
           <td>${m.uses}</td>
         </tr>`).join('');
 
@@ -5296,7 +5476,7 @@
       <h1>Spray Materials &amp; Application Log — Certifier / Buyer Packet</h1>
       <p class="print-meta">
         ${esc(s.farmName || 'Farm')}${s.county ? ` · ${esc(s.county)} County` : ''}${s.state ? `, ${esc(STATE_NAMES[s.state] || s.state)}` : ''}
-        · Period: ${range} · ${apps.length} application(s) · Generated ${now().toLocaleString()} by Pesticide Logger
+        · Period: ${range} · ${countOf(apps.length, 'application')} · Generated ${now().toLocaleString()} by Pesticide Logger
       </p>
       <h2>Materials used in this period</h2>
       <table>
@@ -5413,7 +5593,7 @@
     const blob = new Blob([JSON.stringify(pack, null, 2)], { type: 'application/json' });
     const stamp = new Date().toISOString().slice(0, 10);
     triggerDownload(blob, `state-compliance-pack-${s.state}-${stamp}.json`);
-    toast(`State pack exported for ${STATE_NAMES[s.state] || s.state} (${records.length} record(s))`);
+    toast(`State pack exported for ${STATE_NAMES[s.state] || s.state} (${countOf(records.length, 'record')})`);
   }
 
   // -------------------------------------------------------------- backup
@@ -5936,7 +6116,7 @@
         `inspector-packet-${farm}-${stamp}.html`);
       const drafts = apps.filter((a) => a.draft || !evaluateCompliance(a).complete).length;
       toast(drafts
-        ? `Inspector packet saved — snapshot only. ${drafts} incomplete record(s) are marked; you can still finish them here.`
+        ? `Inspector packet saved — snapshot only. ${countOf(drafts, 'incomplete record')} ${drafts === 1 ? 'is' : 'are'} marked; you can still finish them here.`
         : 'Inspector packet saved — snapshot only. You can keep editing the live log.');
     } catch (err) {
       toast('Could not build the inspector packet');
@@ -6025,7 +6205,7 @@
       mappedEl.hidden = true;
     }
     $('#import-summary').textContent =
-      `${importCsvRows.length - 1} data row(s), ${header.length} column(s). Match each app field to a column (or leave unmapped).`;
+      `${countOf(importCsvRows.length - 1, 'data row')}, ${countOf(header.length, 'column')}. Match each app field to a column (or leave unmapped).`;
     const preview = importCsvRows.slice(0, 4);
     $('#import-preview').innerHTML = `<table class="record-table">
       ${preview.map((r, i) => `<tr>${r.map(c =>
@@ -6071,7 +6251,7 @@
     renderFieldOptions();
     renderProductOptions();
     renderDashboard();
-    toast(`Imported ${result.imported} record(s) as drafts${result.skipped ? `; skipped ${result.skipped} row(s) missing date/product` : ''} — finish them from the Spray Log`);
+    toast(`Imported ${countOf(result.imported, 'record')} as drafts${result.skipped ? `; skipped ${countOf(result.skipped, 'row')} missing date/product` : ''} — finish them from the Spray Log`);
   }
 
   // Nudge when records exist that no backup covers.
@@ -6087,7 +6267,7 @@
   function nudgeShopBackup() {
     clearTimeout(backupNudgeTimer);
     backupNudgeTimer = setTimeout(() => {
-      toast("Download a backup when you're back in the shop.");
+      toast("Download a backup when you’re back in the shop.");
     }, 3400);
   }
 
@@ -6097,7 +6277,7 @@
     el.hidden = !backupDue();
     if (!el.hidden) {
       $('#backup-banner-msg').textContent = data.meta.lastBackupAt
-        ? `Your last backup was ${fmtDate(data.meta.lastBackupAt.slice(0, 10))} and you have newer records. The shop tablet is the book — send logs or download a backup. Don't trust a single browser.`
+        ? `Your last backup was ${fmtDate(data.meta.lastBackupAt.slice(0, 10))} and you have newer records. The shop tablet is the book — send logs or download a backup. Don’t trust a single browser.`
         : `You have ${data.applications.length} spray records that exist only in this browser. The shop tablet is the book. Download a backup and print the restore card.`;
     }
   }
@@ -6260,7 +6440,7 @@
   }
 
   function setPendingWeatherPin(lat, lng, manual) {
-    if (!Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) return;
+    if (!SprayWindow.isCoord(lat) || !SprayWindow.isCoord(lng)) return;
     pendingWeatherPin = { lat: Number(lat), lng: Number(lng), manual: !!manual };
     drawWeatherPinMarker();
   }
@@ -7227,10 +7407,9 @@
     $('#qp-ai').value = EpaRank.epaAiText(result);
     $('#qp-rup').checked = !!result.rup;
     if ($('#qp-company')) $('#qp-company').value = EpaRank.jugCompany(result) || '';
-    const named = [result.name].concat(result.altBrandNames || []).join(' ').toUpperCase();
-    const kind = ['Herbicide', 'Fungicide', 'Insecticide', 'Bactericide', 'Miticide', 'Nematicide']
-      .find(k => named.includes(k.toUpperCase()));
+    const kind = EpaRank.productTypeOf(result);
     if (kind) $('#qp-type').value = kind;
+    syncOmriLink('#qp-omri-check', $('#qp-name').value);
     qpVerified = { ...verifiedFields(result), epaRegNo: jugReg, signalWord: normalizedSignalWord(result.signalWord) };
     if (barcode) {
       $('#qp-barcode').value = barcode;
@@ -7247,6 +7426,7 @@
       host.querySelectorAll('[data-qp-alt]').forEach((button) => {
         button.addEventListener('click', () => {
           $('#qp-name').value = alts[Number(button.dataset.qpAlt)];
+          syncOmriLink('#qp-omri-check', $('#qp-name').value);
           host.innerHTML = '';
           $('#qp-rei')?.focus();
         });
@@ -7672,14 +7852,13 @@
       const facts = await captureAndReadLabel(file, status => toast(status));
       if (facts.signalWord) $('#prod-signal').value = facts.signalWord;
       if (facts.epaRegNo) {
-        $('#epa-search-input').value = facts.epaRegNo;
-        await searchEpaProducts(facts.epaRegNo);
-        $('#epa-search-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        toast(`Found a possible match for ${facts.epaRegNo} — review and add it below`);
+        $('#prod-epa').value = facts.epaRegNo;
+        await lookupProductFormEpa();
       } else {
+        setProductsMode('epa');
         $('#epa-search-input').value = facts.activeIngredientGuess || '';
         $('#epa-search-input').focus();
-        toast('Couldn\u2019t read an EPA registration number — search manually below');
+        toast('Couldn\u2019t read an EPA registration number — type it from the label and Search EPA');
       }
     } catch (e) {
       toastOcrError(e);
@@ -8268,11 +8447,11 @@
     const status = $('#license-status');
     if (status) {
       if (licenseState.mode === 'open') {
-        status.textContent = tr('This host has no checkout. Logging stays open. Spray logs stay on this device.');
+        status.textContent = tr('Checkout is not open yet. Logging stays open. Spray logs stay on this device.');
       } else if (licenseState.mode === 'licensed') {
         status.textContent = `License active${licenseState.holder ? ' — ' + licenseState.holder : ''}. Thank you for your purchase.`;
       } else if (licenseState.mode === 'trial') {
-        status.textContent = `Trial active — ${licenseState.daysLeft} day(s) left. No key needed yet.`;
+        status.textContent = `Trial active — ${countOf(licenseState.daysLeft, 'day')} left. No key needed yet.`;
       } else if (licenseState.mode === 'key_invalid') {
         status.textContent = `Stored license key is not valid (${licenseState.keyReason}). Activate a valid key to keep logging — your spray logs are still here to review and export.`;
       } else {
@@ -8342,7 +8521,7 @@
       .sort((a, b) => (b.date + (b.startTime || '')).localeCompare(a.date + (a.startTime || '')));
     if (status) {
       status.textContent = all.length
-        ? `${all.length} spray record(s) on this device. A lapsed license cannot take them. Two fields or 150 — every year you logged is still here.`
+        ? `${countOf(all.length, 'spray record')} on this device. A lapsed license cannot take them. Two fields or 150 — every year you logged is still here.`
         : 'No spray logs on this device yet. Nothing was deleted. When you log sprays they stay on this device even if a trial or subscription ends.';
     }
     const flag = { value: lockShowPriorYears };
@@ -8533,7 +8712,7 @@
     el.hidden = false;
   }
 
-  const APP_VERSION = 'v2.9.51';
+  const APP_VERSION = 'v2.9.52';
   let updateStatusHideTimer = 0;
 
   function setUpdateStatus(msg, opts) {
@@ -8571,7 +8750,7 @@
       return;
     }
     if (typeof navigator.onLine === 'boolean' && !navigator.onLine) {
-      setUpdateStatus(tr("You're offline. Updates need a connection."));
+      setUpdateStatus(tr("You’re offline. Updates need a connection."));
       done();
       return;
     }

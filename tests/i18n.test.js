@@ -54,8 +54,8 @@ check('whitespace-normalized keys still hit (wrapped HTML hints)', () => {
 check('farm terms: French vous + parcelle; Brazilian você + talhão/calda', () => {
   assert.strictEqual(i18n.FR['Fields'], 'Parcelles');
   assert.strictEqual(i18n.PT_BR['Fields'], 'Talhões');
-  assert.strictEqual(i18n.FR['Tank Mix'], 'Mélange');
-  assert.strictEqual(i18n.PT_BR['Tank Mix'], 'Calda');
+  assert.strictEqual(i18n.FR['Tank mix'], 'Mélange en cuve');
+  assert.strictEqual(i18n.PT_BR['Tank mix'], 'Mistura de tanque');
   assert.strictEqual(i18n.FR['Inspector packet'], 'Dossier inspecteur');
   assert.strictEqual(i18n.PT_BR['Inspector packet'], 'Pacote do fiscal');
   assert.strictEqual(i18n.ES['Open citation'], 'Abrir la referencia');
@@ -85,7 +85,7 @@ check('US units and EPA signal words stay English in the dictionaries', () => {
 
 check('curly-apostrophe toasts used by app.js are translated', () => {
   const jug = 'New barcode — add this jug\u2019s product now';
-  const couldnt = 'Couldn\u2019t read an EPA registration number — search manually below';
+  const couldnt = 'Couldn\u2019t read an EPA registration number — type it from the label and Search EPA';
   assert.notStrictEqual(i18n.t('fr', jug), jug);
   assert.notStrictEqual(i18n.t('pt-BR', jug), jug);
   assert.notStrictEqual(i18n.t('es', jug), jug);
@@ -105,10 +105,7 @@ check('log Next coach is translated', () => {
 check('mix Scan label chrome is translated', () => {
   assert.strictEqual(i18n.t('es', 'Scan label'), 'Escanear etiqueta');
   assert.strictEqual(i18n.t('fr', 'Scan barcode'), 'Scanner le code-barres');
-  assert.notStrictEqual(
-    i18n.t('pt-BR', 'Photograph the EPA Reg. No. on the panel, or pick from your library.'),
-    'Photograph the EPA Reg. No. on the panel, or pick from your library.'
-  );
+  assert.notStrictEqual(i18n.t('pt-BR', 'Look up at EPA'), 'Look up at EPA');
   assert.strictEqual(i18n.t('es', 'Find a product'), 'Hallar un producto');
   assert.strictEqual(i18n.t('es', 'Matches:'), 'Coincidencias:');
   assert.notStrictEqual(
@@ -141,7 +138,7 @@ check('cab A+ restage, stamp weather, and send-now chrome are translated', () =>
 });
 
 check('open-host license status is translated', () => {
-  const msg = 'This host has no checkout. Logging stays open. Spray logs stay on this device.';
+  const msg = 'Checkout is not open yet. Logging stays open. Spray logs stay on this device.';
   assert.ok(i18n.ES[msg] && i18n.FR[msg] && i18n.PT_BR[msg]);
   assert.notStrictEqual(i18n.t('es', 'Open the logger — no card'), 'Open the logger — no card');
 });
@@ -171,9 +168,8 @@ check('keep-book ritual and CSV honesty are translated', () => {
 });
 
 check('first-run and reminder titles are translated', () => {
-  assert.strictEqual(i18n.t('fr', 'Get set up to log'), 'Préparez-vous à enregistrer');
-  assert.strictEqual(i18n.t('pt-BR', 'Get set up to log'), 'Prepare-se para registrar');
-  assert.strictEqual(i18n.t('es', "Welcome. Let's log."), 'Bienvenido. Vamos a registrar.');
+  assert.strictEqual(i18n.t('fr', 'Step 2 of 3: add your first field.'), 'Étape 2 sur 3 : ajoutez votre première parcelle.');
+  assert.strictEqual(i18n.t('es', "Welcome. Let’s log."), 'Bienvenido. Vamos a registrar.');
   assert.notStrictEqual(i18n.t('fr', 'REI ends within an hour'), 'REI ends within an hour');
   assert.notStrictEqual(i18n.t('pt-BR', 'Earliest harvest date reached'), 'Earliest harvest date reached');
 });

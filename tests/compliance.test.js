@@ -286,14 +286,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.51 + deadline/license wiring', () => {
+check('source files advertise v2.9.52 + deadline/license wiring', () => {
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.51'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.51'));
+  assert.ok(app.includes('v2.9.52'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.52'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-09-24'"));
-  assert.ok(!html.includes('v2.9.51'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.52'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -462,17 +462,17 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.51'"));
-  assert.ok(!html.includes('v2.9.51'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.52'"));
+  assert.ok(!html.includes('v2.9.52'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
   const i18n = require(path.join(root, 'i18n.js'));
-  assert.ok(app.includes('Live EPA lookup is not on this host'), 'HTML/404 from /api/epa is not a JSON parse fail');
+  assert.ok(app.includes('EPA lookup works in the online app, not in a USB or saved copy'), 'HTML/404 from /api/epa is not a JSON parse fail');
   assert.ok(app.includes('JSON.parse(text)'), 'EPA body is parsed as JSON only when it is JSON');
-  assert.ok(html.includes('USB, GitHub Pages, and local servers have no lookup'));
+  assert.ok(!html.includes('GitHub Pages'), 'no hosting jargon in grower copy');
   assert.ok(html.includes('id="license-checkout-note"') && html.includes('id="lock-checkout-note"'));
   assert.ok(app.includes("'license-checkout-note', 'lock-checkout-note'"), 'checkout notes hide when BUY_URL is set');
   assert.ok(app.includes("if (typeof isEmptyHome === 'function' ? isEmptyHome() : false)"),
@@ -483,8 +483,8 @@ check('ship-ready: EPA host honesty, install timing, checkout note', () => {
   assert.strictEqual(i18n.ES['Inspector packet'], 'Paquete de inspector');
   assert.strictEqual(i18n.FR['Open citation'], 'Ouvrir la citation');
   assert.notStrictEqual(
-    i18n.t('pt-BR', 'Live EPA lookup is not on this host (USB, GitHub Pages, and local servers have no /api/epa). Type the EPA number from the jug or Scan label. The label is the law.'),
-    'Live EPA lookup is not on this host (USB, GitHub Pages, and local servers have no /api/epa). Type the EPA number from the jug or Scan label. The label is the law.'
+    i18n.t('pt-BR', 'EPA lookup works in the online app, not in a USB or saved copy. Type the EPA number from the jug or Scan label. The label is the law.'),
+    'EPA lookup works in the online app, not in a USB or saved copy. Type the EPA number from the jug or Scan label. The label is the law.'
   );
 });
 
@@ -500,7 +500,7 @@ check('empty first-run home hides zeros until a field or log exists', () => {
   assert.ok(first > 0 && working > first, 'first-run card sits above the working dashboard');
   assert.ok(spray > working && rei > spray && rei < closeWorking, 'stats, windows, and REI live inside dash-working');
   assert.ok(html.includes('id="dash-first-run" hidden'), 'first-run starts hidden until render');
-  assert.ok(html.includes("Welcome. Let's log."), 'setup title');
+  assert.ok(html.includes("Welcome. Let’s log."), 'setup title');
   assert.ok(html.includes('id="dash-setup-steps"'), 'setup steps host');
   const FarmStore = require(path.join(root, 'store.js'));
   const empty = FarmStore.defaultData();
@@ -526,7 +526,6 @@ check('empty first-run home hides zeros until a field or log exists', () => {
   assert.ok(app.includes('function initFirstRun'));
   assert.ok(!app.includes('function initOnboarding'));
   assert.strictEqual(steps[0].goto, 'first-run');
-  assert.strictEqual(i18n.ES['Get set up to log'], 'Prepárese para registrar');
   assert.strictEqual(i18n.ES['Done'], 'Listo');
   assert.strictEqual(i18n.ES['Save farm'], 'Guardar granja');
   assert.strictEqual(i18n.t('es', 'Settings saved'), 'Configuración guardada');
@@ -624,7 +623,8 @@ check('OCR label scanning wired: parser, lazy loader, both entry points, hardene
   assert.ok(!sw.includes('vendor/zxing'), 'ZXing stays lazy-loaded, not precached');
   // Never a silent write: the reg # always goes through a real EPA lookup
   // before it reaches a saved record.
-  assert.ok(app.includes('searchEpaProducts(facts.epaRegNo)') || app.includes('fetchEpa({ reg: facts.epaRegNo })'),
+  assert.ok(/\$\('#prod-epa'\)\.value = facts\.epaRegNo;\s*await lookupProductFormEpa\(\);/.test(app) &&
+    /\$\('#qp-epa'\)\.value = facts\.epaRegNo;\s*await lookupQuickAddEpa\(/.test(app),
     'OCR reg # is verified via the real EPA API, never trusted directly');
   // CSP required for the vendored worker + WASM engine.
   assert.ok(html.includes("worker-src 'self' blob:"), 'worker-src allows the Tesseract worker');
@@ -871,7 +871,7 @@ check('lane-edge takes: mix label link, optional duration, last spray, customer 
   assert.ok(app.includes('function fieldLastSprayHtml'));
   assert.ok(app.includes('<th>Last spray</th>'));
   assert.ok(app.includes('function nudgeShopBackup'));
-  assert.ok(app.includes("Download a backup when you're back in the shop."));
+  assert.ok(app.includes("Download a backup when you’re back in the shop."));
   assert.ok(app.includes('if (idx < 0 && backupDue())'));
   const submit = app.split('function onAppSubmit')[1].split('function resetAppForm')[0];
   assert.ok(submit.includes('renderFields()') && submit.includes('fillCustomerDatalist()'),
@@ -951,12 +951,12 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(start.includes('grower’s book') || start.includes("grower's book"));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(start), 'public page does not name other products');
   assert.ok(!start.includes('Names on those buttons'));
-  assert.ok(!start.includes('v2.9.51'), 'public page keeps version out of copy');
+  assert.ok(!start.includes('v2.9.52'), 'public page keeps version out of copy');
   assert.ok(start.includes('id="start-copy-link"'));
   assert.ok(start.includes('mailto:practicalfarmtools@gmail.com') && inspector.includes('mailto:practicalfarmtools@gmail.com') &&
     extension.includes('mailto:practicalfarmtools@gmail.com'), 'public human on all three pages');
   assert.ok(start.includes('id="public-lang"') && start.includes('src="i18n.js"'));
-  assert.ok(start.includes('USB and GitHub Pages have no lookup') || start.includes('Type the jug number'));
+  assert.ok(start.includes('type the EPA Reg. No. from the jug') && !start.includes('GitHub Pages'));
   assert.ok(extension.includes('start.html?state=IA') && extension.includes('start.html?state=ME'));
   assert.ok(html.includes('id="dash-clerk"') && html.includes('id="report-season-binder"'));
   const licSrc = fs.readFileSync(path.join(root, 'license.js'), 'utf8');
@@ -1046,7 +1046,7 @@ check('v2.9.30: cab A+ restage, compact mix, send-now, device role', () => {
   assert.ok(start.includes('href="how.html"'));
   assert.ok(html.includes('href="how.html"') && html.includes('How restore works'));
   assert.ok(html.includes('Send a file to the shop'));
-  assert.ok(html.includes('Catch up: shop gathers / cab sends'));
+  assert.ok(html.includes('Share logs between devices'));
   assert.ok(sw.includes('./how.html'));
   assert.ok(app.includes("new Set(['where', 'products'])"), 'cab core is Where + Products');
   assert.ok(app.includes('function updateCabToolbar') && app.includes('function maybeReadAutoBackup'));
@@ -1576,6 +1576,30 @@ check('v2.9.51: guided first run and an EPA lookup that finds the jug', () => {
   assert.ok(app.includes('EpaRank.jugRegNo(result)') && app.includes('EpaRank.jugCompany(result)'), 'records keep the jug number');
   assert.ok(app.includes('product-transfer-note'), 'library shows a transfer');
   assert.ok(html.includes('<strong>Most reliable:</strong> the EPA Reg. No. on the label'));
+});
+
+check('v2.9.52: OMRI link-out, product-form EPA lookup, phone layout and plain copy', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  const sw = require(path.join(root, 'spray-window.js'));
+  assert.ok(app.includes('${omriLine(result, jugReg)}'), 'every EPA result carries an OMRI line');
+  assert.ok(app.includes('EpaRank.omriSearchUrl('), 'OMRI links go to OMRI’s own search, not a copied list');
+  assert.ok(html.includes('id="prod-omri-check"') && html.includes('id="qp-omri-check"'));
+  assert.ok(app.includes('omriCheckedAt'), 'the grower’s OMRI mark is dated');
+  assert.ok(html.includes('id="prod-epa-lookup"') && app.includes('async function lookupProductFormEpa'));
+  assert.ok(html.indexOf('id="prod-epa"') < html.indexOf('id="prod-name"'), 'product form asks for the EPA # first');
+  assert.ok(app.includes('record-table field-table') && app.includes(`data-label="\${esc(tr('Last spray'))}"`), 'fields become cards on phones');
+  assert.ok(/@media \(max-width: 640px\)[\s\S]*\.field-table td\[data-label\]::before/.test(css));
+  assert.ok(/\.toast \{[^}]*pointer-events: none/.test(css), 'toasts never swallow taps');
+  assert.ok(app.includes('function liftToastAboveSaveBar'), 'toasts sit above the Save bar');
+  assert.ok(css.includes('var(--log-sticky-h') && app.includes("'--log-sticky-h'"), 'Next jumps land below the sticky Next line');
+  assert.ok(sw.isCoord(0) && !sw.isCoord(null) && !sw.isCoord(''), 'a missing pin is not 0,0');
+  assert.strictEqual((app.match(/^\s*function plural\(/gm) || []).length, 1, 'one plural helper');
+  for (const s of ['field(s)', 'product(s)', 'record(s)', 'spray(s)', 'year(s)']) {
+    assert.ok(!app.includes(s) && !html.includes(s), `no "${s}"`);
+  }
+  assert.ok(html.includes('id="keep-book-actions"') && app.includes("actions.hidden = !role"), 'keep-book asks one question at a time');
 });
 
 if (failed) {

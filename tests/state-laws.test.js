@@ -138,17 +138,17 @@ check('engine and app do not hard-code per-state law branches; engine ignores re
   assert.ok(!/STATE_LAWS\.[A-Z]{2}/.test(app), 'app.js must not index a named state on STATE_LAWS');
   assert.ok(app.includes('stateFieldsApply(ctx, law)'), 'Settings list uses the same matrix gate as completeness');
   assert.ok(app.includes('STATE_LAWS_RESEARCH_DATE'));
-  assert.ok(app.includes('This state\'s rules last checked:'));
+  assert.ok(app.includes('This state’s rules last checked:'));
   assert.ok(app.includes('Source status does not change because a calendar moved'));
   assert.ok(fs.readFileSync(path.join(root, 'index.html'), 'utf8').includes('id="state-laws-update-btn"'));
 });
 
 check('sw cache name splits app version from laws edition', () => {
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
-  assert.ok(sw.includes("const APP_CACHE = 'pesticide-logger-v2.9.51'"));
+  assert.ok(sw.includes("const APP_CACHE = 'pesticide-logger-v2.9.52'"));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-09-24'"));
   assert.ok(sw.includes("const CACHE_NAME = APP_CACHE + '-laws-' + LAWS_EDITION"));
-  assert.ok(!sw.includes("const CACHE_NAME = 'pesticide-logger-v2.9.51';"));
+  assert.ok(!sw.includes("const CACHE_NAME = 'pesticide-logger-v2.9.52';"));
 });
 
 check('reviewBy is 12 months after reviewedAt; freshness helper matches', () => {

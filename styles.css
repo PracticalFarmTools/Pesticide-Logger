@@ -81,6 +81,7 @@ body {
 h1, h2, h3, h4 { font-family: var(--font-title); font-weight: 700; line-height: 1.2; }
 
 button { font: inherit; cursor: pointer; }
+a { color: var(--primary-green); }
 
 a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
   outline: 3px solid var(--primary-green-light);
@@ -311,7 +312,7 @@ main {
 .log-section-parked { display: none; }
 .log-next {
   position: sticky;
-  top: calc(var(--tab-nav-h, 4.5rem) + 0.2rem);
+  top: calc(var(--log-nav-h, 4.35rem) + 0.2rem);
   z-index: 6;
   display: flex;
   flex-wrap: wrap;
@@ -404,7 +405,11 @@ main {
   font-size: 0.92rem;
 }
 .mix-scan-row #app-add-product { flex: 1 1 11rem; }
-#app-form fieldset { scroll-margin-top: 4.5rem; }
+/* --log-sticky-h is the measured bottom of the section chips + Next line,
+   so a jump lands the heading below them, not under them. */
+#app-form fieldset,
+#app-form [data-log-field],
+#app-form .app-product-row { scroll-margin-top: calc(var(--log-sticky-h, 8rem) + 0.6rem); }
 
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .dot-red { background: var(--danger); }
@@ -435,6 +440,8 @@ main {
   background: linear-gradient(180deg, #f3f8f4 0%, var(--bg-card) 42%);
 }
 .keep-book-card p { color: var(--text-muted); margin-bottom: 1rem; max-width: 40rem; }
+.keep-book-card .keep-book-ask { flex-basis: 100%; margin: 0; color: var(--text-dark); }
+.keep-book-card #keep-book-defer { margin-top: 0.75rem; }
 .import-honesty {
   background: var(--warn-bg);
   border: 1px solid rgba(138, 98, 7, 0.28);
@@ -881,6 +888,9 @@ input:hover, select:hover, textarea:hover { border-color: var(--border-color-hov
 .qp-epa-pick:hover, .qp-epa-pick:focus-visible { border-color: var(--primary-green); }
 .qp-epa-pick span { color: var(--text-muted); font-size: 0.78rem; }
 .log-epa-find { margin-top: 0.4rem; }
+.omri-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.8rem; }
+.omri-row .checkbox-label { margin: 0; }
+.epa-omri .badge-pill { margin-right: 0.2rem; }
 
 @media (max-width: 650px) {
   .epa-search-row { grid-template-columns: 1fr; }
@@ -1046,6 +1056,32 @@ input:hover, select:hover, textarea:hover { border-color: var(--border-color-hov
   }
   .history-table td.row-actions { display: flex; padding-top: 0.5rem; }
   .history-table .row-actions .icon-btn { flex: 1; min-height: 2.75rem; }
+}
+
+/* Phones: fields as cards so Last spray and Edit are never off-screen. */
+@media (max-width: 640px) {
+  .field-table thead { display: none; }
+  .field-table, .field-table tbody, .field-table tr, .field-table td { display: block; width: 100%; }
+  .field-table tbody tr {
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    margin: 0 0 0.7rem;
+    padding: 0.35rem 0.2rem;
+    background: var(--bg-white);
+  }
+  .field-table td { border-bottom: none; padding: 0.3rem 0.7rem; }
+  .field-table td[data-label]::before {
+    content: attr(data-label);
+    display: inline-block;
+    min-width: 6.5rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+  }
+  .field-table td.row-actions { display: flex; padding-top: 0.5rem; }
+  .field-table .row-actions .icon-btn { flex: 1; min-height: 2.75rem; }
 }
 
 .row-actions { display: flex; gap: 0.35rem; white-space: nowrap; }
@@ -1837,6 +1873,7 @@ body:not(.map-fullscreen) .tab-nav-wrap {
   max-width: 90vw;
   text-align: center;
   visibility: hidden;
+  pointer-events: none;
 }
 .toast.show { transform: translateX(-50%) translateY(0); visibility: visible; }
 

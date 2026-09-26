@@ -38,16 +38,23 @@ const TYPES = {
 };
 
 function safeJoin(urlPath) {
-  const decoded = decodeURIComponent(urlPath.split('?')[0]);
+  let decoded;
+  try {
+    decoded = decodeURIComponent(urlPath.split('?')[0]);
+  } catch (e) {
+    return null;
+  }
   const rel = decoded === '/' ? 'index.html' : decoded.replace(/^\/+/, '');
   const abs = path.normalize(path.join(ROOT, rel));
-  if (!abs.startsWith(ROOT)) return null;
+  if (!abs.startsWith(ROOT + path.sep)) return null;
+  const top = path.relative(ROOT, abs).split(path.sep);
+  if (top.some((part) => part.startsWith('.')) || top[0] === 'keys') return null;
   return abs;
 }
 
 function sendFile(res, filePath) {
-  fs.stat(filePath, (err, st) => {
-    if (err || !st.isFile()) {
+  fs.stat(filePath || ROOT, (err, st) => {
+    if (!filePath || err || !st.isFile()) {
       res.statusCode = 404;
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
       res.end('Not found');
@@ -90,6 +97,10 @@ const server = http.createServer(async (req, res) => {
   sendFile(res, safeJoin(url.pathname));
 });
 
-server.listen(PORT, '127.0.0.1', () => {
-  console.log('Pesticide Logger with live /api/epa and /api/label at http://127.0.0.1:' + PORT);
-});
+if (require.main === module) {
+  server.listen(PORT, '127.0.0.1', () => {
+    console.log('Pesticide Logger with live /api/epa and /api/label at http://127.0.0.1:' + PORT);
+  });
+}
+
+module.exports = { server, safeJoin };

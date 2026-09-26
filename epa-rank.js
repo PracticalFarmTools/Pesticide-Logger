@@ -230,8 +230,37 @@
     return bits.join(' ');
   }
 
+  const PRODUCT_TYPES = ['Herbicide', 'Fungicide', 'Insecticide', 'Bactericide', 'Miticide', 'Nematicide'];
+
+  // EPA lists every registered use type (INSECTICIDE, MITICIDE…); the form
+  // takes one, so prefer the first EPA type, then a type word in the name.
+  function productTypeOf(result) {
+    if (!result) return '';
+    const fromEpa = (result.types || []).map((t) => String(t).toLowerCase());
+    for (const t of fromEpa) {
+      const hit = PRODUCT_TYPES.find((k) => k.toLowerCase() === t);
+      if (hit) return hit;
+      if (t === 'plant growth regulator') return 'Plant growth regulator';
+    }
+    const named = [result.name].concat(result.altBrandNames || []).join(' ').toLowerCase();
+    return PRODUCT_TYPES.find((k) => named.includes(k.toLowerCase())) || '';
+  }
+
+  // OMRI does not share its list for reuse, so the app links to OMRI's own
+  // search for the grower to check. Type words only narrow the match.
+  function omriSearchUrl(name) {
+    const q = String(name || '')
+      .replace(/[®™]/g, '')
+      .replace(/\b(herbicide|insecticide|fungicide|miticide|bactericide|nematicide|insect control|pesticide)\b/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return 'https://www.omri.org/omri-search' + (q ? '?query=' + encodeURIComponent(q) : '');
+  }
+
   const api = {
     fold,
+    productTypeOf,
+    omriSearchUrl,
     tokens,
     isEpaRegQuery,
     normalizeRegQuery,

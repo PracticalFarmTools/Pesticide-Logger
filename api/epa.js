@@ -88,6 +88,8 @@ function normalize(item, wantReg) {
       ? `https://www3.epa.gov/pesticides/chem_search/ppls/${pdf.pdffile.toLowerCase()}`
       : `https://ordspub.epa.gov/ords/pesticides/f?p=PPLS:102:::NO::P102_REG_NUM:${encodeURIComponent(item.eparegno || '')}`,
     altBrandNames,
+    types: [...new Set((Array.isArray(item.types) ? item.types : [])
+      .map((t) => cleanText(t && t.type)).filter(Boolean))].slice(0, 6),
     transferredFrom,
     source: 'EPA PPLS'
   };

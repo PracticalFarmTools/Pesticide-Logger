@@ -148,6 +148,7 @@ async function run() {
         companyinfo: [{ name: 'RUVEON LLC' }],
         transfer_history: [{ previous_eparegno: '524-549', previous_company: 'BAYER CROPSCIENCE LP', transferred_date: '07/01/2026' }],
         altbrandnames: [{ altbrandname: 'ROUNDUP POWER MAX HERBICIDE' }],
+        types: [{ type: 'HERBICIDE' }],
         pdffiles: [
           { epa_reg_num: '105211-60', pdffile: '105211-00060-20260701.pdf' },
           { epa_reg_num: '000524-00549', pdffile: '000524-00549-20230406.pdf', pdffile_accepted_date: '04/06/2023' }
@@ -166,6 +167,7 @@ async function run() {
       assert.strictEqual(r.epaRegNo, '105211-60');
       assert.ok(r.labelUrl.endsWith('000524-00549-20230406.pdf'));
       assert.deepStrictEqual(r.altBrandNames, ['ROUNDUP POWER MAX HERBICIDE']);
+      assert.deepStrictEqual(r.types, ['HERBICIDE']);
     } finally {
       global.fetch = orig;
     }

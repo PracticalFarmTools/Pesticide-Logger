@@ -20,6 +20,8 @@ const {
   jugCompany,
   jugNotice,
   resultMatchesReg,
+  productTypeOf,
+  omriSearchUrl,
   NAME_SEARCH_HINT
 } = require(path.join(__dirname, '..', 'epa-rank.js'));
 
@@ -238,6 +240,21 @@ check('a plain result matches its own registration or a distributor of it, nothi
 check('library hits find a product saved in label or padded form', () => {
   const lib = [{ name: 'Roundup', epaRegNo: '000524-00549' }, { name: 'Dist', epaRegNo: '524-549-12345' }, { name: 'Other', epaRegNo: '524-5490' }];
   assert.deepStrictEqual(libraryHits('524-549', lib).map(p => p.name), ['Roundup', 'Dist']);
+});
+
+check('product type comes from EPA types first, then the name', () => {
+  assert.strictEqual(productTypeOf({ types: ['INSECTICIDE', 'MITICIDE'], name: 'X HERBICIDE' }), 'Insecticide');
+  assert.strictEqual(productTypeOf({ types: [], name: 'RD 1617 HERBICIDE' }), 'Herbicide');
+  assert.strictEqual(productTypeOf({ name: 'Mystery', altBrandNames: ['MYSTERY FUNGICIDE'] }), 'Fungicide');
+  assert.strictEqual(productTypeOf({ name: 'Mystery' }), '');
+});
+
+check('OMRI link goes to OMRI search with the brand, not the type word', () => {
+  assert.strictEqual(omriSearchUrl('Entrust® SC NATURALYTE INSECT CONTROL'),
+    'https://www.omri.org/omri-search?query=Entrust%20SC%20NATURALYTE');
+  assert.strictEqual(omriSearchUrl('PYGANIC CROP PROTECTION EC 5.0 II'),
+    'https://www.omri.org/omri-search?query=PYGANIC%20CROP%20PROTECTION%20EC%205.0%20II');
+  assert.strictEqual(omriSearchUrl(''), 'https://www.omri.org/omri-search');
 });
 
 if (failed) {

@@ -38,6 +38,16 @@ const EPA_ENTRUST = {
   signalWord: 'Caution', activeIngredients: [{ name: 'Spinosad', percent: 22.5 }], company: 'CORTEVA AGRISCIENCE LLC',
   labelUrl: 'https://www3.epa.gov/pesticides/chem_search/ppls/062719-00621.pdf', altBrandNames: [], types: ['INSECTICIDE'], source: 'EPA PPLS'
 };
+const LABEL_FILE = '062719-00621-20260611.pdf';
+const LABEL_ENTRUST = {
+  reg: '62719-621', name: 'Entrust® SC', newest: LABEL_FILE, source: 'EPA label PDF', checkedAt: '2026-09-26T12:00:00Z',
+  files: [{ file: LABEL_FILE, date: 'June 11, 2026', url: 'https://www3.epa.gov/pesticides/chem_search/ppls/' + LABEL_FILE, pages: 73, scanned: false }],
+  rei: [{ text: 'Do not enter or allow worker entry into treated areas during the restricted entry interval (REI) of 4 hours.', page: 10, file: LABEL_FILE, date: 'June 11, 2026' }],
+  phi: [
+    { text: 'Do not apply within 1 day of harvest.', page: 22, file: LABEL_FILE, date: 'June 11, 2026', near: 'Sweet corn Field corn' },
+    { text: 'Do not apply within 7 days of harvest.', page: 30, file: LABEL_FILE, date: 'June 11, 2026', near: 'Grapes' }
+  ]
+};
 
 let step = 0;
 async function stage(page, name, fn) {
@@ -93,6 +103,9 @@ async function fillFocused(page) {
     const reg = new URL(url).searchParams.get('reg') || '';
     const results = reg === '524-549' ? [EPA_ROUNDUP] : reg === '62719-621' ? [EPA_ENTRUST] : [];
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ results, query: { reg } }) });
+  });
+  await page.route('**/api/label?*', (route) => {
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(LABEL_ENTRUST) });
   });
   const chips = () => page.$$eval('.missing-field-chip', (cs) => cs.map((c) => c.dataset.missingField));
 
@@ -309,6 +322,25 @@ async function fillFocused(page) {
       must(await page.inputValue('#prod-epa') === '62719-621', 'bare jug number');
       must(await page.inputValue('#prod-rei') === '12', 'typed REI kept — the label is the law');
       must(await page.inputValue('#prod-type') === 'Insecticide', 'type from EPA');
+    });
+
+    await stage(page, 'Product form: Find REI & PHI shows label sentences and types nothing', async () => {
+      await page.fill('#prod-phi', '');
+      await page.click('#prod-label-find');
+      await page.waitForSelector('#prod-label-finder .label-finder-list li', { timeout: 10000 });
+      const rei = await page.textContent('#prod-label-finder .label-finder-list');
+      must(/restricted entry interval \(REI\) of 4 hours/.test(rei) && /p\. ?10|page 10/i.test(rei), 'REI sentence with page: ' + rei);
+      must(await page.locator('#prod-label-finder mark', { hasText: '4 hours' }).count() === 1, 'amount marked');
+      const href = await page.getAttribute('#prod-label-finder .label-finder-list a', 'href');
+      must(href && href.endsWith(LABEL_FILE + '#page=10'), 'links the label page: ' + href);
+      await page.fill('#prod-label-finder .label-finder-crop-input', 'Grapes');
+      const phi = await page.$$eval('#prod-label-finder .label-finder-phi li', (li) => li.map((x) => x.textContent));
+      must(phi.length === 1 && /7 days/.test(phi[0]), 'PHI list narrowed to the crop: ' + phi.join(' | '));
+      must(await page.inputValue('#prod-rei') === '12' && await page.inputValue('#prod-phi') === '', 'REI/PHI inputs untouched');
+      if (SHOTS) {
+        await page.locator('#prod-label-finder .label-finder-links').scrollIntoViewIfNeeded();
+        await page.screenshot({ path: path.join(SHOTS, 'label-finder.png') });
+      }
     });
 
     await stage(page, 'Fields list fits a phone without sideways scroll', async () => {

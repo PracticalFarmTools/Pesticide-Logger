@@ -287,14 +287,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.52 + deadline/license wiring', () => {
+check('source files advertise v2.9.53 + deadline/license wiring', () => {
   const app = appSource();
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.52'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.52'));
+  assert.ok(app.includes('v2.9.53'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.53'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-09-24'"));
-  assert.ok(!html.includes('v2.9.52'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.53'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -463,8 +463,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.52'"));
-  assert.ok(!html.includes('v2.9.52'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.53'"));
+  assert.ok(!html.includes('v2.9.53'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -725,7 +725,7 @@ check('audit hardening: EPA proxy + interval/deadline correctness', () => {
   const app = appSource();
   const compliance = fs.readFileSync(path.join(root, 'compliance.js'), 'utf8');
   const camera = fs.readFileSync(path.join(root, 'camera-scan.js'), 'utf8');
-  const epa = fs.readFileSync(path.join(root, 'api/epa.js'), 'utf8');
+  const epa = fs.readFileSync(path.join(root, 'api/epa.js'), 'utf8') + fs.readFileSync(path.join(root, 'api/_lib.js'), 'utf8');
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   const deadline = fs.readFileSync(path.join(root, 'deadline.js'), 'utf8');
   assert.ok(epa.includes('%'), 'product-name search allows percent');
@@ -952,7 +952,7 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(start.includes('grower’s book') || start.includes("grower's book"));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(start), 'public page does not name other products');
   assert.ok(!start.includes('Names on those buttons'));
-  assert.ok(!start.includes('v2.9.52'), 'public page keeps version out of copy');
+  assert.ok(!start.includes('v2.9.53'), 'public page keeps version out of copy');
   assert.ok(start.includes('id="start-copy-link"'));
   assert.ok(start.includes('mailto:practicalfarmtools@gmail.com') && inspector.includes('mailto:practicalfarmtools@gmail.com') &&
     extension.includes('mailto:practicalfarmtools@gmail.com'), 'public human on all three pages');
@@ -1601,6 +1601,23 @@ check('v2.9.52: OMRI link-out, product-form EPA lookup, phone layout and plain c
     assert.ok(!app.includes(s) && !html.includes(s), `no "${s}"`);
   }
   assert.ok(html.includes('id="keep-book-actions"') && app.includes("actions.hidden = !role"), 'keep-book asks one question at a time');
+});
+
+check('v2.9.53: label finder shows EPA label sentences and never fills REI/PHI', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const finder = fs.readFileSync(path.join(root, 'app-label.js'), 'utf8');
+  const api = fs.readFileSync(path.join(root, 'api', 'label.js'), 'utf8');
+  const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
+  const vercel = JSON.parse(fs.readFileSync(path.join(root, 'vercel.json'), 'utf8'));
+  for (const id of ['prod-rei', 'prod-phi', 'qp-rei', 'qp-phi']) {
+    assert.ok(!finder.includes(id), `the label finder never touches #${id}`);
+  }
+  assert.ok(html.includes('id="prod-label-find"') && html.includes('id="qp-label-find"'));
+  assert.deepStrictEqual([...new Set(api.match(/req\.query\.\w+/g))], ['req.query.reg'], 'the label proxy takes only a reg number');
+  assert.ok(api.includes('LABEL_FILE.test('), 'only EPA label file names are fetched');
+  assert.ok(sw.includes("'./label-text.js'") && sw.includes("'./app-label.js'") && !sw.includes('_vendor'), 'pdf.js stays on the server');
+  assert.ok(html.includes('vendor/pdfjs/LICENSE') && fs.existsSync(path.join(root, 'api', '_vendor', 'pdfjs', 'LICENSE')), 'pdf.js credited');
+  assert.strictEqual(vercel.functions['api/label.js'].includeFiles, 'api/_vendor/pdfjs/**');
 });
 
 if (failed) {

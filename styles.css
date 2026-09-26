@@ -82,6 +82,7 @@ h1, h2, h3, h4 { font-family: var(--font-title); font-weight: 700; line-height: 
 
 button { font: inherit; cursor: pointer; }
 a { color: var(--primary-green); }
+a[href^="mailto:"] { overflow-wrap: anywhere; }
 
 a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
   outline: 3px solid var(--primary-green-light);
@@ -2092,6 +2093,8 @@ body.public-page .header-content {
 }
 body.public-page .header-right {
   flex-wrap: wrap;
+  flex-shrink: 1;
+  min-width: 0;
   justify-content: flex-end;
 }
 body.public-page .public-lang {
@@ -2125,6 +2128,7 @@ body.public-page .app-header .btn-secondary {
   margin: 1rem auto 2rem;
   display: grid;
   gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
 }
 .public-hero h2 {
   font-size: clamp(1.45rem, 4vw, 2rem);

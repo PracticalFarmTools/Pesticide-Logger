@@ -350,6 +350,16 @@ async function fillFocused(page) {
       must(await page.locator('.field-table td[data-label]').first().isVisible(), 'field rows render as labeled cards');
     });
 
+    await stage(page, 'Public pages fit a 320px phone', async () => {
+      await page.setViewportSize({ width: 320, height: 700 });
+      for (const pg of ['start.html', 'how.html', 'inspector.html', 'extension.html']) {
+        await page.goto(BASE + pg);
+        await page.waitForTimeout(200);
+        must(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `no sideways scroll on ${pg}`);
+      }
+      await page.setViewportSize({ width: 400, height: 850 });
+    });
+
     must(!errors.length, 'page errors: ' + errors.join(' | '));
     console.log('\nSmoke passed.');
   } catch (e) {

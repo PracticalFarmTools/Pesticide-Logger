@@ -9,6 +9,7 @@ const assert = require('assert');
 const { spawnSync } = require('child_process');
 
 const root = path.join(__dirname, '..');
+const { appSource } = require(path.join(root, 'tools', 'app-source.js'));
 const bundle = require(path.join(root, 'tools', 'bundle-state-laws.js'));
 const Compliance = require(path.join(root, 'compliance.js'));
 const DeadlineUtils = require(path.join(root, 'deadline.js'));
@@ -132,7 +133,7 @@ check('stale reviewedAt does not change completeness status or verification', ()
 
 check('engine and app do not hard-code per-state law branches; engine ignores reviewedAt', () => {
   const compliance = fs.readFileSync(path.join(root, 'compliance.js'), 'utf8');
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   assert.ok(!/\breviewedAt\b/.test(compliance), 'completeness must not read reviewedAt');
   assert.ok(!/\bstateLawIsStale\b/.test(compliance));
   assert.ok(!/STATE_LAWS\.[A-Z]{2}/.test(app), 'app.js must not index a named state on STATE_LAWS');
@@ -163,7 +164,7 @@ check('reviewBy is 12 months after reviewedAt; freshness helper matches', () => 
 
 check('Home and Settings surface check-again dates', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   assert.ok(html.includes('id="compliance-fresh"'));
   assert.ok(html.includes('id="dash-open-state-rules"'));
   assert.ok(app.includes('lawFreshness'));

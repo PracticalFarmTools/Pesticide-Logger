@@ -9,6 +9,7 @@ const assert = require('assert');
 const DeadlineUtils = require(path.join(__dirname, '..', 'deadline.js'));
 
 const root = path.join(__dirname, '..');
+const { appFiles, appSource } = require(path.join(root, 'tools', 'app-source.js'));
 let failed = 0;
 function check(name, fn) {
   try {
@@ -209,7 +210,7 @@ check('unit none: a rule with no clock claims no due date; the app prefers the c
   const app = { date: '2026-07-31', endTime: '09:00' };
   assert.strictEqual(DeadlineUtils.computeRecordDueAtFromLaw(
     { recordDeadline: { count: null, unit: 'none' }, recordWithinHours: null }, app), null);
-  const appJs = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const appJs = appSource();
   assert.ok(appJs.includes('function recordDueFor(a)'));
   assert.ok(!appJs.includes('a.recordDueAt || computeRecordDueAt(a)'), 'stored 24h clocks must not outlive a corrected rule');
   assert.ok(appJs.includes("No state clock — record promptly"));
@@ -229,7 +230,7 @@ check('privateRecordDeadline replaces the clock for private applicators only', (
     privateRecordDeadline: { count: 14, unit: 'calendarDays' } };
   assert.strictEqual(DeadlineUtils.computeRecordDueAtFromLaw(noCommercialClock, app, 'commercial'), null);
   assert.ok(DeadlineUtils.computeRecordDueAtFromLaw(noCommercialClock, app, 'private'));
-  const appJs = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const appJs = appSource();
   assert.ok(appJs.includes('computeRecordDueAtFromLaw(law, app, applicatorClassFor(app))'));
 });
 
@@ -240,7 +241,7 @@ check('privateDutyException rides along with a none duty as a warning', () => {
     { date: '2026-07-01', crop: 'corn', fieldName: 'N', applicatorName: 'J', products: [{ productName: 'X', total: 1, reiHours: 12, phiDays: 1 }] },
     { stateLaws: { AL: law }, settings: { state: 'AL', applicatorClass: 'private' }, now: new Date('2026-07-02T00:00:00Z') });
   assert.ok(r.warnings.some(w => w === 'Exception: Class F and H products need records.'));
-  const appJs = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const appJs = appSource();
   assert.ok(appJs.includes('id="state-private-exception"'));
 });
 
@@ -287,7 +288,7 @@ check('privateDuty none means state matrix should not apply to private users', (
 });
 
 check('source files advertise v2.9.52 + deadline/license wiring', () => {
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert.ok(app.includes('v2.9.52'));
@@ -378,7 +379,7 @@ check('Inter is vendored locally for titles and body, not loaded from Google', (
 
 check('cab chrome: Home, Spray Log, Products, Fields, and More', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const i18n = require(path.join(root, 'i18n.js'));
   assert.ok(html.includes('id="tab-more"'), 'More button');
   assert.ok(html.includes('id="tab-more-menu"'), 'More menu');
@@ -411,7 +412,7 @@ check('cab chrome: Home, Spray Log, Products, Fields, and More', () => {
 
 check('cab UX: compact spray log, library-first lists, quieter home, calc copy, map default', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const i18n = require(path.join(root, 'i18n.js'));
   assert.ok(html.includes('id="log-mode-new"') && html.includes('id="log-mode-history"'));
   assert.ok(html.includes('id="log-new-pane"') && html.includes('id="log-history-pane"'));
@@ -468,7 +469,7 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const i18n = require(path.join(root, 'i18n.js'));
   assert.ok(app.includes('EPA lookup works in the online app, not in a USB or saved copy'), 'HTML/404 from /api/epa is not a JSON parse fail');
   assert.ok(app.includes('JSON.parse(text)'), 'EPA body is parsed as JSON only when it is JSON');
@@ -490,7 +491,7 @@ check('ship-ready: EPA host honesty, install timing, checkout note', () => {
 
 check('empty first-run home hides zeros until a field or log exists', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const i18n = require(path.join(root, 'i18n.js'));
   const first = html.indexOf('id="dash-first-run"');
   const working = html.indexOf('id="dash-working"');
@@ -535,7 +536,7 @@ check('empty first-run home hides zeros until a field or log exists', () => {
 });
 
 check('v2.7 features wired: forecast, photos, barcode, posting, import, i18n', () => {
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert.ok(app.includes('SprayWindow.scoreSprayHour'), 'forecast scoring');
   assert.ok(app.includes('function fetchSprayForecast'), 'forecast fetch');
@@ -581,7 +582,7 @@ check('v2.7 features wired: forecast, photos, barcode, posting, import, i18n', (
 });
 
 check('OCR label scanning wired: parser, lazy loader, both entry points, hardened CSP', () => {
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   assert.ok(fs.existsSync(path.join(root, 'label-ocr.js')));
@@ -637,7 +638,7 @@ check('OCR label scanning wired: parser, lazy loader, both entry points, hardene
 });
 
 check('cab scan / EPA ranking / mix chrome: whole-word ranker, state rules, add-to-mix', () => {
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const epa = fs.readFileSync(path.join(root, 'api/epa.js'), 'utf8');
   assert.ok(fs.existsSync(path.join(root, 'epa-rank.js')));
@@ -668,7 +669,7 @@ check('cab scan / EPA ranking / mix chrome: whole-word ranker, state rules, add-
 });
 
 check('mix-calc, csv-import, and field-map are extracted modules the shell calls', () => {
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   assert.ok(fs.existsSync(path.join(root, 'mix-calc.js')));
@@ -689,7 +690,7 @@ check('mix-calc, csv-import, and field-map are extracted modules the shell calls
 });
 
 check('code-pile hardening: trial merge, lock refresh, hidden Buy, interval fallback', () => {
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert.ok(fs.existsSync(path.join(root, 'backup-merge.js')));
   assert.ok(app.includes('BackupMerge.mergeMeta'), 'merge restore uses conservative trial/license meta');
@@ -721,7 +722,7 @@ check('effectiveIntervalValue falls back to the mix max when the record top-leve
 });
 
 check('audit hardening: EPA proxy + interval/deadline correctness', () => {
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const compliance = fs.readFileSync(path.join(root, 'compliance.js'), 'utf8');
   const camera = fs.readFileSync(path.join(root, 'camera-scan.js'), 'utf8');
   const epa = fs.readFileSync(path.join(root, 'api/epa.js'), 'utf8');
@@ -741,7 +742,7 @@ check('audit hardening: EPA proxy + interval/deadline correctness', () => {
 
 check('paid-only: user-facing copy does not call the product free', () => {
   const files = [
-    'index.html', 'app.js', 'manifest.json', 'README.md', 'PRICING.md', 'TERMS.md',
+    'index.html', ...appFiles(), 'manifest.json', 'README.md', 'PRICING.md', 'TERMS.md',
     'start.html', 'how.html', 'start.js', 'i18n.js', 'inspector.html', 'extension.html'
   ];
   files.forEach(name => {
@@ -757,7 +758,7 @@ check('paid-only: user-facing copy does not call the product free', () => {
 });
 
 check('user-facing copy does not display an app sale price', () => {
-  const files = ['index.html', 'app.js', 'i18n.js', 'README.md', 'PRICING.md', 'TERMS.md', 'license.js'];
+  const files = ['index.html', ...appFiles(), 'i18n.js', 'README.md', 'PRICING.md', 'TERMS.md', 'license.js'];
   files.forEach(name => {
     const text = fs.readFileSync(path.join(root, name), 'utf8');
     assert.ok(!text.includes('$29'), `${name} still names $29`);
@@ -767,7 +768,7 @@ check('user-facing copy does not display an app sale price', () => {
 });
 
 check('paid-only: whole app is gated by license/trial, no per-feature Pro gate', () => {
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   // The old per-feature upsell pattern must be fully removed, not half-migrated.
   assert.ok(!app.includes('function requirePro'), 'requirePro() removed');
@@ -811,7 +812,7 @@ check('paid-only: whole app is gated by license/trial, no per-feature Pro gate',
 });
 
 check('gather, inspector packet, crew, and kiosk stay optional and editable', () => {
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const farmFile = fs.readFileSync(path.join(root, 'farm-file.js'), 'utf8');
   assert.ok(html.includes('id="gather-dialog"'), 'gather receipt dialog');
@@ -851,7 +852,7 @@ check('gather, inspector packet, crew, and kiosk stay optional and editable', ()
 });
 
 check('lane-edge takes: mix label link, optional duration, last spray, customer memory, backup nudge', () => {
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const i18n = require(path.join(root, 'i18n.js'));
   assert.ok(html.includes('id="app-mix-order-hint"'));
@@ -892,7 +893,7 @@ check('lane-edge takes: mix label link, optional duration, last spray, customer 
 
 check('Celsius echo and tank-mix metric are display-only; records stay US', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   assert.ok(html.includes('id="app-temp-c"'), 'Celsius echo under the °F field');
   assert.ok(html.includes('Temperature (°F)'), 'log field stays Fahrenheit');
   assert.ok(app.includes("'Temperature (F)'"), 'CSV header stays F');
@@ -904,7 +905,7 @@ check('Celsius echo and tank-mix metric are display-only; records stay US', () =
 
 check('frontier UI: thumb tabs, inspector handoff, one home message, cab glare', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   const i18n = require(path.join(root, 'i18n.js'));
   assert.ok(/\.tab-nav-wrap \{[\s\S]*?position:\s*fixed/.test(css), 'tabs sit at the thumb');
@@ -916,9 +917,9 @@ check('frontier UI: thumb tabs, inspector handoff, one home message, cab glare',
   assert.ok(html.includes('id="set-cab-glare"') && app.includes('CAB_GLARE_KEY'));
   assert.ok(app.includes('function queueHomeMessages'));
   assert.ok(app.includes("['ios-storage-banner', 'dash-keep-book', 'backup-banner', 'send-nag-banner', 'gather-hint', 'install-banner']"));
-  assert.ok(app.includes('el.hidden = false;\n    queueHomeMessages();'),
+  assert.ok(/el\.hidden = false;\n\s*queueHomeMessages\(\);/.test(app),
     'install banner re-queues so Keep this book stays the one Home message');
-  assert.ok(app.includes("=== 'uncertain'\n          ? 'duty unverified'"),
+  assert.ok(/=== 'uncertain'\n\s*\? 'duty unverified'/.test(app),
     'researched privateDuty none must not show duty unverified');
   assert.ok(html.includes('id="log-more-record"') && html.includes('More for the record'));
   assert.ok(css.includes('body.cab-glare'));
@@ -935,7 +936,7 @@ check('frontier UI: thumb tabs, inspector handoff, one home message, cab glare',
 
 check('share plays: public page, generic CSV chooser, restore card, one-pagers', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');
   const inspector = fs.readFileSync(path.join(root, 'inspector.html'), 'utf8');
@@ -1005,7 +1006,7 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
 
 check('v2.9.30: cab A+ restage, compact mix, send-now, device role', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   const farmFile = fs.readFileSync(path.join(root, 'farm-file.js'), 'utf8');
   const store = fs.readFileSync(path.join(root, 'store.js'), 'utf8');
@@ -1061,7 +1062,7 @@ check('v2.9.30: cab A+ restage, compact mix, send-now, device role', () => {
 
 check('v2.9.34: sticky Next coach; empty mix row hides rate until a product is picked', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   assert.ok(html.includes('id="app-log-next"') && html.includes('id="app-log-next-btn"'));
   assert.ok(app.includes('function nextLogStep') && app.includes('function updateLogNext'));
@@ -1076,7 +1077,7 @@ check('v2.9.34: sticky Next coach; empty mix row hides rate until a product is p
 
 check('v2.9.35: one cab voice — Next, quiet save, inviting copy', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   const i18n = require(path.join(root, 'i18n.js'));
@@ -1109,7 +1110,7 @@ check('v2.9.35: one cab voice — Next, quiet save, inviting copy', () => {
 
 check('v2.9.37: mix search is first-class; scan is optional; map full screen', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   const i18n = require(path.join(root, 'i18n.js'));
   const scale = fs.readFileSync(path.join(root, 'farm-scale.js'), 'utf8');
@@ -1147,7 +1148,7 @@ check('v2.9.37: mix search is first-class; scan is optional; map full screen', (
 
 check('v2.9.33: mix Scan label is primary; picking a product does not collapse the rate', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   const mix = html.split('id="app-mix-scan-row"')[1].split('id="app-products"')[0];
   assert.ok(mix.indexOf('id="app-scan-label-btn"') < mix.indexOf('id="app-scan-jug"'),
@@ -1168,7 +1169,7 @@ check('v2.9.33: mix Scan label is primary; picking a product does not collapse t
 });
 
 check('v2.9.32: empty BUY_URL keeps logging open and does not start a trial', () => {
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');
   const lic = require(path.join(root, 'license.js'));
@@ -1208,7 +1209,7 @@ check('v2.9.31: owner-ops kit — mailbox checkout, delivery letter, owner-next'
 
 check('v2.9.38: class picker asks which record list; hints stay honest', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const start = fs.readFileSync(path.join(root, 'start.html'), 'utf8');
   const startJs = fs.readFileSync(path.join(root, 'start.js'), 'utf8');
   const i18n = require(path.join(root, 'i18n.js'));
@@ -1312,7 +1313,7 @@ check('v2.9.43: jug-style EPA fallback, shorter class copy, Inter titles', () =>
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const rank = fs.readFileSync(path.join(root, 'epa-rank.js'), 'utf8');
   const api = fs.readFileSync(path.join(root, 'api', 'epa.js'), 'utf8');
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const grower = 'I spray my crop on land I own or rent. Selling the harvest does not change this.';
   assert.ok(rank.includes('function fallbackQueries'));
   assert.ok(api.includes('fallbackQueries(query)'));
@@ -1373,14 +1374,14 @@ check('state-dataset blueprint specifies in-app keep-current without a live lega
 });
 
 check('v2.9.42: Next line names product-record boxes and jumps to that box in the product editor', () => {
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   const i18n = require(path.join(root, 'i18n.js'));
   const Compliance = require(path.join(root, 'compliance.js'));
 
   function literal(name) {
-    const m = app.match(new RegExp('const ' + name + ' = (\\{[\\s\\S]*?\\n  \\});'));
+    const m = app.match(new RegExp('const ' + name + ' = (\\{[\\s\\S]*?\\n\\});'));
     assert.ok(m, name + ' map is defined in app.js');
     return vm.runInNewContext('(' + m[1] + ')');
   }
@@ -1427,19 +1428,19 @@ check('v2.9.42: Next line names product-record boxes and jumps to that box in th
 });
 
 check('v2.9.46: tab-nav offset never pins the sticky Save bar under the nav', () => {
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   const nav = app.split('function initLogSectionNav()')[1].split("nav.addEventListener('click'")[0];
   assert.ok(nav.includes('new ResizeObserver(setNavOffset).observe(wrap)'), 're-measures when #app-shell un-hides');
   assert.ok(nav.includes("removeProperty('--tab-nav-h')"), 'a hidden nav falls back to the CSS default');
   assert.ok(!/setProperty\('--tab-nav-h',\s*\(wrap \? wrap\.offsetHeight/.test(nav), 'no unconditional write of a 0px height');
   assert.ok(/:root[^}]*--tab-nav-h:\s*4\.35rem/.test(css), 'CSS default exists for the fallback');
-  const chips = app.split('function showSaveMissingChips(result)')[1].split('\n  }\n')[0];
+  const chips = app.split('function showSaveMissingChips(result)')[1].split('\n}\n')[0];
   assert.ok(chips.includes('missingBox.scrollIntoView'), 'blocked save brings the Missing chips into view');
 });
 
 check('v2.9.46: product library opens the editor from a row and stacks as cards on phones', () => {
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   assert.ok(app.includes('<tr class="product-row" data-open-product="${p.id}">'));
   assert.ok(app.includes("if (e.target.closest('a, button, input, select, textarea')) return;"), 'Delete and links do not also open the editor');
@@ -1449,7 +1450,7 @@ check('v2.9.46: product library opens the editor from a row and stacks as cards 
 });
 
 check('v2.9.48: first blocked save leads with the one-step Next line, not a count', () => {
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const blocked = app.split("if (!asDraft && data.settings.strictCompliance !== false && !result.complete) {")[1].split('return;')[0];
   assert.ok(blocked.includes('const step = nextLogStep();'));
   assert.ok(blocked.indexOf('tr(step.text)') < blocked.indexOf('Strict mode: fill'), 'Next line first; count only as a fallback');
@@ -1458,7 +1459,7 @@ check('v2.9.48: first blocked save leads with the one-step Next line, not a coun
 });
 
 check('v2.9.48: privateDuty-none states still tell private applicators to keep records', () => {
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const i18n = fs.readFileSync(path.join(root, 'i18n.js'), 'utf8');
   const honesty = app.split('function datasetHonestyLine(law, cls) {')[1].split('return bits')[0];
   assert.ok(honesty.includes('Keep records anyway'), 'Home / Log honesty line');
@@ -1469,7 +1470,7 @@ check('v2.9.48: privateDuty-none states still tell private applicators to keep r
 });
 
 check('v2.9.48: iOS Safari tab gets the Safari-can-clear-this-book line ahead of every other Home message', () => {
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const i18n = fs.readFileSync(path.join(root, 'i18n.js'), 'utf8');
   const banner = html.split('id="ios-storage-banner"')[1].split('</div>\n    </div>')[0];
@@ -1485,7 +1486,7 @@ check('v2.9.48: iOS Safari tab gets the Safari-can-clear-this-book line ahead of
 });
 
 check('v2.9.48: WPS application-info print in Reports and beside the REI board', () => {
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   assert.ok(html.includes('id="report-wps-info"') && html.includes('id="dash-wps-info"'));
   assert.ok(html.indexOf('id="dash-wps-info"') - html.indexOf('id="dash-rei-board"') < 200, 'next to the REI board');
@@ -1496,7 +1497,7 @@ check('v2.9.48: WPS application-info print in Reports and beside the REI board',
 });
 
 check('v2.9.49: spray history stacks as cards on phones; Edit / Delete never scroll off', () => {
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   assert.ok(app.includes('<table class="record-table history-table">'));
   ['Date', 'Product', 'Field / crop', 'Area', 'Total applied', 'Applicator']
@@ -1506,7 +1507,7 @@ check('v2.9.49: spray history stacks as cards on phones; Edit / Delete never scr
 });
 
 check('v2.9.47: weather is NWS (public domain) — no Open-Meteo free tier in a paid app', () => {
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const spray = fs.readFileSync(path.join(root, 'spray-window.js'), 'utf8');
@@ -1522,7 +1523,7 @@ check('v2.9.47: weather is NWS (public domain) — no Open-Meteo free tier in a 
 });
 
 check('v2.9.47: satellite imagery is USGS public domain, not unauthenticated Esri', () => {
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   assert.ok(!app.includes('arcgisonline') && !html.includes('arcgisonline'));
@@ -1559,7 +1560,7 @@ check('v2.9.47: persistent credits for every data source and vendored license', 
 
 check('v2.9.51: guided first run and an EPA lookup that finds the jug', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const store = require(path.join(root, 'store.js'));
   assert.ok(app.includes('function guideFirstRunNext'), 'each first-run save hands over the next step');
   assert.ok(/const guided = idx < 0 && firstRunActive\(\);/.test(app), 'first field save is guided');
@@ -1580,7 +1581,7 @@ check('v2.9.51: guided first run and an EPA lookup that finds the jug', () => {
 
 check('v2.9.52: OMRI link-out, product-form EPA lookup, phone layout and plain copy', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
   const sw = require(path.join(root, 'spray-window.js'));
   assert.ok(app.includes('${omriLine(result, jugReg)}'), 'every EPA result carries an OMRI line');

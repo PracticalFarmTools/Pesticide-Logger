@@ -7,6 +7,7 @@ const path = require('path');
 const assert = require('assert');
 
 const root = path.join(__dirname, '..');
+const { appSource } = require(path.join(root, 'tools', 'app-source.js'));
 const i18n = require(path.join(root, 'i18n.js'));
 
 let failed = 0;
@@ -185,7 +186,7 @@ check('French is not a copy of Spanish (except identical cognates)', () => {
 });
 
 check('app.js applies any dictionary language, not only Spanish', () => {
-  const app = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+  const app = appSource();
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const i18nSrc = fs.readFileSync(path.join(root, 'i18n.js'), 'utf8');
   assert.ok(app.includes('function applyUiLanguage'), 'language boot helper');

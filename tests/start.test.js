@@ -117,7 +117,7 @@ check('owner-next is the go-live order; listing is not live; path-ahead is super
   const owner = fs.readFileSync(path.join(__dirname, '..', 'docs', 'owner-next.md'), 'utf8');
   const listing = fs.readFileSync(path.join(__dirname, '..', 'docs', 'suite-listing.md'), 'utf8');
   const pathAhead = fs.readFileSync(path.join(__dirname, '..', 'docs', 'path-ahead-blueprint.md'), 'utf8');
-  const app = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
+  const app = require(path.join(__dirname, '..', 'tools', 'app-source.js')).appSource();
   assert.ok(owner.includes('Rewrite the catalog card'));
   assert.ok(owner.includes('Do not set `BUY_URL`'));
   assert.ok(listing.includes('NOT LIVE') && listing.includes('Coming soon'));

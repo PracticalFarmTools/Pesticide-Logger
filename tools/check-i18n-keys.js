@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* Diagnostic: find i18n.js dictionary keys (English source strings) that no
- * longer match any live UI text in index.html or app.js.
+ * longer match any live UI text in index.html or the app scripts.
  *
  *   node tools/check-i18n-keys.js
  *
@@ -16,7 +16,7 @@ const path = require('path');
 
 const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-const appjs = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+const appjs = require(path.join(__dirname, 'app-source.js')).appSource();
 const storejs = fs.readFileSync(path.join(root, 'store.js'), 'utf8');
 const farmScale = fs.readFileSync(path.join(root, 'farm-scale.js'), 'utf8');
 const sprayWindow = fs.readFileSync(path.join(root, 'spray-window.js'), 'utf8');

@@ -174,6 +174,7 @@ node tests/backup-pack.test.js
 node tests/epa-proxy.test.js
 node tests/label-text.test.js
 node tests/label-proxy.test.js
+node tests/dev-server.test.js
 node tests/spray-window.test.js
 node tests/nws-weather.test.js
 node tests/store.test.js

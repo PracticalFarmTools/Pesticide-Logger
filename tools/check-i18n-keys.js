@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* Diagnostic: find i18n.js dictionary keys (English source strings) that no
- * longer match any live UI text in index.html or the app scripts.
+ * longer match any live UI text in the root pages and scripts.
  *
  *   node tools/check-i18n-keys.js
  *
@@ -16,13 +16,9 @@ const path = require('path');
 
 const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-const appjs = require(path.join(__dirname, 'app-source.js')).appSource();
-const storejs = fs.readFileSync(path.join(root, 'store.js'), 'utf8');
-const farmScale = fs.readFileSync(path.join(root, 'farm-scale.js'), 'utf8');
-const sprayWindow = fs.readFileSync(path.join(root, 'spray-window.js'), 'utf8');
-const farmFile = fs.readFileSync(path.join(root, 'farm-file.js'), 'utf8');
-const csvImport = fs.readFileSync(path.join(root, 'csv-import.js'), 'utf8');
-const laws = fs.readFileSync(path.join(root, 'state_pesticide_laws.js'), 'utf8');
+const pages = fs.readdirSync(root)
+  .filter((f) => /\.(html|js)$/.test(f) && f !== 'i18n.js')
+  .map((f) => fs.readFileSync(path.join(root, f), 'utf8'));
 const i18n = require(path.join(root, 'i18n.js'));
 
 function decodeEntities(s) {
@@ -50,7 +46,7 @@ while ((m = tagRe.exec(html))) {
 const attrRe = /(?:placeholder|aria-label)="([^"]*)"/g;
 while ((m = attrRe.exec(html))) uiTexts.add(decodeEntities(m[1]).trim());
 
-const combinedSource = decodeEntities(html + '\n' + appjs + '\n' + storejs + '\n' + farmScale + '\n' + sprayWindow + '\n' + farmFile + '\n' + csvImport + '\n' + laws);
+const combinedSource = decodeEntities(pages.join('\n')).replace(/\s+/g, ' ');
 
 const stale = keys.filter((k) => !uiTexts.has(k) && !combinedSource.includes(k));
 

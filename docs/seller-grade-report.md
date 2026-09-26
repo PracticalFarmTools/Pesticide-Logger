@@ -1,208 +1,130 @@
-# Grade report — Pesticide Logger v2.9.37
+# Grade report — Pesticide Logger v2.9.50
 
-_Audited 2026-08-19 against this branch (app **v2.9.37**). Laws edition **2026-08-18**. `--holes` is two rows: Arkansas and South Dakota private duty. Support mailbox `practicalfarmtools@gmail.com`. License public key is embedded._
+_Audited 2026-09-26 against `main` (app **v2.9.50**, laws edition **2026-09-24**). Evidence: 22/22 `tests/*.test.js`, browser smoke 10/10 at 400 px (iPhone UA), `bundle-state-laws.js --check` current, `--holes` = SD only, live `pesticide-logger.vercel.app` serves v2.9.50 with `/` → `start.html`, live `/api/epa` answers. Previous grade: v2.9.37 (A−), in git history._
 
-This pass grades the **product**. Catalog URL, DNS, and payment method are **out of scope** (owner storefront, not logger quality). Product UI, `PRICING.md`, and `docs/stay-in-lane-blueprint.md` still must not name other companies — this file is owner-facing and may.
-
-Previous full grade: v2.9.30 in git history. Cab invitation, mix search, and map full screen shipped v2.9.35–v2.9.37.
+Catalog URL, DNS and checkout are graded separately at the end (owner storefront, not logger quality). Product UI and `PRICING.md` still must not name other companies; this owner-facing file may.
 
 ---
 
 ## Verdict
 
-**Product: A−.** Legitimate as a **device-owned U.S. spray book**. Cab has an A path for the second spray (Duplicate last → confirm field → Save → restage). Search is first-class; Scan label is optional. Ready to take paper and last-season CSV from small and mid-sized farms that keep their own book. Not a farm OS, not a chemical encyclopedia, not custom-applicator CRM.
+**Product: A−, the strongest A− so far. Sellable once the owner go-live steps are done.**
 
-Not an A. An A would mean a grower who never met you can finish a **first** spray in the cab and hand an inspector a file the same morning without you on the phone. Next, mix search, and Duplicate-last get close. They do not make the first spray a 15-second ritual, and they must not — the label is still the law.
+Since v2.9.37 the two things that made it unsafe to charge money are gone:
+- third-party licensing (Open-Meteo, keyless Esri tiles), now public-domain NWS and USGS;
+- phone-layout defects that hid Save and Edit.
 
-**$10/month “upgrades”: do not bother.** The architecture is $0 overhead on purpose. A small SaaS spend buys cloud OCR, analytics, or a label API — things that look like progress and quietly wreck “nothing leaves this device.” Owner time (hasher, mailbox, honest listing when you go live) moves the remaining rows. A branded mailbox later is operations, not a logger feature. App Store wrapping is a second binary; revisit after people already use the PWA.
+The 50-state dataset went from "researched" to "re-read against primary text with quotes". It is now the best part of the product.
+
+It is still not an A. An A means a grower who never met you finishes a **first** spray and hands an inspector a file the same morning, with nothing in the app contradicting the label in their hand. The EPA transfer finding (#1 below) breaks that last clause for any jug whose registration moved. The first-run class card still reads like an argument with itself.
 
 ---
 
 ## Scorecard
 
-| Surface | v2.9.30 | v2.9.37 | Why this grade |
+| Surface | v2.9.37 | v2.9.50 | Why |
 |---|---|---|---|
-| Job fit / wedge | A | **A** | Grower’s book on the device. Who-this-is-for still refuses the custom-applicator job. |
-| Trust & legal honesty | A | **A** | Completion ≠ legal determination. EPA / OCR / CSV do not auto-fill rate, REI, or PHI. Holes named. Snapshot ≠ lock. GPS is not a field. |
-| 50-state dataset | A− | **A−** | 50 `researched`. 7 private `none` (AL, IA, KS, MI, MN, SC, VA). MS private `required`. 2 honest `uncertain` (AR, SD). Inventing those two would drop Trust. |
-| Inspector handoff | A− | **A−** | Signed inspect-v2 HTML. Incomplete on the row. Not an agency form (correct). |
-| Keep the book | A | **A** | Trial lapse still reviews, prints, exports. Restore card. Device role cab / shop / solo. Connected file is the send. |
-| File catch-up (the “sync”) | A− | **A−** | Send nag now. Keep-book Send / Connect / Download. Chrome can connect a file in a folder **they** already sync. Still a file, not a server — that is the A. A cloud of ours would be an F. |
-| Clerk tools paper cannot keep | A− | **A−** | Keep-until, incomplete/overdue, season binder, AND search. |
-| Cab daily logging | A− | **A−** (firmer) | Second spray still A: Duplicate last → confirm field → Save → restage. First spray is still a form. v2.9.35–37: one Next voice, missing-count wall off until blocked save, Find a product above Scan, Scan optional, map full screen. Not LedgerRow lock-and-done. |
-| Farm scale | A− | **A−** | Tiny farms stay quiet; 150 sites get search. Full-screen mapper helps draw. GPS is not a field. Tiles still need a signal. |
-| First-run / time-to-first-spray | A− | **A−** | Farm → field → jug. First spray is still “fill Where.” |
-| Switch from last season | A− | **A−** | Generic CSV, drafts, never invent REI/PHI. |
-| Third-party trust objects | A− | **A−** | Inspector + extension one-pagers. No named competitors in the product (correct). |
-| In-app + public language | A− | **A−** | es / fr / pt-BR on logger and public pages. Legal citations stay English. |
-| Offline PWA | A− | **A−** | App shell after first load. `how.html` has no service worker (correct). iPhone A2HS cannot become A without a second binary. |
-| Dataset keep-current | B | **B** | Hasher exists (`--summary`, `--watch-list`, `watch-citations.js`). Grade is B because a tool that is not run is still rot. |
-| Support identity | A− | **A−** | Mailbox + `how.html`. Grade is not A until someone answers. |
+| Job fit / wedge | A | **A** | Grower’s book on the device. Custom-applicator job still refused. |
+| Trust & legal honesty | A | **A** | Completion ≠ legal determination. EPA / OCR / CSV never auto-fill rate, REI or PHI. Snapshot ≠ lock. New: RUP-scope hint says “good practice” instead of pretending a GUP spray is statute-bound. |
+| 50-state dataset | A− | **A** | All 50 re-read 2026-09-24; every changed value quoted from official text. 16 private `none`, 15 `rupOnly`, 30 “no state clock” instead of invented 24 h, 8 real customer-copy clocks. One honest hole (SD). |
+| Third-party licensing | B (at v2.9.44 audit) | **A** | NWS + USGS public domain; credits in Settings and `start.html`; CSP matches. |
+| Inspector handoff | A− | **A−** | Signed inspect HTML, WPS 170.311 sheet, print. Three “for inspectors” buttons in a row are one too many. |
+| Keep the book | A | **A** | Trial lapse still prints and exports. iPhone Safari eviction warning ships. Restore card. |
+| File catch-up (“sync”) | A− | **A−** | Still a file in a folder they sync. Correct. |
+| Cab daily logging | A− | **A−** | Duplicate last → confirm field → Save. Refusal leads with one Next line. RUP scope removes over-asks for GUP sprays in 15 states. Maine-type states still show 8–9 chips on a first spray (that is the law). |
+| First-run / time-to-first-spray | A− | **B+** | Flow is fine; copy is not. The second class card’s body tells the reader not to pick it (“use a custom-applicator tool… Not ‘I sell produce’”). |
+| EPA lookup / product library | A− | **B+** | Live and fast. **Transferred registrations are not handled** (see #1). |
+| Farm scale | A− | **A−** | Unchanged. Fields table scrolls sideways at 400 px (Last spray column off-screen). |
+| Switch from last season | A− | **A−** | Generic CSV → drafts; never invents REI/PHI. |
+| Language | A− | **A−** | es / fr / pt-BR. 69 orphaned i18n keys (dead copy, hygiene only). |
+| Offline PWA | A− | **A−** | ~1.3 MB shell, `app.js` 87 KB gzip. iPhone A2HS limits unchanged. |
+| Test coverage | B+ | **A−** | 22 unit suites + 10-step browser smoke covering refusal → complete → packet → WPS sheet. |
+| Dataset keep-current | B | **B** | Hasher + `--diff` exist. Still B until someone runs it on a calendar. |
+| Support identity | A− | **A−** | Mailbox + `how.html`. Not A until someone answers. |
 
-**Weighted product grade (URL and payment excluded): A−.**
+**Weighted product grade: A−.** With #1 and #2 fixed: A− → A on everything the code controls.
 
 ---
 
-## Direct answers (this pass)
+## Findings (this pass)
 
-### Are private applicators even necessary if you sell to farmers?
+Ranked by damage to a paying grower.
 
-**Keep the class. Change the marketing word, not the matrix.**
+1. **EPA transfers look like a wrong answer.**
+   - What happens: registration **524-549** (Roundup PowerMAX, the smoke-test product) was transferred Bayer → Ruveon as **105211-60** on 2026-07-01. EPA’s `/ppls/524-549` now returns “RD 1617 HERBICIDE 105211-60”.
+   - The app ignores `transfer_history`:
+     - Typing the jug’s number shows an unrelated product name.
+     - “Verify all products” silently copies Ruveon’s company, status and label URL onto a library row that still says 524-549.
+   - Why it matters: the record should carry the number on the jug they sprayed. Existing stocks under the old number stay legal to use.
+   - Fix (in lane, no new data entry):
+     - Pass `previousRegNo`, `previousCompany` and `transferredDate` through `api/epa.js`.
+     - When the result’s number ≠ the typed or stored number, say “Transferred to Ruveon as 105211-60 on Jul 1, 2026 — record the number on your jug.”
+     - Never overwrite the stored number.
+     - Don’t let a different registration mark the row verified.
+2. **First-run class card copy.** Title “This state’s commercial record list”, then a bold paragraph that sends the reader elsewhere. Say who it is for in one line (“I hold a commercial license and spray for hire on farms”) and move the refusal to `start.html`.
+3. **Toasts cover the next control** for a few seconds: Save incomplete draft (refusal), the history card’s Edit (after save), and the Reports buttons. Anchor toasts above the save bar, or shorten them.
+4. **Fields table at phone width** scrolls sideways; Last spray is off-screen. Same card treatment as history/products (the U2 pattern, third table).
+5. **Sticky “Next:” banner** covers the section heading it points into. Offset the scroll target by the banner height.
+6. **Stray `smoke-failure.png` shipped in v2.9.50** (repo root, public on the deploy). Removed; the smoke now writes it inside `tools/smoke/` (gitignored).
+7. **Hygiene:** 69 orphaned i18n keys; `app.js` is 8.5k lines. Neither blocks a sale.
 
-In U.S. pesticide law, a farmer spraying their own (or rented) land **is** a private applicator. That is not a second customer next to “farmers.” It is the legal name for the buyer you already want. First-run already says **Private / grower**. Lead with grower / farmer in listing copy. Do not lead with “private applicators.”
+Not findings: 8–9 Missing chips on a Maine first spray (the rule asks for them); South Dakota private Needs review (honest hole); empty REI/PHI on CSV drafts.
 
-You still need the class **in the product** because the 50-state matrix reshapes the form:
+---
 
-| If you… | What breaks |
+## What changed since v2.9.37
+
+| Then | Now |
 |---|---|
-| Drop class and show one form | Iowa / Alabama / Minnesota private growers get commercial office boxes (customer, weather clocks) the statute does not put on them. Honesty dies. |
-| Drop class and show only the quiet private form | A farm with a commercial license (sprays a neighbor, or is a pesticide business) loses required boxes. |
-| Drop commercial entirely | You refuse a real subset of farms. The custom-applicator *job* is already refused on `start.html`. A commercial *license on a farm* is not that job. **Both** exists for the overlap. |
+| Open-Meteo weather, keyless Esri tiles | NWS weather, USGS imagery, public domain, credited |
+| Save bar / Missing chips under the tab nav; Edit clipped on phones | Fixed; smoke asserts both at 400 px |
+| “Strict mode: fill N fields” | One Next line + “Or save as incomplete draft” |
+| No WPS display help | WPS 170.311 application sheet (EN/ES) from the record |
+| iPhone Safari could evict the book silently | Eviction warning leads Home on Safari tabs |
+| 7 private `none`, 2 `uncertain`, 24 h fallbacks shown as law | 16 `none`, 15 `rupOnly`, 1 `uncertain`; “no state clock — record promptly” |
+| No browser test | 10-step smoke |
 
-Census (edition 2026-08-18): 41 states `privateDuty: required`, 7 `none`, 2 `uncertain` (AR, SD). Those numbers are why private is not optional chrome. Default stays `private`. Leave commercial and both in Settings. Do not build a second product for custom applicators (clients, e-sign, lock-after-submit).
+---
 
-### Own-cloud backup for “sync” without hosting their book?
+## Landscape (unchanged, one line each)
 
-**Yes as a folder they already pay for. No as Sign in with Google/Dropbox. You already shipped the honest version.**
+- **Paper / state PDF:** the pool you can take. You win on second spray, clocks, search, packet, keep-until.
+- **Extension apps (e.g. ISU):** don’t fight them. Win on states and classes they don’t reshape for.
+- **Custom-applicator apps (SprayLedger, LedgerRow, AgTerra):** refuse.
+- **Farm OS (Croptracker):** refuse.
+- **Chemical databases / mix apps (CDMS, Agrian, Mix Tank):** refuse. The label is the law.
+- **State e-file (CA PUR, NY PRL):** refuse.
 
-Chrome / Edge: **Connect automatic backup file** (`showSaveFilePicker`). Every save rewrites that file. If they save it inside iCloud Drive, Dropbox, Google Drive for desktop, Syncthing, or a NAS folder, **their** provider copies the file. This device also reads it when the file is newer and merges (newest `updatedAt` wins; the other version stays in History). Copy already says we do not store the book.
+The dataset re-read is now a real moat. No small competitor quotes 50 state who-clauses.
 
-That is syncing while remaining honest: the bytes never hit a Practical Farm Tools server. The live book stays IndexedDB on the device. The file is a copy they can see.
+---
 
-| Do | Do not |
+## Go-live (owner, not graded above)
+
+| Item | State on 2026-09-26 |
 |---|---|
-| Tell them: pick a file in a folder your computer already backs up | OAuth to Drive/Dropbox/iCloud. The consent screen would say *your app* wants their files. That looks like you take the book, even if you never store it. |
-| Keep Share / AirDrop / Files on iPhone (Safari has no file picker) | Promise iPhone “connect a Dropbox account.” You cannot match Chrome’s handle there without an SDK. |
-| Keep merge + History when two devices write the same file | Background account sync, “we restored your cloud copy,” seats |
-| Name *their* provider as the copier, not us | Suite copy that says the logger “Syncs when connected” as if we were the cloud |
-
-Do not spend $10/month on a Drive API. The remaining nick is **prominence and iPhone honesty**, not a missing vendor. Cab/shop Send a file is still the ritual when they cannot use Chrome’s picker.
-
----
-
-## Competitive landscape (jobs)
-
-Product copy still speaks in jobs. This section names the other products so the owner can see what share is actually available. Prices move; this file does not keep a named price table.
-
-### 1. Paper / state PDF / visor notebook — **primary competitor, and the one you can beat**
-
-**Who wins today:** most small and mid-sized private applicators (farmers).
-
-**What they win on:** $0, inspector familiarity, no install, no “the phone died.”
-
-**What we take:** a second spray that is confirm-field-and-Save, a packet that *reads* like a log sheet, incomplete that looks incomplete, keep-until year, clocks, search, a file to the shop. Paper cannot do those.
-
-**What we must not do:** 50 official PDF clones, agency letterhead, or lock-after-save to “feel professional.”
-
-**Share available:** this is still the only large pool in reach.
-
-### 2. Free extension / land-grant apps — **beachhead threat, not a target**
-
-**Representative:** Iowa State’s Pesticide and Field Records II. Iowa-registered list, satellite map, email/print. Free. Later added account sync between Apple devices.
-
-**Do not pick a fight with extension.** Forward *their* growers a state link and the inspector one-pager. Win on states and class the free app does not reshape for. Iowa private is quiet here because 45.26 does not name private applicators — that honesty is why an extension agent can forward you.
-
-### 3. Custom-applicator / contractor spray apps — **refuse**
-
-SprayLedger, LedgerRow, AgTerra SprayLogger: other people’s farms, signatures, as-applied maps, a cloud the office can see.
-
-`start.html` already says use a custom-applicator tool. Taking that job is how a farmer-built logger stops being farmer-built.
-
-### 4. Farm-OS spray modules — **refuse**
-
-Croptracker’s spray module: USDA/GAP formats, chemical inventory, auto-calculated tank mixes, PHI/REI maps, cloud seats.
-
-**What we take:** the grower who will not put the spray book in that cloud, and the inspector who will not make an account. They are not the Croptracker customer. Adding inventory will not make them one.
-
-### 5. Last-season spreadsheet / generic spray CSV — **take, if drafts stay honest**
-
-Generic import, mapped columns, drafts, never invent REI/PHI. Incomplete is expected.
-
-### 6. Chemical encyclopedias / mix databases — **refuse**
-
-CDMS / Agrian (TELUS Agronomy) indemnified labels. Mix Tank (Precision Laboratories) is mixing order plus a log. Auto-filling REI/PHI from a vendor file ends “the label is the law.”
-
-### 7. State e-file — **refuse**
-
-CA PUR, NY PRL, and the rest are a different product. A packet is not a filing.
-
-**Can you wreck the companies that are not farmers?** No. And you should not try. They sell maps, seats, inventory, signatures, and a cloud. You sell a book that stays on the farm. Stay-in-lane is the product.
-
----
-
-## What changed since the v2.9.30 A− pass
-
-| Then (v2.9.30) | Now (v2.9.37) |
-|---|---|
-| Cab: Duplicate last / restage / Stamp weather | Same path, plus one Next voice, quiet save, Find a product, Scan optional, map full screen |
-| Mix: Scan was easy to read as the way in | Search is first-class; library matches (name / EPA # / AI); Scan is secondary OCR |
-| Mapper: 440px map in the Fields tab | Full screen / Exit; thumb bar restores |
-| Catch-up | Unchanged on purpose: file, not a server |
-| Dataset | Still AR and SD private holes. Correct. |
-
----
-
-## Where honesty still costs conversions
-
-These are features, not bugs.
-
-- **Arkansas / South Dakota private** cannot get a Complete badge.
-- **Operational 24-hour fallbacks** are labeled.
-- **CSV lands as drafts.** Empty REI/PHI is a feature.
-- **Catch-up is a file.** Newest `updatedAt` wins; the other version is in History.
-- **EPA lookup** is host-dependent. Scan / type always work.
-- **iPhone** is Share → Add to Home Screen. Safari, not a missing store listing.
-- **Connected backup** is Chrome/Edge. iPhone uses Send / Files, not a Drive login.
-
----
-
-## What would still make a careful grower refuse
-
-Ranked by whether they already liked the pitch. Listing and checkout omitted this pass.
-
-1. **Nobody answers `practicalfarmtools@gmail.com`** when a restore fails. `how.html` covers the common path; a dead mailbox still kills the careful spouse.
-2. **Private signing key lost.** This build can verify keys; it cannot issue new ones without the gitignored private key.
-3. **iPhone never installed.** Browser tab, zoomed, no offline shell.
-4. **CSV “failed”** because they skipped the mapping line.
-5. **Arkansas / South Dakota private Needs review** with every box filled.
-6. **Iowa private grower already has the free ISU app** and does not need a second book unless they also farm another state or want the inspector HTML.
-7. **Two devices write the same Dropbox file at once** and they expected Google Docs-style merge. History keeps the loser; teach that, do not add a server.
-
-None of these are “add inventory” or “add OAuth.”
-
----
-
-## What was not graded
-
-- Live catalog card, DNS, `BUY_URL`, merchant of record, tax, sale price in the UI.
-- Whether the owner has backed up `keys/license-signing-key.json`.
-- Whether anyone has answered the mailbox.
-
-Owner decisions left in place: public `start.html` in front of the logger; generic CSV; no named companies in the product; no named price table; $0-overhead static host; paid-only one product; 30-day full trial then license is for **new sprays** only; no Mix Tank database, e-sign, CRM, cloud seats, e-file, or auto-filled REI/PHI. No Drive/Dropbox OAuth.
+| Catalog card on practicalfarmtools.com | **Still says “Pesticide Logger & Database … Syncs when connected.”** That is a false claim next to a product whose honesty is the pitch. Apply `docs/catalog-card.patch` before anything else. |
+| `pesticide.practicalfarmtools.com` | 404 (correct until Lemon Squeezy exists) |
+| Lemon Squeezy product + `BUY_URL` | Not set (correct until the steps in `docs/owner-next.md`) |
+| Signing-key offline backup | Unknown. Without it no new keys can ever be issued. |
+| MIT license vs paid key (G3) | Still MIT. Anyone may legally fork and drop the key check. Decide before charging. |
+| Public terms/privacy page | Terms live inside the app (`<details>`) and `TERMS.md`. Lemon Squeezy covers buyer terms; a one-screen privacy note on `start.html` (“records never leave this device”) is cheap. |
+| Mailbox + hasher | Unknown. These two move Support and Keep-current to A−/A. |
 
 ---
 
 ## Blueprint — what is left
 
-Do not spend another month on cab chrome. Do not rent a cloud OCR. Do not add Sign in with Google.
+Code (in lane, small):
+1. EPA transfer handling (#1). Add a unit test with the real 524-549 → 105211-60 payload shape.
+2. First-run class card copy (#2).
+3. Toast placement, Fields table cards, Next-banner offset (#3–#5).
+4. Delete orphaned i18n keys after a hand check.
 
-### Owner (not this repo)
+Owner:
+1. Catalog card patch, then the owner-next order (Lemon Squeezy → hostname → `BUY_URL`).
+2. Key backup (two places). Decide MIT vs source-available.
+3. Hasher on a calendar; send the SD letter.
+4. Answer the mailbox the same week.
 
-1. Run the hasher on a calendar you will look at (`node tools/watch-citations.js`; still a human `--stamp`s). That is keep-current B → A−.
-2. Answer the mailbox the same week. How-to first. Never “we restored your cloud copy.”
-3. Offline backup of the private signing key. Two places, not one laptop.
-4. When you choose to go live: honest catalog card (`docs/suite-listing.md`), then hostname, then merchant, then `BUY_URL`. Order in `docs/owner-next.md`.
-
-### Product (in lane, optional, later)
-
-5. Make Connect automatic backup louder: “Put this file in iCloud Drive / Dropbox / Google Drive on this computer. Their app copies it. We never see it.” Do not add OAuth.
-6. Leave AR and SD frozen until that URL’s hash changes and a who-clause appears.
-7. Stop. If growers still ask for maps-as-the-product, inventory, e-file, or e-sign, that is a different product.
-
-### How to know it worked
-
-- Cab second spray is Duplicate last → confirm field → Save.
-- Shop has the file because the phone sent it, or because a folder **they** sync rewrote it — not because a server stored it.
-- Iowa / Alabama private Home is quiet; Mississippi private names Chapter 09; Arkansas private still says Needs review.
-- Someone answers email when restore fails.
-- No new surface that needs an account.
+Do not: add OAuth, a farm-data server, inventory, e-sign, e-file, or auto-filled REI/PHI.

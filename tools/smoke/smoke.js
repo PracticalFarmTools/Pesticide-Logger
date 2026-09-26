@@ -217,7 +217,7 @@ async function fillFocused(page) {
     console.log('FAIL');
     console.error(e.message);
     if (errors.length) console.error('page errors:', errors.join(' | '));
-    await page.screenshot({ path: 'smoke-failure.png' }).catch(() => {});
+    await page.screenshot({ path: path.join(__dirname, 'smoke-failure.png') }).catch(() => {});
     process.exitCode = 1;
   } finally {
     await browser.close();

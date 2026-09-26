@@ -71,7 +71,7 @@ function showUpdateBanner() {
   el.hidden = false;
 }
 
-const APP_VERSION = 'v2.9.53';
+const APP_VERSION = 'v2.9.54';
 let updateStatusHideTimer = 0;
 
 function setUpdateStatus(msg, opts) {

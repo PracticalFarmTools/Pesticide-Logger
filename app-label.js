@@ -48,10 +48,17 @@ async function fetchLabelIntervals(reg) {
   return body;
 }
 
+function labelDate(text) {
+  const t = Date.parse(text || '');
+  return Number.isFinite(t)
+    ? new Date(t).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+    : (text || '—');
+}
+
 function labelSentenceHtml(s, newestFile) {
   const href = labelPdfUrl(LABEL_PDF_BASE + s.file, s.page);
   const older = newestFile && s.file !== newestFile && s.date
-    ? ` <span class="label-finder-older">${esc(tr('from the {date} label').replace('{date}', s.date))}</span>`
+    ? ` <span class="label-finder-older">${esc(tr('from the {date} label').replace('{date}', labelDate(s.date)))}</span>`
     : '';
   const page = href
     ? ` <a href="${esc(href)}" target="_blank" rel="noopener">${esc(tr('p. {n}').replace('{n}', s.page))} ↗</a>`
@@ -85,7 +92,7 @@ function renderLabelFinder(host, body, crop) {
   const parts = [];
   if (first) {
     const from = tr('From EPA’s label accepted {date} ({n} pages).')
-      .replace('{date}', first.date || '—').replace('{n}', first.pages || '?');
+      .replace('{date}', labelDate(first.date)).replace('{n}', first.pages || '?');
     parts.push(`<p class="label-finder-status" role="status">${esc(from)} <strong>${esc(tr('Read the sentence, then type the number yourself. The label is the law.'))}</strong></p>`);
     if (first.scanned) {
       parts.push(`<p class="label-finder-warn">${esc(tr('This label file is a scanned image, so its words cannot be searched. Open it and read REI and PHI.'))}</p>`);

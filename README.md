@@ -1,4 +1,4 @@
-# Pesticide Logger v2.9.55
+# Pesticide Logger v2.9.56
 
 **Offline-first pesticide record keeping for real farms.**
 Part of the [Practical Farm Tools](https://github.com/PracticalFarmTools) suite. Licensed software with
@@ -34,7 +34,7 @@ application at the repository root.
 | **Tank-mix spray log** | One application can contain any number of products. Dashboard uses the mix's longest REI and PHI. |
 | **Post–Part 110 framing** | USDA rescinded 7 CFR Part 110 (effective July 11, 2025). State pesticide acts, labels, and WPS control. |
 | **REI / PHI tracking** | Label REI/PHI countdown for worker re-entry and harvest timing. |
-| **Tank mix calculator** | Area, tank size, spray volume, multi-product rates, printable W-A-L-E worksheet. |
+| **Tank mix calculator** | Pick a field (or type the area), tank size, spray volume, multi-product rates, printable W-A-L-E worksheet. Opened from the log, it starts on the field you picked. |
 | **Find REI & PHI in the label** | On the Vercel host, `/api/label` reads EPA's newest label PDF for the jug number and shows its REI and PHI sentences with page links, narrowed by crop. It never fills the boxes — the grower reads and types. |
 | **Live EPA product lookup** | Official EPA PPLS identity/status import when the host provides `/api/epa`. Name search ranks whole-word matches first so short queries are not trapped by a longer substring. USB, GitHub Pages, and local servers have no lookup — type the jug number or Scan label. Rates, REI, and PHI stay label-entered. |
 | **Field mapper** | Satellite corner tapping on USGS aerial imagery (The National Map and NAIP Plus — public domain; full-resolution NAIP loads at close zoom and on high-DPI screens) with geodesic acreage; boundaries stay local. **Add corners** is a toggle so dragging a handle or the amber forecast pin does not drop extra points. Tap a field line to insert a corner; tap the first corner to close. Saved rings show last spray / REI / PHI. **Fit all fields** when two or more rings exist. First open zooms toward the farm state, not CONUS. |

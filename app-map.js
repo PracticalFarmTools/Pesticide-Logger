@@ -254,6 +254,18 @@ function fitAllFields() {
   fieldMap.fitBounds(bounds, { padding: [30, 30] });
 }
 
+function showFieldOnMap(id) {
+  const f = getField(id);
+  setFieldsMode('map');
+  const card = $('#fields-map-pane .map-card');
+  if (card && window.matchMedia('(max-width: 600px)').matches) card.scrollIntoView({ block: 'start' });
+  if (!fieldMap || !f || !f.boundary || f.boundary.length < 3) return;
+  setTimeout(() => {
+    fieldMap.invalidateSize();
+    fieldMap.fitBounds(L.latLngBounds(f.boundary), { padding: [30, 30], maxZoom: 18 });
+  }, 80);
+}
+
 function syncFitAllButton() {
   const btn = $('#map-fit-all');
   if (!btn) return;

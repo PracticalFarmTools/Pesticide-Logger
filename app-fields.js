@@ -196,6 +196,7 @@ function renderFields() {
           <td data-label="${esc(tr('Location'))}">${esc(f.location || '—')}</td>
           <td class="field-last-spray" data-label="${esc(tr('Last spray'))}">${fieldLastSprayHtml(f)}</td>
           <td class="row-actions">
+            ${f.boundary && f.boundary.length >= 3 ? `<button class="icon-btn" data-map-field="${f.id}">Map</button>` : ''}
             <button class="icon-btn" data-edit-field="${f.id}">Edit</button>
             <button class="icon-btn danger" data-del-field="${f.id}">Delete</button>
           </td>
@@ -205,6 +206,8 @@ function renderFields() {
       <tbody>${rows}</tbody></table></div>`;
   host.querySelectorAll('[data-edit-field]').forEach(b =>
     b.addEventListener('click', () => editField(b.dataset.editField)));
+  host.querySelectorAll('[data-map-field]').forEach(b =>
+    b.addEventListener('click', () => showFieldOnMap(b.dataset.mapField)));
   host.querySelectorAll('[data-del-field]').forEach(b =>
     b.addEventListener('click', () => deleteField(b.dataset.delField)));
 }
@@ -219,5 +222,5 @@ function fieldLastSprayHtml(f) {
   if (rei && hoursLeft(rei) > 0) {
     badge = ` <span class="badge-pill badge-rei">REI ${esc(fmtCountdown(hoursLeft(rei)))}</span>`;
   }
-  return `${esc(last.date)}${badge}`;
+  return `${esc(fmtDate(last.date))}${badge}`;
 }

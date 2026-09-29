@@ -23,8 +23,33 @@ function refreshCalcProductOptions() {
   });
 }
 
+function refreshCalcFieldOptions() {
+  const sel = $('#calc-field');
+  if (!sel) return;
+  const keep = sel.value;
+  const fields = data.fields.slice().sort((a, b) => a.name.localeCompare(b.name));
+  sel.innerHTML = `<option value="">${esc(tr('— Type the area —'))}</option>` +
+    fields.map(f => `<option value="${f.id}">${esc(f.name)}${f.size != null ? ' · ' + fmtNum(f.size) + ' ' + (f.sizeUnit === 'sqft' ? 'sq ft' : 'ac') : ''}</option>`).join('');
+  if ($('#calc-field-row')) $('#calc-field-row').hidden = !fields.length;
+  const fromLog = $('#app-field') && getField($('#app-field').value);
+  if (fromLog && !keep) {
+    sel.value = fromLog.id;
+    applyCalcField();
+  } else if (getField(keep)) {
+    sel.value = keep;
+  }
+}
+
+function applyCalcField() {
+  const f = getField($('#calc-field').value);
+  if (!f || f.size == null) return;
+  $('#calc-area').value = f.size;
+  $('#calc-area-unit').value = f.sizeUnit === 'sqft' ? 'sqft' : 'acres';
+}
+
 function initCalculator() {
   $('#calc-add-product').addEventListener('click', () => addCalcRow());
+  if ($('#calc-field')) $('#calc-field').addEventListener('change', applyCalcField);
   $('#calc-run').addEventListener('click', runCalc);
   $('#calc-print').addEventListener('click', printCalcWorksheet);
   if ($('#calc-copy-to-log')) $('#calc-copy-to-log').addEventListener('click', copyCalcOntoLog);

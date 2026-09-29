@@ -25,6 +25,22 @@ function reportApps() {
 
 function updateReportCount() {
   $('#report-count').textContent = plural(reportApps().length, '1 record matches the current filter.', '{n} records match the current filter.');
+  syncReportRangeChips();
+}
+
+function reportRangeDates(kind) {
+  const y = now().getFullYear();
+  if (kind === 'season') return { from: y + '-01-01', to: y + '-12-31' };
+  if (kind === 'last') return { from: (y - 1) + '-01-01', to: (y - 1) + '-12-31' };
+  return { from: '', to: '' };
+}
+
+function syncReportRangeChips() {
+  const from = $('#report-from').value, to = $('#report-to').value;
+  $$('[data-report-range]').forEach(chip => {
+    const r = reportRangeDates(chip.dataset.reportRange);
+    chip.setAttribute('aria-pressed', r.from === from && r.to === to ? 'true' : 'false');
+  });
 }
 
 function initReports() {
@@ -35,6 +51,12 @@ function initReports() {
       el.addEventListener('input', updateReportCount);
       el.addEventListener('change', updateReportCount);
     });
+  $$('[data-report-range]').forEach(chip => chip.addEventListener('click', () => {
+    const r = reportRangeDates(chip.dataset.reportRange);
+    $('#report-from').value = r.from;
+    $('#report-to').value = r.to;
+    updateReportCount();
+  }));
   ['#report-field-filter', '#report-product-filter'].forEach((sel) => {
     const el = $(sel);
     if (!el) return;

@@ -1963,9 +1963,11 @@ function renderDueBanner() {
   if (!items.length) { host.hidden = true; host.innerHTML = ''; return; }
   const top = items.slice(0, 4).map(it => {
     const dueDay = it.due.slice(0, 10);
-    return `<li><strong>${esc(it.label)}</strong> — ${esc(appProductsLabel(it.a))} · ${esc(it.a.fieldName || 'field')} · due ${fmtDate(dueDay)}${it.overdue ? ' (overdue)' : ''}</li>`;
+    return `<li><button type="button" class="text-btn due-open" data-due-edit="${esc(it.a.id)}"><strong>${esc(it.label)}</strong> — ${esc(appProductsLabel(it.a))} · ${esc(it.a.fieldName || 'field')}</button> · due ${fmtDate(dueDay)}${it.overdue ? ' (overdue)' : ''}</li>`;
   }).join('');
   host.hidden = false;
   host.innerHTML = `<strong>Completion &amp; customer-copy clocks</strong><ul>${top}</ul>
       <p class="card-hint">${countOf(items.length, 'open item')}. Deadlines are guidance from state rules — confirm with your regulator.</p>`;
+  host.querySelectorAll('[data-due-edit]').forEach(btn =>
+    btn.addEventListener('click', () => editApp(btn.dataset.dueEdit)));
 }

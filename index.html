@@ -230,15 +230,6 @@
       <button type="button" class="btn btn-secondary btn-xl" id="dash-inspect-packet">Hand to inspector</button>
     </div>
 
-    <div id="dash-clerk" class="card" hidden>
-      <h3 class="card-title">The book paper cannot keep</h3>
-      <p id="dash-clerk-body"></p>
-      <div class="form-actions">
-        <button type="button" class="btn btn-secondary" id="dash-clerk-incomplete" data-goto="log" data-scroll-to="app-history-card" data-incomplete-filter="1">Finish incomplete</button>
-        <button type="button" class="btn btn-secondary" id="dash-clerk-binder">Print season binder</button>
-      </div>
-    </div>
-
     <div class="stat-grid">
       <button type="button" class="stat-card" data-goto="log" data-scroll-to="app-history-card">
         <span class="stat-value" id="stat-season-apps">0</span>
@@ -310,18 +301,29 @@
     <div class="card">
       <div class="card-title-row">
         <h3 class="card-title">Recent sprays</h3>
-        <button class="btn btn-primary btn-sm" data-goto="log" id="dash-new-app">+ Log a spray</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-goto="log" data-scroll-to="app-history-card" id="dash-all-sprays">All sprays</button>
       </div>
       <div id="recent-apps"></div>
     </div>
+    <div id="dash-clerk" class="card" hidden>
+      <h3 class="card-title">Record keeping</h3>
+      <p id="dash-clerk-body"></p>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" id="dash-clerk-incomplete" data-goto="log" data-scroll-to="app-history-card" data-incomplete-filter="1">Finish incomplete</button>
+        <button type="button" class="btn btn-secondary" id="dash-clerk-binder">Print season binder</button>
+      </div>
+    </div>
+
 
     <div class="card compliance-card" id="compliance-card" hidden>
-      <h3 class="card-title">Your state’s rules</h3>
+      <div class="card-title-row">
+        <h3 class="card-title">Your state’s rules</h3>
+        <button type="button" class="btn btn-secondary btn-sm" data-goto="settings" data-scroll-to="state-info-card" id="dash-open-state-rules">Open state rules</button>
+      </div>
       <p id="compliance-summary"></p>
       <p class="card-hint" id="compliance-fresh"></p>
       <p class="card-hint" id="compliance-honesty"></p>
       <p class="card-hint" id="compliance-citation"></p>
-      <button type="button" class="btn btn-secondary" data-goto="settings" id="dash-open-state-rules">Open state rules</button>
     </div>
     </div>
   </section>
@@ -339,15 +341,17 @@
       <div class="cab-toolbar">
         <button type="button" class="btn btn-primary" id="app-spray-now">Spray now</button>
         <button type="button" class="btn btn-secondary" id="app-duplicate-last">Duplicate last spray</button>
-        <button type="button" class="text-btn" id="app-stamp-weather">Stamp weather</button>
-        <button type="button" class="text-btn" data-goto="calculator" id="app-open-tank-mix">Tank mix</button>
+        <span class="cab-links">
+          <button type="button" class="text-btn" id="app-stamp-weather">Stamp weather</button>
+          <button type="button" class="text-btn" data-goto="calculator" id="app-open-tank-mix">Tank mix</button>
+          <button type="button" class="text-btn" data-goto="settings" data-scroll-to="state-info-card" id="app-open-state-rules" hidden>State rules</button>
+        </span>
         <label class="checkbox-label cab-toggle">
           <input type="checkbox" id="app-show-recommended">
           Show extra boxes
         </label>
       </div>
       <p class="card-hint" id="app-form-shape-summary"></p>
-      <button type="button" class="text-btn" data-goto="settings" data-scroll-to="state-info-card" id="app-open-state-rules" hidden>View state rules</button>
       <p class="card-hint field-req-legend"><span class="req-star">*</span> always required · <span class="state-req-tag">state</span> required for your state · no tag = optional</p>
       <nav class="log-section-nav" id="log-section-nav" aria-label="Jump to spray log section">
         <button type="button" class="log-section-nav-item" data-jump-section="where">Where</button>
@@ -365,7 +369,6 @@
         <button type="button" class="log-next-go" id="app-log-next-btn">Next: pick the field</button>
         <span class="log-next-rest" id="app-log-next-rest"></span>
       </p>
-      <div id="app-due-banner" class="due-banner" hidden></div>
       <div id="app-compliance-status" class="compliance-status" hidden></div>
 
       <form id="app-form" class="form-grid" autocomplete="off">
@@ -445,9 +448,9 @@
             <label class="text-btn camera-file-btn" id="app-scan-jug-photo" hidden>Scan barcode
               <input type="file" id="app-scan-jug-input" accept="image/*" capture="environment" aria-label="Scan jug barcode">
             </label>
-            <button type="button" class="btn btn-secondary" id="app-add-product">+ Add another product to this mix</button>
           </div>
           <div id="app-products"></div>
+          <button type="button" class="btn btn-secondary" id="app-add-product">+ Add another product to this mix</button>
           <div id="app-product-info" class="product-info-strip" hidden></div>
           <button type="button" class="text-btn" id="app-last-on-field" hidden></button>
         </fieldset>
@@ -654,12 +657,12 @@
         <div id="app-interval-preview" class="interval-preview" hidden></div>
         <div id="app-missing-fields" class="missing-fields" hidden></div>
 
-        <div class="form-actions sticky-actions">
+        <p class="app-save-note"><span class="app-save-quiet" id="app-save-draft-hint">Save a draft anytime.</span>
+          <span class="app-save-honesty" id="app-save-honesty">The label is the law.</span></p>
+        <div class="form-actions sticky-actions app-save-bar">
           <button type="submit" class="btn btn-primary btn-lg" id="app-save-btn">Save this spray</button>
           <button type="button" class="btn btn-secondary btn-lg" id="app-save-draft-btn">Save incomplete draft</button>
           <button type="button" class="btn btn-secondary" id="app-cancel-btn" hidden>Cancel edit</button>
-          <p class="app-save-quiet" id="app-save-draft-hint">Save a draft anytime.</p>
-          <p class="app-save-honesty" id="app-save-honesty">The label is the law.</p>
         </div>
       </form>
     </div>
@@ -668,7 +671,7 @@
     <div id="log-history-pane" hidden>
     <div class="card" id="app-history-card">
       <div class="card-title-row">
-        <h3 class="card-title">Application history</h3>
+        <h3 class="card-title">Past sprays</h3>
         <div class="history-controls">
           <input type="search" id="log-search" class="search-input" placeholder="Product, field, EPA #…">
           <button type="button" class="btn btn-secondary btn-sm" id="log-filter-incomplete" hidden>Incomplete</button>
@@ -679,6 +682,7 @@
           </label>
         </div>
       </div>
+      <div id="app-due-banner" class="due-banner" hidden></div>
       <div id="app-list"></div>
     </div>
     </div>
@@ -688,22 +692,28 @@
   <section id="tab-calculator" class="tab-panel" role="tabpanel">
     <div class="card">
       <h3 class="card-title">Tank mix calculator</h3>
-      <p class="card-hint">Enter your sprayer setup and the area to treat. Add one or more products and get exact amounts per tank, total product needed, and a fill-order worksheet.</p>
-      <p class="card-hint">US label units. After Calculate, metric equivalents appear as a reference — they are not stored on spray records.</p>
+      <p class="card-hint">Amounts per tank, total product, and a fill-order worksheet. US label units; metric appears after Calculate as a reference only.</p>
 
       <div class="form-grid">
         <fieldset>
           <legend>Sprayer &amp; area</legend>
-          <div class="form-row form-row-3">
-            <label>Area to treat
-              <input type="number" id="calc-area" step="any" min="0" value="1">
-            </label>
-            <label>Area unit
-              <select id="calc-area-unit">
-                <option value="acres">acres</option>
-                <option value="sqft">sq ft</option>
-                <option value="1000sqft">1,000 sq ft</option>
+          <div class="form-row" id="calc-field-row" hidden>
+            <label>Field
+              <select id="calc-field">
+                <option value="">— Type the area —</option>
               </select>
+            </label>
+          </div>
+          <div class="form-row form-row-2">
+            <label>Area to treat
+              <div class="input-pair">
+                <input type="number" id="calc-area" step="any" min="0" value="1" aria-label="Area to treat">
+                <select id="calc-area-unit" aria-label="Area unit">
+                  <option value="acres">acres</option>
+                  <option value="sqft">sq ft</option>
+                  <option value="1000sqft">1,000 sq ft</option>
+                </select>
+              </div>
             </label>
             <label>Tank size (gal)
               <input type="number" id="calc-tank" step="any" min="0" value="25">
@@ -741,14 +751,14 @@
   <!-- ============ PRODUCTS ============ -->
   <section id="tab-products" class="tab-panel" role="tabpanel">
     <div class="log-mode-toggle" role="group" aria-label="Products">
-      <button type="button" class="btn btn-primary btn-lg" id="products-mode-library" aria-pressed="true">Product library</button>
-      <button type="button" class="btn btn-secondary btn-lg" id="products-mode-add" aria-pressed="false">Add a product</button>
+      <button type="button" class="btn btn-primary btn-lg" id="products-mode-library" aria-pressed="true">Library</button>
+      <button type="button" class="btn btn-secondary btn-lg" id="products-mode-add" aria-pressed="false">Add product</button>
       <button type="button" class="btn btn-secondary btn-lg" id="products-mode-epa" aria-pressed="false">EPA lookup</button>
     </div>
     <div id="products-library-pane">
     <div class="card">
       <div class="card-title-row">
-        <h3 class="card-title">Product library</h3>
+        <h3 class="card-title visually-hidden">Product library</h3>
         <input type="search" id="product-search" class="search-input" placeholder="Search products…" hidden autocomplete="off">
       </div>
       <div id="product-list"></div>
@@ -905,14 +915,14 @@
   <!-- ============ FIELDS ============ -->
   <section id="tab-fields" class="tab-panel" role="tabpanel">
     <div class="log-mode-toggle" role="group" aria-label="Fields">
-      <button type="button" class="btn btn-primary btn-lg" id="fields-mode-list" aria-pressed="true">Fields &amp; sites</button>
-      <button type="button" class="btn btn-secondary btn-lg" id="fields-mode-add" aria-pressed="false">Add a field</button>
-      <button type="button" class="btn btn-secondary btn-lg" id="fields-mode-map" aria-pressed="false">Field mapper</button>
+      <button type="button" class="btn btn-primary btn-lg" id="fields-mode-list" aria-pressed="true">All fields</button>
+      <button type="button" class="btn btn-secondary btn-lg" id="fields-mode-add" aria-pressed="false">Add field</button>
+      <button type="button" class="btn btn-secondary btn-lg" id="fields-mode-map" aria-pressed="false">Map</button>
     </div>
     <div id="fields-list-pane">
     <div class="card">
       <div class="card-title-row">
-        <h3 class="card-title">Fields &amp; sites</h3>
+        <h3 class="card-title visually-hidden">Fields &amp; sites</h3>
         <input type="search" id="field-search" class="search-input" placeholder="Search fields…" hidden autocomplete="off">
       </div>
       <div id="field-group-chips" class="group-chips" hidden></div>
@@ -1021,8 +1031,13 @@
     <div class="card">
       <h3 class="card-title">Reports &amp; export</h3>
       <p class="card-hint">Keep records for the retention period your state requires (shown in Settings). USDA’s 7 CFR Part 110 federal private-applicator RUP rule was rescinded July 11, 2025. Everything below runs on this device — nothing is uploaded anywhere.</p>
+      <div class="report-range" role="group" aria-label="Date range">
+        <button type="button" class="chip" data-report-range="season" aria-pressed="false">This season</button>
+        <button type="button" class="chip" data-report-range="last" aria-pressed="false">Last season</button>
+        <button type="button" class="chip" data-report-range="all" aria-pressed="true">All dates</button>
+      </div>
       <div class="form-grid">
-        <div class="form-row form-row-4">
+        <div class="form-row form-row-4 report-filters">
           <label>From
             <input type="date" id="report-from">
           </label>
@@ -1038,13 +1053,14 @@
             <select id="report-product"><option value="">All products</option></select>
           </label>
         </div>
-        <div class="form-row">
+        <div class="form-row report-deleted-row">
           <label class="checkbox-label">
             <input type="checkbox" id="report-include-deleted">
             Include soft-deleted records (audit / retention)
           </label>
         </div>
       </div>
+      <p class="report-count" id="report-count"></p>
       <div class="report-action-group">
         <p class="report-action-group-label">For inspectors</p>
         <div class="form-actions report-actions">
@@ -1076,7 +1092,6 @@
         <p class="card-hint">Formats the same records for organic certifiers and GAP / buyer audits: a
           materials list with OMRI status plus a per-crop application log with PHI clearance dates.</p>
       </div>
-      <p class="card-hint" id="report-count"></p>
     </div>
 
     <div class="card" id="gather-card">
@@ -1112,9 +1127,20 @@
 
   <!-- ============ SETTINGS ============ -->
   <section id="tab-settings" class="tab-panel" role="tabpanel">
-    <div class="card">
+    <nav class="settings-jump" aria-label="Jump to a settings section">
+      <button type="button" class="chip" data-scroll-to="settings-farm-card">Farm</button>
+      <button type="button" class="chip" data-scroll-to="state-info-card" id="settings-jump-state" hidden>State rules</button>
+      <button type="button" class="chip" data-scroll-to="crew-card">Crew</button>
+      <button type="button" class="chip" data-scroll-to="inspector-view-card">Inspector view</button>
+      <button type="button" class="chip" data-scroll-to="reminders-card">Reminders</button>
+      <button type="button" class="chip" data-scroll-to="license-card">License</button>
+      <button type="button" class="chip" data-scroll-to="data-card">Data</button>
+      <button type="button" class="chip" data-scroll-to="about-card">About</button>
+    </nav>
+    <div class="card" id="settings-farm-card">
       <h3 class="card-title">Farm &amp; applicator</h3>
       <form id="settings-form" class="form-grid" autocomplete="off">
+        <p class="settings-group">Farm</p>
         <div class="form-row form-row-3">
           <label>Farm name
             <input type="text" id="set-farm" placeholder="e.g. Spear Farm">
@@ -1151,6 +1177,7 @@
           <p class="card-hint class-pick-cite" id="set-class-pick-cite" hidden></p>
           <p class="card-hint class-pick-foot class-pick-refuse">Spraying other people’s farms for hire? Use a custom-applicator tool. This is the grower’s book.</p>
         </div>
+        <p class="settings-group">Applicator</p>
         <div class="form-row form-row-2">
           <label>Default applicator name
             <input type="text" id="set-applicator">
@@ -1166,21 +1193,26 @@
           <label>Default permit / operator ID
             <input type="text" id="set-permit" placeholder="CA operator ID, AZ permit, etc.">
           </label>
-          <label>Company license #
-            <input type="text" id="set-company-license">
-          </label>
         </div>
-        <div class="form-row">
-          <label>Business name &amp; address
-            <input type="text" id="set-business" placeholder="Used for commercial applicator records">
-          </label>
-        </div>
+        <details class="state-details" id="set-commercial-details">
+          <summary>Company license and business name</summary>
+          <div class="form-row form-row-2">
+            <label>Company license #
+              <input type="text" id="set-company-license">
+            </label>
+            <label>Business name &amp; address
+              <input type="text" id="set-business" placeholder="Used for commercial applicator records">
+            </label>
+          </div>
+        </details>
+        <p class="settings-group">On save</p>
         <div class="form-row">
           <label class="checkbox-label">
             <input type="checkbox" id="set-strict-compliance" checked>
             Strict compliance mode — block incomplete state-required fields on save (drafts still allowed)
           </label>
         </div>
+        <p class="settings-group">Language &amp; this device</p>
         <div class="form-row form-row-3">
           <label>Interface language
             <select id="set-language">
@@ -1192,6 +1224,12 @@
           </label>
         </div>
         <p class="card-hint">Menus, buttons, and messages. The printed REI posting sheet stays English and Spanish (DO NOT ENTER / NO ENTRE).</p>
+        <div class="form-row">
+          <label class="checkbox-label">
+            <input type="checkbox" id="set-cab-glare">
+            Cab glare — larger type for sun and the tractor
+          </label>
+        </div>
         <div class="form-row form-row-3">
           <label>This device’s nickname
             <input type="text" id="set-device-label" placeholder="e.g. Cab iPhone" autocomplete="off">
@@ -1256,7 +1294,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="reminders-card">
       <h3 class="card-title">Reminders</h3>
       <label class="checkbox-label">
         <input type="checkbox" id="set-reminders">
@@ -1264,10 +1302,6 @@
       </label>
       <p class="card-hint" id="reminders-hint">Notifications fire while the app is open — there is no server,
         so nothing runs when it’s closed. The dashboard clocks are always authoritative.</p>
-      <label class="checkbox-label">
-        <input type="checkbox" id="set-cab-glare">
-        Cab glare — larger type for sun and the tractor
-      </label>
     </div>
 
     <div class="card" id="license-card">
@@ -1286,7 +1320,7 @@
         Keys are verified on this device with a cryptographic signature — nothing is sent anywhere.</p>
     </div>
 
-    <div class="card">
+    <div class="card" id="data-card">
       <h3 class="card-title">Data</h3>
       <p class="card-hint">All data is stored locally in this browser (<span id="storage-usage">…</span>). No account and no server. Records stay on this device.</p>
       <p class="card-hint">To send logs to another device or bring them in, use Reports. This button downloads a backup file.</p>
@@ -1296,7 +1330,7 @@
       </div>
     </div>
 
-    <div class="card about-card">
+    <div class="card about-card" id="about-card">
       <h3 class="card-title">About</h3>
       <p>Pesticide Logger — part of the <strong>Practical Farm Tools</strong> suite. A licensed, offline-first tool built for farms of every size; your farm records stay on this device.</p>
       <p class="card-hint"><a href="start.html">What this is</a> · <a href="inspector.html">For inspectors</a> · <a href="extension.html">For extension</a> · <a href="how.html">How-to</a></p>

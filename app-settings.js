@@ -37,6 +37,13 @@ function fillStateSelect(sel, selected) {
   if (selected) sel.value = selected;
 }
 
+function syncCommercialDetails() {
+  const box = $('#set-commercial-details');
+  if (!box) return;
+  const cls = $('#set-applicator-class').value || 'private';
+  if (cls !== 'private' || $('#set-company-license').value || $('#set-business').value) box.open = true;
+}
+
 function initSettings() {
   fillStateSelect($('#set-state'), data.settings.state);
 
@@ -51,6 +58,11 @@ function initSettings() {
   $('#set-permit').value = s.permitNumber || '';
   $('#set-company-license').value = s.companyLicense || '';
   $('#set-business').value = s.businessNameAddress || '';
+  syncCommercialDetails();
+  if ($('#set-applicator-class') && !$('#set-applicator-class').dataset.commercialBound) {
+    $('#set-applicator-class').dataset.commercialBound = '1';
+    $('#set-applicator-class').addEventListener('change', syncCommercialDetails);
+  }
   $('#set-strict-compliance').checked = s.strictCompliance !== false;
   if ($('#set-language')) $('#set-language').value = s.language || '';
   if ($('#set-device-label')) $('#set-device-label').value = s.deviceLabel || '';
@@ -339,6 +351,9 @@ function reshapeAppFormForState() {
     const tag = document.getElementById('req-' + name);
     if (tag) tag.hidden = false;
   });
+  $$('#app-form label').forEach(label => {
+    label.querySelectorAll(':scope > .state-req-tag:not([hidden]) ~ .state-req-tag').forEach(t => { t.hidden = true; });
+  });
 
   $$('#app-form [data-log-field]').forEach(label => {
     const name = label.getAttribute('data-log-field');
@@ -439,6 +454,7 @@ function renderStateInfo() {
   const card = $('#state-info-card');
   if (!code || typeof STATE_LAWS === 'undefined' || !STATE_LAWS[code]) {
     card.hidden = true;
+    if ($('#settings-jump-state')) $('#settings-jump-state').hidden = true;
     return;
   }
   const law = STATE_LAWS[code];
@@ -451,6 +467,7 @@ function renderStateInfo() {
     : law.verification === 'partial' ? 'Partially verified — confirm private/commercial nuances'
     : 'Limited verification — confirm with your agency';
   card.hidden = false;
+  if ($('#settings-jump-state')) $('#settings-jump-state').hidden = false;
   $('#state-info').innerHTML = `
       <div class="state-info-block">
         <p><strong>${esc(law.agency)}</strong></p>
@@ -469,8 +486,10 @@ function renderStateInfo() {
         ? `<p class="state-law-stale" id="state-law-stale">This state’s rules were last checked more than 12 months ago. Open the citation and compare. Reload the app if a newer edition has shipped. Source status does not change because a calendar moved.</p>`
         : ''}
         ${applyMatrix
-        ? `<p>Applicable required fields for ${esc(STATE_NAMES[code])} as a <strong>${esc(applicatorClassFor(ctx))}</strong> applicator (${req.length}):</p>
-        <ul>${req.map(r => `<li>${esc(r.label)}</li>`).join('')}</ul>
+        ? `<details class="state-details">
+          <summary>Applicable required fields for ${esc(STATE_NAMES[code])} as a <strong>${esc(applicatorClassFor(ctx))}</strong> applicator (${req.length})</summary>
+          <ul>${req.map(r => `<li>${esc(r.label)}</li>`).join('')}</ul>
+        </details>
         ${applicatorClassFor(ctx) === 'private' && Compliance.privateDutyScopeFor(law) === 'rupOnly'
         ? `<p class="card-hint" id="state-rup-scope">${esc(tr('Private duty in this state covers restricted-use pesticides. General-use sprays keep the core boxes.'))}</p>`
         : ''}`
@@ -479,7 +498,7 @@ function renderStateInfo() {
         : `<p class="card-hint">This state's sources indicate no private-applicator recordkeeping duty — still follow the label and keep the operational core (date, crop, field, applicator, amount).</p>
         ${law.privateDutyException ? `<p class="card-hint state-law-stale" id="state-private-exception"><strong>${esc(tr('Exception:'))}</strong> ${esc(law.privateDutyException)}</p>` : ''}
         <p class="card-hint keep-anyway">Keep records anyway: some labels (dicamba, for one) require them, organic certifiers want 5 years, WPS farms keep application info 2 years, and a record is your defense in a drift complaint.</p>`}
-        ${law.notes ? `<p class="card-hint">${esc(law.notes)}</p>` : ''}
+        ${law.notes ? `<details class="state-details"><summary>${esc(tr('Research notes'))}</summary><p class="card-hint">${esc(law.notes)}</p></details>` : ''}
         <p class="card-hint">Completion means required fields are filled for this context — not a legal determination.
         This app does not file electronic reports (CA PUR, NY PRL, etc.) and does not replace WPS employer duties.</p>
       </div>`;

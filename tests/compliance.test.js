@@ -287,14 +287,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.56 + deadline/license wiring', () => {
+check('source files advertise v2.9.57 + deadline/license wiring', () => {
   const app = appSource();
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.56'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.56'));
+  assert.ok(app.includes('v2.9.57'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.57'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-09-24'"));
-  assert.ok(!html.includes('v2.9.56'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.57'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -463,8 +463,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.56'"));
-  assert.ok(!html.includes('v2.9.56'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.57'"));
+  assert.ok(!html.includes('v2.9.57'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -952,7 +952,7 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(start.includes('grower’s book') || start.includes("grower's book"));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(start), 'public page does not name other products');
   assert.ok(!start.includes('Names on those buttons'));
-  assert.ok(!start.includes('v2.9.56'), 'public page keeps version out of copy');
+  assert.ok(!start.includes('v2.9.57'), 'public page keeps version out of copy');
   assert.ok(start.includes('id="start-copy-link"'));
   assert.ok(start.includes('mailto:practicalfarmtools@gmail.com') && inspector.includes('mailto:practicalfarmtools@gmail.com') &&
     extension.includes('mailto:practicalfarmtools@gmail.com'), 'public human on all three pages');
@@ -1349,10 +1349,10 @@ check('v2.9.44: first-run points to Settings for This book covers both', () => {
   assert.ok(i18n.t('pt-BR', hint).includes('Este livro cobre os dois'));
 });
 
-check('schema default version is 5', () => {
+check('schema default version is 6 (shed, plans, sites arrays)', () => {
   const store = fs.readFileSync(path.join(root, 'store.js'), 'utf8');
-  assert.ok(/version:\s*5/.test(store));
-  assert.ok(store.includes('d.version = 5'));
+  assert.ok(/version:\s*6/.test(store));
+  assert.ok(store.includes('d.version = 6'));
 });
 
 check('state-dataset blueprint specifies in-app keep-current without a live legal feed', () => {
@@ -1664,6 +1664,21 @@ check('v2.9.56: every tab reads the same — one-row modes, one save row, one ph
   assert.ok(reports.includes('id="report-count"'), 'match count sits with the filters');
   assert.ok(html.includes('class="settings-jump"') && html.includes('id="set-commercial-details"'), 'settings jump bar; commercial boxes fold');
   assert.ok(app.includes('<details class="state-details">'), 'long state rule lists fold');
+});
+
+check('v2.9.57: shed, season limits, work orders, site pins, PHI sheet, wall screen', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
+  const sync = fs.readFileSync(path.join(root, 'app-sync.js'), 'utf8');
+  ['shed.js', 'season-limits.js', 'work-order.js', 'app-shed.js', 'app-plans.js'].forEach((f) => {
+    assert.ok(fs.existsSync(path.join(root, f)), f);
+    assert.ok(html.includes(f) && sw.includes('./' + f), f + ' is loaded and cached');
+  });
+  assert.ok(html.includes('id="products-shed-pane"') && !html.includes('id="products-mode-shed"'), 'shed is a view, not a fourth segment');
+  assert.ok(html.includes('id="prod-limits"') && html.includes('id="plan-strip"'));
+  assert.ok(html.includes('id="map-site-pin"') && html.includes('id="report-phi-sheet"') && html.includes('id="wall-screen"'));
+  assert.ok(sync.includes('WorkOrder.isWorkOrder') && sync.includes('function reiBoardRows'));
+  assert.ok(!fs.readFileSync(path.join(root, 'compliance.js'), 'utf8').includes('seasonLimits'));
 });
 
 if (failed) {

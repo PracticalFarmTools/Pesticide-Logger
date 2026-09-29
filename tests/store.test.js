@@ -38,7 +38,7 @@ check('migrate lifts a v2 single-product record into products[]', () => {
     products: [],
     fields: []
   });
-  assert.strictEqual(d.version, 5);
+  assert.strictEqual(d.version, 6);
   assert.strictEqual(d.applications[0].products[0].productName, 'Glyphosate');
   assert.strictEqual(d.applications[0].complianceState, 'IA');
   assert.strictEqual(d.applications[0].draft, false);
@@ -194,7 +194,7 @@ check('default and migrate include empty deviceRole', () => {
 
 check('hydrateFromCacheRaw recovers corrupt JSON as empty farm', () => {
   const d = FarmStore.hydrateFromCacheRaw('{not json');
-  assert.strictEqual(d.version, 5);
+  assert.strictEqual(d.version, 6);
   assert.deepStrictEqual(d.applications, []);
 });
 

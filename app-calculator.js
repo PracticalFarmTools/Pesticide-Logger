@@ -211,7 +211,42 @@ function runCalc() {
 
   $('#calc-print').hidden = false;
   if ($('#calc-copy-to-log')) $('#calc-copy-to-log').hidden = false;
+  if ($('#calc-save-plan')) $('#calc-save-plan').hidden = false;
   lastCalc = { area, areaUnit, acres, tank, gpa, gpaUnit, totalSpray, fullTanks, partialGal, products };
+}
+
+function fillLogFromMix(mix, extra) {
+  extra = extra || {};
+  mix = mix || {};
+  setLogMode('new');
+  resetAppForm();
+  if (extra.fieldId && $('#app-field') && getField(extra.fieldId)) {
+    $('#app-field').value = extra.fieldId;
+    onAppFieldChange();
+  }
+  if ($('#app-area') && mix.area) $('#app-area').value = mix.area;
+  if ($('#app-area-unit')) $('#app-area-unit').value = mix.areaUnit || 'acres';
+  if ($('#app-carrier') && mix.totalSpray) $('#app-carrier').value = mix.totalSpray;
+  if ($('#app-carrier-unit')) $('#app-carrier-unit').value = 'gal';
+  if (extra.crop && $('#app-crop')) $('#app-crop').value = extra.crop;
+  if ($('#app-plan-id')) $('#app-plan-id').value = extra.planId || '';
+  $('#app-products').innerHTML = '';
+  (mix.products || []).forEach((pr) => {
+    addAppProductRow({
+      productId: pr.productId,
+      rate: pr.rate,
+      rateUnit: pr.rateUnit || pr.unit,
+      total: pr.total,
+      totalUnit: pr.totalUnit || pr.unit
+    });
+  });
+  if (!$('#app-products').children.length) addAppProductRow();
+  updateMixInfo();
+  updateIntervalPreview();
+  updateCompliancePreview();
+  updateSeasonHints();
+  updateSiteWarning();
+  showTab('log');
 }
 
 function copyCalcOntoLog() {
@@ -226,26 +261,19 @@ function copyCalcOntoLog() {
     toast('Add those products to your library before copying onto the spray log');
     return;
   }
-  setLogMode('new');
-  resetAppForm();
-  if ($('#app-area')) $('#app-area').value = lastCalc.area || '';
-  if ($('#app-area-unit')) $('#app-area-unit').value = lastCalc.areaUnit || 'acres';
-  if ($('#app-carrier') && lastCalc.totalSpray) $('#app-carrier').value = lastCalc.totalSpray;
-  if ($('#app-carrier-unit')) $('#app-carrier-unit').value = 'gal';
-  $('#app-products').innerHTML = '';
-  library.forEach(pr => {
-    addAppProductRow({
+  const fieldId = ($('#calc-field') && $('#calc-field').value) || '';
+  fillLogFromMix({
+    area: lastCalc.area,
+    areaUnit: lastCalc.areaUnit,
+    totalSpray: lastCalc.totalSpray,
+    products: library.map(pr => ({
       productId: pr.productId,
       rate: pr.rate,
       rateUnit: pr.unit,
       total: pr.total,
       totalUnit: pr.unit
-    });
-  });
-  updateMixInfo();
-  updateIntervalPreview();
-  updateCompliancePreview();
-  showTab('log');
+    }))
+  }, { fieldId: fieldId && getField(fieldId) ? fieldId : '' });
   let msg = `Copied ${countOf(library.length, 'product')} onto the spray log`;
   if (skipped) msg += `. Skipped ${countOf(skipped, 'mix row')} not in your library`;
   toast(msg);

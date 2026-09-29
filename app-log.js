@@ -48,14 +48,16 @@ function setTogglePressed(btn, on) {
 }
 
 function setProductsMode(mode) {
-  const next = mode === 'add' || mode === 'epa' ? mode : 'library';
+  const next = mode === 'add' || mode === 'epa' || mode === 'shed' ? mode : 'library';
   const lib = $('#products-library-pane');
   const add = $('#products-add-pane');
   const epa = $('#products-epa-pane');
+  const shed = $('#products-shed-pane');
   if (lib) lib.hidden = next !== 'library';
   if (add) add.hidden = next !== 'add';
   if (epa) epa.hidden = next !== 'epa';
-  setTogglePressed($('#products-mode-library'), next === 'library');
+  if (shed) shed.hidden = next !== 'shed';
+  setTogglePressed($('#products-mode-library'), next === 'library' || next === 'shed');
   setTogglePressed($('#products-mode-add'), next === 'add');
   setTogglePressed($('#products-mode-epa'), next === 'epa');
 }
@@ -254,6 +256,9 @@ function initAppForm() {
   renderFieldOptions();
 
   $('#app-field').addEventListener('change', onAppFieldChange);
+  ['#app-date', '#app-wind-dir', '#app-area', '#app-area-unit'].forEach((sel) => {
+    if ($(sel)) $(sel).addEventListener('change', () => { updateSeasonHints(); updateSiteWarning(); });
+  });
   ['#app-area', '#app-area-unit', '#app-carrier']
     .forEach(sel => $(sel).addEventListener('input', computeMixTotals));
   ['#app-date', '#app-start', '#app-end']
@@ -567,7 +572,8 @@ function addAppProductRow(pre) {
           </label>
           <button type="button" class="btn btn-secondary apr-remove">Remove product</button>
         </div>
-      </div>`;
+      </div>
+      <p class="card-hint apr-season" hidden></p>`;
   $('#app-products').appendChild(row);
 
   row.querySelector('.apr-product').addEventListener('change', () => onRowProductChange(row));
@@ -784,6 +790,7 @@ function onRowProductChange(row) {
   updateMixEmptyHint();
   numberMixRows();
   syncMixRowPresence(row);
+  updateSeasonHints();
 }
 
 // Total for one mix row: label rate × area, or × carrier for water-based rates.
@@ -820,6 +827,7 @@ function showCalcNote() {
 
 function computeMixTotals() {
   $$('#app-products .app-product-row').forEach(computeRowTotal);
+  updateSeasonHints();
 }
 
 // Effective product intervals from mix rows (overrides beat library defaults).
@@ -929,7 +937,7 @@ function onAppFieldChange() {
     return;
   }
   const f = getField($('#app-field').value);
-  if (!f) { updateLastOnFieldHint(); return; }
+  if (!f) { updateLastOnFieldHint(); updateSeasonHints(); updateSiteWarning(); return; }
   if (f.size != null) {
     $('#app-area').value = f.size;
     $('#app-area-unit').value = f.sizeUnit === 'sqft' ? 'sqft' : 'acres';
@@ -939,6 +947,7 @@ function onAppFieldChange() {
   computeMixTotals();
   updateCompliancePreview();
   updateLastOnFieldHint();
+  updateSiteWarning();
 }
 
 function round3(n) { return Math.round(n * 1000) / 1000; }
@@ -1125,6 +1134,108 @@ function appProductsLabel(a) {
   return (a.products || []).map(p => p.productName).join(' + ') || '—';
 }
 
+
+function seasonContext() {
+  const field = getField($('#app-field') && $('#app-field').value);
+  return {
+    fieldId: field ? field.id : '',
+    fieldName: field ? field.name : '',
+    seasonStart: (data.settings && data.settings.seasonStart) || '01-01',
+    date: ($('#app-date') && $('#app-date').value) || todayISO(),
+    excludeId: ($('#app-id') && $('#app-id').value) || ''
+  };
+}
+
+function updateSeasonHints() {
+  if (typeof SeasonLimits === 'undefined') return;
+  const ctx = seasonContext();
+  $$('#app-products .apr-season').forEach((el) => {
+    const row = el.closest('.app-product-row');
+    const p = row && getProduct(row.querySelector('.apr-product').value);
+    const hint = p ? SeasonLimits.hintFor(data, p, ctx) : '';
+    el.hidden = !hint;
+    el.textContent = hint;
+  });
+}
+
+function seasonWarningsForApp(app) {
+  if (typeof SeasonLimits === 'undefined') return [];
+  const out = [];
+  const seen = new Set();
+  (app.products || []).forEach((row) => {
+    const p = getProduct(row.productId) ||
+      data.products.find((x) => x.epaRegNo && row.epaRegNo && x.epaRegNo === row.epaRegNo);
+    if (!p || seen.has(p.id)) return;
+    seen.add(p.id);
+    out.push.apply(out, SeasonLimits.warningsFor(data, p, {
+      fieldId: app.fieldId,
+      fieldName: app.fieldName,
+      seasonStart: (data.settings && data.settings.seasonStart) || '01-01',
+      date: app.date,
+      excludeId: app.id,
+      incoming: app
+    }));
+  });
+  return out;
+}
+
+function markPlanDone(app) {
+  const plan = (data.plans || []).find((p) => p.id === app.planId);
+  if (!plan || plan.deletedAt || plan.status === 'cancelled' || plan.doneAppId) return;
+  plan.doneAppId = app.id;
+  plan.doneAt = app.updatedAt;
+  plan.updatedAt = app.updatedAt;
+  if (typeof renderPlanStrip === 'function') renderPlanStrip();
+  if (typeof renderCalcPlans === 'function') renderCalcPlans();
+}
+
+function siteMilesLabel(miles) {
+  if (Number(miles) === 0.25) return '¼';
+  if (Number(miles) === 1) return '1';
+  return '½';
+}
+
+function updateSiteWarning() {
+  const el = $('#app-site-warn');
+  if (!el || typeof FieldMap === 'undefined' || !FieldMap.downwindSites) return;
+  const field = getField($('#app-field') && $('#app-field').value);
+  const sites = (data.sites || []).filter((s) => s && !s.deletedAt);
+  const pin = field && field.weatherLat != null && field.weatherLng != null
+    ? { lat: Number(field.weatherLat), lng: Number(field.weatherLng) } : null;
+  const ring = field && field.boundary && field.boundary.length >= 3 ? field.boundary : null;
+  if (!field || !sites.length || (!ring && !pin)) {
+    el.hidden = true;
+    el.innerHTML = '';
+    return;
+  }
+  const miles = Number(data.settings && data.settings.siteAlertMiles) || 0.5;
+  const hits = FieldMap.downwindSites({
+    ring, pin, sites, windFrom: $('#app-wind-dir') && $('#app-wind-dir').value, miles
+  });
+  if (!hits.length) { el.hidden = true; el.innerHTML = ''; return; }
+  const calm = !hits[0].downwindKnown;
+  el.hidden = false;
+  el.innerHTML = hits.map((h) => {
+    const where = h.inside ? 'inside field' : (h.compass + ', ' + h.miles + ' mi');
+    const text = (h.site.name || siteKindLabel(h.site.kind)) + ' — ' + where;
+    const prefix = calm ? 'Within ' + siteMilesLabel(miles) + ' mi (wind not recorded): ' : 'Downwind within ' + siteMilesLabel(miles) + ' mi: ';
+    return `<span>${esc(prefix + text)}</span> <button type="button" class="text-btn" data-site-note="${esc(text)}">Add to note</button>`;
+  }).join('<br>');
+  el.querySelectorAll('[data-site-note]').forEach((b) => b.addEventListener('click', () => addSiteNote(b.dataset.siteNote)));
+}
+
+function siteKindLabel(kind) {
+  return ({ bees: 'Beehives', organic: 'Organic neighbor', well: 'Well', water: 'Water', school: 'School', residence: 'Residence' })[kind] || 'Site';
+}
+
+function addSiteNote(text) {
+  const input = $('#app-sensitive-sites');
+  if (!input || !text) return;
+  const cur = input.value.trim();
+  if (cur.toLowerCase().includes(text.toLowerCase())) return;
+  input.value = cur ? cur + '; ' + text : text;
+}
+
 function collectAppFromForm(allowIncomplete) {
   const f = getField($('#app-field').value);
   const fieldSnap = !f ? keptFieldSnapshot($('#app-field')) : null;
@@ -1197,6 +1308,7 @@ function collectAppFromForm(allowIncomplete) {
     complianceState: s.state || '',
     complianceApplicatorClass: s.applicatorClass || 'private',
     draft: !!allowIncomplete,
+    planId: ($('#app-plan-id') && $('#app-plan-id').value) || '',
     deletedAt: null,
     history: [],
     loggedBy: '',
@@ -1300,6 +1412,10 @@ function onAppSubmit(e, asDraft) {
     toast('Strict mode: enter label REI and PHI on every product (or save as draft)');
     return;
   }
+  if (!asDraft) {
+    const seasonWarns = seasonWarningsForApp(app);
+    if (seasonWarns.length && !confirm(seasonWarns.join('\n\n') + '\n\nSave this spray anyway?')) return;
+  }
   if (asDraft) app.draft = true;
   app.recordDueAt = computeRecordDueAt(app);
   app.updatedAt = new Date().toISOString();
@@ -1315,6 +1431,7 @@ function onAppSubmit(e, asDraft) {
     app.history = [];
     data.applications.push(app);
   }
+  if (!asDraft && app.planId) markPlanDone(app);
   save();
   const restageMix = (!asDraft && !editingId && mix.length && canLogNewSpray()) ? mix : null;
   const restageCrop = restageMix ? (($('#app-crop') && $('#app-crop').value.trim()) || '') : '';
@@ -1365,6 +1482,8 @@ function resetAppForm() {
   if ($('#app-ground-speed')) $('#app-ground-speed').value = '';
   if ($('#app-buffer-distance')) $('#app-buffer-distance').value = '';
   if ($('#app-sensitive-sites')) $('#app-sensitive-sites').value = '';
+  if ($('#app-plan-id')) $('#app-plan-id').value = '';
+  if ($('#app-site-warn')) { $('#app-site-warn').hidden = true; $('#app-site-warn').innerHTML = ''; }
   restoreDurationPref();
   appFormPhotoIds = [];
   renderPhotoThumbs(appFormPhotoIds, $('#app-photo-thumbs'));
@@ -1445,6 +1564,7 @@ function editApp(id) {
   if ($('#app-ground-speed')) $('#app-ground-speed').value = a.groundSpeed || '';
   if ($('#app-buffer-distance')) $('#app-buffer-distance').value = a.bufferDistance || '';
   if ($('#app-sensitive-sites')) $('#app-sensitive-sites').value = a.sensitiveSites || '';
+  if ($('#app-plan-id')) $('#app-plan-id').value = a.planId || '';
   if ($('#app-inversion')) $('#app-inversion').checked = !!a.inversionObserved;
   if ($('#app-customer-copy')) $('#app-customer-copy').checked = !!a.customerCopyProvided;
   if ($('#app-customer-copy-date')) $('#app-customer-copy-date').value = a.customerCopyDate || '';
@@ -1467,6 +1587,8 @@ function editApp(id) {
   syncFormTitleChrome();
   showTab('log');
   syncNewLogChrome();
+  updateSeasonHints();
+  updateSiteWarning();
   $('#app-form').scrollIntoView({ behavior: 'smooth' });
 }
 

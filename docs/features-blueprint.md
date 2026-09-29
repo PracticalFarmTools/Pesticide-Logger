@@ -1,6 +1,6 @@
 # Blueprint: six features without clutter
 
-**Status: plan.** Written against v2.9.56 (`cursor/tab-cohesion-bde0`). Every file, function, and id named here was checked in that code.
+**Status: implemented in v2.9.57.** Written against v2.9.56 (`cursor/tab-cohesion-bde0`). Every file, function, and id named here was checked in that code.
 
 Build order: **1 Shed → 2 Season limits → 3 Work orders**, then 4 Site pins, 5 PHI sheet, 6 Wall screen. Ship each one as its own version.
 

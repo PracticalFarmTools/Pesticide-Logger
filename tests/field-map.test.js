@@ -124,3 +124,42 @@ check('sharp imagery: NAIP tiles line up with the web-map grid and start where c
 
 if (failed) process.exit(1);
 console.log('\nAll field-map checks passed.');
+
+check('bearing is the direction from one point to another', () => {
+  almost(FieldMap.bearingDeg({ lat: 40, lng: -100 }, { lat: 41, lng: -100 }), 0, 0.01);
+  almost(FieldMap.bearingDeg({ lat: 40, lng: -100 }, { lat: 40, lng: -99 }), 90, 0.5);
+});
+
+check('wind from the north blows toward the south', () => {
+  assert.strictEqual(FieldMap.compassToDeg('N'), 0);
+  assert.strictEqual(FieldMap.downwindDeg('N'), 180);
+  assert.strictEqual(FieldMap.downwindDeg('Calm'), null);
+  assert.strictEqual(FieldMap.downwindDeg(''), null);
+  assert.strictEqual(FieldMap.compassFromDeg(180), 'S');
+});
+
+check('a site inside the field is distance 0', () => {
+  const ring = [[40, -100], [40, -99.9], [40.1, -99.9], [40.1, -100]];
+  const hit = FieldMap.nearestBoundaryPoint(ring, { lat: 40.05, lng: -99.95 });
+  assert.strictEqual(hit.inside, true);
+  assert.strictEqual(hit.distanceM, 0);
+});
+
+check('downwind cone is 45 degrees either side and skips sites upwind', () => {
+  const ring = [[40, -100], [40.001, -100], [40.001, -99.999], [40, -99.999]];
+  const south = { id: 's', name: 'Hives', lat: 39.995, lng: -99.9995 };
+  const north = { id: 'n', name: 'School', lat: 40.006, lng: -99.9995 };
+  const fromNorth = FieldMap.downwindSites({ ring, sites: [south, north], windFrom: 'N', miles: 2 });
+  assert.deepStrictEqual(fromNorth.map((h) => h.site.id), ['s']);
+  const calm = FieldMap.downwindSites({ ring, sites: [south, north], windFrom: 'Calm', miles: 2 });
+  assert.strictEqual(calm.length, 2);
+  assert.strictEqual(calm[0].downwindKnown, false);
+});
+
+check('no boundary and no pin means no site check', () => {
+  assert.deepStrictEqual(FieldMap.downwindSites({
+    sites: [{ lat: 40, lng: -100 }], windFrom: 'N', miles: 1
+  }), []);
+});
+
+if (failed) { console.error(failed + ' field-map check(s) failed'); process.exit(1); }

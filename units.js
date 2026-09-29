@@ -139,7 +139,36 @@
     return bits.join(' · ');
   }
 
+  // Product amounts for inventory and season limits. Volume converts to mL,
+  // weight to g; the two never convert into each other (oz is weight, fl oz
+  // is volume). Returns null for an unknown unit.
+  function toBase(value, unit) {
+    const n = num(value);
+    if (n == null) return null;
+    switch (String(unit || '')) {
+      case 'fl oz': return { dim: 'vol', value: n * FLOZ_ML };
+      case 'pt': return { dim: 'vol', value: n * PT_L * 1000 };
+      case 'qt': return { dim: 'vol', value: n * QT_L * 1000 };
+      case 'gal': return { dim: 'vol', value: n * GAL_L * 1000 };
+      case 'mL': return { dim: 'vol', value: n };
+      case 'L': return { dim: 'vol', value: n * 1000 };
+      case 'oz': return { dim: 'mass', value: n * OZ_G };
+      case 'lb': return { dim: 'mass', value: n * LB_KG * 1000 };
+      case 'g': return { dim: 'mass', value: n };
+      case 'kg': return { dim: 'mass', value: n * 1000 };
+      default: return null;
+    }
+  }
+
+  function convert(value, from, to) {
+    const a = toBase(value, from);
+    const b = toBase(1, to);
+    if (!a || !b || a.dim !== b.dim) return null;
+    return a.value / b.value;
+  }
+
   const api = {
+    toBase, convert,
     GAL_L, ACRE_HA, FLOZ_ML, GPA_LHA,
     fToC, cToF, fmtCelsiusEcho, fmtTempF,
     acresToHa, galToL, galPerAcreToLha,

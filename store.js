@@ -22,7 +22,7 @@
 
   function defaultData() {
     return {
-      version: 5,
+      version: 6,
       settings: {
         farmName: '', state: '', county: '',
         applicatorName: '', certNumber: '', certExpiry: '',
@@ -32,11 +32,16 @@
         deviceLabel: '',
         deviceUser: '',
         deviceRole: '',
-        inspectorPin: ''
+        inspectorPin: '',
+        seasonStart: '01-01',
+        siteAlertMiles: 0.5
       },
       products: [],
       fields: [],
       applications: [],
+      shed: [],
+      plans: [],
+      sites: [],
       crew: [],
       meta: {}
     };
@@ -79,6 +84,19 @@
     if (d.settings.deviceUser == null) d.settings.deviceUser = '';
     if (d.settings.deviceRole == null) d.settings.deviceRole = '';
     if (d.settings.inspectorPin == null) d.settings.inspectorPin = '';
+    if (!/^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(String(d.settings.seasonStart || ''))) {
+      d.settings.seasonStart = '01-01';
+    }
+    if (!(Number(d.settings.siteAlertMiles) > 0)) d.settings.siteAlertMiles = 0.5;
+    ['shed', 'plans', 'sites'].forEach((key) => {
+      d[key] = (Array.isArray(d[key]) ? d[key] : []).filter((x) => x && typeof x === 'object');
+      d[key].forEach((x) => {
+        x.id = sanitizeId(x.id) || (key + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8));
+        if (x.createdAt == null) x.createdAt = x.updatedAt || new Date().toISOString();
+        if (x.updatedAt == null) x.updatedAt = x.createdAt;
+        if (x.deletedAt == null) x.deletedAt = null;
+      });
+    });
     d.crew = Array.isArray(d.crew) ? d.crew : [];
     d.crew.forEach((c) => {
       if (!c || typeof c !== 'object') return;
@@ -178,7 +196,7 @@
     });
     d.fields.forEach(f => { f.id = sanitizeId(f.id); });
     d.meta = d.meta || {};
-    d.version = 5;
+    d.version = 6;
     return d;
   }
 
@@ -195,7 +213,7 @@
   function bootStub(farm) {
     const src = farm || defaultData();
     return {
-      version: src.version || 5,
+      version: src.version || 6,
       settings: Object.assign({}, src.settings || {}),
       meta: Object.assign({}, src.meta || {}),
       products: [],
@@ -235,7 +253,10 @@
     if (!farm || isBootStub(farm)) return -1;
     return (farm.applications || []).length
       + (farm.products || []).length
-      + (farm.fields || []).length;
+      + (farm.fields || []).length
+      + (farm.shed || []).length
+      + (farm.plans || []).length
+      + (farm.sites || []).length;
   }
 
   // IDB is the durable copy. A full local cache wins only when its rev is
@@ -278,7 +299,21 @@
       const purgeAfterMs = anchorMs + (retain + 1) * 365.25 * 24 * 60 * 60 * 1000;
       return nowMs < purgeAfterMs;
     });
-    return farm.applications.length !== before;
+    let changed = farm.applications.length !== before;
+    // Shed, work-order, and site tombstones only need to outlive the gather
+    // window; two years matches the fallback retention above.
+    const tombstoneMs = fallbackRetain * 365.25 * 24 * 60 * 60 * 1000;
+    ['shed', 'plans', 'sites'].forEach((key) => {
+      if (!Array.isArray(farm[key])) return;
+      const n = farm[key].length;
+      farm[key] = farm[key].filter((x) => {
+        if (!x || !x.deletedAt) return true;
+        const at = Date.parse(x.deletedAt);
+        return !at || nowMs < at + tombstoneMs;
+      });
+      if (farm[key].length !== n) changed = true;
+    });
+    return changed;
   }
 
   function isEmptyHome(farm) {
@@ -343,7 +378,7 @@
       const stub = Object.assign(defaultData(), {
         settings: parsed.settings || {},
         meta: parsed.meta || {},
-        version: parsed.version || 5,
+        version: parsed.version || 6,
         _boot: true,
         products: [],
         fields: [],

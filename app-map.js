@@ -13,6 +13,7 @@ let drawPoints = [];        // L.LatLng[] of the shape being drawn
 let drawMarkers = [];       // draggable vertex markers
 let drawPoly = null;        // live preview polygon
 let savedPolysLayer = null; // all saved field boundaries
+let sitesLayer = null;
 let pendingBoundary = null; // [[lat,lng],...] to store on the next field save
 let pendingWeatherPin = null; // { lat, lng, manual }
 let weatherPinMarker = null;
@@ -86,6 +87,7 @@ function initFieldMap() {
   if (fieldMap) {
     setTimeout(() => fieldMap.invalidateSize(), 50);
     if (pendingWeatherPin) drawWeatherPinMarker();
+    renderSitePins();
     syncMapOfflineNote();
     return;
   }
@@ -117,7 +119,9 @@ function initFieldMap() {
   baseSatellite.addTo(fieldMap);
 
   savedPolysLayer = L.layerGroup().addTo(fieldMap);
+  sitesLayer = L.layerGroup().addTo(fieldMap);
   renderFieldPolys();
+  renderSitePins();
   applyFarmMapView();
 
   fieldMap.on('click', (e) => handleMapClick(e.latlng));
@@ -160,6 +164,14 @@ function initFieldMap() {
       updateDrawUI();
     });
   }
+  if ($('#map-site-pin')) {
+    $('#map-site-pin').addEventListener('click', () => {
+      mapClickMode = 'site';
+      toast('Tap the map to drop a site pin');
+      updateDrawUI();
+    });
+  }
+  initSiteForm();
   window.addEventListener('online', syncMapOfflineNote);
   window.addEventListener('offline', syncMapOfflineNote);
   syncMapOfflineNote();
@@ -300,6 +312,12 @@ function handleMapClick(latlng) {
     setPendingWeatherPin(latlng.lat, latlng.lng, true);
     mapClickMode = 'draw';
     toast('Forecast pin set — drag the amber pin; it will not add a field corner');
+    updateDrawUI();
+    return;
+  }
+  if (mapClickMode === 'site') {
+    mapClickMode = 'draw';
+    openSiteDraft(latlng);
     updateDrawUI();
     return;
   }
@@ -586,7 +604,7 @@ function renderFieldPolys() {
     });
     poly.on('click', (e) => {
       L.DomEvent.stop(e);
-      if (addingCorners || mapClickMode === 'pin' || drawPoints.length) {
+      if (addingCorners || mapClickMode === 'pin' || mapClickMode === 'site' || drawPoints.length) {
         handleMapClick(e.latlng);
         return;
       }
@@ -595,4 +613,120 @@ function renderFieldPolys() {
     savedPolysLayer.addLayer(poly);
   });
   syncFitAllButton();
+}
+
+const SITE_KINDS = {
+  bees: 'Beehives', organic: 'Organic neighbor', well: 'Well', water: 'Water',
+  school: 'School', residence: 'Residence', other: 'Other'
+};
+
+function sitePinLabel(s) {
+  const kind = SITE_KINDS[s.kind] || 'Site';
+  return s.name ? kind + ': ' + s.name : kind;
+}
+
+function renderSitePins() {
+  if (!fieldMap || typeof L === 'undefined') return;
+  if (!sitesLayer) sitesLayer = L.layerGroup().addTo(fieldMap);
+  sitesLayer.clearLayers();
+  (data.sites || []).filter((s) => s && !s.deletedAt && Number.isFinite(Number(s.lat))).forEach((s) => {
+    const marker = L.circleMarker([Number(s.lat), Number(s.lng)], {
+      radius: 7, color: '#6b2458', weight: 2, fillColor: '#e7a0cf', fillOpacity: 0.95
+    }).bindTooltip(esc(sitePinLabel(s)), { sticky: true });
+    marker.on('click', (e) => {
+      L.DomEvent.stop(e);
+      suppressNextMapClick();
+    });
+    sitesLayer.addLayer(marker);
+  });
+  renderSiteList();
+}
+
+function renderSiteList() {
+  const host = $('#site-list');
+  if (!host) return;
+  const miles = $('#site-alert-miles');
+  if (miles && document.activeElement !== miles) {
+    const cur = String((data.settings && data.settings.siteAlertMiles) || 0.5);
+    if ([...miles.options].some((o) => o.value === cur)) miles.value = cur;
+  }
+  const rows = (data.sites || []).filter((s) => s && !s.deletedAt);
+  host.innerHTML = rows.length ? rows.map((s) =>
+    `<div class="gather-item"><div>${esc(sitePinLabel(s))}</div>
+      <button type="button" class="icon-btn danger" data-site-del="${esc(s.id)}">Delete</button></div>`
+  ).join('') : '<p class="empty-note">No site pins yet.</p>';
+  host.querySelectorAll('[data-site-del]').forEach((b) =>
+    b.addEventListener('click', () => deleteSite(b.dataset.siteDel)));
+}
+
+function openSiteDraft(latlng) {
+  const form = $('#site-form');
+  const details = $('#map-sites-details');
+  if (!form) return;
+  form.hidden = false;
+  if (details) details.open = true;
+  if ($('#site-id')) $('#site-id').value = '';
+  if ($('#site-lat')) $('#site-lat').value = latlng.lat;
+  if ($('#site-lng')) $('#site-lng').value = latlng.lng;
+  if ($('#site-name')) $('#site-name').value = '';
+  if ($('#site-notes')) $('#site-notes').value = '';
+  if ($('#site-contact')) $('#site-contact').value = '';
+  form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  toast('Name the site, then save the pin');
+}
+
+function onSiteSubmit(e) {
+  e.preventDefault();
+  const lat = Number($('#site-lat').value);
+  const lng = Number($('#site-lng').value);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    toast('Tap the map to drop the pin first');
+    return;
+  }
+  const nowIso = new Date().toISOString();
+  const site = {
+    id: uid(),
+    kind: $('#site-kind').value || 'other',
+    name: $('#site-name').value.trim(),
+    lat, lng,
+    contact: $('#site-contact').value.trim(),
+    notes: $('#site-notes').value.trim(),
+    createdAt: nowIso,
+    updatedAt: nowIso,
+    deletedAt: null
+  };
+  if (!Array.isArray(data.sites)) data.sites = [];
+  data.sites.push(site);
+  save();
+  $('#site-form').hidden = true;
+  renderSitePins();
+  updateSiteWarning();
+  toast('Site pin saved');
+}
+
+function deleteSite(id) {
+  const site = (data.sites || []).find((s) => s.id === id);
+  if (!site || site.deletedAt) return;
+  if (!confirm('Remove this site pin?')) return;
+  site.deletedAt = new Date().toISOString();
+  site.updatedAt = site.deletedAt;
+  save();
+  renderSitePins();
+  updateSiteWarning();
+}
+
+function initSiteForm() {
+  const form = $('#site-form');
+  if (!form || form.dataset.bound) return;
+  form.dataset.bound = '1';
+  form.addEventListener('submit', onSiteSubmit);
+  if ($('#site-cancel')) $('#site-cancel').addEventListener('click', () => { form.hidden = true; });
+  if ($('#site-alert-miles')) {
+    $('#site-alert-miles').addEventListener('change', () => {
+      const n = Number($('#site-alert-miles').value);
+      data.settings.siteAlertMiles = n > 0 ? n : 0.5;
+      save();
+      updateSiteWarning();
+    });
+  }
 }

@@ -286,6 +286,144 @@
       '" role="img" aria-label="Named field outlines">' + paths + '</svg>';
   }
 
+
+  function bearingDeg(a, b) {
+    const lat1 = toRad(latOf(a));
+    const lat2 = toRad(latOf(b));
+    const dLng = toRad(lngOf(b) - lngOf(a));
+    if (![lat1, lat2, lngOf(a), lngOf(b)].every(Number.isFinite)) return null;
+    const y = Math.sin(dLng) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) -
+      Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+    return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+  }
+
+  const COMPASS16 = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+
+  function compassFromDeg(deg) {
+    if (deg == null || !Number.isFinite(Number(deg))) return '';
+    return COMPASS16[Math.round((Number(deg) % 360 + 360) % 360 / 22.5) % 16];
+  }
+
+  function compassToDeg(label) {
+    const i = COMPASS16.indexOf(String(label || '').trim().toUpperCase());
+    return i < 0 ? null : i * 22.5;
+  }
+
+  // Wind in this app is the direction it blows FROM. Downwind is from + 180.
+  function downwindDeg(fromLabel) {
+    if (!fromLabel || String(fromLabel).trim().toLowerCase() === 'calm') return null;
+    const d = compassToDeg(fromLabel);
+    return d == null ? null : (d + 180) % 360;
+  }
+
+  function angleDelta(a, b) {
+    let d = Math.abs(a - b) % 360;
+    if (d > 180) d = 360 - d;
+    return d;
+  }
+
+  function toLocalM(origin, p) {
+    const lat = latOf(p);
+    const lng = lngOf(p);
+    const oLat = latOf(origin);
+    const oLng = lngOf(origin);
+    return {
+      x: toRad(lng - oLng) * EARTH_R * Math.cos(toRad(oLat)),
+      y: toRad(lat - oLat) * EARTH_R
+    };
+  }
+
+  function pointInRing(pts, q) {
+    let inside = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const yi = pts[i].y, yj = pts[j].y;
+      const xi = pts[i].x, xj = pts[j].x;
+      if ((yi > q.y) !== (yj > q.y) &&
+          q.x < (xj - xi) * (q.y - yi) / ((yj - yi) || 1e-12) + xi) inside = !inside;
+    }
+    return inside;
+  }
+
+  function distPointSeg(px, py, ax, ay, bx, by) {
+    const dx = bx - ax, dy = by - ay;
+    const len2 = dx * dx + dy * dy;
+    let t = len2 ? ((px - ax) * dx + (py - ay) * dy) / len2 : 0;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+  }
+
+  // Distance from a point to a field ring, in meters. Inside the ring is 0.
+  function nearestBoundaryPoint(ring, p) {
+    const list = Array.isArray(ring) ? ring : [];
+    if (list.length < 3 || !p) return null;
+    const origin = list[0];
+    const pts = list.map((q) => toLocalM(origin, q));
+    const q = toLocalM(origin, p);
+    if (![q.x, q.y].every(Number.isFinite)) return null;
+    if (pointInRing(pts, q)) return { distanceM: 0, inside: true };
+    let best = Infinity;
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i], b = pts[(i + 1) % pts.length];
+      const d = distPointSeg(q.x, q.y, a.x, a.y, b.x, b.y);
+      if (d < best) best = d;
+    }
+    return { distanceM: best, inside: false };
+  }
+
+  function ringCentroid(ring) {
+    const list = Array.isArray(ring) ? ring : [];
+    if (!list.length) return null;
+    let lat = 0, lng = 0, n = 0;
+    list.forEach((p) => {
+      const a = latOf(p), b = lngOf(p);
+      if (!Number.isFinite(a) || !Number.isFinite(b)) return;
+      lat += a; lng += b; n++;
+    });
+    return n ? { lat: lat / n, lng: lng / n } : null;
+  }
+
+  const M_PER_MILE = 1609.344;
+
+  // Sites within the alert distance that the wind blows toward.
+  // No boundary and no pin: no check. Calm or blank wind: every site in range.
+  function downwindSites(opts) {
+    opts = opts || {};
+    const miles = Number(opts.miles) > 0 ? Number(opts.miles) : 0.5;
+    const maxM = miles * M_PER_MILE;
+    const ring = Array.isArray(opts.ring) && opts.ring.length >= 3 ? opts.ring : null;
+    const pin = opts.pin && Number.isFinite(Number(opts.pin.lat)) && Number.isFinite(Number(opts.pin.lng))
+      ? { lat: Number(opts.pin.lat), lng: Number(opts.pin.lng) } : null;
+    const from = ring ? ringCentroid(ring) : pin;
+    if (!from) return [];
+    const down = downwindDeg(opts.windFrom);
+    const known = down != null;
+    const half = opts.halfDeg != null ? Number(opts.halfDeg) : 45;
+    const hits = [];
+    (opts.sites || []).forEach((site) => {
+      if (!site || site.deletedAt) return;
+      if (!Number.isFinite(Number(site.lat)) || !Number.isFinite(Number(site.lng))) return;
+      const at = { lat: Number(site.lat), lng: Number(site.lng) };
+      const near = ring ? nearestBoundaryPoint(ring, at) : null;
+      const distanceM = near ? near.distanceM : haversineM(from, at);
+      if (distanceM > maxM) return;
+      const bearing = bearingDeg(from, at);
+      const inside = !!(near && near.inside);
+      if (!inside && known && bearing != null && angleDelta(bearing, down) > half + 1e-6) return;
+      hits.push({
+        site,
+        distanceM,
+        miles: Math.round((distanceM / M_PER_MILE) * 10) / 10,
+        bearing,
+        compass: bearing == null ? '' : compassFromDeg(bearing),
+        inside,
+        downwindKnown: known
+      });
+    });
+    hits.sort((a, b) => a.distanceM - b.distanceM);
+    return hits;
+  }
+
   const api = {
     SQM_PER_ACRE,
     latOf,
@@ -299,6 +437,14 @@
     pointOnSegmentPx,
     nearestEdgePx,
     shouldSnapClosePx,
+    bearingDeg,
+    compassFromDeg,
+    compassToDeg,
+    downwindDeg,
+    nearestBoundaryPoint,
+    ringCentroid,
+    downwindSites,
+    M_PER_MILE,
     STATE_VIEWS,
     stateView,
     isPlaceholderView,

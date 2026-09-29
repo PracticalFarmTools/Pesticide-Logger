@@ -225,18 +225,27 @@
     return local || incoming || null;
   }
 
+  // A finished work order stays finished: a later shop edit cannot reopen it.
+  function keepPlanDone(winner, loser) {
+    if (!winner || !loser) return;
+    if (!winner.doneAppId && loser.doneAppId) {
+      winner.doneAppId = loser.doneAppId;
+      winner.doneAt = loser.doneAt || winner.doneAt || '';
+    }
+  }
+
   function mergeInto(target, incoming) {
     const farm = target;
     const src = incoming || {};
     const receipt = {
       incomingDeviceLabel: norm(src.settings && src.settings.deviceLabel),
-      added: { applications: 0, fields: 0, products: 0, crew: 0 },
-      updated: { applications: 0, fields: 0, products: 0 },
+      added: { applications: 0, fields: 0, products: 0, crew: 0, shed: 0, plans: 0, sites: 0 },
+      updated: { applications: 0, fields: 0, products: 0, shed: 0, plans: 0, sites: 0 },
       conflicts: [],
       notes: []
     };
 
-    ['products', 'fields', 'applications'].forEach((key) => {
+    ['products', 'fields', 'applications', 'shed', 'plans', 'sites'].forEach((key) => {
       if (!Array.isArray(farm[key])) farm[key] = [];
       const byId = new Map(farm[key].map((x) => [x.id, x]));
       (src[key] || []).forEach((x) => {
@@ -275,6 +284,7 @@
           if (winner !== local) receipt.updated.applications++;
         } else {
           const winner = newerRecord(local, x);
+          if (key === 'plans') keepPlanDone(winner, winner === local ? x : local);
           const idx = farm[key].findIndex((r) => r.id === x.id);
           if (idx >= 0) farm[key][idx] = winner;
           byId.set(x.id, winner);
@@ -314,9 +324,11 @@
     receipt.duplicateFields = findDuplicateFields(farm.fields);
     receipt.duplicateProducts = findDuplicateProducts(farm.products);
     receipt.addedTotal = receipt.added.applications + receipt.added.fields +
-      receipt.added.products + receipt.added.crew;
+      receipt.added.products + receipt.added.crew +
+      receipt.added.shed + receipt.added.plans + receipt.added.sites;
     receipt.updatedTotal = receipt.updated.applications + receipt.updated.fields +
-      receipt.updated.products;
+      receipt.updated.products + receipt.updated.shed + receipt.updated.plans +
+      receipt.updated.sites;
     return receipt;
   }
 
@@ -1221,6 +1233,9 @@
     if (r.added && r.added.fields) parts.push(r.added.fields + ' field(s)');
     if (r.added && r.added.products) parts.push(r.added.products + ' product(s)');
     if (r.updated && r.updated.applications) parts.push(r.updated.applications + ' updated spray(s)');
+    if (r.added && r.added.shed) parts.push(r.added.shed + ' shed entr' + (r.added.shed === 1 ? 'y' : 'ies'));
+    if (r.added && r.added.plans) parts.push(r.added.plans + ' work order(s)');
+    if (r.added && r.added.sites) parts.push(r.added.sites + ' site pin(s)');
     if (r.conflicts && r.conflicts.length) parts.push(r.conflicts.length + ' spray(s) saved on both devices');
     if (!parts.length) parts.push('nothing new — this device already had these records');
     const from = r.incomingDeviceLabel ? ' from ' + r.incomingDeviceLabel : '';
@@ -1304,6 +1319,110 @@
       '<p class="print-footer">Pesticide Logger — Practical Farm Tools. Snapshot of counts only.</p>';
   }
 
+
+  function phiEntered(v) {
+    return v != null && v !== '' && Number.isFinite(Number(v)) && Number(v) >= 0;
+  }
+
+  function everyProductHasPhi(app) {
+    const prods = (app && app.products) || [];
+    return prods.length > 0 && prods.every((p) => phiEntered(p.phiDays));
+  }
+
+  function localIsoDate(d) {
+    if (!d || isNaN(d.getTime())) return '';
+    const y = d.getFullYear();
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
+    return y + '-' + (m < 10 ? '0' : '') + m + '-' + (day < 10 ? '0' : '') + day;
+  }
+
+  // Rows for one harvest. A spray counts only when it is on a chosen field
+  // and its spray date or its PHI date meets the season. Cleared means every
+  // product row has a PHI and the earliest harvest is on or before the
+  // harvest date. A missing PHI is Unknown: the app's usual PHI date ignores
+  // products that have none.
+  function phiSheetModel(opts) {
+    opts = opts || {};
+    const fieldIds = new Set(opts.fieldIds || []);
+    const crop = norm(opts.crop).toLowerCase();
+    const harvest = String(opts.harvestDate || '').slice(0, 10);
+    const season = opts.season || { from: '0000-01-01', to: '9999-12-31' };
+    const phiDate = opts.phiDate || (() => null);
+    const rows = [];
+    const others = [];
+    (opts.apps || []).forEach((a) => {
+      if (!a || a.deletedAt || !a.date) return;
+      if (fieldIds.size && !fieldIds.has(a.fieldId)) return;
+      const clear = phiDate(a);
+      const clearIso = localIsoDate(clear);
+      const end = clearIso || a.date;
+      if (a.date > season.to || end < season.from) return;
+      if (crop && norm(a.crop).toLowerCase() !== crop) {
+        others.push({ app: a, clearIso });
+        return;
+      }
+      const complete = everyProductHasPhi(a);
+      let status = 'Unknown';
+      if (a.draft) status = 'Draft';
+      else if (complete && clearIso && harvest && clearIso <= harvest) status = 'Cleared';
+      else if (complete && clearIso && harvest) status = 'Not yet';
+      else if (complete && !harvest) status = 'Unknown';
+      rows.push({ app: a, status, clearIso, complete });
+    });
+    rows.sort((x, y) => String(x.app.date).localeCompare(String(y.app.date)));
+    others.sort((x, y) => String(x.app.date).localeCompare(String(y.app.date)));
+    return {
+      rows, others,
+      allCleared: rows.length > 0 && rows.every((r) => r.status === 'Cleared')
+    };
+  }
+
+  function phiProductsCell(app) {
+    return (app.products || []).map((p) => esc(p.productName || '')).join('<br>') || '—';
+  }
+
+  function phiSheetHtml(opts) {
+    opts = opts || {};
+    const model = opts.model || phiSheetModel(opts);
+    const harvest = esc(opts.harvestLabel || opts.harvestDate || '');
+    const head = model.allCleared
+      ? '<h1>Cleared for harvest on ' + harvest + '</h1>'
+      : '<h1>PHI sheet — not fully cleared</h1>';
+    function prodRows(list) {
+      return list.map((r) => {
+        const a = r.app;
+        const prods = a.products || [];
+        return '<tr><td>' + esc(a.date) + (a.draft ? '<br>Draft' : '') + '</td><td>' +
+          prods.map((p) => esc(p.productName || '')).join('<br>') + '</td><td>' +
+          prods.map((p) => esc(p.epaRegNo || '—')).join('<br>') + '</td><td>' +
+          prods.map((p) => esc(p.activeIngredient || '—')).join('<br>') + '</td><td>' +
+          prods.map((p) => esc(p.lotNumber || '—')).join('<br>') + '</td><td>' +
+          prods.map((p) => phiEntered(p.phiDays) ? esc(String(p.phiDays)) + ' d' : '—').join('<br>') + '</td><td>' +
+          esc(r.clearIso || 'unknown') + '</td><td>' + esc(r.status) + '</td></tr>';
+      }).join('');
+    }
+    const body = model.rows.length
+      ? prodRows(model.rows)
+      : '<tr><td colspan="8">No sprays of this crop on the chosen fields.</td></tr>';
+    const other = model.others.length
+      ? '<h2>Other sprays on these fields</h2><p class="print-meta">A different crop. Replanting limits are not a pre-harvest interval.</p><table><thead><tr><th>Date</th><th>Crop</th><th>Product</th><th>Field</th></tr></thead><tbody>' +
+        model.others.map((r) => '<tr><td>' + esc(r.app.date) + '</td><td>' + esc(r.app.crop || '') +
+          '</td><td>' + phiProductsCell(r.app) + '</td><td>' + esc(r.app.fieldName || '') + '</td></tr>').join('') +
+        '</tbody></table>'
+      : '';
+    return head +
+      '<p class="print-meta">' + esc(opts.farmName || 'Farm') +
+      (opts.crop ? ' · ' + esc(opts.crop) : '') +
+      (opts.lot ? ' · Lot ' + esc(opts.lot) : '') +
+      ' · Harvest ' + harvest + '</p>' +
+      '<p class="print-meta">From this farm’s spray records and the label PHI the farm entered. Not a residue test or a certification.</p>' +
+      '<table><thead><tr><th>Date</th><th>Product</th><th>EPA Reg. No.</th><th>Active ingredient</th><th>Lot</th><th>PHI</th><th>Earliest harvest</th><th>Status</th></tr></thead><tbody>' +
+      body + '</tbody></table>' + other +
+      '<p class="print-meta">Grower signature ______________________ &nbsp; Date __________</p>' +
+      '<p class="print-footer">Pesticide Logger — Practical Farm Tools.</p>';
+  }
+
   const api = {
     INSPECT_FORMAT,
     INSPECT_FORMAT_V1,
@@ -1352,6 +1471,9 @@
     isIosSafariTab,
     shouldShowIosStorageWarning,
     reiBoardHtml,
+    phiSheetModel,
+    phiSheetHtml,
+    everyProductHasPhi,
     wpsApplicationRows,
     wpsApplicationInfoHtml,
     restoreCardHtml,

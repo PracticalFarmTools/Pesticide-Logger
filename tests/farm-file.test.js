@@ -729,6 +729,53 @@ await check('clerk snapshot counts incomplete, overdue, and keep-until year', ()
   assert.ok(html.includes('Oak'));
 });
 
+
+await check('PHI sheet: missing PHI is unknown, drafts and other crops stay out of cleared', () => {
+  const phiDate = Compliance.phiDate;
+  const season = { from: '2026-01-01', to: '2026-12-31' };
+  const apps = [
+    { id: 'ok', date: '2026-06-01', fieldId: 'f1', fieldName: 'North', crop: 'Corn',
+      products: [{ productName: 'A', epaRegNo: '1-1', activeIngredient: 'x', lotNumber: 'L', phiDays: 7 }] },
+    { id: 'miss', date: '2026-06-02', fieldId: 'f1', fieldName: 'North', crop: 'Corn',
+      products: [{ productName: 'A', phiDays: 7 }, { productName: 'B', phiDays: null }] },
+    { id: 'draft', date: '2026-06-03', fieldId: 'f1', crop: 'Corn', draft: true,
+      products: [{ productName: 'A', phiDays: 1 }] },
+    { id: 'other', date: '2026-06-04', fieldId: 'f1', fieldName: 'North', crop: 'Soy',
+      products: [{ productName: 'C', phiDays: 1 }] },
+    { id: 'old', date: '2025-12-01', fieldId: 'f1', crop: 'Corn',
+      products: [{ productName: 'A', phiDays: 40 }] },
+    { id: 'gone', date: '2025-01-01', fieldId: 'f1', crop: 'Corn', deletedAt: '2025-02-01',
+      products: [{ productName: 'A', phiDays: 1 }] },
+    { id: 'short', date: '2025-11-01', fieldId: 'f1', crop: 'Corn',
+      products: [{ productName: 'A', phiDays: 7 }] }
+  ];
+  const model = FarmFile.phiSheetModel({
+    apps, fieldIds: ['f1'], crop: 'Corn', harvestDate: '2026-08-01', season, phiDate
+  });
+  const byId = {};
+  model.rows.forEach((r) => { byId[r.app.id] = r.status; });
+  assert.strictEqual(byId.ok, 'Cleared');
+  assert.strictEqual(byId.miss, 'Unknown');
+  assert.strictEqual(byId.draft, 'Draft');
+  assert.strictEqual(byId.old, 'Cleared');
+  assert.ok(!byId.gone);
+  assert.ok(!byId.short);
+  assert.deepStrictEqual(model.others.map((r) => r.app.id), ['other']);
+  assert.strictEqual(model.allCleared, false);
+  const html = FarmFile.phiSheetHtml({
+    model, farmName: 'A&B', crop: 'Corn', harvestDate: '2026-08-01', lot: 'H1'
+  });
+  assert.ok(html.includes('not fully cleared'));
+  assert.ok(html.includes('A&amp;B'));
+  assert.ok(html.includes('Other sprays'));
+  assert.ok(html.includes('Not a residue test'));
+  const cleared = FarmFile.phiSheetModel({
+    apps: [apps[0]], fieldIds: ['f1'], crop: 'Corn', harvestDate: '2026-08-01', season, phiDate
+  });
+  assert.strictEqual(cleared.allCleared, true);
+  assert.ok(FarmFile.phiSheetHtml({ model: cleared, harvestDate: '2026-08-01' }).includes('Cleared for harvest'));
+});
+
 if (failed) {
   console.error(`\n${failed} farm-file check(s) failed.`);
   process.exit(1);

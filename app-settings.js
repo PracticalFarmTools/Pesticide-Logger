@@ -56,6 +56,12 @@ function initSettings() {
   $('#set-cert').value = s.certNumber;
   $('#set-cert-expiry').value = s.certExpiry;
   $('#set-permit').value = s.permitNumber || '';
+  {
+    const ss = (typeof SeasonLimits !== 'undefined')
+      ? SeasonLimits.parseStart(s.seasonStart) : { m: 1, d: 1 };
+    if ($('#set-season-month')) $('#set-season-month').value = String(ss.m).padStart(2, '0');
+    if ($('#set-season-day')) $('#set-season-day').value = ss.d;
+  }
   $('#set-company-license').value = s.companyLicense || '';
   $('#set-business').value = s.businessNameAddress || '';
   syncCommercialDetails();
@@ -75,7 +81,7 @@ function initSettings() {
   $('#settings-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const langBefore = data.settings.language || '';
-    data.settings = {
+    data.settings = Object.assign({}, data.settings, {
       farmName: $('#set-farm').value.trim(),
       state: $('#set-state').value,
       county: $('#set-county').value.trim(),
@@ -93,8 +99,9 @@ function initSettings() {
       deviceRole: ($('#set-device-role') && $('#set-device-role').value) || data.settings.deviceRole || '',
       inspectorPin: ($('#set-inspector-pin') && $('#set-inspector-pin').value.trim())
         ? $('#set-inspector-pin').value.trim()
-        : (data.settings.inspectorPin || '')
-    };
+        : (data.settings.inspectorPin || ''),
+      seasonStart: seasonStartFromForm()
+    });
     if ($('#set-inspector-pin')) $('#set-inspector-pin').value = '';
     if ((data.settings.language || '') !== langBefore) {
       // Reload so the translator applies (or reverts) to a clean DOM.
@@ -127,6 +134,14 @@ function initSettings() {
   }
   bindClassPick($('#set-class-pick'), $('#set-state'));
   applySettings();
+}
+
+function seasonStartFromForm() {
+  const month = ($('#set-season-month') && $('#set-season-month').value) || '01';
+  let day = Math.trunc(Number($('#set-season-day') && $('#set-season-day').value));
+  if (!Number.isFinite(day) || day < 1) day = 1;
+  const last = new Date(Date.UTC(2001, Number(month), 0)).getUTCDate();
+  return month + '-' + String(Math.min(day, last)).padStart(2, '0');
 }
 
 function stateLaw() {

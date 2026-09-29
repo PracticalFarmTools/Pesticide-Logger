@@ -52,12 +52,31 @@
       delete farm.meta.forecastCache;
     }
     const photos = (opts.photos || []).map(sanitizePhoto).filter(Boolean);
-    return {
+    const out = {
       kind: KIND,
       packVersion: PACK_VERSION,
       farm: farm,
       photos: photos
     };
+    if (opts.appVersion) out.appVersion = String(opts.appVersion);
+    return out;
+  }
+
+  function versionParts(v) {
+    const m = String(v == null ? '' : v).match(/(\d+)\.(\d+)\.(\d+)/);
+    return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : null;
+  }
+
+  // True when `theirs` is a newer app version than `mine`. Unknown versions
+  // (older files carry none) are never "newer".
+  function isNewerVersion(theirs, mine) {
+    const a = versionParts(theirs);
+    const b = versionParts(mine);
+    if (!a || !b) return false;
+    for (let i = 0; i < 3; i++) {
+      if (a[i] !== b[i]) return a[i] > b[i];
+    }
+    return false;
   }
 
   function byteLength(str) {
@@ -92,6 +111,7 @@
       ok: true,
       isPack: isPack,
       isLegacy: isLegacy,
+      appVersion: isPack && parsed.appVersion ? String(parsed.appVersion) : '',
       farm: farm,
       photos: photos,
       photoCount: photos.length,
@@ -108,6 +128,11 @@
     const products = (farm.products || []).length;
     const fields = (farm.fields || []).length;
     const bits = [`${records} records`, `${products} products`, `${fields} fields`];
+    const extra = [['shed', 'shed entries'], ['plans', 'work orders'], ['sites', 'site pins']];
+    extra.forEach((pair) => {
+      const n = (farm[pair[0]] || []).length;
+      if (n) bits.push(`${n} ${pair[1]}`);
+    });
     if (info.isLegacy && info.referencedPhotoCount) {
       bits.push(`${info.referencedPhotoCount} photo(s) were not in this older file`);
     } else if (info.photoCount) {
@@ -127,6 +152,7 @@
     sanitizePhoto,
     referencedPhotoIds,
     pack,
+    isNewerVersion,
     inspect,
     summaryLine,
     byteLength

@@ -411,6 +411,8 @@ function initProducts() {
       pendingEpaImport.epaRegNo === $('#prod-epa').value.trim()
       ? pendingEpaImport
       : existing;
+    const seasonLimits = seasonLimitsFromForm();
+    if (seasonLimits && seasonLimits.error) { toast(seasonLimits.error); return; }
     const product = {
       id,
       name: $('#prod-name').value.trim(),
@@ -438,6 +440,8 @@ function initProducts() {
       omri: !!( $('#prod-omri') && $('#prod-omri').checked ),
       omriCheckedAt: nextOmriCheckedAt(!!($('#prod-omri') && $('#prod-omri').checked),
         existing && existing.omri ? existing.omriCheckedAt : null),
+      reorderAt: existing && existing.reorderAt ? existing.reorderAt : null,
+      seasonLimits: seasonLimits,
       lotHint: ($('#prod-lot-hint') && $('#prod-lot-hint').value.trim()) || '',
       barcode: ($('#prod-barcode') && $('#prod-barcode').value.trim()) || '',
       photoIds: productFormPhotoIds.slice(),
@@ -489,6 +493,7 @@ function resetProductForm() {
   $('#product-form-title').textContent = 'Add a product';
   $('#prod-save-btn').textContent = 'Save product';
   $('#prod-cancel-btn').hidden = true;
+  fillSeasonLimitsForm(null);
 }
 
 function editProduct(id) {
@@ -518,6 +523,7 @@ function editProduct(id) {
   productFormPhotoIds = (p.photoIds || []).slice();
   renderPhotoThumbs(productFormPhotoIds, $('#prod-photo-thumbs'));
   $('#prod-notes').value = p.notes;
+  fillSeasonLimitsForm(p.seasonLimits);
   $('#product-form-title').textContent = `Edit — ${p.name}`;
   $('#prod-save-btn').textContent = 'Update product';
   $('#prod-cancel-btn').textContent = 'Cancel edit';
@@ -583,13 +589,16 @@ function renderProducts() {
   }
   const addFromLabel = (p, field) =>
     `<button type="button" class="text-btn prod-add-label" data-prod-fill="${p.id}" data-prod-fill-input="${field}">${esc(tr('Add from label'))}</button>`;
+  const shedMap = shedLedgerMap();
   const rows = list.map(p => `
         <tr class="product-row" data-open-product="${p.id}">
           <td data-label="${esc(tr('Product'))}"><strong>${esc(p.name)}</strong><br>
             <span class="card-hint">${esc(p.activeIngredient || '')}</span>
             ${p.rup ? '<span class="badge-pill badge-rup">RUP</span>' : ''}
             ${p.omri ? `<span class="badge-pill badge-ok"${p.omriCheckedAt ? ` title="${esc(tr('Marked {date}').replace('{date}', fmtDate(p.omriCheckedAt.slice(0, 10))))}"` : ''}>OMRI</span>` : ''}
+            ${(p.seasonLimits && p.seasonLimits.groups && p.seasonLimits.groups.length) ? `<span class="badge-pill">${esc(SeasonLimits.formatGroups(p.seasonLimits.groups))}</span>` : ''}
             ${signalBadge(p)} ${epaStatusBadge(p)}
+            ${shedBadgeHtml(p, shedMap)}
             ${p.lotHint ? `<br><span class="card-hint">Lot hint: ${esc(p.lotHint)}</span>` : ''}
             ${p.epaActiveIngredient && p.activeIngredient &&
             p.epaActiveIngredient.toLowerCase() !== p.activeIngredient.toLowerCase()
@@ -633,4 +642,46 @@ function renderProducts() {
     }));
   host.querySelectorAll('[data-del-product]').forEach(b =>
     b.addEventListener('click', () => deleteProduct(b.dataset.delProduct)));
+}
+
+function seasonLimitsFromForm() {
+  if (!$('#prod-max-amount')) return null;
+  const num = (id) => {
+    const el = $(id);
+    if (!el || el.value === '') return null;
+    const n = Number(el.value);
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  };
+  const groupsText = ($('#prod-groups') && $('#prod-groups').value.trim()) || '';
+  const groups = (typeof SeasonLimits !== 'undefined') ? SeasonLimits.parseGroups(groupsText) : [];
+  if (groupsText && !groups.length) {
+    return { error: 'Use FRAC, IRAC, HRAC, or WSSA plus the code, like FRAC 11' };
+  }
+  const limits = {
+    maxAmount: num('#prod-max-amount'),
+    maxUnit: $('#prod-max-unit') ? $('#prod-max-unit').value : 'gal',
+    maxPer: $('#prod-max-per') ? $('#prod-max-per').value : 'acre',
+    maxApps: num('#prod-max-apps'),
+    minDays: num('#prod-min-days'),
+    maxConsecutive: num('#prod-max-consecutive'),
+    groups
+  };
+  const empty = limits.maxAmount == null && limits.maxApps == null && limits.minDays == null &&
+    limits.maxConsecutive == null && !groups.length;
+  return empty ? null : limits;
+}
+
+function fillSeasonLimitsForm(limits) {
+  const det = $('#prod-limits');
+  if (!det) return;
+  const L = limits || {};
+  if ($('#prod-max-amount')) $('#prod-max-amount').value = L.maxAmount != null ? L.maxAmount : '';
+  if ($('#prod-max-unit') && L.maxUnit) $('#prod-max-unit').value = L.maxUnit;
+  if ($('#prod-max-per') && L.maxPer) $('#prod-max-per').value = L.maxPer;
+  if ($('#prod-max-apps')) $('#prod-max-apps').value = L.maxApps != null ? L.maxApps : '';
+  if ($('#prod-min-days')) $('#prod-min-days').value = L.minDays != null ? L.minDays : '';
+  if ($('#prod-max-consecutive')) $('#prod-max-consecutive').value = L.maxConsecutive != null ? L.maxConsecutive : '';
+  if ($('#prod-groups')) $('#prod-groups').value = (typeof SeasonLimits !== 'undefined')
+    ? SeasonLimits.formatGroups(L.groups) : '';
+  det.open = !!limits;
 }

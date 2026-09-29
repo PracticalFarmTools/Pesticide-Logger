@@ -286,6 +286,7 @@
         <div id="rei-list" class="interval-list"></div>
         <p class="forecast-show-all-wrap">
           <button type="button" class="text-btn" id="dash-rei-board">Print today’s REI board</button>
+          · <button type="button" class="text-btn" id="dash-wall-screen">Wall screen</button>
           · <button type="button" class="text-btn" id="dash-wps-info">Print WPS application info</button>
         </p>
       </div>
@@ -338,6 +339,7 @@
     <div class="card">
       <h3 class="card-title" id="app-form-title" hidden>Log an application</h3>
       <p class="card-hint" id="app-form-hint">This spray log reshapes for your selected state and applicator class. Completion means required fields are filled — not a legal determination. Extra boxes stay under More for the record.</p>
+      <div id="plan-strip" class="plan-strip" hidden></div>
       <div class="cab-toolbar">
         <button type="button" class="btn btn-primary" id="app-spray-now">Spray now</button>
         <button type="button" class="btn btn-secondary" id="app-duplicate-last">Duplicate last spray</button>
@@ -372,6 +374,7 @@
       <div id="app-compliance-status" class="compliance-status" hidden></div>
 
       <form id="app-form" class="form-grid" autocomplete="off">
+        <input type="hidden" id="app-plan-id">
         <input type="hidden" id="app-id">
 
         <fieldset data-log-section="where">
@@ -390,6 +393,7 @@
               <input type="text" id="app-site-id" placeholder="County / state site ID">
             </label>
           </div>
+          <p class="card-hint" id="app-site-warn" hidden></p>
           <div class="form-row form-row-3">
             <label data-log-field="crop_treated">Crop / commodity / site treated <span class="req-star">*</span> <span id="req-crop_treated" class="state-req-tag" hidden>state</span>
               <input type="text" id="app-crop" required placeholder="e.g. Sweet corn">
@@ -740,10 +744,16 @@
       </div>
 
       <div id="calc-results" class="calc-results" hidden></div>
+      <div class="card" id="calc-plans-card" hidden>
+        <h3 class="card-title">Work orders</h3>
+        <p class="card-hint">A work order is a plan. It becomes a spray record only when the cab phone taps Save.</p>
+        <div id="calc-plans-list"></div>
+      </div>
       <div class="form-actions">
         <button type="button" class="btn btn-primary" id="calc-run">Calculate mix</button>
         <button type="button" class="btn btn-secondary" id="calc-print" hidden>Print mix worksheet</button>
         <button type="button" class="btn btn-secondary" id="calc-copy-to-log" hidden>Copy these amounts onto the open spray log</button>
+        <button type="button" class="btn btn-secondary" id="calc-save-plan" hidden>Save as work order</button>
       </div>
     </div>
   </section>
@@ -760,6 +770,7 @@
       <div class="card-title-row">
         <h3 class="card-title visually-hidden">Product library</h3>
         <input type="search" id="product-search" class="search-input" placeholder="Search products…" hidden autocomplete="off">
+        <button type="button" class="text-btn" id="products-shed-open">Shed inventory</button>
       </div>
       <div id="product-list"></div>
     </div>
@@ -878,9 +889,46 @@
             <div id="prod-photo-thumbs" class="photo-thumbs"></div>
           </div>
         </div>
+        <details class="state-details" id="prod-limits">
+          <summary>Season limits and resistance group (from the label)</summary>
+          <p class="card-hint">Type these from the label. The app warns before a spray would pass them. It never fills them in for you.</p>
+          <div class="form-row form-row-3">
+            <label>Max per season
+              <input type="number" id="prod-max-amount" min="0" step="any" inputmode="decimal">
+            </label>
+            <label>Unit
+              <select id="prod-max-unit">
+                <option>fl oz</option><option>pt</option><option>qt</option><option>gal</option>
+                <option>mL</option><option>L</option><option>oz</option><option>lb</option>
+                <option>g</option><option>kg</option>
+              </select>
+            </label>
+            <label>Per
+              <select id="prod-max-per">
+                <option value="acre">acre</option>
+                <option value="1000sqft">1,000 sq ft</option>
+              </select>
+            </label>
+          </div>
+          <div class="form-row form-row-3">
+            <label>Max applications
+              <input type="number" id="prod-max-apps" min="0" step="1" inputmode="numeric">
+            </label>
+            <label>Days between sprays
+              <input type="number" id="prod-min-days" min="0" step="1" inputmode="numeric">
+            </label>
+            <label>Max in a row
+              <input type="number" id="prod-max-consecutive" min="0" step="1" inputmode="numeric">
+            </label>
+          </div>
+          <label>Resistance group
+            <input type="text" id="prod-groups" placeholder="FRAC 11, IRAC 4A">
+          </label>
+          <p class="card-hint">Group letters follow EPA’s voluntary resistance labeling. Leave blank when the label has none. This does not cover plant-back limits or totals across different products that share an active ingredient.</p>
+        </details>
         <div class="form-row">
           <label>Notes
-            <input type="text" id="prod-notes" placeholder="Max apps per season, buffer requirements…">
+            <input type="text" id="prod-notes" placeholder="Buffer requirements, plant-back…">
           </label>
         </div>
         <div class="form-actions sticky-actions">
@@ -888,6 +936,110 @@
           <button type="button" class="btn btn-secondary" id="prod-cancel-btn" hidden>Cancel edit</button>
         </div>
       </form>
+    </div>
+    </div>
+    <div id="products-shed-pane" hidden>
+    <div class="card">
+      <div class="card-title-row">
+        <h3 class="card-title">Chemical shed</h3>
+        <button type="button" class="text-btn" id="shed-back">← Library</button>
+      </div>
+      <p class="card-hint">Shed count from your purchases and sprays. Check it against a physical count. This is your own bookkeeping, not a pesticide-use record.</p>
+      <div id="shed-list"></div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-primary" id="shed-add-open">Add to shed</button>
+      </div>
+    </div>
+    <div class="card" id="shed-form-card" hidden>
+      <h3 class="card-title" id="shed-form-title">Add to shed</h3>
+      <form id="shed-form" class="form-grid" autocomplete="off">
+        <div class="form-row form-row-3">
+          <label>What happened
+            <select id="shed-type">
+              <option value="in">Bought / received</option>
+              <option value="count">Counted on the shelf</option>
+              <option value="out">Took out (spill, return, disposal)</option>
+            </select>
+          </label>
+          <label>Product <span class="req-star">*</span>
+            <select id="shed-product" required></select>
+          </label>
+          <label>Date <span class="req-star">*</span>
+            <input type="date" id="shed-date" required>
+          </label>
+        </div>
+        <div class="form-row form-row-3" data-shed-for="in">
+          <label>Containers
+            <input type="number" id="shed-containers" min="0" step="any" inputmode="decimal" placeholder="e.g. 4">
+          </label>
+          <label>Size of each
+            <input type="number" id="shed-size" min="0" step="any" inputmode="decimal" placeholder="e.g. 2.5">
+          </label>
+          <label>Unit
+            <select id="shed-unit-in" data-shed-unit></select>
+          </label>
+        </div>
+        <div class="form-row form-row-3" data-shed-for="count out" hidden>
+          <label>Amount
+            <input type="number" id="shed-amount" min="0" step="any" inputmode="decimal">
+          </label>
+          <label>Unit
+            <select id="shed-unit-amt" data-shed-unit></select>
+          </label>
+          <label data-shed-for="out" hidden>Why
+            <select id="shed-reason">
+              <option>Spill or leak</option><option>Returned</option><option>Disposed</option><option>Gave or sold</option><option>Other</option>
+            </select>
+          </label>
+        </div>
+        <div class="form-row form-row-3">
+          <label>Lot / batch (optional)
+            <input type="text" id="shed-lot" placeholder="As printed on the jug">
+          </label>
+          <label data-shed-for="in">Supplier (optional)
+            <input type="text" id="shed-supplier">
+          </label>
+          <label data-shed-for="in">Invoice / ref (optional)
+            <input type="text" id="shed-ref">
+          </label>
+        </div>
+        <label>Notes (optional)
+          <input type="text" id="shed-notes">
+        </label>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Save to shed</button>
+          <button type="button" class="btn btn-secondary" id="shed-cancel">Cancel</button>
+        </div>
+      </form>
+    </div>
+    <div class="card" id="shed-reorder-card">
+      <h3 class="card-title">Reorder list</h3>
+      <div id="shed-reorder-list"></div>
+      <div class="form-actions" id="shed-reorder-actions" hidden>
+        <button type="button" class="btn btn-secondary" id="shed-reorder-print">Print</button>
+        <button type="button" class="btn btn-secondary" id="shed-reorder-share">Share</button>
+      </div>
+      <details class="state-details">
+        <summary>Reorder points</summary>
+        <p class="card-hint">Flag a product when the shed count falls to this amount.</p>
+        <div id="shed-reorder-points"></div>
+      </details>
+    </div>
+    <div class="card" id="shed-year-card">
+      <h3 class="card-title">Year-end inventory</h3>
+      <div class="form-row form-row-2">
+        <label>As of
+          <input type="date" id="shed-asof">
+        </label>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="shed-year-print">Print</button>
+          <button type="button" class="btn btn-secondary" id="shed-year-csv">CSV</button>
+        </div>
+      </div>
+      <details class="state-details" id="shed-entries-details">
+        <summary>Shed entries</summary>
+        <div id="shed-entries"></div>
+      </details>
     </div>
     </div>
     <div id="products-epa-pane" hidden>
@@ -1008,8 +1160,10 @@
           <span><i class="map-swatch map-swatch-sprayed"></i> Last spray</span>
           <span><i class="map-swatch map-swatch-idle"></i> No spray on file</span>
           <span><i class="map-swatch map-swatch-pin"></i> Forecast pin</span>
+          <span><i class="map-swatch map-swatch-site"></i> Site</span>
         </div>
         <button type="button" class="text-btn" id="map-weather-pin">Set forecast pin</button>
+        <button type="button" class="text-btn" id="map-site-pin">Site pin</button>
       </div>
       <details class="map-help">
         <summary>How drawing works</summary>
@@ -1021,6 +1175,51 @@
           <li>Set forecast pin is for sites with no drawn boundary.</li>
           <li>Photos are USGS aerial imagery (USDA NAIP). Close in, a sharper photo loads a moment after the first one.</li>
         </ul>
+      </details>
+      <details class="state-details" id="map-sites-details">
+        <summary>Sensitive sites</summary>
+        <p class="card-hint">Beehives, organic neighbors, wells, schools. The log warns when the wind blows from the field toward a pin.</p>
+        <form id="site-form" class="form-grid" hidden autocomplete="off">
+          <input type="hidden" id="site-id">
+          <input type="hidden" id="site-lat">
+          <input type="hidden" id="site-lng">
+          <div class="form-row form-row-3">
+            <label>Kind
+              <select id="site-kind">
+                <option value="bees">Beehives</option>
+                <option value="organic">Organic neighbor</option>
+                <option value="well">Well</option>
+                <option value="water">Water</option>
+                <option value="school">School</option>
+                <option value="residence">Residence</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+            <label>Name
+              <input type="text" id="site-name" placeholder="Miller hives">
+            </label>
+            <label>Contact (optional)
+              <input type="text" id="site-contact" placeholder="Phone or name">
+            </label>
+          </div>
+          <label>Notes (optional)
+            <input type="text" id="site-notes">
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save site pin</button>
+            <button type="button" class="btn btn-secondary" id="site-cancel">Cancel</button>
+          </div>
+        </form>
+        <div id="site-list"></div>
+        <label>Alert distance
+          <select id="site-alert-miles">
+            <option value="0.25">¼ mi</option>
+            <option value="0.5">½ mi</option>
+            <option value="1">1 mi</option>
+          </select>
+        </label>
+        <p class="card-hint">Alert distance, not a legal buffer — the label and state rules set buffers.</p>
+        <p class="card-hint"><a href="https://www.fieldwatch.com/" target="_blank" rel="noopener">FieldWatch (DriftWatch / BeeCheck) ↗</a> — look up registered sites. Nothing is imported.</p>
       </details>
     </div>
     </div>
@@ -1088,6 +1287,7 @@
         <p class="report-action-group-label">For buyers &amp; certifiers</p>
         <div class="form-actions report-actions">
           <button class="btn btn-secondary btn-lg" id="report-certifier">Print certifier / buyer packet</button>
+          <button type="button" class="btn btn-secondary btn-lg" id="report-phi-sheet">Print PHI sheet for a harvest</button>
         </div>
         <p class="card-hint">Formats the same records for organic certifiers and GAP / buyer audits: a
           materials list with OMRI status plus a per-crop application log with PHI clearance dates.</p>
@@ -1151,6 +1351,17 @@
           <label>Default county
             <input type="text" id="set-county" placeholder="e.g. Lincoln">
           </label>
+        </div>
+        <div class="form-row form-row-2">
+          <label>Season starts
+            <div class="input-pair">
+              <select id="set-season-month" aria-label="Season start month">
+                <option value="01">January</option><option value="02">February</option><option value="03">March</option><option value="04">April</option><option value="05">May</option><option value="06">June</option><option value="07">July</option><option value="08">August</option><option value="09">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option>
+              </select>
+              <input type="number" id="set-season-day" min="1" max="31" step="1" inputmode="numeric" aria-label="Season start day">
+            </div>
+          </label>
+          <p class="card-hint">Used by “This season” in Reports and by season limits on products. Most farms leave January 1.</p>
         </div>
         <div class="class-pick" id="set-class-pick">
           <p class="class-pick-label" id="set-class-label">This log is for</p>
@@ -1599,6 +1810,37 @@
       <datalist id="crew-applicator-list"></datalist>
       <datalist id="customer-name-list"></datalist>
 
+<dialog id="phi-dialog" class="app-dialog">
+  <h3>PHI sheet for a harvest</h3>
+  <p class="card-hint">From this farm’s spray records and the label PHI you entered. Not a residue test or a certification.</p>
+  <div class="form-row form-row-2">
+    <label>Crop
+      <input type="text" id="phi-crop" list="phi-crop-list" placeholder="Crop on the harvest">
+      <datalist id="phi-crop-list"></datalist>
+    </label>
+    <label>Harvest date
+      <input type="date" id="phi-harvest">
+    </label>
+  </div>
+  <label>Lot label (optional)
+    <input type="text" id="phi-lot" placeholder="Bin, load, or buyer lot">
+  </label>
+  <div id="phi-fields" class="phi-fields"></div>
+  <div class="form-actions">
+    <button type="button" class="btn btn-primary" id="phi-print">Print</button>
+    <button type="button" class="btn btn-secondary" id="phi-cancel">Cancel</button>
+  </div>
+</dialog>
+
+<dialog id="wall-screen" class="wall-screen">
+  <div class="wall-bar">
+    <p id="wall-asof" class="card-hint"></p>
+    <p id="wall-lock-note" class="card-hint" hidden>If the screen dims, set Auto-Lock to Never.</p>
+    <button type="button" class="btn btn-secondary" id="wall-close">Close</button>
+  </div>
+  <div id="wall-board"></div>
+</dialog>
+
 <dialog id="gather-dialog" class="app-dialog gather-dialog-box">
   <h3 id="gather-dialog-title">Logs brought in</h3>
   <p class="card-hint" id="gather-summary"></p>
@@ -1636,6 +1878,9 @@
 
 <script src="units.js"></script>
 <script src="mix-calc.js"></script>
+<script src="season-limits.js"></script>
+<script src="work-order.js"></script>
+<script src="shed.js"></script>
 <script src="csv-import.js"></script>
 <script src="field-map.js"></script>
 <script src="state_pesticide_laws.js"></script>
@@ -1665,6 +1910,8 @@
 <script src="app-calculator.js"></script>
 <script src="app-reports.js"></script>
 <script src="app-sync.js"></script>
+<script src="app-shed.js"></script>
+<script src="app-plans.js"></script>
 <script src="app-map.js"></script>
 <script src="app-reminders.js"></script>
 <script src="app-photos.js"></script>

@@ -2297,3 +2297,26 @@ body.public-paper .card {
   .public-main { width: auto; margin: 0; }
   .print-area ol { margin: 0.75rem 0 0 1.2rem; }
 }
+
+/* Work orders, shed reorder, site pins, wall screen */
+.plan-strip { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.4rem 0 0.6rem; }
+.plan-strip .chip { max-width: 100%; }
+.reorder-name { align-self: center; font-weight: 600; }
+.phi-fields { display: flex; flex-direction: column; gap: 0.35rem; margin: 0.6rem 0; }
+.map-swatch-site { background: #e7a0cf; border: 2px solid #6b2458; border-radius: 50%; }
+.wall-screen {
+  width: 100vw; height: 100vh; max-width: none; max-height: none;
+  margin: 0; border: 0; padding: 1.2rem 1.4rem;
+  background: #102416; color: #f4efe4;
+}
+.wall-screen::backdrop { background: #102416; }
+.wall-screen h1 { color: #f4efe4; font-size: 1.8rem; }
+.wall-screen h2 { color: #f0d99a; font-size: 1.3rem; margin-top: 1rem; }
+.wall-screen .print-meta, .wall-screen .card-hint { color: #d5dece; }
+.wall-screen .row {
+  display: flex; justify-content: space-between; gap: 1rem;
+  padding: 0.7rem 0; border-bottom: 1px solid rgba(255,255,255,0.15); font-size: 1.15rem;
+}
+.wall-screen .when { font-weight: 700; white-space: nowrap; }
+.wall-bar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+#app-site-warn { margin-top: 0.35rem; }

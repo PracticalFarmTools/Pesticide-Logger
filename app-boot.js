@@ -71,7 +71,7 @@ function showUpdateBanner() {
   el.hidden = false;
 }
 
-const APP_VERSION = 'v2.9.56';
+const APP_VERSION = 'v2.9.57';
 let updateStatusHideTimer = 0;
 
 function setUpdateStatus(msg, opts) {
@@ -168,6 +168,8 @@ function startFarmUi() {
   farmUiStarted = true;
   initSettings();
   initProducts();
+  initShed();
+  initPlans();
   initFields();
   initAppForm();
   initCameraCapture();
@@ -188,6 +190,7 @@ function startFarmUi() {
   bindAutoBackupWatchers();
   initLaunchQueue();
   if ($('#dash-rei-board')) $('#dash-rei-board').addEventListener('click', printReiBoard);
+  initWallScreen();
   if ($('#dash-wps-info')) $('#dash-wps-info').addEventListener('click', printWpsApplicationInfo);
   if ($('#report-wps-info')) $('#report-wps-info').addEventListener('click', printWpsApplicationInfo);
   initInstallHint();

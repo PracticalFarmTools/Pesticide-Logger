@@ -29,10 +29,8 @@ function updateReportCount() {
 }
 
 function reportRangeDates(kind) {
-  const y = now().getFullYear();
-  if (kind === 'season') return { from: y + '-01-01', to: y + '-12-31' };
-  if (kind === 'last') return { from: (y - 1) + '-01-01', to: (y - 1) + '-12-31' };
-  return { from: '', to: '' };
+  if (kind !== 'season' && kind !== 'last') return { from: '', to: '' };
+  return SeasonLimits.seasonWindow(data.settings.seasonStart, todayISO(), kind === 'last' ? 1 : 0);
 }
 
 function syncReportRangeChips() {
@@ -70,6 +68,10 @@ function initReports() {
   $('#report-print').addEventListener('click', printReport);
   if ($('#report-state-pack')) $('#report-state-pack').addEventListener('click', downloadStatePack);
   if ($('#report-certifier')) $('#report-certifier').addEventListener('click', printCertifierPacket);
+  if ($('#report-phi-sheet')) $('#report-phi-sheet').addEventListener('click', openPhiSheet);
+  if ($('#phi-print')) $('#phi-print').addEventListener('click', printPhiSheet);
+  if ($('#phi-cancel')) $('#phi-cancel').addEventListener('click', () => $('#phi-dialog').close());
+  if ($('#phi-crop')) $('#phi-crop').addEventListener('input', fillPhiFields);
   if ($('#report-inspect-html')) $('#report-inspect-html').addEventListener('click', downloadInspectPacket);
   if ($('#report-season-binder')) $('#report-season-binder').addEventListener('click', printSeasonBinder);
   if ($('#dash-clerk-binder')) $('#dash-clerk-binder').addEventListener('click', printSeasonBinder);
@@ -425,4 +427,63 @@ function downloadStatePack() {
   const stamp = new Date().toISOString().slice(0, 10);
   triggerDownload(blob, `state-compliance-pack-${s.state}-${stamp}.json`);
   toast(`State pack exported for ${STATE_NAMES[s.state] || s.state} (${countOf(records.length, 'record')})`);
+}
+
+function openPhiSheet() {
+  const dlg = $('#phi-dialog');
+  if (!dlg || !dlg.showModal) return;
+  const crops = [];
+  const seen = new Set();
+  data.applications.forEach((a) => {
+    const crop = (a && !a.deletedAt && a.crop) ? a.crop.trim() : '';
+    if (!crop || seen.has(crop.toLowerCase())) return;
+    seen.add(crop.toLowerCase());
+    crops.push(crop);
+  });
+  crops.sort((a, b) => a.localeCompare(b));
+  if ($('#phi-crop-list')) {
+    $('#phi-crop-list').innerHTML = crops.map((c) => `<option value="${esc(c)}">`).join('');
+  }
+  if ($('#phi-harvest') && !$('#phi-harvest').value) $('#phi-harvest').value = todayISO();
+  fillPhiFields();
+  dlg.showModal();
+}
+
+function fillPhiFields() {
+  const host = $('#phi-fields');
+  if (!host) return;
+  const crop = ($('#phi-crop') && $('#phi-crop').value.trim().toLowerCase()) || '';
+  let fields = data.fields.slice();
+  if (crop) {
+    const ids = new Set(data.applications
+      .filter((a) => a && !a.deletedAt && (a.crop || '').trim().toLowerCase() === crop)
+      .map((a) => a.fieldId));
+    const matched = fields.filter((f) => ids.has(f.id));
+    if (matched.length) fields = matched;
+  }
+  host.innerHTML = fields.length
+    ? fields.map((f) => `<label class="checkbox-label"><input type="checkbox" value="${esc(f.id)}" checked> ${esc(f.name)}</label>`).join('')
+    : '<p class="card-hint">Add a field first.</p>';
+}
+
+function printPhiSheet() {
+  const harvest = $('#phi-harvest') && $('#phi-harvest').value;
+  if (!harvest) { toast('Pick a harvest date'); return; }
+  const ids = [...$('#phi-fields').querySelectorAll('input:checked')].map((i) => i.value);
+  if (!ids.length) { toast('Pick at least one field'); return; }
+  const crop = ($('#phi-crop') && $('#phi-crop').value.trim()) || '';
+  const season = SeasonLimits.seasonWindow(data.settings.seasonStart, harvest, 0);
+  $('#print-area').innerHTML = FarmFile.phiSheetHtml({
+    apps: data.applications,
+    fieldIds: ids,
+    crop,
+    harvestDate: harvest,
+    harvestLabel: fmtDate(harvest),
+    lot: ($('#phi-lot') && $('#phi-lot').value.trim()) || '',
+    season,
+    phiDate: Compliance.phiDate,
+    farmName: data.settings.farmName || 'Farm'
+  });
+  if ($('#phi-dialog') && $('#phi-dialog').open) $('#phi-dialog').close();
+  window.print();
 }

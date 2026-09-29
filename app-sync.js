@@ -110,7 +110,7 @@ async function buildBackupObject() {
   farm.meta.lastBackupAt = data.meta.lastBackupAt;
   const photos = await idbPhotosGetAll();
   if (typeof BackupPack !== 'undefined' && BackupPack.pack) {
-    return BackupPack.pack({ farm, photos });
+    return BackupPack.pack({ farm, photos, appVersion: APP_VERSION });
   }
   return farm;
 }
@@ -154,6 +154,9 @@ function refreshAfterGather() {
   renderProductOptions();
   renderFieldOptions();
   renderProducts();
+  renderShed();
+  renderPlanStrip();
+  renderCalcPlans();
   renderFields();
   renderAppList();
   renderDashboard();
@@ -248,9 +251,25 @@ async function applyBackupFarm(info, mode) {
 
 async function ingestBackupFile(file) {
   if (!file) return;
+  let parsed = null;
+  try {
+    parsed = JSON.parse(await file.text());
+  } catch (err) {
+    toast('That file is not a valid backup: ' + err.message);
+    return;
+  }
+  if (typeof WorkOrder !== 'undefined' && WorkOrder.isWorkOrder(parsed)) {
+    await ingestWorkOrder(parsed);
+    return;
+  }
   try {
     const info = await inspectBackupFile(file);
     const farmIn = info.farm;
+    if (typeof BackupPack !== 'undefined' && BackupPack.isNewerVersion &&
+        BackupPack.isNewerVersion(info.appVersion, APP_VERSION)) {
+      toast('This file came from a newer version (' + info.appVersion + '). Update this device first, then open it again.');
+      return;
+    }
     const counts = (typeof BackupPack !== 'undefined' && BackupPack.summaryLine)
       ? BackupPack.summaryLine(info)
       : `${(farmIn.applications || []).length} records, ${(farmIn.products || []).length} products, ${(farmIn.fields || []).length} fields`;
@@ -528,8 +547,7 @@ async function downloadInspectPacket() {
   }
 }
 
-function printReiBoard() {
-  if (typeof FarmFile === 'undefined' || !FarmFile.reiBoardHtml) return;
+function reiBoardRows() {
   const apps = sortedApps();
   const reiRows = apps
     .map((a) => ({ a, exp: Compliance.reiExpiry(a) }))
@@ -538,7 +556,8 @@ function printReiBoard() {
     .map(({ a, exp }) => ({
       where: a.fieldName || '',
       what: appProductsLabel(a) + ' · sprayed ' + fmtDate(a.date),
-      when: exp.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+      when: exp.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
+      exp
     }));
   const phiRows = apps
     .map((a) => ({ a, d: Compliance.phiDate(a) }))
@@ -547,15 +566,106 @@ function printReiBoard() {
     .map(({ a, d }) => ({
       where: (a.crop || a.fieldName || '') + (a.fieldName ? ' — ' + a.fieldName : ''),
       what: appProductsLabel(a) + ' · sprayed ' + fmtDate(a.date),
-      when: 'harvest ' + d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+      when: 'harvest ' + d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+      exp: d
     }));
+  return { reiRows, phiRows };
+}
+
+function printReiBoard() {
+  if (typeof FarmFile === 'undefined' || !FarmFile.reiBoardHtml) return;
+  const rows = reiBoardRows();
   $('#print-area').innerHTML = FarmFile.reiBoardHtml({
     farmName: data.settings.farmName || 'Farm',
     generatedAt: now().toLocaleString(),
-    reiRows,
-    phiRows
+    reiRows: rows.reiRows,
+    phiRows: rows.phiRows
   });
   window.print();
+}
+
+let wallTimer = 0;
+let wallLock = null;
+
+function paintWallScreen() {
+  const board = $('#wall-board');
+  if (!board || typeof FarmFile === 'undefined') return;
+  const rows = reiBoardRows();
+  const gathered = data.meta && data.meta.lastGatherAt;
+  if ($('#wall-asof')) {
+    $('#wall-asof').textContent = 'Book as of the last gather: ' +
+      (gathered ? new Date(gathered).toLocaleString() : 'not yet');
+  }
+  board.innerHTML = FarmFile.reiBoardHtml({
+    farmName: data.settings.farmName || 'Farm',
+    generatedAt: now().toLocaleString(),
+    reiRows: rows.reiRows,
+    phiRows: rows.phiRows
+  });
+  return rows;
+}
+
+function wallDelay(rows) {
+  const times = []
+    .concat((rows.reiRows || []).map((r) => r.exp), (rows.phiRows || []).map((r) => r.exp))
+    .filter((d) => d && d.getTime && d.getTime() > Date.now())
+    .map((d) => d.getTime() - Date.now());
+  const soon = times.length ? Math.min.apply(null, times) + 1000 : 60000;
+  return Math.max(1000, Math.min(60000, soon));
+}
+
+async function askWallLock() {
+  const note = $('#wall-lock-note');
+  if (!navigator.wakeLock) {
+    if (note) note.hidden = false;
+    return;
+  }
+  try {
+    wallLock = await navigator.wakeLock.request('screen');
+    if (note) note.hidden = true;
+  } catch (e) {
+    if (note) note.hidden = false;
+  }
+}
+
+function scheduleWall() {
+  clearTimeout(wallTimer);
+  const rows = paintWallScreen();
+  wallTimer = setTimeout(scheduleWall, wallDelay(rows));
+}
+
+function openWallScreen() {
+  const dlg = $('#wall-screen');
+  if (!dlg || !dlg.showModal) return;
+  scheduleWall();
+  dlg.showModal();
+  askWallLock();
+  if (dlg.requestFullscreen) dlg.requestFullscreen().catch(() => {});
+}
+
+function closeWallScreen() {
+  clearTimeout(wallTimer);
+  wallTimer = 0;
+  if (wallLock && wallLock.release) wallLock.release().catch(() => {});
+  wallLock = null;
+  if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+  const dlg = $('#wall-screen');
+  if (dlg && dlg.open) dlg.close();
+}
+
+function initWallScreen() {
+  if ($('#dash-wall-screen')) $('#dash-wall-screen').addEventListener('click', openWallScreen);
+  if ($('#wall-close')) $('#wall-close').addEventListener('click', closeWallScreen);
+  if ($('#wall-screen')) {
+    $('#wall-screen').addEventListener('close', () => { clearTimeout(wallTimer); wallTimer = 0; });
+  }
+  if (!document.body.dataset.wallLock) {
+    document.body.dataset.wallLock = '1';
+    document.addEventListener('visibilitychange', () => {
+      const dlg = $('#wall-screen');
+      if (document.visibilityState === 'visible' && dlg && dlg.open) askWallLock();
+    });
+  }
 }
 
 function printWpsApplicationInfo() {

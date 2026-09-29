@@ -110,6 +110,12 @@ async function fillFocused(page) {
     const body = reg === '62719-621' ? LABEL_ENTRUST : { reg, files: [], rei: [], phi: [], notFound: true };
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
   });
+  const naipCalls = [];
+  const TILE_PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64');
+  await page.route('https://imagery.nationalmap.gov/**', (route) => {
+    naipCalls.push(route.request().url());
+    route.fulfill({ status: 200, contentType: 'image/png', body: TILE_PNG });
+  });
   const chips = () => page.$$eval('.missing-field-chip', (cs) => cs.map((c) => c.dataset.missingField));
 
   try {
@@ -358,6 +364,31 @@ async function fillFocused(page) {
       await page.waitForTimeout(300);
       must(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), 'no sideways scroll at 400px');
       must(await page.locator('.field-table td[data-label]').first().isVisible(), 'field rows render as labeled cards');
+    });
+
+    await stage(page, 'Field mapper: sharp NAIP tiles up close, drawing bar on screen, a drawn square fills acres', async () => {
+      await page.click('#fields-mode-map');
+      await page.evaluate(() => fieldMap.setView([38.9075, -92.28], 18));
+      await page.waitForSelector('#field-map img.leaflet-tile[src*="/USGSNAIPPlus/ImageServer/exportImage?"]', { state: 'attached', timeout: 10000 });
+      must(naipCalls.length > 0 && naipCalls.every((u) => /&size=256,256&format=jpgpng/.test(u)), 'standard screen asks 256px NAIP tiles');
+      const nav = await page.evaluate(() => document.querySelector('.tab-nav-wrap').getBoundingClientRect().top);
+      const use = await page.evaluate(() => document.querySelector('#map-use').getBoundingClientRect().bottom);
+      must(use <= nav, `Use this shape sits above the thumb bar (${use} > ${nav})`);
+      if ((await page.getAttribute('#map-add-corners', 'aria-pressed')) !== 'true') await page.click('#map-add-corners');
+      const box = await page.locator('#field-map').boundingBox();
+      const cx = box.x + box.width / 2;
+      const cy = box.y + box.height / 2;
+      for (const [dx, dy] of [[-60, -60], [60, -60], [60, 60], [-60, 60]]) {
+        await page.mouse.click(cx + dx, cy + dy);
+        await page.waitForTimeout(120);
+      }
+      must(/acres/.test(await page.textContent('#map-readout')), 'readout shows acres');
+      must(await page.isEnabled('#map-use'), 'Use this shape enabled after 4 corners');
+      await page.click('#map-use');
+      must(Number(await page.inputValue('#field-acres')) > 0, 'field acres filled from the shape');
+      await page.click('#fields-mode-map');
+      await page.click('#map-clear');
+      await page.click('#fields-mode-list');
     });
 
     await stage(page, 'Public pages fit a 320px phone', async () => {

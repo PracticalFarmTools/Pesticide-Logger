@@ -287,14 +287,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.54 + deadline/license wiring', () => {
+check('source files advertise v2.9.55 + deadline/license wiring', () => {
   const app = appSource();
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.54'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.54'));
+  assert.ok(app.includes('v2.9.55'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.55'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-09-24'"));
-  assert.ok(!html.includes('v2.9.54'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.55'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -463,8 +463,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.54'"));
-  assert.ok(!html.includes('v2.9.54'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.55'"));
+  assert.ok(!html.includes('v2.9.55'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -952,7 +952,7 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(start.includes('grower’s book') || start.includes("grower's book"));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(start), 'public page does not name other products');
   assert.ok(!start.includes('Names on those buttons'));
-  assert.ok(!start.includes('v2.9.54'), 'public page keeps version out of copy');
+  assert.ok(!start.includes('v2.9.55'), 'public page keeps version out of copy');
   assert.ok(start.includes('id="start-copy-link"'));
   assert.ok(start.includes('mailto:practicalfarmtools@gmail.com') && inspector.includes('mailto:practicalfarmtools@gmail.com') &&
     extension.includes('mailto:practicalfarmtools@gmail.com'), 'public human on all three pages');
@@ -1531,7 +1531,7 @@ check('v2.9.47: satellite imagery is USGS public domain, not unauthenticated Esr
   assert.ok(app.includes('maxNativeZoom: 16'), 'USGS tiles stop at z16; closer zoom stretches instead of 404');
   assert.ok(app.includes("attribution: 'Imagery: USGS The National Map (USDA NAIP)'"));
   assert.strictEqual(html.match(/img-src ([^;]*);/)[1].trim(),
-    "'self' data: blob: https://basemap.nationalmap.gov https://tile.openstreetmap.org");
+    "'self' data: blob: https://basemap.nationalmap.gov https://imagery.nationalmap.gov https://tile.openstreetmap.org");
   assert.ok(!sw.includes('nationalmap') && !sw.includes('tile.openstreetmap'), 'third-party tiles are never precached');
 });
 
@@ -1618,6 +1618,23 @@ check('v2.9.53: label finder shows EPA label sentences and never fills REI/PHI',
   assert.ok(sw.includes("'./label-text.js'") && sw.includes("'./app-label.js'") && !sw.includes('_vendor'), 'pdf.js stays on the server');
   assert.ok(html.includes('vendor/pdfjs/LICENSE') && fs.existsSync(path.join(root, 'api', '_vendor', 'pdfjs', 'LICENSE')), 'pdf.js credited');
   assert.strictEqual(vercel.functions['api/label.js'].includeFiles, 'api/_vendor/pdfjs/**');
+});
+
+check('v2.9.55: field mapper loads full-resolution NAIP up close; the map comes first', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  const app = appSource();
+  const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
+  assert.ok(app.includes('FieldMap.naipTileUrl(c.x, c.y, c.z, this.options.tilePx)'), 'sharp tiles come from USGS NAIP Plus');
+  assert.ok(app.includes('minZoom: FieldMap.sharpImageryMinZoom(dpr)') && app.includes('tilePx: FieldMap.sharpTilePx(dpr)'), 'sharp layer sized for the screen');
+  assert.ok(/L\.layerGroup\(\[\s*L\.tileLayer\(\s*'https:\/\/basemap\.nationalmap\.gov/.test(app), 'cached tiles stay underneath the sharp ones');
+  assert.ok(!sw.includes('imagery.nationalmap'), 'NAIP tiles are never precached');
+  const pane = html.slice(html.indexOf('id="fields-map-pane"'), html.indexOf('<!-- ============ REPORTS'));
+  assert.ok(pane.indexOf('id="field-map"') < pane.indexOf('id="map-add-corners"'), 'map sits above the drawing buttons');
+  assert.ok(pane.indexOf('id="map-readout"') < pane.indexOf('id="map-use"'), 'acres read out right under the map');
+  assert.ok(/class="map-view-tools"[\s\S]*id="map-locate"[\s\S]*id="map-fullscreen"/.test(pane), 'view buttons float on the map');
+  assert.ok(pane.includes('<details class="map-help">'), 'long drawing tips fold away');
+  assert.ok(css.includes('.btn:disabled {'), 'disabled buttons look disabled');
 });
 
 if (failed) {

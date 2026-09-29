@@ -99,5 +99,28 @@ check('inspector SVG draws named rings without live tiles', () => {
   assert.ok(!svg.includes('nationalmap.gov'));
 });
 
+check('sharp imagery: NAIP tiles line up with the web-map grid and start where cached tiles run out', () => {
+  const H = 20037508.34;
+  assert.deepStrictEqual(FieldMap.tileBbox3857(0, 0, 0), [-H, -H, H, H]);
+  const lat = 38.9075;
+  const lng = -92.28;
+  const z = 18;
+  const n = 2 ** z;
+  const x = Math.floor((lng + 180) / 360 * n);
+  const y = Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * n);
+  const [minX, minY, maxX, maxY] = FieldMap.tileBbox3857(x, y, z);
+  const px = lng * Math.PI / 180 * 6378137;
+  const py = Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)) * 6378137;
+  assert.ok(px >= minX && px <= maxX && py >= minY && py <= maxY, 'tile contains its point');
+  assert.ok(Math.abs((maxX - minX) - 152.87) < 0.02, 'z18 tile is 152.87 m wide');
+  const url = FieldMap.naipTileUrl(x, y, z, 512);
+  assert.ok(url.startsWith('https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPPlus/ImageServer/exportImage?bbox='));
+  assert.ok(url.includes('&size=512,512&') && url.includes('format=jpgpng') && url.includes('bboxSR=3857&imageSR=3857'));
+  assert.strictEqual(FieldMap.sharpImageryMinZoom(1), FieldMap.CACHED_IMAGERY_MAX_ZOOM + 1, 'standard screens use cached tiles through z16');
+  assert.strictEqual(FieldMap.sharpImageryMinZoom(2), 14, 'high-DPI screens go sharp from z14');
+  assert.strictEqual(FieldMap.sharpTilePx(1), 256);
+  assert.strictEqual(FieldMap.sharpTilePx(3), 512);
+});
+
 if (failed) process.exit(1);
 console.log('\nAll field-map checks passed.');

@@ -287,14 +287,14 @@ check('privateDuty none means state matrix should not apply to private users', (
   assert.strictEqual(apply, false);
 });
 
-check('source files advertise v2.9.55 + deadline/license wiring', () => {
+check('source files advertise v2.9.56 + deadline/license wiring', () => {
   const app = appSource();
   const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.ok(app.includes('v2.9.55'));
-  assert.ok(sw.includes('pesticide-logger-v2.9.55'));
+  assert.ok(app.includes('v2.9.56'));
+  assert.ok(sw.includes('pesticide-logger-v2.9.56'));
   assert.ok(sw.includes("const LAWS_EDITION = '2026-09-24'"));
-  assert.ok(!html.includes('v2.9.55'), 'version stays out of the header and About copy');
+  assert.ok(!html.includes('v2.9.56'), 'version stays out of the header and About copy');
   assert.ok(html.includes('class="header-sub">Practical Farm Tools</span>'));
   assert.ok(!/header-sub">[^<]*v\d/.test(html));
   assert.ok(html.includes('id="header-check-update"'), 'Check for app updates lives in Settings');
@@ -463,8 +463,8 @@ check('cab UX: compact spray log, library-first lists, quieter home, calc copy, 
   assert.ok(app.includes('addingCorners = mappedRings().length === 0'));
   assert.strictEqual(i18n.ES['Log this spray'], 'Registrar esta aspersión');
   assert.strictEqual(i18n.FR['Check for updates'], 'Rechercher des mises à jour');
-  assert.ok(app.includes("const APP_VERSION = 'v2.9.55'"));
-  assert.ok(!html.includes('v2.9.55'));
+  assert.ok(app.includes("const APP_VERSION = 'v2.9.56'"));
+  assert.ok(!html.includes('v2.9.56'));
 });
 
 check('ship-ready: EPA host honesty, install timing, checkout note', () => {
@@ -899,7 +899,7 @@ check('Celsius echo and tank-mix metric are display-only; records stay US', () =
   assert.ok(app.includes("'Temperature (F)'"), 'CSV header stays F');
   assert.ok(app.includes('function syncTempC'), 'live °C echo');
   assert.ok(app.includes('mixMetricCaption'), 'tank mix metric strip');
-  assert.ok(html.includes('US label units. After Calculate'), 'calculator hint');
+  assert.ok(html.includes('US label units; metric appears after Calculate as a reference only.'), 'calculator hint');
   assert.ok(!html.includes('id="set-units"') && !html.includes('id="set-metric"'), 'no global unit toggle');
 });
 
@@ -952,7 +952,7 @@ check('share plays: public page, generic CSV chooser, restore card, one-pagers',
   assert.ok(start.includes('grower’s book') || start.includes("grower's book"));
   assert.ok(!/SprayLedger|Farm Spray Pro|AgriXP/.test(start), 'public page does not name other products');
   assert.ok(!start.includes('Names on those buttons'));
-  assert.ok(!start.includes('v2.9.55'), 'public page keeps version out of copy');
+  assert.ok(!start.includes('v2.9.56'), 'public page keeps version out of copy');
   assert.ok(start.includes('id="start-copy-link"'));
   assert.ok(start.includes('mailto:practicalfarmtools@gmail.com') && inspector.includes('mailto:practicalfarmtools@gmail.com') &&
     extension.includes('mailto:practicalfarmtools@gmail.com'), 'public human on all three pages');
@@ -1502,8 +1502,8 @@ check('v2.9.49: spray history stacks as cards on phones; Edit / Delete never scr
   assert.ok(app.includes('<table class="record-table history-table">'));
   ['Date', 'Product', 'Field / crop', 'Area', 'Total applied', 'Applicator']
     .forEach((l) => assert.ok(app.includes(`data-label="\${esc(tr('${l}'))}"`), l));
-  const phone = css.split('@media (max-width: 640px) {\n  .history-table thead')[1];
-  assert.ok(phone && phone.includes('display: block') && phone.includes('.history-table td.row-actions { display: flex;'));
+  const phone = css.split('@media (max-width: 640px) {\n  .product-table thead, .field-table thead, .history-table thead')[1];
+  assert.ok(phone && phone.includes('display: block') && phone.includes('.history-table td.row-actions {'));
 });
 
 check('v2.9.47: weather is NWS (public domain) — no Open-Meteo free tier in a paid app', () => {
@@ -1635,6 +1635,35 @@ check('v2.9.55: field mapper loads full-resolution NAIP up close; the map comes 
   assert.ok(/class="map-view-tools"[\s\S]*id="map-locate"[\s\S]*id="map-fullscreen"/.test(pane), 'view buttons float on the map');
   assert.ok(pane.includes('<details class="map-help">'), 'long drawing tips fold away');
   assert.ok(css.includes('.btn:disabled {'), 'disabled buttons look disabled');
+});
+
+check('v2.9.56: every tab reads the same — one-row modes, one save row, one phone card', () => {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+  const app = appSource();
+  assert.ok(!/@media \(max-width: 720px\) \{\n  \.log-mode-toggle \{ flex-direction: column/.test(css), 'mode switch stays one row on phones');
+  const bar = html.slice(html.indexOf('sticky-actions app-save-bar'), html.indexOf('</form>', html.indexOf('sticky-actions app-save-bar')));
+  assert.ok(!bar.includes('app-save-draft-hint') && html.indexOf('id="app-save-honesty"') < html.indexOf('sticky-actions app-save-bar'),
+    'Save hints sit above the sticky bar, not in it; the bar stays last in the form');
+  assert.ok(css.includes('.app-save-bar #app-save-btn { order: 2; }'), 'Save and draft share one row on phones');
+  const mix = html.slice(html.indexOf('<fieldset data-log-section="products">'), html.indexOf('<fieldset data-log-section="when">'));
+  assert.ok(mix.indexOf('id="app-products"') < mix.indexOf('id="app-add-product"'), 'Add another product comes after the rows');
+  assert.ok(app.includes(":scope > .state-req-tag:not([hidden]) ~ .state-req-tag"), 'one STATE tag per box');
+  const history = html.slice(html.indexOf('id="log-history-pane"'), html.indexOf('<!-- ============ TANK MIX'));
+  assert.ok(history.includes('id="app-due-banner"') && history.includes('>Past sprays</h3>'), 'completion clocks live with Past sprays');
+  assert.ok(app.includes('data-due-edit=') && app.includes('editApp(btn.dataset.dueEdit)'), 'a clock line opens that spray');
+  const home = html.slice(html.indexOf('id="tab-dashboard"'), html.indexOf('<!-- ============ SPRAY LOG'));
+  assert.ok(home.indexOf('id="recent-apps"') < home.indexOf('id="dash-clerk"'), 'record keeping follows Recent sprays');
+  assert.ok(home.includes('id="dash-all-sprays"') && !home.includes('+ Log a spray'), 'one Log button on Home');
+  assert.ok(css.includes('.product-table tbody tr, .field-table tbody tr, .history-table tbody tr {'), 'one phone card for all three lists');
+  assert.ok(app.includes('esc(fmtDate(last.date))'), 'field Last spray uses the app date format');
+  assert.ok(app.includes('data-map-field=') && app.includes('function showFieldOnMap'), 'mapped fields open on the map');
+  assert.ok(html.includes('id="calc-field"') && app.includes('function applyCalcField'), 'tank mix can start from a field');
+  assert.ok(html.includes('data-report-range="season"') && app.includes('function reportRangeDates'), 'report date shortcuts');
+  const reports = html.slice(html.indexOf('id="tab-reports"'), html.indexOf('report-action-group-label">For inspectors'));
+  assert.ok(reports.includes('id="report-count"'), 'match count sits with the filters');
+  assert.ok(html.includes('class="settings-jump"') && html.includes('id="set-commercial-details"'), 'settings jump bar; commercial boxes fold');
+  assert.ok(app.includes('<details class="state-details">'), 'long state rule lists fold');
 });
 
 if (failed) {

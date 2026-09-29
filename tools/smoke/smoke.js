@@ -391,6 +391,23 @@ async function fillFocused(page) {
       await page.click('#fields-mode-list');
     });
 
+    await stage(page, 'Every tab fits a 360px phone; mode switch and Save stay one row', async () => {
+      await page.setViewportSize({ width: 360, height: 780 });
+      for (const t of ['dashboard', 'log', 'products', 'fields', 'calculator', 'reports', 'settings']) {
+        await page.evaluate((tab) => document.querySelector(`[data-tab="${tab}"]`).click(), t);
+        await page.waitForTimeout(250);
+        must(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `no sideways scroll on ${t}`);
+      }
+      await page.evaluate(() => document.querySelector('[data-tab="log"]').click());
+      await page.click('#log-mode-new');
+      const rows = await page.evaluate(() => {
+        const top = (s) => Math.round(document.querySelector(s).getBoundingClientRect().top);
+        return { modes: top('#log-mode-new') === top('#log-mode-history'), save: top('#app-save-btn') === top('#app-save-draft-btn') };
+      });
+      must(rows.modes && rows.save, 'Log / Past sprays and Save / draft each share one row: ' + JSON.stringify(rows));
+      await page.setViewportSize({ width: 400, height: 850 });
+    });
+
     await stage(page, 'Public pages fit a 320px phone', async () => {
       await page.setViewportSize({ width: 320, height: 700 });
       for (const pg of ['start.html', 'how.html', 'inspector.html', 'extension.html']) {

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="Pesticide Logger — offline-first spray record keeping with 50-state recordkeeping field coverage, tank mix calculator, and REI/PHI tracking for farms. 30-day trial, then a paid license.">
   <meta name="theme-color" content="#0f2814">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://basemap.nationalmap.gov https://tile.openstreetmap.org; connect-src 'self' https://api.weather.gov; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://basemap.nationalmap.gov https://imagery.nationalmap.gov https://tile.openstreetmap.org; connect-src 'self' https://api.weather.gov; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>Pesticide Logger · Practical Farm Tools</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -973,29 +973,45 @@
     <div id="fields-map-pane" hidden>
     <div class="card map-card">
       <h3 class="card-title">Field mapper — draw your acreage</h3>
-      <p class="card-hint">Zoom to your farm (or tap My location). Turn on Add corners to drop points — drag a green handle to move a corner instead of erasing. Tap a field line to insert a corner. Tap the first corner or turn off Add corners when the ring is right, then Use this shape. The amber pin is the forecast spot; drag it anytime without adding a corner. Set forecast pin is only for sites with no drawn boundary.</p>
-      <div class="map-toolbar">
-        <button type="button" class="btn btn-secondary btn-sm" id="map-locate">My location</button>
-        <button type="button" class="btn btn-secondary btn-sm" id="map-fit-all" hidden>Fit all fields</button>
-        <button type="button" class="btn btn-secondary btn-sm" id="map-basemap">Satellite / streets</button>
-        <button type="button" class="btn btn-secondary btn-sm" id="map-weather-pin">Set forecast pin</button>
-        <span class="map-toolbar-spacer"></span>
+      <p class="card-hint">Find your field, turn on Add corners, and tap each corner. Then tap Use this shape.</p>
+      <p class="map-offline-note" id="map-offline-note" hidden>Imagery needs a network. Drawn boundaries stay on this device.</p>
+      <div class="map-frame">
+        <div id="field-map" role="application" aria-label="Field boundary drawing map"></div>
+        <div class="map-view-tools" role="group" aria-label="Map view">
+          <button type="button" class="btn btn-secondary btn-sm" id="map-locate">My location</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="map-fit-all" hidden>Fit all fields</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="map-basemap">Satellite / streets</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="map-fullscreen" aria-pressed="false">Full screen</button>
+        </div>
+      </div>
+      <div class="map-readout" id="map-readout" aria-live="polite">Add corners is off. Turn it on to start a field.</div>
+      <div class="map-toolbar" role="group" aria-label="Draw a field">
         <button type="button" class="btn btn-secondary btn-sm" id="map-add-corners" aria-pressed="false">Add corners</button>
         <button type="button" class="btn btn-secondary btn-sm" id="map-undo" disabled>Undo point</button>
         <button type="button" class="btn btn-secondary btn-sm" id="map-clear" disabled>Clear</button>
         <button type="button" class="btn btn-primary btn-sm" id="map-use" disabled>Use this shape</button>
-        <button type="button" class="btn btn-secondary btn-sm" id="map-fullscreen" aria-pressed="false">Full screen</button>
       </div>
-      <p class="map-offline-note" id="map-offline-note" hidden>Imagery needs a network. Drawn boundaries stay on this device.</p>
-      <div id="field-map" role="application" aria-label="Field boundary drawing map"></div>
-      <div class="map-legend" id="map-legend">
-        <span><i class="map-swatch map-swatch-rei"></i> REI</span>
-        <span><i class="map-swatch map-swatch-phi"></i> PHI wait</span>
-        <span><i class="map-swatch map-swatch-sprayed"></i> Last spray</span>
-        <span><i class="map-swatch map-swatch-idle"></i> No spray on file</span>
-        <span><i class="map-swatch map-swatch-pin"></i> Forecast pin</span>
+      <div class="map-footer">
+        <div class="map-legend" id="map-legend">
+          <span><i class="map-swatch map-swatch-rei"></i> REI</span>
+          <span><i class="map-swatch map-swatch-phi"></i> PHI wait</span>
+          <span><i class="map-swatch map-swatch-sprayed"></i> Last spray</span>
+          <span><i class="map-swatch map-swatch-idle"></i> No spray on file</span>
+          <span><i class="map-swatch map-swatch-pin"></i> Forecast pin</span>
+        </div>
+        <button type="button" class="text-btn" id="map-weather-pin">Set forecast pin</button>
       </div>
-      <div class="map-readout" id="map-readout">Add corners is off — turn it on to drop points. Drag a handle to move a corner; drag the amber pin anytime without adding a point.</div>
+      <details class="map-help">
+        <summary>How drawing works</summary>
+        <ul>
+          <li>Drag a green handle to move a corner instead of erasing it.</li>
+          <li>Tap a field line to add a corner there.</li>
+          <li>Tap the first corner, or turn off Add corners, to close the shape.</li>
+          <li>The amber pin is the forecast spot. Drag it anytime; it will not add a corner.</li>
+          <li>Set forecast pin is for sites with no drawn boundary.</li>
+          <li>Photos are USGS aerial imagery (USDA NAIP). Close in, a sharper photo loads a moment after the first one.</li>
+        </ul>
+      </details>
     </div>
     </div>
   </section>
@@ -1317,7 +1333,7 @@
         <summary>Credits &amp; data sources</summary>
         <div class="legal-body">
           <p><strong>Weather:</strong> U.S. National Weather Service (<a href="https://www.weather.gov/" target="_blank" rel="noopener">weather.gov</a>), public domain.</p>
-          <p><strong>Satellite imagery:</strong> USGS The National Map, mostly USDA NAIP (<a href="https://www.usgs.gov/programs/national-geospatial-program/national-map" target="_blank" rel="noopener">usgs.gov</a>), public domain.</p>
+          <p><strong>Satellite imagery:</strong> USGS The National Map imagery and NAIP Plus, mostly USDA NAIP (<a href="https://www.usgs.gov/programs/national-geospatial-program/national-map" target="_blank" rel="noopener">usgs.gov</a>), public domain.</p>
           <p><strong>Street map:</strong> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors (ODbL).</p>
           <p><strong>Product identity and label text:</strong> U.S. EPA Pesticide Product and Label System.</p>
           <p><strong>Open-source components:</strong>

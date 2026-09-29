@@ -92,12 +92,25 @@ function initFieldMap() {
 
   fieldMap = L.map('field-map', { zoomControl: true }).setView([39.8, -98.6], 4);
 
-  // USGS The National Map orthoimagery (mostly USDA NAIP, 1 m): public
-  // domain, no account, fine in a paid app. Tiles stop at z16; Leaflet
-  // stretches them for closer corner-drawing.
-  baseSatellite = L.tileLayer(
-    'https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}',
-    { maxZoom: 19, maxNativeZoom: 16, attribution: 'Imagery: USGS The National Map (USDA NAIP)' });
+  // USGS The National Map orthoimagery (mostly USDA NAIP): public domain, no
+  // account, fine in a paid app. Cached tiles stop at z16; the sharp NAIP
+  // layer on top fills in closer zooms and high-DPI screens.
+  const dpr = window.devicePixelRatio || 1;
+  const SharpImagery = L.TileLayer.extend({
+    getTileUrl(c) { return FieldMap.naipTileUrl(c.x, c.y, c.z, this.options.tilePx); }
+  });
+  baseSatellite = L.layerGroup([
+    L.tileLayer(
+      'https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom: 19, maxNativeZoom: 16, attribution: 'Imagery: USGS The National Map (USDA NAIP)' }),
+    new SharpImagery('', {
+      minZoom: FieldMap.sharpImageryMinZoom(dpr),
+      maxZoom: 19,
+      tilePx: FieldMap.sharpTilePx(dpr),
+      updateWhenZooming: false,
+      zIndex: 2
+    })
+  ]);
   baseStreets = L.tileLayer(
     'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     { maxZoom: 19, attribution: '© OpenStreetMap contributors' });
@@ -401,8 +414,8 @@ function updateDrawUI() {
   }
   if (n === 0) {
     readout.innerHTML = addingCorners
-      ? 'Add corners is on — tap each corner. Drag a handle to move it. Drag the amber pin anytime without adding a point.'
-      : 'Add corners is off. Turn it on to drop points, or drag an existing handle / amber pin.';
+      ? 'Add corners is on — tap each corner of the field.'
+      : 'Add corners is off. Turn it on to start a field.';
   } else if (n < 3) {
     readout.innerHTML = `${n} corner${n === 1 ? '' : 's'} — need 3 to close. Drag a handle to move it instead of undoing.`;
   } else {

@@ -194,6 +194,39 @@
     return { color: '#4a6b50', fillColor: '#6b8f72', fillOpacity: 0.14, weight: 2 };
   }
 
+  // USGS cached imagery tiles stop at z16 (2.4 m/px). Closer in, and on
+  // high-DPI screens from z14, tiles come from USGS NAIP Plus (0.15-1 m,
+  // public domain) via exportImage, drawn over the cached tiles so a slow or
+  // missing sharp tile still shows the soft one underneath.
+  const CACHED_IMAGERY_MAX_ZOOM = 16;
+  const NAIP_EXPORT_URL = 'https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPPlus/ImageServer/exportImage';
+  const MERCATOR_HALF = 20037508.342789244;
+
+  function isHiDpi(dpr) {
+    return Number(dpr) >= 1.5;
+  }
+
+  function sharpImageryMinZoom(dpr) {
+    return isHiDpi(dpr) ? CACHED_IMAGERY_MAX_ZOOM - 2 : CACHED_IMAGERY_MAX_ZOOM + 1;
+  }
+
+  function sharpTilePx(dpr) {
+    return isHiDpi(dpr) ? 512 : 256;
+  }
+
+  function tileBbox3857(x, y, z) {
+    const size = (2 * MERCATOR_HALF) / Math.pow(2, z);
+    const minX = -MERCATOR_HALF + x * size;
+    const maxY = MERCATOR_HALF - y * size;
+    return [minX, maxY - size, minX + size, maxY].map((v) => Math.round(v * 100) / 100);
+  }
+
+  function naipTileUrl(x, y, z, px) {
+    const n = Number(px) || 256;
+    return NAIP_EXPORT_URL + '?bbox=' + tileBbox3857(x, y, z).join(',') +
+      '&bboxSR=3857&imageSR=3857&size=' + n + ',' + n + '&format=jpgpng&f=image';
+  }
+
   function escSvg(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -270,7 +303,13 @@
     stateView,
     isPlaceholderView,
     ringStyle,
-    ringsSvg
+    ringsSvg,
+    CACHED_IMAGERY_MAX_ZOOM,
+    NAIP_EXPORT_URL,
+    sharpImageryMinZoom,
+    sharpTilePx,
+    tileBbox3857,
+    naipTileUrl
   };
 
   if (typeof module !== 'undefined' && module.exports) {

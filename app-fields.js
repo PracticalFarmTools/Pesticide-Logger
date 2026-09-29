@@ -68,7 +68,13 @@ function initFields() {
   if ($('#field-search')) $('#field-search').addEventListener('input', renderFields);
   if ($('#fields-mode-list')) $('#fields-mode-list').addEventListener('click', () => setFieldsMode('list'));
   if ($('#fields-mode-add')) $('#fields-mode-add').addEventListener('click', () => setFieldsMode('add'));
-  if ($('#fields-mode-map')) $('#fields-mode-map').addEventListener('click', () => setFieldsMode('map'));
+  if ($('#fields-mode-map')) {
+    $('#fields-mode-map').addEventListener('click', () => {
+      setFieldsMode('map');
+      const card = $('#fields-map-pane .map-card');
+      if (card && window.matchMedia('(max-width: 600px)').matches) card.scrollIntoView({ block: 'start' });
+    });
+  }
   renderFields();
 }
 
